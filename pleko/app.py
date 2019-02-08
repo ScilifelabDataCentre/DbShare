@@ -1,4 +1,4 @@
-"The web app."
+"The Pleko web app."
 
 import flask
 
@@ -7,8 +7,8 @@ import pleko
 app = flask.Flask(__name__)
 
 @app.route('/')
-def index():
-    return '<h1>Hello World!</h1>'
+def home():
+    return flask.render_template('base.html')
 
 @app.route('/user/<name>')
 def user(name):
