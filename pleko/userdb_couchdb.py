@@ -7,8 +7,10 @@ import couchdb2
 
 from pleko import settings
 
+DDOCNAME = 'mango'
+
 INDEXES = {
-    "mango": {
+    DDOCNAME: {
         "username": {
             "fields": [{"username": "asc"}],
             "selector": {"type": {"$eq": "user"}}
@@ -20,15 +22,29 @@ INDEXES = {
     }
 }
 
-DDOCNAME = 'mango'
 
 class UserDb:
+    "User account database."
 
     def __init__(self):
         server = couchdb2.Server(href=settings.USER_DBI['SERVER'],
                                  username=settings.USER_DBI['USERNAME'],
                                  password=settings.USER_DBI['PASSWORD'])
         self.db = server[settings.USER_DBI['DATABASE']]
+
+    def __getitem__(self, identifier):
+        """Get the user by identifier (username or email).
+        Raise KeyError if no such user.
+        """
+        result = db.db.find({'username': identifier},
+                            use_index=[DDOCNAME, 'username'])
+        if len(result['docs']) == 1:
+            return result['docs'][0]
+        result = db.db.find({'email': identifier},
+                            use_index=[DDOCNAME, 'email'])
+        if len(result['docs']) == 1:
+            return result['docs'][0]
+        raise KeyError
 
     def initialize(self):
         "Initialize the database; Mango-style indexes."

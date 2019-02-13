@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block head_title %}Pleko{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='logo64.png') }}">
-    {# bootstrap 4.2.1 #}
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    {# bootstrap 4.3.0 #}
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.0/css/bootstrap.min.css" integrity="sha384-PDle/QlgIONtM1aqA2Qemk5gPOE7wFq8+Em+G/hmo5Iq0CCmYZLv3fVRDJ4MMwEA" crossorigin="anonymous">
     {# datatables 1.10.18 for bootstrap 4 #}
     <link rel="stylesheet"
           href="https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css">
@@ -32,6 +32,14 @@
             <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
         </ul>
+        <ul class="nav justify-content-end">
+          {% if False %}
+          {% else %}
+          <li class="mr-2">
+            <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
+          </li>
+          {% endif %}
+        </ul>
       </div>
     </nav>
 
@@ -39,62 +47,51 @@
       <div class="row">
         <div class="col-sm-9 offset-sm-1">
           <h2 class="pt-2">{% block body_title %}Pleko{% endblock %}</h2>
-          {% for message in get_flashed_messages() %}
+          {% for cat, msg in get_flashed_messages(with_categories=True) %}
+          {% if cat == 'error' %}
           <div class="alert alert-danger" role="alert">
-            <strong>Error:</strong> {{ message }}
+            <strong>Error:</strong> {{ msg }}
           </div>
+          {% else %}
+          <div class="alert alert-warning" role="alert">
+            {{ msg }}
+          </div>
+          {% endif %}
           {% endfor %}
         </div>
         <div class="col-sm-2">
-          {% block upper_right %}
+          {% block panel_meta %}
           {% endblock %}
         </div>
       </div>
       <div class="row">
-        <div class="col-sm-9 offset-sm-1">
-          {% block top %}
+        <div class="col-sm-10">
+          {% block panel_main %}
           {% endblock %}
         </div>
         <div class="col-sm-2">
-          {% block right %}
-          {% endblock %}
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-sm-1">
-          {% block left %}
-          {% endblock %}
-        </div>
-        <div class="col-sm-11">
-          {% block middle %}
+          {% block panel_actions %}
           {% endblock %}
         </div>
       </div>
       {% block footer %}
       <hr>
       <div class="row">
-        <div class="col-sm-2">
-          <a href="http://pleko.org/">
-            <img src="{{ url_for('static', filename='logo64.png') }}"
-                 width="32" height="32" title="pleko.org">
-            pleko.org
-          </a>
-        </div>
-        <div class="col-sm-2 offset-sm-8 text-right small">
-{#
-<a href="{{ constants.GITHUB_URL}}">version {{ constants.VERSION }}</a>
-#}
+        <div class="col-sm-2 offset-md-10 text-right">
+          Software <a href="{{ settings.GITHUB_URL }}">{{ settings.VERSION }}</a>
         </div>
       </div>
       {% endblock %}
     </div>
-    {# bootstrap v4.2.1 #}
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-    <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
+    {# bootstrap 4.3.0 #}
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.0/js/bootstrap.min.js" integrity="sha384-7aThvCh9TypR7fIc2HV4O/nFMVCBwyIUKL8XCtKE+8xgCgl/PQGuFsvShjr74PBp" crossorigin="anonymous"></script>
+    {# datatables 1.10.18 #}
     <script src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
+    {# localtime 0.9.1 (static) #}
+    <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
     {% block javascript_code %}
     {% endblock %}
   </body>

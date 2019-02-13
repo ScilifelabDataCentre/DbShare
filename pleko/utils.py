@@ -3,7 +3,6 @@
 import collections
 import datetime
 import functools
-import hashlib
 import json
 import os
 import urllib
@@ -15,7 +14,6 @@ import flask
 # import requests
 import werkzeug.routing
 
-import settings
 import constants
 
 def url(name, **kwargs):
@@ -77,16 +75,6 @@ def get_time(offset=None):
     instant = instant.isoformat()
     return instant[:17] + "{:06.3f}".format(float(instant[17:])) + "Z"
 
-def get_hashed(s):
-    h = hashlib.sha256()
-    h.update(settings.HASH_SALT.encode('utf-8'))
-    h.update(s.encode('utf-8'))
-    return h.hexdigest()
-
-def check_password(user, password):
-    if not user or user.get('password') != get_hashed(password):
-        raise ValueError('wrong username and/or password')
-
 def check(item, access_func=None, **kwargs):
     """Raise HTTP 404 if no item.
     Raise HTTP 403 if access_func evaluates to False.
@@ -123,10 +111,12 @@ def is_method_DELETE(csrf=True):
         return False
 
 def csrf_token():
-    "Protection agains cross-site request forgery (CSRF). For use in POST HTML."
+    """Output HTML for cross-site request forgery (CSRF) protection.
+    Must be used with filter 'safe'."""
     if '_csrf_token' not in flask.session:
         flask.session['_csrf_token'] = get_iuid()
-    return flask.session['_csrf_token']
+    return '<input type="hidden" name="_csrf_token">{}</input>'.format(
+        flask.session['_csrf_token'])
 
 def check_csrf_token():
     "Check the CSRF token for POST HTML."
@@ -208,14 +198,3 @@ def dictdiff(old, new):
     if changed:
         result['changed'] = changed
     return result
-
-
-if __name__ == '__main__':
-    import sys
-    settings.load()
-    try:
-        # Print out hashed value if an input argument.
-        print(get_hashed(sys.argv[1]))
-    except IndexError:
-        # Print out a IUID if no input argument.
-        print(get_iuid())
