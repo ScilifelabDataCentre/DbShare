@@ -1,7 +1,6 @@
 "The Pleko web app."
 
 import importlib
-import logging
 
 import flask
 
@@ -9,40 +8,41 @@ import pleko
 from pleko import constants
 from pleko import utils
 
+DEFAULT_CONFIG = dict(
+    VERSION = pleko.__version__,
+    SITE_NAME = 'Pleko',
+    GITHUB_URL = 'https://github.com/pekrau/Pleko',
+    SECRET_KEY = None,
+    MIN_PASSWORD_LENGTH = 6,
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60,
+    USER_DBI_MODULE = None,
+    CONTACT_EMAIL = None,
+    EMAIL_HOST = None
+)
+
 app = flask.Flask(__name__)
-app.config.from_object(pleko.DefaultConfig)
+app.config.from_mapping(DEFAULT_CONFIG)
 app.config.from_json('config.json')
 
 app.url_map.converters['iuid'] = utils.IuidConverter
 app.url_map.converters['id'] = utils.IdentifierConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
-app.session.permanent = True
 
-user_dbi = importlib.import_module(app.config.USER_DBI['MODULE'])
+userdb = importlib.import_module(app.config['USERDB_MODULE'])
 
-if not app.config.SECRET_KEY:
-    raise ValueError('SECRET_KEY not defined')
-if not app.config.HASH_SALT:
-    raise ValueError('HASH_SALT not defined')
-if app.config.LOGGING_DEBUG:
-    kwargs = dict(level=logging.DEBUG)
-else:
-    kwargs = dict(level=logging.INFO)
-logging.basicConfig(**kwargs)
-logging.info("Pleko version %s", pleko.__version__)
-logging.debug('logging debug')
+flask.logger.info("Pleko version %s", pleko.__version__)
 
 
 @app.before_first_request
 def init_userdbi():
     "Initialize the user database, if not done."
-    user_dbi.UserDb().initialize()
+    userdb.UserDb(app.config).initialize()
 
 @app.before_request
 def set_userdb():
     "Set the user database interface object."
-    flask.g.userdb = user_dbi.UserDb()
+    flask.g.userdb = userdb.UserDb(app.config)
 
 @app.before_request
 def get_user():
@@ -73,13 +73,20 @@ def home():
     "Home page."
     return flask.render_template('home.html')
 
-@aoo.route('/register')
+@app.route('/register', methods=["GET", "POST"])
 def register():
     "Register a new user account."
     if utils.is_method_GET():
         return flask.render_template('register.html')
     elif utils.is_method_POST():
-        # XXX depending on direct enable or not
+        try:
+            user = flask.g.userdb.create(flask.request.form.get('username'),
+                                         flask.request.form.get('email'),
+                                         flask.request.form.get('password'))
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(url_for('register'))
+        # XXX
         return flask.redirect(flask.url_for('home'))
 
 @app.route('/login', methods=["GET", "POST"])
@@ -95,7 +102,7 @@ def login():
                 user = flask.g.db.get_user(username)
                 utils.check_password(user, password)
                 flask.session['username'] = user['username']
-                flask.session['expires'] = utils.get_time(settings.MAX_SESSION_AGE)
+                flask.session.permanent = True
             else:
                 raise ValueError('username and/or password missing')
             try:
@@ -106,17 +113,7 @@ def login():
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('login'))
 
-def get_hashed(s):
-    h = hashlib.sha256()
-    h.update(settings.HASH_SALT.encode('utf-8'))
-    h.update(s.encode('utf-8'))
-    return h.hexdigest()
-
-def check_password(user, password):
-    if not user or user.get('password') != get_hashed(password):
-        raise ValueError('wrong username and/or password')
-
 
 # This code is used only during testing.
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True)

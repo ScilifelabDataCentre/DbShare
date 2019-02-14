@@ -5,8 +5,6 @@ import logging
 
 import couchdb2
 
-from pleko import settings
-
 DDOCNAME = 'mango'
 
 INDEXES = {
@@ -26,25 +24,11 @@ INDEXES = {
 class UserDb:
     "User account database."
 
-    def __init__(self):
-        server = couchdb2.Server(href=settings.USER_DBI['SERVER'],
-                                 username=settings.USER_DBI['USERNAME'],
-                                 password=settings.USER_DBI['PASSWORD'])
-        self.db = server[settings.USER_DBI['DATABASE']]
-
-    def __getitem__(self, identifier):
-        """Get the user by identifier (username or email).
-        Raise KeyError if no such user.
-        """
-        result = db.db.find({'username': identifier},
-                            use_index=[DDOCNAME, 'username'])
-        if len(result['docs']) == 1:
-            return result['docs'][0]
-        result = db.db.find({'email': identifier},
-                            use_index=[DDOCNAME, 'email'])
-        if len(result['docs']) == 1:
-            return result['docs'][0]
-        raise KeyError
+    def __init__(self, config):
+        server = couchdb2.Server(href=config['USERDB_SERVER'],
+                                 username=config['USERDB_USERNAME'],
+                                 password=config['USERDB_PASSWORD'])
+        self.db = server[config['USERDB_DATABASE']]
 
     def initialize(self):
         "Initialize the database; Mango-style indexes."
@@ -64,11 +48,36 @@ class UserDb:
                                   name=indexname,
                                   selector=indexdef['selector'])
 
+    def __getitem__(self, identifier):
+        """Get the user by identifier (username or email).
+        Raise KeyError if no such user.
+        """
+        result = db.db.find({'username': identifier},
+                            use_index=[DDOCNAME, 'username'])
+        if len(result['docs']) == 1:
+            return result['docs'][0]
+        result = db.db.find({'email': identifier},
+                            use_index=[DDOCNAME, 'email'])
+        if len(result['docs']) == 1:
+            return result['docs'][0]
+        raise KeyError
 
-if __name__ == '__main__':
-    settings.load()
-    db = UserDb()
-    db.initialize()
-    result = db.db.find({'username': 'pekrau'},
-                        use_index=[DDOCNAME, 'username'])
-    print(json.dumps(result, indent=2))
+    def get(self, identifier, default=None):
+        try:
+            return self[identifier]
+        except KeyError:
+            return default
+
+    def create(self, username, email, password, role):
+        """Create a user account.
+        Raise ValueError if any problem.
+        """
+        if not username:
+            raise ValueError('no username provided')
+        if self.get(username):
+            raise ValueError('username already in use')
+        if not email:
+            raise ValueError('no email provided')
+        if self.get(email):
+            raise ValueError('email already in use')
+        # XXX

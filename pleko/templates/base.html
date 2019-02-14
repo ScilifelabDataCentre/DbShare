@@ -47,16 +47,15 @@
       <div class="row">
         <div class="col-sm-9 offset-sm-1">
           <h2 class="pt-2">{% block body_title %}Pleko{% endblock %}</h2>
-          {% for cat, msg in get_flashed_messages(with_categories=True) %}
-          {% if cat == 'error' %}
+          {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
             <strong>Error:</strong> {{ msg }}
           </div>
-          {% else %}
+          {% endfor %}
+          {% for msg in get_flashed_messages(category_filter=['message']) %}
           <div class="alert alert-warning" role="alert">
             {{ msg }}
           </div>
-          {% endif %}
           {% endfor %}
         </div>
         <div class="col-sm-2">
