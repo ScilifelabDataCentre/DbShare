@@ -1,9 +1,10 @@
 "CouchDB implementation of UserDb."
 
-import json
-import logging
-
 import couchdb2
+import flask
+import werkzeug.security
+
+from pleko.userdb import BaseUserDb
 
 DDOCNAME = 'mango'
 
@@ -21,17 +22,23 @@ INDEXES = {
 }
 
 
-class UserDb:
-    "User account database."
+class UserDb(BaseUserDb):
+    "CouchDB implementation of user account database."
 
     def __init__(self, config):
-        server = couchdb2.Server(href=config['USERDB_SERVER'],
-                                 username=config['USERDB_USERNAME'],
-                                 password=config['USERDB_PASSWORD'])
+        "Connect to the CouchDB database server."
+        if config.get('USERDB_SERVER') and config.get('USERDB_USERNAME'):
+            server = couchdb2.Server(href=config['USERDB_SERVER'],
+                                     username=config['USERDB_USERNAME'],
+                                     password=config['USERDB_PASSWORD'])
+        else:
+            server = couchdb2.Server(href=config['USERDB_SERVER'])
         self.db = server[config['USERDB_DATABASE']]
 
     def initialize(self):
-        "Initialize the database; Mango-style indexes."
+        """Initialize the database.
+        Ensure up-to-date Mango-style indexes.
+        """
         current_indexes = self.db.get_indexes()['indexes']
         for ddocname, indexes in INDEXES.items():
             for indexname, indexdef in indexes.items():
@@ -42,7 +49,9 @@ class UserDb:
                         ok = current['def']['fields'] == indexdef['fields'] and \
                              current['def']['partial_filter_selector'] == indexdef['selector']
                 if not ok:
-                    logging.debug("loading index %s %s", ddocname, indexname)
+                    flask.current_app.logger.debug("loading index %s %s",
+                                                   ddocname,
+                                                   indexname)
                 self.db.put_index(indexdef['fields'],
                                   ddoc=ddocname,
                                   name=indexname,
@@ -62,22 +71,9 @@ class UserDb:
             return result['docs'][0]
         raise KeyError
 
-    def get(self, identifier, default=None):
-        try:
-            return self[identifier]
-        except KeyError:
-            return default
-
     def create(self, username, email, password, role):
         """Create a user account.
         Raise ValueError if any problem.
         """
-        if not username:
-            raise ValueError('no username provided')
-        if self.get(username):
-            raise ValueError('username already in use')
-        if not email:
-            raise ValueError('no email provided')
-        if self.get(email):
-            raise ValueError('email already in use')
-        # XXX
+        self.check_create(username, email, password, role)
+        raise NotImplementedError

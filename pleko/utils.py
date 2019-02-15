@@ -115,7 +115,7 @@ def csrf_token():
     Must be used with filter 'safe'."""
     if '_csrf_token' not in flask.session:
         flask.session['_csrf_token'] = get_iuid()
-    return '<input type="hidden" name="_csrf_token">{}</input>'.format(
+    return '<input type="hidden" name="_csrf_token" value="{}">'.format(
         flask.session['_csrf_token'])
 
 def check_csrf_token():

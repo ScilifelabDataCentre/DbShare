@@ -3,6 +3,7 @@
 import importlib
 
 import flask
+import werkzeug.security
 
 import pleko
 from pleko import constants
@@ -31,11 +32,11 @@ app.jinja_env.lstrip_blocks = True
 
 userdb = importlib.import_module(app.config['USERDB_MODULE'])
 
-flask.logger.info("Pleko version %s", pleko.__version__)
+app.logger.info("Pleko version %s", pleko.__version__)
 
 
 @app.before_first_request
-def init_userdbi():
+def init_userdb():
     "Initialize the user database, if not done."
     userdb.UserDb(app.config).initialize()
 
@@ -54,7 +55,7 @@ def get_user():
             pass                # XXX Try API key
         else:
             if flask.session['expires'] <= utils.get_time():
-                do_logout()
+                flask.session.pop('username', None)
                 raise KeyError
             flask.g.is_admin = flask.g.user.get('role') == constants.ADMIN
     except KeyError:
@@ -86,7 +87,6 @@ def register():
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(url_for('register'))
-        # XXX
         return flask.redirect(flask.url_for('home'))
 
 @app.route('/login', methods=["GET", "POST"])
@@ -99,8 +99,13 @@ def login():
         password = flask.request.form.get('password')
         try:
             if username and password:
-                user = flask.g.db.get_user(username)
-                utils.check_password(user, password)
+                try:
+                    user = flask.g.userdb[username]
+                except KeyError:
+                    raise ValueError('no such user')
+                if not werkzeug.security.check_password_hash(user['password'],
+                                                             password):
+                    raise ValueError('invalid password')
                 flask.session['username'] = user['username']
                 flask.session.permanent = True
             else:
