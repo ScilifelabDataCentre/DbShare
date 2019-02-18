@@ -26,7 +26,10 @@
     </div>
   </div>
 </form>
-<p>
-  Register an account <a href="{{ url_for('register') }}">here</a>.
-</p>
+<div class="row pt-sm-4">
+  <div class="col-sm-4">
+    <a class="btn btn-success" role="button"
+       href="{{ url_for('register') }}">Register a new account</a>
+  </div>
+</div>
 {% endblock %}

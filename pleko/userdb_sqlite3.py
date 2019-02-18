@@ -19,13 +19,14 @@ class UserDb(BaseUserDb):
         """Initialize the database.
         Tables and indexes.
         """
-        with self.db:
-            self.db.execute("CREATE TABLE IF NOT EXISTS users"
-                            "(iuid TEXT PRIMARY KEY,"
-                            " username TEXT NOT NULL UNIQUE,"
-                            " email TEXT NOT NULL UNIQUE,"
-                            " password TEXT,"
-                            " role TEXT NOT NULL)")
+        self.db.execute("CREATE TABLE IF NOT EXISTS users"
+                        "(iuid TEXT PRIMARY KEY,"
+                        " username TEXT NOT NULL UNIQUE,"
+                        " email TEXT NOT NULL UNIQUE,"
+                        " password TEXT,"
+                        " role TEXT NOT NULL,"
+                        " created TEXT NOT NULL,"
+                        " modified TEXT NOT NULL)")
 
     def __getitem__(self, identifier):
         """Get the user by identifier (username or email).
@@ -48,23 +49,31 @@ class UserDb(BaseUserDb):
                 'password': row[3],
                 'role': row[4]}
 
-    def create(self, username, email, password, role=constants.USER):
+    def create(self, username, email, password,
+               role=constants.USER, status=constants.DISABLED):
         """Create a user account.
         Raise ValueError if any problem.
         """
-        self.check_create(username, email, password, role)
+        self.check_create(username, email, password, role, status)
+        iuid = utils.get_iuid()
         password = werkzeug.security.generate_password_hash(password)
         with self.db:
-            sql = "INSERT INTO users(iuid, username, email, password, role)" \
-                  " VALUES (?, ?, ?, ?, ?)"
-            iuid = utils.get_iuid()
+            sql = "INSERT INTO users(iuid, username, email, password, role," \
+                  "status, created, modified)"\
+                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+            now = utils.get_time()
             self.db.execute(sql, (iuid,
                                   username,
                                   email,
                                   password,
-                                  role))
+                                  role,
+                                  status,
+                                  now,
+                                  now))
         return {'iuid': iuid,
                 'username': username,
                 'email': email,
-                'password': password,
-                'role': role}
+                'role': role,
+                'status': status,
+                'created': now,
+                'modified': now}

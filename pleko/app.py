@@ -14,8 +14,9 @@ DEFAULT_CONFIG = dict(
     SITE_NAME = 'Pleko',
     GITHUB_URL = 'https://github.com/pekrau/Pleko',
     SECRET_KEY = None,
+    SALT_LENGTH = 12,
     MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60,
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
     USER_DBI_MODULE = None,
     CONTACT_EMAIL = None,
     EMAIL_HOST = None
@@ -46,8 +47,9 @@ def set_userdb():
     flask.g.userdb = userdb.UserDb(app.config)
 
 @app.before_request
-def get_user():
+def get_session_user():
     "Get the logged-in user from the session cookie."
+    flask.g.user = None
     try:
         try:
             flask.g.user = flask.g.userdb[flask.session['username']]
@@ -57,10 +59,10 @@ def get_user():
             if flask.session['expires'] <= utils.get_time():
                 flask.session.pop('username', None)
                 raise KeyError
-            flask.g.is_admin = flask.g.user.get('role') == constants.ADMIN
     except KeyError:
-        flask.g.user = None
-        flask.g.is_admin = False
+        pass
+    flask.g.is_admin = flask.g.user and \
+                       flask.g.user.get('role') == constants.ADMIN
 
 @app.context_processor
 def setup_template_context():
@@ -83,11 +85,13 @@ def register():
         try:
             user = flask.g.userdb.create(flask.request.form.get('username'),
                                          flask.request.form.get('email'),
-                                         flask.request.form.get('password'))
+                                         flask.request.form.get('password'),
+                                         status=constants.ENABLED)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(url_for('register'))
-        return flask.redirect(flask.url_for('home'))
+            return flask.redirect(flask.url_for('register'))
+        flask.flash('user account created')
+        return flask.redirect(flask.url_for('user', identifier=user['username']))
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
@@ -102,21 +106,40 @@ def login():
                 try:
                     user = flask.g.userdb[username]
                 except KeyError:
-                    raise ValueError('no such user')
+                    raise ValueError
                 if not werkzeug.security.check_password_hash(user['password'],
                                                              password):
-                    raise ValueError('invalid password')
+                    raise ValueError
                 flask.session['username'] = user['username']
                 flask.session.permanent = True
             else:
-                raise ValueError('username and/or password missing')
+                raise ValueError
             try:
                 return flask.redirect(flask.request.form['next'])
             except KeyError:
                 return flask.redirect(flask.url_for('home'))
-        except ValueError as error:
-            flask.flash(str(error), 'error')
+        except ValueError:
+            flask.flash('invalid user or password', 'error')
             return flask.redirect(flask.url_for('login'))
+
+@app.route('/logout', methods=["POST"])
+def logout():
+    "Logout from the user account."
+    del flask.session['username']
+    return flask.redirect(flask.url_for('home'))
+
+@app.route('/user/<id:identifier>')
+def user(identifier):
+    try:
+        user = flask.g.userdb[identifier]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    if not (flask.g.is_admin or
+            (flask.g.user and flask.g.user['username'] == user['username'])):
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('home'))
+    return flask.render_template('user.html', user=user)
 
 
 # This code is used only during testing.

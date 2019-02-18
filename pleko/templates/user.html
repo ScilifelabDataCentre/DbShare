@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block head_title %}User {{ user['username'] }}{% endblock %}
+
+{% block body_title %}User {{ user['username'] }}{% endblock %}
+
+{% block panel_main %}
+<div class="row">
+  <div class="col-md-6">
+<table class="table">
+  <tr>
+    <th class="text-right">Username</th>
+    <td>{{ user['username'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Email</th>
+    <td>{{ user['email'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Role</th>
+    <td>{{ user['role'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Status</th>
+    <td>{{ user['status'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Modified</th>
+    <td class="localtime">{{ user['modified'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Created</th>
+    <td class="localtime">{{ user['created'] }}</td>
+  </tr>
+</table>
+</div>
+</div>
+{% endblock %}
