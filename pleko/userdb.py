@@ -1,5 +1,7 @@
 "Base abstract UserDb class; user account database."
 
+import re
+
 from pleko import constants
 
 
@@ -34,7 +36,7 @@ class BaseUserDb:
         """
         raise NotImplementedError
 
-    def check_create(self, username, email, password, role, status):
+    def check_create(self, username, email, password, role):
         """Check the values given for creating a user account.
         Raise ValueError if any problem.
         """
@@ -50,8 +52,16 @@ class BaseUserDb:
             raise ValueError('invalid email')
         if self.get(email):
             raise ValueError('email already in use')
-        # XXX quality of password
+        if len(password) < self.config['MIN_PASSWORD_LENGTH']:
+            raise ValueError('password is too short')
         if not role in constants.USER_ROLES:
             raise ValueError('invalid user role')
-        if not status in constants.USER_STATUSES:
-            raise ValueError('invalid user status')
+
+    def get_initial_status(self, email):
+        "Get the initial status for the user given the email."
+        if self.config['REGISTRATION_DIRECT']:
+            return constants.ENABLED
+        for pattern in self.config['REGISTRATION_WHITELIST']:
+            if re.match(pattern, email):
+                return constants.ENABLED
+        return constants.DISABLED

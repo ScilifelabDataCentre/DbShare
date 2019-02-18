@@ -49,14 +49,15 @@ class UserDb(BaseUserDb):
                 'password': row[3],
                 'role': row[4]}
 
-    def create(self, username, email, password,
-               role=constants.USER, status=constants.DISABLED):
+    def create(self, username, email, password, role=constants.USER):
         """Create a user account.
         Raise ValueError if any problem.
         """
-        self.check_create(username, email, password, role, status)
+        self.check_create(username, email, password, role)
         iuid = utils.get_iuid()
-        password = werkzeug.security.generate_password_hash(password)
+        password = werkzeug.security.generate_password_hash(
+            password, salt_length=self.config['SALT_LENGTH'])
+        status = self.get_initial_status(email)
         with self.db:
             sql = "INSERT INTO users(iuid, username, email, password, role," \
                   "status, created, modified)"\

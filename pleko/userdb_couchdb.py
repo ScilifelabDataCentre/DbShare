@@ -135,17 +135,18 @@ class UserDb(BaseUserDb):
             return result['docs'][0]
         raise KeyError
 
-    def create(self, username, email, password,
-               role=constants.USER, status=constants.DISABLED):
+    def create(self, username, email, password, role=constants.USER):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """
-        self.check_create(username, email, password, role, status)
+        self.check_create(username, email, password, role)
+        password = werkzeug.security.generate_password_hash(
+            password, salt_length=self.config['SALT_LENGTH'])
+        status = self.get_initial_status(email)
         with UserSaver(self.db) as saver:
             saver['username'] = username
             saver['email'] = email
-            saver['password'] = werkzeug.security.generate_password_hash(
-                password, salt_length=self.config['SALT_LENGTH'])
+            saver['password'] = password
             saver['role'] = role
             saver['status'] = status
         return saver.doc
