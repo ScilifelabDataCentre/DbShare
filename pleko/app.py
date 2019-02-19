@@ -3,11 +3,11 @@
 import importlib
 
 import flask
-import werkzeug.security
 
 import pleko
 from pleko import constants
 from pleko import utils
+from pleko.auth import auth_blueprint
 
 DEFAULT_CONFIG = dict(
     VERSION = pleko.__version__,
@@ -33,6 +33,8 @@ app.url_map.converters['id'] = utils.IdentifierConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
+app.register_blueprint(auth_blueprint)
+
 userdb = importlib.import_module(app.config['USERDB_MODULE'])
 
 app.logger.info("Pleko version %s", pleko.__version__)
@@ -44,7 +46,7 @@ def init_userdb():
     userdb.UserDb(app.config).initialize()
 
 @app.before_request
-def set_userdb():
+def setup_userdb():
     "Set the user database interface object."
     flask.g.userdb = userdb.UserDb(app.config)
 
@@ -74,9 +76,9 @@ def setup_template_context():
                 utils=utils)
 
 @app.route('/')
-def home():
+def index():
     "Home page."
-    return flask.render_template('home.html')
+    return flask.render_template('index.html')
 
 @app.route('/register', methods=["GET", "POST"])
 def register():
@@ -95,52 +97,18 @@ def register():
         flask.flash('user account created')
         return flask.redirect(flask.url_for('user', identifier=user['username']))
 
-@app.route('/login', methods=["GET", "POST"])
-def login():
-    "Login to a user account."
-    if utils.is_method_GET():
-        return flask.render_template('login.html')
-    if utils.is_method_POST():
-        username = flask.request.form.get('username')
-        password = flask.request.form.get('password')
-        try:
-            if username and password:
-                try:
-                    user = flask.g.userdb[username]
-                except KeyError:
-                    raise ValueError
-                if not werkzeug.security.check_password_hash(user['password'],
-                                                             password):
-                    raise ValueError
-                flask.session['username'] = user['username']
-                flask.session.permanent = True
-            else:
-                raise ValueError
-            try:
-                return flask.redirect(flask.request.form['next'])
-            except KeyError:
-                return flask.redirect(flask.url_for('home'))
-        except ValueError:
-            flask.flash('invalid user or password', 'error')
-            return flask.redirect(flask.url_for('login'))
-
-@app.route('/logout', methods=["POST"])
-def logout():
-    "Logout from the user account."
-    del flask.session['username']
-    return flask.redirect(flask.url_for('home'))
-
 @app.route('/user/<id:identifier>')
+@utils.login_required
 def user(identifier):
     try:
         user = flask.g.userdb[identifier]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('index'))
     if not (flask.g.is_admin or
             (flask.g.user and flask.g.user['username'] == user['username'])):
         flask.flash('access not allowed', 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('index'))
     return flask.render_template('user.html', user=user)
 
 

@@ -29,7 +29,7 @@
       <div class="collapse navbar-collapse" id="top_navbar">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item active">
-            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
+            <a class="nav-link" href="{{ url_for('index') }}">Home</a>
           </li>
         </ul>
         <ul class="nav justify-content-end">
@@ -41,7 +41,7 @@
             </a>
           </li>
           <li class="mr-2">
-            <form action="{{ url_for('logout') }}"
+            <form action="{{ url_for('auth.logout') }}"
                   method="POST">
               {{ csrf_token() | safe }}
               <button type="submit" class="btn btn-secondary">Logout</button>
@@ -49,7 +49,7 @@
           </li>
           {% else %}
           <li class="mr-2">
-            <a class="btn btn-secondary" href="{{ url_for('login') }}">Login</a>
+            <a class="btn btn-secondary" href="{{ url_for('auth.login') }}">Login</a>
           </li>
           {% endif %}
         </ul>
