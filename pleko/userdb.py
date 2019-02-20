@@ -6,7 +6,7 @@ from pleko import constants
 
 
 class BaseUserDb:
-    "Base abstract UserDb class."
+    "Base abstract user database class."
 
     def __init__(self, config):
         "Connect to the database."
@@ -29,8 +29,7 @@ class BaseUserDb:
         except KeyError:
             return default
 
-    def create(self, username, email, password,
-               role=constants.USER, status=constants.DISABLED):
+    def create(self, username, email, password, role):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """

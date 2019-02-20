@@ -1,11 +1,6 @@
 "Various utility functions and classes."
 
-import collections
 import datetime
-import functools
-import json
-import os
-import urllib
 import uuid
 
 import flask
@@ -16,29 +11,6 @@ import constants
 def url(name, **kwargs):
     "Get the absolute URL for the named resource."
     return flask.url_for(name, _external=True, **kwargs)
-
-def login_required(f):
-    "Decorator for checking if logged in. Send to login page if not."
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not flask.g.user:
-            url = flask.url_for('login')
-            query = urllib.parse.urlencode({'next': flask.request.base_url})
-            url += '?' + query
-            return flask.redirect(url)
-        return f(*args, **kwargs)
-    return wrap
-
-def admin_required(f):
-    """Decorator for checking if logged in and 'admin' role.
-    Otherwise status 403 Forbidden.
-    """
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not flask.g.is_admin:
-            flask.abort(403)
-        return f(*args, **kwargs)
-    return wrap
 
 class IuidConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an IUID."

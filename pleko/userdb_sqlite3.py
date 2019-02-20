@@ -1,4 +1,4 @@
-"Sqlite implementation of UserDb."
+"Sqlite3 implementation of UserDb."
 
 import sqlite3
 
@@ -11,6 +11,7 @@ from pleko.userdb import BaseUserDb
 
 
 class UserDb(BaseUserDb):
+    "Sqlite3 implementation of user account database."
 
     def __init__(self, config):
         self.db = sqlite3.connect(config['USERDB_FILEPATH'])
@@ -49,7 +50,7 @@ class UserDb(BaseUserDb):
                 'password': row[3],
                 'role': row[4]}
 
-    def create(self, username, email, password, role=constants.USER):
+    def create(self, username, email, password, role):
         """Create a user account.
         Raise ValueError if any problem.
         """

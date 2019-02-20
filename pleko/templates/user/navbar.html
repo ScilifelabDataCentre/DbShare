@@ -1,0 +1,21 @@
+<ul class="nav justify-content-end">
+  {% if g.current_user %}
+  <li class="nav-item active">
+    <a class="nav-link"
+       href="{{ url_for('user.account', identifier=g.current_user['username']) }}">
+      {{ g.current_user['username'] }}
+    </a>
+  </li>
+  <li class="mr-2">
+    <form action="{{ url_for('user.logout') }}"
+          method="POST">
+      {{ csrf_token() | safe }}
+      <button type="submit" class="btn btn-secondary">Logout</button>
+    </form>
+  </li>
+  {% else %}
+  <li class="mr-2">
+    <a class="btn btn-secondary" href="{{ url_for('user.login') }}">Login</a>
+  </li>
+  {% endif %}
+</ul>
