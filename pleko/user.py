@@ -18,15 +18,12 @@ def initialize(config):
     userdb = importlib.import_module(config['USERDB_MODULE'])
     userdb.UserDb(config).initialize()
 
-def setup(config):
-    "Setup for handling a request: set the user database connection."
-    flask.g.userdb = userdb.UserDb(config)
-
 def get_current_user():
     "Return the current user for the session."
+    db = userdb.UserDb(flask.current_app.config)
     try:
         try:
-            return flask.g.userdb[flask.session['username']]
+            return db[flask.session['username']]
         except KeyError:
             pass                # XXX Try API key
         else:
@@ -42,7 +39,7 @@ def login_required(f):
     @functools.wraps(f)
     def wrap(*args, **kwargs):
         if not flask.g.current_user:
-            url = flask.url_for('login')
+            url = flask.url_for('.login')
             query = urllib.parse.urlencode({'next': flask.request.base_url})
             url += '?' + query
             return flask.redirect(url)
@@ -93,7 +90,7 @@ def login():
                 return flask.redirect(next)
         except ValueError:
             flask.flash('invalid user or password', 'error')
-            return flask.redirect(flask.url_for('login'))
+            return flask.redirect(flask.url_for('.login'))
 
 @blueprint.route('/logout', methods=["POST"])
 def logout():
@@ -107,14 +104,15 @@ def register():
     if utils.is_method_GET():
         return flask.render_template('user/register.html')
     elif utils.is_method_POST():
+        db = userdb.UserDb(flask.current_app.config)
         try:
-            user = flask.g.userdb.create(flask.request.form.get('username'),
-                                         flask.request.form.get('email'),
-                                         flask.request.form.get('password'),
-                                         status=constants.ENABLED)
+            user = db.create(flask.request.form.get('username'),
+                             flask.request.form.get('email'),
+                             flask.request.form.get('password'),
+                             status=constants.ENABLED)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('register'))
+            return flask.redirect(flask.url_for('.register'))
         flask.flash('user account created')
         return flask.redirect(
             flask.url_for('.account', identifier=user['username']))

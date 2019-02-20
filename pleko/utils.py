@@ -8,10 +8,6 @@ import werkzeug.routing
 
 import constants
 
-def url(name, **kwargs):
-    "Get the absolute URL for the named resource."
-    return flask.url_for(name, _external=True, **kwargs)
-
 class IuidConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an IUID."
     def to_python(self, value):
@@ -25,10 +21,6 @@ class IdentifierConverter(werkzeug.routing.BaseConverter):
         if not constants.IDENTIFIER_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
-
-def is_identifier(s):
-    "Is the string value a valid identifier value?"
-    return bool(constants.IDENTIFIER_RX.match(s))
 
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."

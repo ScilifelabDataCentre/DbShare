@@ -37,10 +37,6 @@ app.logger.info("Pleko version %s", pleko.__version__)
 
 
 @app.before_request
-def user_setup():
-    user.setup(app.config)
-
-@app.before_request
 def get_current_user():
     flask.g.current_user = user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
