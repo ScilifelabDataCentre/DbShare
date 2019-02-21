@@ -50,18 +50,17 @@ class UserDb(BaseUserDb):
                 'password': row[3],
                 'role': row[4]}
 
-    def create(self, username, email, password, role):
+    def create(self, username, email, role):
         """Create a user account.
         Raise ValueError if any problem.
         """
-        self.check_create(username, email, password, role)
+        self.check_create(username, email, role)
         iuid = utils.get_iuid()
-        password = werkzeug.security.generate_password_hash(
-            password, salt_length=self.config['SALT_LENGTH'])
+        password = "code:{}".format(utils.get_iuid())
         status = self.get_initial_status(email)
         with self.db:
             sql = "INSERT INTO users(iuid, username, email, password, role," \
-                  "status, created, modified)"\
+                  "status, created, modified)" \
                   " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             now = utils.get_time()
             self.db.execute(sql, (iuid,
@@ -79,3 +78,9 @@ class UserDb(BaseUserDb):
                 'status': status,
                 'created': now,
                 'modified': now}
+
+    def set_password(self, user, password):
+        "Save the password, which must already be encrypted."
+        with self.db:
+            sql = "UPDATE users SET password=?, modified=? WHERE iuid=?"
+            self.db.execute(sql, (password, utils.get_time(), user['iuid']))

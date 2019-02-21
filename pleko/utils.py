@@ -1,12 +1,16 @@
 "Various utility functions and classes."
 
 import datetime
+import urllib.parse
 import uuid
 
 import flask
+import flask_mail
 import werkzeug.routing
 
 import constants
+
+mail = flask_mail.Mail()
 
 class IuidConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an IUID."
@@ -21,6 +25,13 @@ class IdentifierConverter(werkzeug.routing.BaseConverter):
         if not constants.IDENTIFIER_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
+
+def get_absolute_url(endpoint, values, query):
+    "Get the absolute URL for the endpoint, with optional query part."
+    url = flask.url_for(endpoint, _external=True, **values)
+    if query:
+        url += '?' + urllib.parse.urlencode(query)
+    return url
 
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."

@@ -16,9 +16,7 @@ DEFAULT_CONFIG = dict(
     REGISTRATION_DIRECT = False,
     REGISTRATION_WHITELIST = [],
     MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
-    CONTACT_EMAIL = None,
-    EMAIL_HOST = None
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60 # seconds; 1 week
 )
 
 app = flask.Flask(__name__)
@@ -30,10 +28,12 @@ app.url_map.converters['id'] = utils.IdentifierConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
-user.initialize(app.config)
+app.logger.info("Pleko version %s", pleko.__version__)
+
+user.init_app(app)
 app.register_blueprint(user.blueprint)
 
-app.logger.info("Pleko version %s", pleko.__version__)
+utils.mail.init_app(app)
 
 
 @app.before_request

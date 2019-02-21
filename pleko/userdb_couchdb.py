@@ -79,13 +79,14 @@ class UserDb(BaseUserDb):
             return result['docs'][0]
         raise KeyError
 
-    def create(self, username, email, password, role):
+    def create(self, username, email, role):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """
         self.check_create(username, email, password, role)
-        password = werkzeug.security.generate_password_hash(
-            password, salt_length=self.config['SALT_LENGTH'])
+        # password = werkzeug.security.generate_password_hash(
+        #     password, salt_length=self.config['SALT_LENGTH'])
+        password = "code:{}".format(utils.get_iuid())
         status = self.get_initial_status(email)
         with UserSaver(self.db) as saver:
             saver['username'] = username
@@ -94,6 +95,10 @@ class UserDb(BaseUserDb):
             saver['role'] = role
             saver['status'] = status
         return saver.doc
+
+    def set_password(self, user, password):
+        "Save the password, which must already be encrypted."
+        raise NotImplementedError
 
 
 class BaseSaver:

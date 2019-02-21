@@ -1,10 +1,15 @@
-"User blueprint; user profile and login/logout."
+"""User blueprint; user profile and login/logout.
+This module must access an interface to a user database.
+A module containing a UserDb class that is a subclass of userdb.BaseUserDb
+must be defined at run time in the config variable USERDB_MODULE.
+"""
 
 import functools
 import importlib
 import urllib.parse
 
 import flask
+import flask_mail
 import werkzeug.security
 
 from pleko import utils
@@ -12,11 +17,11 @@ from pleko import utils
 # User database interface module
 userdb = None
 
-def initialize(config):
-    "Import the configured user database implementation and iniialize it."
+def init_app(app):
+    "Import the configured user database implementation and initialize it."
     global userdb
-    userdb = importlib.import_module(config['USERDB_MODULE'])
-    userdb.UserDb(config).initialize()
+    userdb = importlib.import_module(app.config['USERDB_MODULE'])
+    userdb.UserDb(app.config).initialize()
 
 def get_current_user():
     "Return the current user for the session."
@@ -108,14 +113,46 @@ def register():
         try:
             user = db.create(flask.request.form.get('username'),
                              flask.request.form.get('email'),
-                             flask.request.form.get('password'),
                              status=constants.ENABLED)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.register'))
-        flask.flash('user account created')
-        return flask.redirect(
-            flask.url_for('.account', identifier=user['username']))
+        config = flask.current_app.config
+        message = flask_mail.Message(
+            "{} user account registration".format(config['SITE_NAME']),
+            sender=config['MAIL_SENDER'],
+            recipients=[user['email']])
+        query = dict(username=user['username'],
+                     code=user['password'][len('code:'):])
+        message.body = "To set your password, go to {}".format(
+            utils.get_absolute_url('.password', {}, query))
+        utils.mail.send(message)
+        flask.flash('user account created; check your email')
+        return flask.redirect(flask.url_for('index'))
+
+@blueprint.route('/register', methods=["GET", "POST"])
+def password():
+    "Set the password for a user account."
+    if utils.is_method_GET():
+        return flask.render_template('user/password.html')
+    elif utils.is_method_POST():
+        db = userdb.UserDb(flask.current_app.config)
+        try:
+            user = db[flask.request.form['username']]
+            code = flask.request.form['code']
+            if user['password'] != "code:{}".format(code):
+                raise KeyError
+            password = flask.request.form.get('password') or ''
+            if len(password) < flask.current_app.config['MIN_PASSWORD_LENGTH']:
+                raise ValueError
+        except KeyError:
+            flask.flash('no such user or wrong code', 'error')
+        except ValueError:
+            flask.flash('too short password', 'error')
+        else:
+            db.set_password(user, werkzeug.security.generate_password_hash(
+                password, salt_length=self.config['SALT_LENGTH']))
+        return flask.redirect(flask.url_for('index'))
 
 @blueprint.route('/account/<id:identifier>')
 @login_required

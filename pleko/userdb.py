@@ -35,7 +35,7 @@ class BaseUserDb:
         """
         raise NotImplementedError
 
-    def check_create(self, username, email, password, role):
+    def check_create(self, username, email, role):
         """Check the values given for creating a user account.
         Raise ValueError if any problem.
         """
@@ -51,8 +51,6 @@ class BaseUserDb:
             raise ValueError('invalid email')
         if self.get(email):
             raise ValueError('email already in use')
-        if len(password) < self.config['MIN_PASSWORD_LENGTH']:
-            raise ValueError('password is too short')
         if not role in constants.USER_ROLES:
             raise ValueError('invalid user role')
 
@@ -64,3 +62,7 @@ class BaseUserDb:
             if re.match(pattern, email):
                 return constants.ENABLED
         return constants.DISABLED
+
+    def save(self, user):
+        "Save the user data."
+        raise NotImplementedError
