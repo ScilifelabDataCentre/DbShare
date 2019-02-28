@@ -11,9 +11,11 @@ USER = 'user'
 LOG  = 'log'
 
 # User statuses and roles
-ENABLED = 'enabled'
+PENDING  = 'pending'
+ENABLED  = 'enabled'
 DISABLED = 'disabled'
-USER_STATUSES = (ENABLED, DISABLED)
+USER_STATUSES = (PENDING, ENABLED, DISABLED)
+
 ADMIN     = 'admin'
 # USER defined above
 USER_ROLES = (ADMIN, USER)

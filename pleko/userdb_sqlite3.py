@@ -2,9 +2,6 @@
 
 import sqlite3
 
-import flask
-import werkzeug.security
-
 from pleko import constants
 from pleko import utils
 from pleko.userdb import BaseUserDb
@@ -80,7 +77,21 @@ class UserDb(BaseUserDb):
                 'modified': now}
 
     def set_password(self, user, password):
-        "Save the password, which must already be encrypted."
+        "Save the password, which is hashed within this method."
+        password = self.hash_password(password)
         with self.db:
             sql = "UPDATE users SET password=?, modified=? WHERE iuid=?"
             self.db.execute(sql, (password, utils.get_time(), user['iuid']))
+
+    def set_status(self, user, status):
+        "Set the status of the user account."
+        with self.db:
+            sql = "UPDATE users SET status=?, modified=? WHERE iuid=?"
+            self.db.execute(sql, (status, utils.get_time(), user['iuid']))
+
+    def get_admins_email(self):
+        "Get a list of email addresses to the admins."
+        sql = "SELECT email FROM users WHERE role=? AND status=?"
+        cursor = self.db.cursor()
+        cursor.execute(sql, (constants.ADMIN, constants.ENABLED))
+        return [row[0] for row in cursor]

@@ -2,6 +2,9 @@
 
 import re
 
+import flask
+import werkzeug.security
+
 from pleko import constants
 
 
@@ -29,7 +32,7 @@ class BaseUserDb:
         except KeyError:
             return default
 
-    def create(self, username, email, password, role):
+    def create(self, username, email, role):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """
@@ -54,6 +57,20 @@ class BaseUserDb:
         if not role in constants.USER_ROLES:
             raise ValueError('invalid user role')
 
+    def set_password(self, user, password):
+        "Save the password, which is hashed within this method."
+        raise NotImplementedError
+
+    def hash_password(self, password):
+        "Return the hash of the password."
+        return werkzeug.security.generate_password_hash(
+            password,
+            salt_length=flask.current_app.config['SALT_LENGTH'])
+
+    def set_status(self, user, status):
+        "Set the status of the user account."
+        raise NotImplementedError
+
     def get_initial_status(self, email):
         "Get the initial status for the user given the email."
         if self.config['REGISTRATION_DIRECT']:
@@ -61,8 +78,12 @@ class BaseUserDb:
         for pattern in self.config['REGISTRATION_WHITELIST']:
             if re.match(pattern, email):
                 return constants.ENABLED
-        return constants.DISABLED
+        return constants.PENDING
 
     def save(self, user):
         "Save the user data."
+        raise NotImplementedError
+
+    def get_admins_email(self):
+        "Get a list of email addresses to the admins."
         raise NotImplementedError

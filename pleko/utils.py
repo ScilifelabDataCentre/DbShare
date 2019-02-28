@@ -26,7 +26,7 @@ class IdentifierConverter(werkzeug.routing.BaseConverter):
             raise werkzeug.routing.ValidationError
         return value
 
-def get_absolute_url(endpoint, values, query):
+def get_absolute_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."
     url = flask.url_for(endpoint, _external=True, **values)
     if query:

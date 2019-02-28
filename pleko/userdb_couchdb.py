@@ -3,7 +3,6 @@
 import couchdb2
 
 import flask
-import werkzeug.security
 
 from pleko import constants
 from pleko import utils
@@ -19,6 +18,14 @@ INDEXES = {
         },
         "email": {
             "fields": [{"email": "asc"}],
+            "selector": {"type": {"$eq": "user"}}
+        },
+        "role": {
+            "fields": [{"role": "asc"}],
+            "selector": {"type": {"$eq": "user"}}
+        },
+        "status": {
+            "fields": [{"status": "asc"}],
             "selector": {"type": {"$eq": "user"}}
         },
         "log": {
@@ -56,10 +63,6 @@ class UserDb(BaseUserDb):
                        and current['name'] == indexname:
                         ok = current['def']['fields'] == indexdef['fields'] and \
                              current['def']['partial_filter_selector'] == indexdef['selector']
-                if not ok:
-                    flask.current_app.logger.debug("loading index %s %s",
-                                                   ddocname,
-                                                   indexname)
                 self.db.put_index(indexdef['fields'],
                                   ddoc=ddocname,
                                   name=indexname,
@@ -83,9 +86,7 @@ class UserDb(BaseUserDb):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """
-        self.check_create(username, email, password, role)
-        # password = werkzeug.security.generate_password_hash(
-        #     password, salt_length=self.config['SALT_LENGTH'])
+        self.check_create(username, email, role)
         password = "code:{}".format(utils.get_iuid())
         status = self.get_initial_status(email)
         with UserSaver(self.db) as saver:
@@ -97,8 +98,22 @@ class UserDb(BaseUserDb):
         return saver.doc
 
     def set_password(self, user, password):
-        "Save the password, which must already be encrypted."
-        raise NotImplementedError
+        "Save the password, which is hashed within this method."
+        password = self.hash_password(password)
+        with UserSaver(self.db, doc=user) as saver:
+            saver['password'] = password
+
+    def set_status(self, user, status):
+        "Set the status of the user account."
+        with UserSaver(self.db, doc=user) as saver:
+            saver['status'] = status
+
+    def get_admins_email(self):
+        "Get a list of email addresses to the admins."
+        result = self.db.find({'role': constants.ADMIN},
+                              use_index=[DDOCNAME, 'role'])
+        return [user['email'] for user in result['docs']
+                if user['status'] == constants.ENABLED]
 
 
 class BaseSaver:

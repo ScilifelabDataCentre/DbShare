@@ -12,7 +12,8 @@ import flask
 import flask_mail
 import werkzeug.security
 
-from pleko import utils
+from . import constants
+from . import utils
 
 # User database interface module
 userdb = None
@@ -75,15 +76,7 @@ def login():
         password = flask.request.form.get('password')
         try:
             if username and password:
-                try:
-                    user = flask.g.userdb[username]
-                except KeyError:
-                    raise ValueError
-                if not werkzeug.security.check_password_hash(user['password'],
-                                                             password):
-                    raise ValueError
-                flask.session['username'] = user['username']
-                flask.session.permanent = True
+                do_login(username, password)
             else:
                 raise ValueError
             try:
@@ -97,6 +90,20 @@ def login():
             flask.flash('invalid user or password', 'error')
             return flask.redirect(flask.url_for('.login'))
 
+def do_login(username, password, db=None):
+    "Set the session cookie if successful login."
+    if db is None:
+        db = userdb.UserDb(flask.current_app.config)
+    try:
+        user = db[username]
+    except KeyError:
+        raise ValueError
+    if not werkzeug.security.check_password_hash(user['password'],
+                                                 password):
+        raise ValueError
+    flask.session['username'] = user['username']
+    flask.session.permanent = True
+
 @blueprint.route('/logout', methods=["POST"])
 def logout():
     "Logout from the user account."
@@ -109,36 +116,51 @@ def register():
     if utils.is_method_GET():
         return flask.render_template('user/register.html')
     elif utils.is_method_POST():
-        db = userdb.UserDb(flask.current_app.config)
+        config = flask.current_app.config
+        db = userdb.UserDb(config)
         try:
             user = db.create(flask.request.form.get('username'),
                              flask.request.form.get('email'),
-                             status=constants.ENABLED)
+                             role=constants.USER)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.register'))
-        config = flask.current_app.config
-        message = flask_mail.Message(
-            "{} user account registration".format(config['SITE_NAME']),
-            sender=config['MAIL_SENDER'],
-            recipients=[user['email']])
-        query = dict(username=user['username'],
-                     code=user['password'][len('code:'):])
-        message.body = "To set your password, go to {}".format(
-            utils.get_absolute_url('.password', {}, query))
-        utils.mail.send(message)
-        flask.flash('user account created; check your email')
+        # Directly enabled; send code to the user.
+        if user['status'] == constants.ENABLED:
+            message = flask_mail.Message(
+                "{} user account registration".format(config['SITE_NAME']),
+                recipients=[user['email']])
+            query = dict(username=user['username'],
+                         code=user['password'][len('code:'):])
+            message.body = "To set your password, go to {}".format(
+                utils.get_absolute_url('.password', query=query))
+            utils.mail.send(message)
+            flask.flash('User account created; check your email.')
+        # Set to 'pending'; send email to admins.
+        else:
+            message = flask_mail.Message(
+                "{} user account pending".format(config['SITE_NAME']),
+                recipients=db.get_admins_email())
+            message.body = "To enable the user account, go to {}".format(
+                utils.get_absolute_url('.account',
+                                       values={'identifier': user['username']}))
+            utils.mail.send(message)
+            flask.flash('User account created; email will be sent when it'
+                        ' has been enabled by the admin.')
         return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/register', methods=["GET", "POST"])
+@blueprint.route('/password', methods=["GET", "POST"])
 def password():
-    "Set the password for a user account."
+    "Set the password for a user account, and login user."
     if utils.is_method_GET():
-        return flask.render_template('user/password.html')
+        return flask.render_template('user/password.html',
+                                     username=flask.request.args.get('username'),
+                                     code=flask.request.args.get('code'))
     elif utils.is_method_POST():
         db = userdb.UserDb(flask.current_app.config)
         try:
-            user = db[flask.request.form['username']]
+            username = flask.request.form['username']
+            user = db[username]
             code = flask.request.form['code']
             if user['password'] != "code:{}".format(code):
                 raise KeyError
@@ -150,15 +172,16 @@ def password():
         except ValueError:
             flask.flash('too short password', 'error')
         else:
-            db.set_password(user, werkzeug.security.generate_password_hash(
-                password, salt_length=self.config['SALT_LENGTH']))
+            db.set_password(user, password)
+            do_login(username, password, db=db)
         return flask.redirect(flask.url_for('index'))
 
 @blueprint.route('/account/<id:identifier>')
 @login_required
 def account(identifier):
+    db = userdb.UserDb(flask.current_app.config)
     try:
-        user = flask.g.userdb[identifier]
+        user = db[identifier]
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
@@ -168,3 +191,33 @@ def account(identifier):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     return flask.render_template('user/account.html', user=user)
+
+@blueprint.route('/account/<id:identifier>/enable', methods=["POST"])
+@login_required
+def enable(identifier):
+    if not flask.g.is_admin:
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('index'))
+    db = userdb.UserDb(flask.current_app.config)
+    try:
+        user = db[identifier]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    db.set_status(user, constants.ENABLED)
+    return flask.redirect(flask.url_for('.account', identifier=identifier))
+
+@blueprint.route('/account/<id:identifier>/disable', methods=["POST"])
+@login_required
+def disable(identifier):
+    if not flask.g.is_admin:
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('index'))
+    db = userdb.UserDb(flask.current_app.config)
+    try:
+        user = db[identifier]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    db.set_status(user, constants.DISABLED)
+    return flask.redirect(flask.url_for('.account', identifier=identifier))

@@ -23,6 +23,23 @@
   <tr>
     <th class="text-right">Status</th>
     <td>{{ user['status'] }}</td>
+    {% if g.is_admin %}
+    <td>
+      {% if user['status'] != constants.ENABLED %}
+      <form action="{{ url_for('.enable', identifier=user['username']) }}"
+            method="POST">
+        {{ csrf_token() | safe }}
+        <button type="submit" class="btn btn-success">Enable</button>
+      </form>
+      {% elif user['status'] == constants.ENABLED %}
+      <form action="{{ url_for('.disable', identifier=user['username']) }}"
+            method="POST">
+        {{ csrf_token() | safe }}
+        <button type="submit" class="btn btn-danger">Disable</button>
+      </form>
+      {% endif %}
+    </td>
+    {% endif %}
   </tr>
   <tr>
     <th class="text-right">Modified</th>
