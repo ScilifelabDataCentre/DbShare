@@ -190,7 +190,15 @@ def account(identifier):
              flask.g.current_user['username'] == user['username'])):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
-    return flask.render_template('user/account.html', user=user)
+    enable_disable = flask.g.is_admin and flask.g.current_user != user
+    return flask.render_template('user/account.html',
+                                 user=user, enable_disable=enable_disable)
+
+@blueprint.route('/accounts')
+@login_required
+def accounts():
+    db = userdb.UserDb(flask.current_app.config)
+    return flask.render_template('user/accounts.html', users=list(db))
 
 @blueprint.route('/account/<id:identifier>/enable', methods=["POST"])
 @login_required

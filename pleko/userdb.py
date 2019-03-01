@@ -25,6 +25,10 @@ class BaseUserDb:
         """
         raise NotImplementedError
 
+    def __iter__(self):
+        "Return an iterator over all users."
+        raise NotImplementedError
+
     def get(self, identifier, default=None):
         "Get the user by identifier (username of email); default if none."
         try:

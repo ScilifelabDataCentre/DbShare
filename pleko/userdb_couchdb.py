@@ -82,6 +82,13 @@ class UserDb(BaseUserDb):
             return result['docs'][0]
         raise KeyError
 
+    def __iter__(self):
+        "Return an iterator over all users."
+        result = self.db.find({'username': {'$gt': None}},
+                              use_index=[DDOCNAME, 'username'])
+        flask.current_app.logger.debug(result.get('warning'))
+        return iter(result['docs'])
+
     def create(self, username, email, role):
         """Create a user account and return the document.
         Raise ValueError if any problem.
