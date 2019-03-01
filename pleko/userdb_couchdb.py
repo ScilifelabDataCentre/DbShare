@@ -86,7 +86,6 @@ class UserDb(BaseUserDb):
         "Return an iterator over all users."
         result = self.db.find({'username': {'$gt': None}},
                               use_index=[DDOCNAME, 'username'])
-        flask.current_app.logger.debug(result.get('warning'))
         return iter(result['docs'])
 
     def create(self, username, email, role):
@@ -94,15 +93,19 @@ class UserDb(BaseUserDb):
         Raise ValueError if any problem.
         """
         self.check_create(username, email, role)
-        password = "code:{}".format(utils.get_iuid())
         status = self.get_initial_status(email)
         with UserSaver(self.db) as saver:
             saver['username'] = username
             saver['email'] = email
-            saver['password'] = password
+            saver['password'] = self.get_password_code()
             saver['role'] = role
             saver['status'] = status
         return saver.doc
+
+    def set_password_code(self, user):
+        "Set the password to a one-time code."
+        with UserSaver(self.db) as saver:
+            saver['password'] = self.get_password_code()
 
     def set_password(self, user, password):
         "Save the password, which is hashed within this method."

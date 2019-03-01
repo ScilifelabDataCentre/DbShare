@@ -47,13 +47,26 @@ class UserDb(BaseUserDb):
                 'password': row[3],
                 'role': row[4]}
 
+    def __iter__(self):
+        "Return an iterator over all users."
+        cursor = self.db.cursor()
+        sql = "SELECT iuid, username, email, password, role"
+        cursor.execute(sql)
+        result = []
+        for row in cursor:
+            result.append({'iuid': row[0],
+                           'username': row[1],
+                           'email': row[2],
+                           'password': row[3],
+                           'role': row[4]})
+        return iter(result)
+
     def create(self, username, email, role):
         """Create a user account.
         Raise ValueError if any problem.
         """
         self.check_create(username, email, role)
         iuid = utils.get_iuid()
-        password = "code:{}".format(utils.get_iuid())
         status = self.get_initial_status(email)
         with self.db:
             sql = "INSERT INTO users(iuid, username, email, password, role," \
@@ -63,7 +76,7 @@ class UserDb(BaseUserDb):
             self.db.execute(sql, (iuid,
                                   username,
                                   email,
-                                  password,
+                                  self.get_password_code(),
                                   role,
                                   status,
                                   now,
@@ -75,6 +88,14 @@ class UserDb(BaseUserDb):
                 'status': status,
                 'created': now,
                 'modified': now}
+
+    def set_password_code(self, user):
+        "Set the password to a one-time code."
+        with self.db:
+            sql = "UPDATE users SET password=?, modified=? WHERE iuid=?"
+            self.db.execute(sql, (self.get_password_code(),
+                                  utils.get_time(),
+                                  user['iuid']))
 
     def set_password(self, user, password):
         "Save the password, which is hashed within this method."

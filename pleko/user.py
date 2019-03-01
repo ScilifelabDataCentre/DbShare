@@ -28,17 +28,18 @@ def get_current_user():
     "Return the current user for the session."
     db = userdb.UserDb(flask.current_app.config)
     try:
-        try:
-            return db[flask.session['username']]
-        except KeyError:
-            pass                # XXX Try API key
-        else:
-            if flask.session['expires'] <= utils.get_time():
-                flask.session.pop('username', None)
-                raise KeyError
+        user = db[flask.session['username']]
     except KeyError:
-        pass
-    return None
+        return None
+    else:
+        if flask.session['expires'] <= utils.get_time():
+            flask.session.pop('username', None)
+            return None
+    if user['status'] == constants.ENABLED:
+        return user
+    else:
+        flask.session.pop('username', None)
+        return None
 
 def login_required(f):
     "Decorator for checking if logged in. Send to login page if not."
@@ -87,7 +88,7 @@ def login():
                 next = urllib.parse.urljoin(flask.request.host_url, next.path)
                 return flask.redirect(next)
         except ValueError:
-            flask.flash('invalid user or password', 'error')
+            flask.flash('invalid user or password, or disabled', 'error')
             return flask.redirect(flask.url_for('.login'))
 
 def do_login(username, password, db=None):
@@ -100,6 +101,8 @@ def do_login(username, password, db=None):
         raise ValueError
     if not werkzeug.security.check_password_hash(user['password'],
                                                  password):
+        raise ValueError
+    if user['status'] != constants.ENABLED:
         raise ValueError
     flask.session['username'] = user['username']
     flask.session.permanent = True
@@ -127,14 +130,7 @@ def register():
             return flask.redirect(flask.url_for('.register'))
         # Directly enabled; send code to the user.
         if user['status'] == constants.ENABLED:
-            message = flask_mail.Message(
-                "{} user account registration".format(config['SITE_NAME']),
-                recipients=[user['email']])
-            query = dict(username=user['username'],
-                         code=user['password'][len('code:'):])
-            message.body = "To set your password, go to {}".format(
-                utils.get_absolute_url('.password', query=query))
-            utils.mail.send(message)
+            send_password_code(user, 'registration')
             flask.flash('User account created; check your email.')
         # Set to 'pending'; send email to admins.
         else:
@@ -145,17 +141,49 @@ def register():
                 utils.get_absolute_url('.account',
                                        values={'identifier': user['username']}))
             utils.mail.send(message)
-            flask.flash('User account created; email will be sent when it'
-                        ' has been enabled by the admin.')
+            flask.flash('User account created; an email will be sent when'
+                        ' it has been enabled by the admin.')
         return flask.redirect(flask.url_for('index'))
+
+@blueprint.route('/reset', methods=["GET", "POST"])
+def reset():
+    "Reset the password for a user account and send email."
+    if utils.is_method_GET():
+        return flask.render_template('user/reset.html')
+    elif utils.is_method_POST():
+        db = userdb.UserDb(flask.current_app.config)
+        try:
+            email = flask.request.form['email']
+            user = db[email]
+            if user['status'] != constants.ENABLED: raise KeyError
+        except KeyError:
+            pass
+        else:
+            db.set_password_code(user)
+            send_password_code(user, 'password reset')
+        flask.flash('An email has been sent if the user account exists.')
+        return flask.redirect(flask.url_for('index'))
+
+def send_password_code(user, action):
+    "Send an email with the one-time code to the user's email address."
+    message = flask_mail.Message(
+        "{} user account {}".format(flask.current_app.config['SITE_NAME'],
+                                    action),
+        recipients=[user['email']])
+    query = dict(username=user['username'],
+                 code=user['password'][len('code:'):])
+    message.body = "To set your password, go to {}".format(
+        utils.get_absolute_url('.password', query=query))
+    utils.mail.send(message)
 
 @blueprint.route('/password', methods=["GET", "POST"])
 def password():
     "Set the password for a user account, and login user."
     if utils.is_method_GET():
-        return flask.render_template('user/password.html',
-                                     username=flask.request.args.get('username'),
-                                     code=flask.request.args.get('code'))
+        return flask.render_template(
+            'user/password.html',
+            username=flask.request.args.get('username'),
+            code=flask.request.args.get('code'))
     elif utils.is_method_POST():
         db = userdb.UserDb(flask.current_app.config)
         try:
@@ -213,6 +241,8 @@ def enable(identifier):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
     db.set_status(user, constants.ENABLED)
+    db.set_password_code(user)
+    send_password_code(user, 'enabled')
     return flask.redirect(flask.url_for('.account', identifier=identifier))
 
 @blueprint.route('/account/<id:identifier>/disable', methods=["POST"])

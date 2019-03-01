@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Reset password{% endblock %}
+
+{% block body_title %}Reset password{% endblock %}
+
+{% block panel_main %}
+<form action="{{ url_for('.reset') }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <div class="form-group row">
+    <label for="email" class="col-sm-2 col-form-label">Email</label>
+    <div class="col-sm-6">
+      <input type="text" class="form-control" id="email" name="email"
+             aria-describedby="emailHelp">
+      <small id="emailHelp" class="form-text text-muted">
+        Email address of the user account.
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-6 offset-sm-2">
+      <button type="submit" class="btn btn-primary"
+             aria-describedby="resetHelp">Reset</button>
+      <small id="resetHelp" class="form-text text-muted">
+        Nothing will happen if there is no account with the given email address.
+      </small>
+    </div>
+  </div>
+</form>
+{% endblock %}

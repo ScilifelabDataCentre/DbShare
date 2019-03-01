@@ -5,7 +5,7 @@
 {% block body_title %}Users{% endblock %}
 
 {% block panel_main %}
-<table id="users" class="table">
+<table id="users" class="table table-sm">
   <thead>
     <tr>
       <th>User</th>
@@ -28,4 +28,15 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block javascript_code %}
+<script>
+  $(function() {
+    $("#users").DataTable( {
+      "pagingType": "full_numbers",
+      "order": [[ 0, "asc"]],
+    });
+  });
+</script>
 {% endblock %}

@@ -6,6 +6,7 @@ import flask
 import werkzeug.security
 
 from pleko import constants
+from pleko import utils
 
 
 class BaseUserDb:
@@ -60,6 +61,14 @@ class BaseUserDb:
             raise ValueError('email already in use')
         if not role in constants.USER_ROLES:
             raise ValueError('invalid user role')
+
+    def set_password_code(self, user):
+        "Set the password to a one-time code."
+        raise NotImplementedError
+
+    def get_password_code(self):
+        "Get a one-time code for the password slot."
+        return "code:{}".format(utils.get_iuid())
 
     def set_password(self, user, password):
         "Save the password, which is hashed within this method."
