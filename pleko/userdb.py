@@ -88,7 +88,7 @@ class BaseUserDb:
         "Get the initial status for the user given the email."
         if self.config['REGISTRATION_DIRECT']:
             return constants.ENABLED
-        for pattern in self.config['REGISTRATION_WHITELIST']:
+        for pattern in self.config['REGISTRATION_REGEXP_WHITELIST']:
             if re.match(pattern, email):
                 return constants.ENABLED
         return constants.PENDING
