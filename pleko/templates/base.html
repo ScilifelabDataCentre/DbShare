@@ -31,6 +31,7 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('index') }}">Home</a>
           </li>
+          {% if is_admin %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
                role="button" data-toggle="dropdown"
@@ -44,6 +45,7 @@
               <a class="dropdown-item" href="#">Something else here</a>
             </div>
           </li>
+          {% endif %}
         </ul>
         {% include "user/navbar.html" %}
       </div>

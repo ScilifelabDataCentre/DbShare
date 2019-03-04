@@ -7,34 +7,21 @@ from pleko import constants
 from pleko import utils
 from pleko import user
 
-DEFAULT_CONFIG = dict(
-    VERSION = pleko.__version__,
-    SITE_NAME = 'Pleko',
-    GITHUB_URL = 'https://github.com/pekrau/Pleko',
-    SECRET_KEY = None,
-    SALT_LENGTH = 12,
-    REGISTRATION_DIRECT = False,
-    REGISTRATION_REGEXP_WHITELIST = [],
-    MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60 # seconds; 1 week
-)
+def create_app():
+    "Return the configured app object."
+    app = flask.Flask(__name__)
+    app.config.from_mapping(pleko.default_config)
+    app.config.from_json('config.json')
+    app.url_map.converters['iuid'] = utils.IuidConverter
+    app.url_map.converters['id'] = utils.IdentifierConverter
+    app.jinja_env.trim_blocks = True
+    app.jinja_env.lstrip_blocks = True
+    user.init_app(app)
+    app.register_blueprint(user.blueprint)
+    utils.mail.init_app(app)
+    return app
 
-app = flask.Flask(__name__)
-app.config.from_mapping(DEFAULT_CONFIG)
-app.config.from_json('config.json')
-
-app.url_map.converters['iuid'] = utils.IuidConverter
-app.url_map.converters['id'] = utils.IdentifierConverter
-app.jinja_env.trim_blocks = True
-app.jinja_env.lstrip_blocks = True
-
-app.logger.info("Pleko version %s", pleko.__version__)
-
-user.init_app(app)
-app.register_blueprint(user.blueprint)
-
-utils.mail.init_app(app)
-
+app = create_app()
 
 @app.before_request
 def get_current_user():

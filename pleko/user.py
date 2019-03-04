@@ -31,10 +31,6 @@ def get_current_user():
         user = db[flask.session['username']]
     except KeyError:
         return None
-    else:
-        if flask.session['expires'] <= utils.get_time():
-            flask.session.pop('username', None)
-            return None
     if user['status'] == constants.ENABLED:
         return user
     else:

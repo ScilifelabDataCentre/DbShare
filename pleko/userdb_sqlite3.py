@@ -61,13 +61,15 @@ class UserDb(BaseUserDb):
                            'role': row[4]})
         return iter(result)
 
-    def create(self, username, email, role):
+    def create(self, username, email, role, status=None):
         """Create a user account.
         Raise ValueError if any problem.
         """
         self.check_create(username, email, role)
         iuid = utils.get_iuid()
-        status = self.get_initial_status(email)
+        if status is None:
+            status = self.get_initial_status(email)
+        assert status in constants.USER_STATUSES
         with self.db:
             sql = "INSERT INTO users(iuid, username, email, password, role," \
                   "status, created, modified)" \

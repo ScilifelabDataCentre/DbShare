@@ -37,7 +37,7 @@ class BaseUserDb:
         except KeyError:
             return default
 
-    def create(self, username, email, role):
+    def create(self, username, email, role, status=None):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """

@@ -88,12 +88,14 @@ class UserDb(BaseUserDb):
                               use_index=[DDOCNAME, 'username'])
         return iter(result['docs'])
 
-    def create(self, username, email, role):
+    def create(self, username, email, role, status=None):
         """Create a user account and return the document.
         Raise ValueError if any problem.
         """
         self.check_create(username, email, role)
-        status = self.get_initial_status(email)
+        if status is None:
+            status = self.get_initial_status(email)
+        assert status in constants.USER_STATUSES
         with UserSaver(self.db) as saver:
             saver['username'] = username
             saver['email'] = email
@@ -171,11 +173,12 @@ class BaseSaver:
             log['username'] = flask.g.user['username']
         except AttributeError:
             pass
-        try:
-            log['remote_addr'] = str(flask.request.remote_addr)
-            log['user_agent'] = str(flask.request.user_agent)
-        except AttributeError:
-            pass
+        if flask.has_request_context():
+            try:
+                log['remote_addr'] = str(flask.request.remote_addr)
+                log['user_agent'] = str(flask.request.user_agent)
+            except AttributeError:
+                pass
         self.db.put(log)
 
 
