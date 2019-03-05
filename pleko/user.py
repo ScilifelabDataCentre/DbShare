@@ -67,7 +67,8 @@ blueprint = flask.Blueprint('user', __name__)
 def login():
     "Login to a user account."
     if utils.is_method_GET():
-        return flask.render_template('user/login.html')
+        return flask.render_template('user/login.html',
+                                     next=flask.request.args.get('next'))
     if utils.is_method_POST():
         username = flask.request.form.get('username')
         password = flask.request.form.get('password')
