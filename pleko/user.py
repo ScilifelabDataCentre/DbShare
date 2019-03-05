@@ -119,9 +119,12 @@ def register():
         config = flask.current_app.config
         db = userdb.UserDb(config)
         try:
-            user = db.create(flask.request.form.get('username'),
-                             flask.request.form.get('email'),
-                             role=constants.USER)
+            with db.get_context() as ctx:
+                ctx.set_username(flask.request.form.get('username'))
+                ctx.set_email(flask.request.form.get('email'))
+                ctx.set_role(constants.USER)
+                ctx.set_password()
+            user = ctx.user
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.register'))
@@ -129,7 +132,7 @@ def register():
         if user['status'] == constants.ENABLED:
             send_password_code(user, 'registration')
             flask.flash('User account created; check your email.')
-        # Set to 'pending'; send email to admins.
+        # Was set to 'pending'; send email to admins.
         else:
             message = flask_mail.Message(
                 "{} user account pending".format(config['SITE_NAME']),
@@ -156,7 +159,8 @@ def reset():
         except KeyError:
             pass
         else:
-            db.set_password_code(user)
+            with db.get_context(user) as ctx:
+                ctx.set_password()
             send_password_code(user, 'password reset')
         flask.flash('An email has been sent if the user account exists.')
         return flask.redirect(flask.url_for('index'))
@@ -197,7 +201,8 @@ def password():
         except ValueError:
             flask.flash('too short password', 'error')
         else:
-            db.set_password(user, password)
+            with db.get_context(user) as ctx:
+                ctx.set_password(password)
             do_login(username, password, db=db)
         return flask.redirect(flask.url_for('index'))
 
@@ -210,14 +215,36 @@ def account(identifier):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    if not (flask.g.is_admin or 
-            (flask.g.current_user and
-             flask.g.current_user['username'] == user['username'])):
+    if not is_admin_or_user(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     enable_disable = flask.g.is_admin and flask.g.current_user != user
     return flask.render_template('user/account.html',
                                  user=user, enable_disable=enable_disable)
+
+def is_admin_or_user(user):
+    "Is the current user admin, or the same as the given user?"
+    if flask.g.is_admin: return True
+    if not flask.g.current_user: return False
+    return flask.g.current_user['username'] == user['username']
+
+@blueprint.route('/edit/<id:username>', methods=["GET", "POST"])
+@login_required
+def edit():
+    "Edit the user account."
+    db = userdb.UserDb(flask.current_app.config)
+    try:
+        user = db[identifier]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    if not is_admin_or_user(user):
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('index'))
+    if utils.is_method_GET():
+        return flask.render_template('user/edit.html', user=user)
+    elif utils.is_method_POST():
+        raise NotImplementedError # XXX
 
 @blueprint.route('/accounts')
 @login_required
@@ -237,8 +264,9 @@ def enable(identifier):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    db.set_status(user, constants.ENABLED)
-    db.set_password_code(user)
+    with db.get_context(user) as ctx:
+        ctx.set_status(constants.ENABLED)
+        ctx.set_password()
     send_password_code(user, 'enabled')
     return flask.redirect(flask.url_for('.account', identifier=identifier))
 
@@ -254,5 +282,6 @@ def disable(identifier):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    db.set_status(user, constants.DISABLED)
+    with db.get_context(user) as ctx:
+        ctx.set_status(constants.DISABLED)
     return flask.redirect(flask.url_for('.account', identifier=identifier))

@@ -1,6 +1,7 @@
 "Script to create an admin user account."
 
 import sys
+import getpass
 
 import flask
 
@@ -8,28 +9,18 @@ import pleko
 import pleko.app
 import pleko.constants
 import pleko.user
-import pleko.utils
+import pleko.userdb
 
 app = pleko.app.create_app()
-
 with app.app_context():
-    db = pleko.user.userdb.UserDb(app.config)
-
-    username = input('username > ')
-    if not username:
-        sys.exit('Error: no username given')
-    email = input('email > ')
-    if not email:
-        sys.exit('Error: no email given')
-
+    userdb = pleko.user.userdb.UserDb(app.config)
     try:
-        user = db.create(username, email, pleko.constants.ADMIN, 
-                         status=pleko.constants.ENABLED)
+        with userdb.get_context() as ctx:
+            ctx.set_username(input('username > '))
+            ctx.set_email(input('email > '))
+            ctx.set_role(pleko.constants.ADMIN)
+            ctx.set_status(pleko.constants.ENABLED)
+            ctx.set_password(getpass.getpass('password > '))
     except ValueError as error:
         sys.exit("Error: %s" % error)
-    else:
-        print('Created admin user', username)
-        query = dict(username=user['username'],
-                     code=user['password'][len('code:'):])
-        url = pleko.utils.get_absolute_url('user.password', query=query)
-        print('To set password, go to', url)
+    print('Created admin user', ctx.user['username'])

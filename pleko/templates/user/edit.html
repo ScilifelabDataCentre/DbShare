@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Edit user {{ user['username'] }}{% endblock %}
+
+{% block body_title %}Edit user {{ user['username'] }}{% endblock %}
+
+{% block panel_main %}
+<form action="{{ url_for('.edit', username=user['username']) }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <div class="form-group row">
+    <label for="username" class="col-sm-2 col-form-label">User name</label>
+    <div class="col-sm-6">
+      <input type="text" class="form-control" id="username" name="username">
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="email" class="col-sm-2 col-form-label">Email</label>
+    <div class="col-sm-6">
+      <input type="text" class="form-control" id="email" name="email">
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-2 offset-md-2">
+      <button type="submit" class="btn btn-primary">Register</button>
+    </div>
+  </div>
+</form>
+
+<div class="row">
+  <div class="col-md-6">
+    <table class="table">
+      <tr>
+        <th class="text-right">Username</th>
+        <td>{{ user['username'] }}</td>
+      </tr>
+      <tr>
+        <th class="text-right">Email</th>
+        <td>{{ user['email'] }}</td>
+      </tr>
+      <tr>
+        <th class="text-right">Role</th>
+        <td>{{ user['role'] }}</td>
+      </tr>
+      <tr>
+        <th class="text-right">Status</th>
+        <td>{{ user['status'] }}</td>
+        {% if enable_disable %}
+        <td>
+          {% if user['status'] != constants.ENABLED %}
+          <form action="{{ url_for('.enable', identifier=user['username']) }}"
+                method="POST">
+            {{ csrf_token() | safe }}
+            <button type="submit" class="btn btn-success">Enable</button>
+          </form>
+          {% elif user['status'] == constants.ENABLED %}
+          <form action="{{ url_for('.disable', identifier=user['username']) }}"
+                method="POST">
+            {{ csrf_token() | safe }}
+            <button type="submit" class="btn btn-danger">Disable</button>
+          </form>
+          {% endif %}
+        </td>
+        {% endif %}
+      </tr>
+      <tr>
+        <th class="text-right">Modified</th>
+        <td class="localtime">{{ user['modified'] }}</td>
+      </tr>
+      <tr>
+        <th class="text-right">Created</th>
+        <td class="localtime">{{ user['created'] }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+{% endblock %}
