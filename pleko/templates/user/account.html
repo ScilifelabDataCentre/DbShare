@@ -4,7 +4,7 @@
 
 {% block body_title %}User {{ user['username'] }}{% endblock %}
 
-{% block panel_main %}
+{% block main %}
 <div class="row">
   <div class="col-md-6">
     <table class="table">
@@ -26,13 +26,13 @@
         {% if enable_disable %}
         <td>
           {% if user['status'] != constants.ENABLED %}
-          <form action="{{ url_for('.enable', identifier=user['username']) }}"
+          <form action="{{ url_for('.enable', username=user['username']) }}"
                 method="POST">
             {{ csrf_token() | safe }}
             <button type="submit" class="btn btn-success">Enable</button>
           </form>
           {% elif user['status'] == constants.ENABLED %}
-          <form action="{{ url_for('.disable', identifier=user['username']) }}"
+          <form action="{{ url_for('.disable', username=user['username']) }}"
                 method="POST">
             {{ csrf_token() | safe }}
             <button type="submit" class="btn btn-danger">Disable</button>
@@ -52,4 +52,9 @@
     </table>
   </div>
 </div>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('.edit', username=user['username']) }}"
+   role="button" class="btn btn-primary">Edit</a>
 {% endblock %}

@@ -4,7 +4,7 @@
 
 {% block body_title %}Reset password{% endblock %}
 
-{% block panel_main %}
+{% block main %}
 <form action="{{ url_for('.reset') }}"
       method="POST">
   {{ csrf_token() | safe }}

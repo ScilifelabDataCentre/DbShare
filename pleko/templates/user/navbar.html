@@ -2,7 +2,7 @@
   {% if g.current_user %}
   <li class="nav-item active">
     <a class="nav-link"
-       href="{{ url_for('user.account', identifier=g.current_user['username']) }}">
+       href="{{ url_for('user.account', username=g.current_user['username']) }}">
       {{ g.current_user['username'] }}
     </a>
   </li>

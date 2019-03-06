@@ -4,7 +4,7 @@
 
 {% block body_title %}Login{% endblock %}
 
-{% block panel_main %}
+{% block main %}
 <form action="{{ url_for('.login') }}"
       method="POST">
   {{ csrf_token() | safe }}

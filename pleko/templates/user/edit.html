@@ -4,74 +4,44 @@
 
 {% block body_title %}Edit user {{ user['username'] }}{% endblock %}
 
-{% block panel_main %}
+{% block main %}
 <form action="{{ url_for('.edit', username=user['username']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   <div class="form-group row">
-    <label for="username" class="col-sm-2 col-form-label">User name</label>
+    <label for="email" class="col-sm-2 col-form-label text-right">Email</label>
     <div class="col-sm-6">
-      <input type="text" class="form-control" id="username" name="username">
+      <input type="email" class="form-control"
+             id="email" name="email" value="{{ user['email'] }}">
     </div>
   </div>
+  {% if is_admin_and_not_self %}
   <div class="form-group row">
-    <label for="email" class="col-sm-2 col-form-label">Email</label>
+    <label for="role" class="col-sm-2 col-form-label text-right">Role</label>
     <div class="col-sm-6">
-      <input type="text" class="form-control" id="email" name="email">
+      {% for role in constants.USER_ROLES %}
+      <div class="form-check">
+        <input class="form-check-input" type="checkbox"
+               name="role" id="role_{{ role }}" value="{{ role }}"
+               {{ role == user['role'] and 'checked' or '' }}>
+        <label class="form-check-label" for="role_{{ role }}">{{ role }}</label>
+      </div>
+      {% endfor %}
     </div>
   </div>
+  {% endif %}
   <div class="form-group row">
-    <div class="col-sm-2 offset-md-2">
-      <button type="submit" class="btn btn-primary">Register</button>
+    <div class="col-sm-2 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Save</button>
     </div>
   </div>
 </form>
-
-<div class="row">
-  <div class="col-md-6">
-    <table class="table">
-      <tr>
-        <th class="text-right">Username</th>
-        <td>{{ user['username'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Email</th>
-        <td>{{ user['email'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Role</th>
-        <td>{{ user['role'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Status</th>
-        <td>{{ user['status'] }}</td>
-        {% if enable_disable %}
-        <td>
-          {% if user['status'] != constants.ENABLED %}
-          <form action="{{ url_for('.enable', identifier=user['username']) }}"
-                method="POST">
-            {{ csrf_token() | safe }}
-            <button type="submit" class="btn btn-success">Enable</button>
-          </form>
-          {% elif user['status'] == constants.ENABLED %}
-          <form action="{{ url_for('.disable', identifier=user['username']) }}"
-                method="POST">
-            {{ csrf_token() | safe }}
-            <button type="submit" class="btn btn-danger">Disable</button>
-          </form>
-          {% endif %}
-        </td>
-        {% endif %}
-      </tr>
-      <tr>
-        <th class="text-right">Modified</th>
-        <td class="localtime">{{ user['modified'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Created</th>
-        <td class="localtime">{{ user['created'] }}</td>
-      </tr>
-    </table>
+<form action="{{ url_for('.account', username=user['username']) }}"
+      method="GET">
+  <div class="form-group row">
+    <div class="col-sm-6 offset-sm-2">
+      <button type="submit" class="btn btn-secondary">Cancel</button>
+    </div>
   </div>
-</div>
+</form>
 {% endblock %}

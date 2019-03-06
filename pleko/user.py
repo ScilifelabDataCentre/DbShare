@@ -139,7 +139,7 @@ def register():
                 recipients=db.get_admins_email())
             message.body = "To enable the user account, go to {}".format(
                 utils.get_absolute_url('.account',
-                                       values={'identifier': user['username']}))
+                                       values={'username': user['username']}))
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
                         ' it has been enabled by the admin.')
@@ -206,45 +206,59 @@ def password():
             do_login(username, password, db=db)
         return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/account/<id:identifier>')
+@blueprint.route('/account/<id:username>')
 @login_required
-def account(identifier):
+def account(username):
     db = userdb.UserDb(flask.current_app.config)
     try:
-        user = db[identifier]
+        user = db[username]
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    if not is_admin_or_user(user):
+    if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     enable_disable = flask.g.is_admin and flask.g.current_user != user
     return flask.render_template('user/account.html',
-                                 user=user, enable_disable=enable_disable)
+                                 user=user,
+                                 enable_disable=enable_disable)
 
-def is_admin_or_user(user):
+def is_admin_or_self(user):
     "Is the current user admin, or the same as the given user?"
     if flask.g.is_admin: return True
     if not flask.g.current_user: return False
     return flask.g.current_user['username'] == user['username']
 
+def is_admin_and_not_self(user):
+    "Is the current user admin, but not the same as the given user?"
+    if flask.g.is_admin:
+        return flask.g.current_user['username'] != user['username']
+    return False
+
 @blueprint.route('/edit/<id:username>', methods=["GET", "POST"])
 @login_required
-def edit():
+def edit(username):
     "Edit the user account."
     db = userdb.UserDb(flask.current_app.config)
     try:
-        user = db[identifier]
+        user = db[username]
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    if not is_admin_or_user(user):
+    if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     if utils.is_method_GET():
-        return flask.render_template('user/edit.html', user=user)
+        return flask.render_template('user/edit.html',
+                                     user=user,
+                                     is_admin_and_not_self=is_admin_and_not_self(user))
     elif utils.is_method_POST():
-        raise NotImplementedError # XXX
+        with db.get_context(user) as ctx:
+            ctx.set_email(flask.request.form.get('email'))
+            if is_admin_and_not_self(user):
+                ctx.set_role(flask.request.form.get('role'))
+        return flask.redirect(
+            flask.url_for('.account', username=user['username']))
 
 @blueprint.route('/accounts')
 @login_required
@@ -252,15 +266,15 @@ def accounts():
     db = userdb.UserDb(flask.current_app.config)
     return flask.render_template('user/accounts.html', users=list(db))
 
-@blueprint.route('/account/<id:identifier>/enable', methods=["POST"])
+@blueprint.route('/account/<id:username>/enable', methods=["POST"])
 @login_required
-def enable(identifier):
+def enable(username):
     if not flask.g.is_admin:
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     db = userdb.UserDb(flask.current_app.config)
     try:
-        user = db[identifier]
+        user = db[username]
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
@@ -268,20 +282,20 @@ def enable(identifier):
         ctx.set_status(constants.ENABLED)
         ctx.set_password()
     send_password_code(user, 'enabled')
-    return flask.redirect(flask.url_for('.account', identifier=identifier))
+    return flask.redirect(flask.url_for('.account', username=username))
 
-@blueprint.route('/account/<id:identifier>/disable', methods=["POST"])
+@blueprint.route('/account/<id:username>/disable', methods=["POST"])
 @login_required
-def disable(identifier):
+def disable(username):
     if not flask.g.is_admin:
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     db = userdb.UserDb(flask.current_app.config)
     try:
-        user = db[identifier]
+        user = db[username]
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
     with db.get_context(user) as ctx:
         ctx.set_status(constants.DISABLED)
-    return flask.redirect(flask.url_for('.account', identifier=identifier))
+    return flask.redirect(flask.url_for('.account', username=username))
