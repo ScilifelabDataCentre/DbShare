@@ -20,6 +20,10 @@ INDEXES = {
             "fields": [{"email": "asc"}],
             "selector": {"type": {"$eq": "user"}}
         },
+        "apikey": {
+            "fields": [{"apikey": "asc"}],
+            "selector": {"type": {"$eq": "user"}}
+        },
         "role": {
             "fields": [{"role": "asc"}],
             "selector": {"type": {"$eq": "user"}}
@@ -73,17 +77,14 @@ class UserDb(BaseUserDb):
         return iter(result['docs'])
 
     def __getitem__(self, identifier):
-        """Get the user by identifier (username or email).
+        """Get the user by identifier (username, email or apikey).
         Raise KeyError if no such user.
         """
-        result = self.db.find({'username': identifier},
-                              use_index=[DDOCNAME, 'username'])
-        if len(result['docs']) == 1:
-            return result['docs'][0]
-        result = self.db.find({'email': identifier},
-                              use_index=[DDOCNAME, 'email'])
-        if len(result['docs']) == 1:
-            return result['docs'][0]
+        for key in ['username', 'email', 'apikey']:
+            result = self.db.find({key: identifier},
+                                  use_index=[DDOCNAME, key])
+            if len(result['docs']) == 1:
+                return result['docs'][0]
         raise KeyError
 
     def get_admins_email(self):

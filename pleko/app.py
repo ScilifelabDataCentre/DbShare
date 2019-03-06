@@ -17,7 +17,7 @@ def create_app():
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
     user.init_app(app)
-    app.register_blueprint(user.blueprint)
+    app.register_blueprint(user.blueprint, url_prefix='/user')
     utils.mail.init_app(app)
     return app
 

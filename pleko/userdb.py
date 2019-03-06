@@ -25,7 +25,7 @@ class BaseUserDb:
         raise NotImplementedError
 
     def __getitem__(self, identifier):
-        """Get the user by identifier (username or email).
+        """Get the user by identifier (username, email or API key).
         Raise KeyError if no such user.
         """
         raise NotImplementedError
@@ -139,3 +139,7 @@ class UserContext:
             if len(password) < self.userdb.config['MIN_PASSWORD_LENGTH']:
                 raise ValueError('password too short')
             self.user['password'] = self.userdb.hash_password(password)
+
+    def set_apikey(self):
+        "Set a new API key."
+        self.user['apikey'] = utils.get_iuid()

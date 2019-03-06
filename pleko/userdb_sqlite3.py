@@ -21,6 +21,7 @@ class UserDb(BaseUserDb):
                         " username TEXT NOT NULL UNIQUE,"
                         " email TEXT NOT NULL UNIQUE,"
                         " password TEXT,"
+                        " apikey TEXT,"
                         " role TEXT NOT NULL,"
                         " created TEXT NOT NULL,"
                         " modified TEXT NOT NULL)")
@@ -53,21 +54,20 @@ class UserDb(BaseUserDb):
         Raise KeyError if no such user.
         """
         cursor = self.db.cursor()
-        sql = "SELECT iuid, username, email, password, role" \
+        sql = "SELECT iuid, username, email, password, apikey, role," \
               " FROM users WHERE"
-        cursor.execute(sql + " username=?", (identifier,))
-        rows = list(cursor)
-        if len(rows) != 1:
-            cursor.execute(sql + " email=?", (identifier,))
+        for key in ['username', 'email', 'apikey']:
+            cursor.execute(sql + " %s=?" % key, (identifier,))
             rows = list(cursor)
-            if len(rows) != 1:
-                raise KeyError('no such user')
-        row = rows[0]
-        return {'iuid': row[0],
-                'username': row[1],
-                'email': row[2],
-                'password': row[3],
-                'role': row[4]}
+            if len(rows) == 1:
+                row = rows[0]
+                return {'iuid': row[0],
+                        'username': row[1],
+                        'email': row[2],
+                        'password': row[3],
+                        'apikey': row[4],
+                        'role': row[5]}
+        raise KeyError('no such user')
 
     def get_admins_email(self):
         "Get a list of email addresses to the admins."
@@ -84,23 +84,25 @@ class UserDb(BaseUserDb):
         rows = list(cursor)
         if rows[0][0]:
             sql = "INSERT INTO users" \
-                  " (iuid, username, email, password, role," \
+                  " (iuid, username, email, password, apikey, role," \
                   " status, created, modified)" \
                   " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
             cursor.execute(sql, (user['iuid'],
                                  user['username'],
                                  user['email'],
                                  user['password'],
+                                 user.get('apikey'),
                                  user['role'],
                                  user['status'],
                                  user['created'], 
                                  user['modified']))
         else:
-            sql = "UPDATE users SET username=?, email=?, password=?, role=?," \
-                  " status=?, created=?, modified=? WHERE iuid=?"
+            sql = "UPDATE users SET username=?, email=?, password=?, apikey=?,"\
+                  " role=?, status=?, created=?, modified=? WHERE iuid=?"
             cursor.execute(sql, (user['username'],
                                  user['email'],
                                  user['password'],
+                                 user.get('apikey'),
                                  user['role'],
                                  user['status'],
                                  user['created'],

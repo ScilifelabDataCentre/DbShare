@@ -30,7 +30,10 @@ def get_current_user():
     try:
         user = db[flask.session['username']]
     except KeyError:
-        return None
+        try:
+            user = db[flask.request.headers['x-apikey']]
+        except KeyError:
+            return None
     if user['status'] == constants.ENABLED:
         return user
     else:
@@ -96,8 +99,7 @@ def do_login(username, password, db=None):
         user = db[username]
     except KeyError:
         raise ValueError
-    if not werkzeug.security.check_password_hash(user['password'],
-                                                 password):
+    if not werkzeug.security.check_password_hash(user['password'], password):
         raise ValueError
     if user['status'] != constants.ENABLED:
         raise ValueError
@@ -254,9 +256,13 @@ def edit(username):
                                      is_admin_and_not_self=is_admin_and_not_self(user))
     elif utils.is_method_POST():
         with db.get_context(user) as ctx:
-            ctx.set_email(flask.request.form.get('email'))
+            email = flask.request.form.get('email')
+            if email != user['email']:
+                ctx.set_email(enail)
             if is_admin_and_not_self(user):
                 ctx.set_role(flask.request.form.get('role'))
+            if flask.request.form.get('apikey'):
+                ctx.set_apikey()
         return flask.redirect(
             flask.url_for('.account', username=user['username']))
 
