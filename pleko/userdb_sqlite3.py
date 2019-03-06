@@ -1,17 +1,21 @@
 "Sqlite3 implementation of UserDb."
 
+import json
 import sqlite3
 
-from pleko import constants
-from pleko import utils
-from pleko.userdb import BaseUserDb
+import flask
+
+import pleko.constants
+import pleko.utils
+import pleko.userdb
 
 
-class UserDb(BaseUserDb):
+class UserDb(pleko.userdb.BaseUserDb):
     "Sqlite3 implementation of user account database."
 
     def __init__(self, config):
         "Connect to the Sqlite3 database."
+        self.config = config
         self.db = sqlite3.connect(config['USERDB_FILEPATH'])
 
     def initialize(self):
@@ -23,6 +27,7 @@ class UserDb(BaseUserDb):
                         " password TEXT,"
                         " apikey TEXT,"
                         " role TEXT NOT NULL,"
+                        " status TEXT NOT NULL,"
                         " created TEXT NOT NULL,"
                         " modified TEXT NOT NULL)")
         self.db.execute("CREATE TABLE IF NOT EXISTS logs"
@@ -36,17 +41,17 @@ class UserDb(BaseUserDb):
                         " ON logs (user)")
 
     def __iter__(self):
-        "Return an iterator over all users."
+        "Return an iterator over all users; partial data."
         cursor = self.db.cursor()
-        sql = "SELECT iuid, username, email, password, role"
+        sql = "SELECT iuid, username, email, role, status FROM users"
         cursor.execute(sql)
         result = []
         for row in cursor:
             result.append({'iuid': row[0],
                            'username': row[1],
                            'email': row[2],
-                           'password': row[3],
-                           'role': row[4]})
+                           'role': row[3],
+                           'status': row[4]})
         return iter(result)
 
     def __getitem__(self, identifier):
@@ -54,8 +59,8 @@ class UserDb(BaseUserDb):
         Raise KeyError if no such user.
         """
         cursor = self.db.cursor()
-        sql = "SELECT iuid, username, email, password, apikey, role," \
-              " FROM users WHERE"
+        sql = "SELECT iuid, username, email, password, apikey, role, status," \
+              " created, modified FROM users WHERE"
         for key in ['username', 'email', 'apikey']:
             cursor.execute(sql + " %s=?" % key, (identifier,))
             rows = list(cursor)
@@ -66,58 +71,64 @@ class UserDb(BaseUserDb):
                         'email': row[2],
                         'password': row[3],
                         'apikey': row[4],
-                        'role': row[5]}
+                        'role': row[5],
+                        'status': row[6],
+                        'created': row[7],
+                        'modified': row[8]}
         raise KeyError('no such user')
 
     def get_admins_email(self):
         "Get a list of email addresses to the admins."
         sql = "SELECT email FROM users WHERE role=? AND status=?"
         cursor = self.db.cursor()
-        cursor.execute(sql, (constants.ADMIN, constants.ENABLED))
+        cursor.execute(sql, (pleko.constants.ADMIN, pleko.constants.ENABLED))
         return [row[0] for row in cursor]
 
     def save(self, user):
         "Save the user data."
         cursor = self.db.cursor()
         cursor.execute("SELECT COUNT(*) FROM users WHERE username=?",
-                       (user['username']))
+                       (user['username'],))
         rows = list(cursor)
-        if rows[0][0]:
-            sql = "INSERT INTO users" \
-                  " (iuid, username, email, password, apikey, role," \
-                  " status, created, modified)" \
-                  " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-            cursor.execute(sql, (user['iuid'],
-                                 user['username'],
-                                 user['email'],
-                                 user['password'],
-                                 user.get('apikey'),
-                                 user['role'],
-                                 user['status'],
-                                 user['created'], 
-                                 user['modified']))
-        else:
-            sql = "UPDATE users SET username=?, email=?, password=?, apikey=?,"\
-                  " role=?, status=?, created=?, modified=? WHERE iuid=?"
-            cursor.execute(sql, (user['username'],
-                                 user['email'],
-                                 user['password'],
-                                 user.get('apikey'),
-                                 user['role'],
-                                 user['status'],
-                                 user['created'],
-                                 user['modified'],
-                                 user['iuid']))
+        with self.db:
+            if rows[0][0]:
+                sql = "UPDATE users SET username=?, email=?, password=?," \
+                      " apikey=?, role=?, status=?, created=?, modified=?" \
+                      " WHERE iuid=?"
+                self.db.execute(sql, (user['username'],
+                                      user['email'],
+                                      user['password'],
+                                      user.get('apikey'),
+                                      user['role'],
+                                      user['status'],
+                                      user['created'],
+                                      user['modified'],
+                                      user['iuid']))
+            else:
+                sql = "INSERT INTO users" \
+                      " (iuid, username, email, password, apikey, role," \
+                      " status, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                self.db.execute(sql, (user['iuid'],
+                                      user['username'],
+                                      user['email'],
+                                      user['password'],
+                                      user.get('apikey'),
+                                      user['role'],
+                                      user['status'],
+                                      user['created'], 
+                                      user['modified']))
 
     def log(self, user, prev, **kwargs):
         "Log the changes in user account from the previous values."
         sql = "INSERT INTO logs" \
               " (user, prev, editor, remote_addr, user_agent, timestamp)" \
               " VALUES (?, ?, ?, ?, ?, ?)"
-        self.db.execute(sql,
-                        (user['username'],
-                         flask.jsonify(prev),
-                         kwargs.get('editor'),
-                         kwargs.get('remote_addr'),
-                         kwargs.get('user_agent'),
-                         utils.get_time()))
+        with self.db:
+            self.db.execute(sql,
+                            (user['username'],
+                             json.dumps(prev),
+                             kwargs.get('editor'),
+                             kwargs.get('remote_addr'),
+                             kwargs.get('user_agent'),
+                             pleko.utils.get_time()))

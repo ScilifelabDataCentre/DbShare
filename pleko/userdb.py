@@ -5,8 +5,8 @@ import re
 import flask
 import werkzeug.security
 
-from pleko import constants
-from pleko import utils
+import pleko.constants
+import pleko.utils
 
 
 class BaseUserDb:
@@ -66,12 +66,12 @@ class UserContext:
         self.userdb = userdb
         if user is None:
             if self.userdb.config['REGISTRATION_DIRECT']:
-                status = constants.ENABLED
+                status = pleko.constants.ENABLED
             else:
-                status = constants.PENDING
-            self.user = dict(iuid=utils.get_iuid(),
+                status = pleko.constants.PENDING
+            self.user = dict(iuid=pleko.utils.get_iuid(),
                              status=status, 
-                             created=utils.get_time())
+                             created=pleko.utils.get_time())
             self.prev = dict()
         else:
             self.user = user
@@ -81,11 +81,10 @@ class UserContext:
         return self
 
     def __exit__(self, etyp, einst, etb):
-        print(self.user)
         for key in ['username', 'email', 'role', 'status']:
             if key not in self.user:
                 raise ValueError("invalid user: %s not set" % key)
-        self.user['modified'] = utils.get_time()
+        self.user['modified'] = pleko.utils.get_time()
         self.userdb.save(self.user)
         kwargs = dict()
         try:
@@ -103,38 +102,38 @@ class UserContext:
     def set_username(self, username):
         if 'username' in self.user:
             raise ValueError('username cannot be changed')
-        if not constants.IDENTIFIER_RX.match(username):
+        if not pleko.constants.IDENTIFIER_RX.match(username):
             raise ValueError('invalid username; must be an identifier')
         if self.userdb.get(username):
             raise ValueError('username already in use')
         self.user['username'] = username
 
     def set_email(self, email):
-        if not constants.EMAIL_RX.match(email):
+        if not pleko.constants.EMAIL_RX.match(email):
             raise ValueError('invalid email')
         if self.userdb.get(email):
             raise ValueError('email already in use')
         self.user['email'] = email
-        if self.user.get('status') == constants.PENDING:
+        if self.user.get('status') == pleko.constants.PENDING:
             for pattern in self.userdb.config['REGISTRATION_REGEXP_WHITELIST']:
                 if re.match(pattern, email):
-                    self.set_status(constants.ENABLED)
+                    self.set_status(pleko.constants.ENABLED)
                     break
 
     def set_status(self, status):
-        if status not in constants.USER_STATUSES:
+        if status not in pleko.constants.USER_STATUSES:
             raise ValueError('invalid status')
         self.user['status'] = status
 
     def set_role(self, role):
-        if role not in constants.USER_ROLES:
+        if role not in pleko.constants.USER_ROLES:
             raise ValueError('invalid role')
         self.user['role'] = role
 
     def set_password(self, password=None):
         "Set the password; a one-time code if no password provided."
         if password is None:
-            self.user['password'] = "code:%s" % utils.get_iuid()
+            self.user['password'] = "code:%s" % pleko.utils.get_iuid()
         else:
             if len(password) < self.userdb.config['MIN_PASSWORD_LENGTH']:
                 raise ValueError('password too short')
@@ -142,4 +141,4 @@ class UserContext:
 
     def set_apikey(self):
         "Set a new API key."
-        self.user['apikey'] = utils.get_iuid()
+        self.user['apikey'] = pleko.utils.get_iuid()
