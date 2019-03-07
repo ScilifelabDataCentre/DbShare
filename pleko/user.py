@@ -12,8 +12,8 @@ import flask
 import flask_mail
 import werkzeug.security
 
-from . import constants
-from . import utils
+import pleko.constants
+import pleko.utils
 
 # User database interface module
 userdb = None
@@ -34,7 +34,7 @@ def get_current_user():
             user = db[flask.request.headers['x-apikey']]
         except KeyError:
             return None
-    if user['status'] == constants.ENABLED:
+    if user['status'] == pleko.constants.ENABLED:
         return user
     else:
         flask.session.pop('username', None)
@@ -69,10 +69,10 @@ blueprint = flask.Blueprint('user', __name__)
 @blueprint.route('/login', methods=["GET", "POST"])
 def login():
     "Login to a user account."
-    if utils.is_method_GET():
+    if pleko.utils.is_method_GET():
         return flask.render_template('user/login.html',
                                      next=flask.request.args.get('next'))
-    if utils.is_method_POST():
+    if pleko.utils.is_method_POST():
         username = flask.request.form.get('username')
         password = flask.request.form.get('password')
         try:
@@ -101,7 +101,7 @@ def do_login(username, password, db=None):
         raise ValueError
     if not werkzeug.security.check_password_hash(user['password'], password):
         raise ValueError
-    if user['status'] != constants.ENABLED:
+    if user['status'] != pleko.constants.ENABLED:
         raise ValueError
     flask.session['username'] = user['username']
     flask.session.permanent = True
@@ -115,23 +115,23 @@ def logout():
 @blueprint.route('/register', methods=["GET", "POST"])
 def register():
     "Register a new user account."
-    if utils.is_method_GET():
+    if pleko.utils.is_method_GET():
         return flask.render_template('user/register.html')
-    elif utils.is_method_POST():
+    elif pleko.utils.is_method_POST():
         config = flask.current_app.config
         db = userdb.UserDb(config)
         try:
             with db.get_context() as ctx:
                 ctx.set_username(flask.request.form.get('username'))
                 ctx.set_email(flask.request.form.get('email'))
-                ctx.set_role(constants.USER)
+                ctx.set_role(pleko.constants.USER)
                 ctx.set_password()
             user = ctx.user
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.register'))
         # Directly enabled; send code to the user.
-        if user['status'] == constants.ENABLED:
+        if user['status'] == pleko.constants.ENABLED:
             send_password_code(user, 'registration')
             flask.flash('User account created; check your email.')
         # Was set to 'pending'; send email to admins.
@@ -140,9 +140,10 @@ def register():
                 "{} user account pending".format(config['SITE_NAME']),
                 recipients=db.get_admins_email())
             message.body = "To enable the user account, go to {}".format(
-                utils.get_absolute_url('.account',
-                                       values={'username': user['username']}))
-            utils.mail.send(message)
+                pleko.utils.get_absolute_url('.account',
+                                             values={'username': 
+                                                     user['username']}))
+            pleko.utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
                         ' it has been enabled by the admin.')
         return flask.redirect(flask.url_for('index'))
@@ -150,14 +151,14 @@ def register():
 @blueprint.route('/reset', methods=["GET", "POST"])
 def reset():
     "Reset the password for a user account and send email."
-    if utils.is_method_GET():
+    if pleko.utils.is_method_GET():
         return flask.render_template('user/reset.html')
-    elif utils.is_method_POST():
+    elif pleko.utils.is_method_POST():
         db = userdb.UserDb(flask.current_app.config)
         try:
             email = flask.request.form['email']
             user = db[email]
-            if user['status'] != constants.ENABLED: raise KeyError
+            if user['status'] != pleko.constants.ENABLED: raise KeyError
         except KeyError:
             pass
         else:
@@ -176,18 +177,18 @@ def send_password_code(user, action):
     query = dict(username=user['username'],
                  code=user['password'][len('code:'):])
     message.body = "To set your password, go to {}".format(
-        utils.get_absolute_url('.password', query=query))
-    utils.mail.send(message)
+        pleko.utils.get_absolute_url('.password', query=query))
+    pleko.utils.mail.send(message)
 
 @blueprint.route('/password', methods=["GET", "POST"])
 def password():
     "Set the password for a user account, and login user."
-    if utils.is_method_GET():
+    if pleko.utils.is_method_GET():
         return flask.render_template(
             'user/password.html',
             username=flask.request.args.get('username'),
             code=flask.request.args.get('code'))
-    elif utils.is_method_POST():
+    elif pleko.utils.is_method_POST():
         db = userdb.UserDb(flask.current_app.config)
         try:
             username = flask.request.form['username']
@@ -250,11 +251,11 @@ def edit(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
-    if utils.is_method_GET():
+    if pleko.utils.is_method_GET():
         return flask.render_template('user/edit.html',
                                      user=user,
                                      is_admin_and_not_self=is_admin_and_not_self(user))
-    elif utils.is_method_POST():
+    elif pleko.utils.is_method_POST():
         with db.get_context(user) as ctx:
             email = flask.request.form.get('email')
             if email != user['email']:
@@ -285,7 +286,7 @@ def enable(username):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
     with db.get_context(user) as ctx:
-        ctx.set_status(constants.ENABLED)
+        ctx.set_status(pleko.constants.ENABLED)
         ctx.set_password()
     send_password_code(user, 'enabled')
     return flask.redirect(flask.url_for('.account', username=username))
@@ -303,5 +304,5 @@ def disable(username):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
     with db.get_context(user) as ctx:
-        ctx.set_status(constants.DISABLED)
+        ctx.set_status(pleko.constants.DISABLED)
     return flask.redirect(flask.url_for('.account', username=username))

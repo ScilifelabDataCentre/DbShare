@@ -6,8 +6,8 @@ import sqlite3
 import flask
 
 import pleko.constants
-import pleko.utils
 import pleko.userdb
+import pleko.utils
 
 
 class UserDb(pleko.userdb.BaseUserDb):

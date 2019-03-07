@@ -8,21 +8,21 @@ import flask
 import flask_mail
 import werkzeug.routing
 
-import constants
+import pleko.constants
 
 mail = flask_mail.Mail()
 
 class IuidConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an IUID."
     def to_python(self, value):
-        if not constants.IUID_RX.match(value):
+        if not pleko.constants.IUID_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
 
 class IdentifierConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an identifier."
     def to_python(self, value):
-        if not constants.IDENTIFIER_RX.match(value):
+        if not pleko.constants.IDENTIFIER_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
 

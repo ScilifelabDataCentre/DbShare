@@ -82,7 +82,7 @@ class UserContext:
 
     def __exit__(self, etyp, einst, etb):
         for key in ['username', 'email', 'role', 'status']:
-            if key not in self.user:
+            if not self.user.get(key):
                 raise ValueError("invalid user: %s not set" % key)
         self.user['modified'] = pleko.utils.get_time()
         self.userdb.save(self.user)

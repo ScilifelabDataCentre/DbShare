@@ -4,9 +4,9 @@ import couchdb2
 
 import flask
 
-from pleko import constants
-from pleko import utils
-from pleko.userdb import BaseUserDb
+import pleko.constants
+import pleko.userdb
+import pleko.utils
 
 DDOCNAME = 'mango'
 
@@ -40,7 +40,7 @@ INDEXES = {
 }
 
 
-class UserDb(BaseUserDb):
+class UserDb(pleko.userdb.BaseUserDb):
     "CouchDB implementation of user account database."
 
     def __init__(self, config):
@@ -89,25 +89,25 @@ class UserDb(BaseUserDb):
 
     def get_admins_email(self):
         "Get a list of email addresses to the admins."
-        result = self.db.find({'role': constants.ADMIN},
+        result = self.db.find({'role': pleko.constants.ADMIN},
                               use_index=[DDOCNAME, 'role'])
         return [user['email'] for user in result['docs']
-                if user['status'] == constants.ENABLED]
+                if user['status'] == pleko.constants.ENABLED]
 
     def save(self, user):
         "Save the user data."
         if 'type' not in user:
-            user['type'] = constants.USER
+            user['type'] = pleko.constants.USER
         if '_id' not in user:
             user['_id'] = user['iuid']
         self.db.put(user)
 
     def log(self, user, prev, **kwargs):
         "Log the changes in user account from the previous values."
-        doc = dict(_id=utils.get_iuid(),
+        doc = dict(_id=pleko.utils.get_iuid(),
                    type='log',
                    user=user['username'],
                    prev=prev,
-                   timestamp=utils.get_time())
+                   timestamp=pleko.utils.get_time())
         doc.update(kwargs)
         self.db.put(doc)
