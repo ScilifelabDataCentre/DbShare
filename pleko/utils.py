@@ -1,6 +1,7 @@
 "Various utility functions and classes."
 
 import datetime
+import json
 import urllib.parse
 import uuid
 
@@ -86,3 +87,6 @@ def check_csrf_token():
     token = flask.session.pop('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
+
+def json_html(data):
+    return '<pre>%s</pre>' % json.dumps(data, indent=2)

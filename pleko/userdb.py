@@ -54,6 +54,10 @@ class BaseUserDb:
         "Log the changes in user account from the previous values."
         raise NotImplementedError
 
+    def get_logs(self, user):
+        "Get the log entries for the user; sorted latest first."
+        raise NotImplementedError
+
     def get_context(self, user=None):
         "Return a context for creating, modifying and save a user account."
         return UserContext(self, user=user)
@@ -65,7 +69,7 @@ class UserContext:
     def __init__(self, userdb, user=None):
         self.userdb = userdb
         if user is None:
-            if self.userdb.config['REGISTRATION_DIRECT']:
+            if self.userdb.config['USER_ENABLE_IMMEDIATELY']:
                 status = pleko.constants.ENABLED
             else:
                 status = pleko.constants.PENDING
@@ -81,6 +85,7 @@ class UserContext:
         return self
 
     def __exit__(self, etyp, einst, etb):
+        if etyp is not None: return False
         for key in ['username', 'email', 'role', 'status']:
             if not self.user.get(key):
                 raise ValueError("invalid user: %s not set" % key)
@@ -97,6 +102,23 @@ class UserContext:
                 kwargs['user_agent'] = str(flask.request.user_agent)
             except AttributeError:
                 pass
+        try:
+            del self.prev['modified']
+        except KeyError:
+            pass
+        for key, value in self.user.items():
+            try:
+                if value == self.prev[key]:
+                    del self.prev[key]
+            except KeyError:
+                pass
+        try:
+            password = self.prev['password']
+        except KeyError:
+            pass
+        else:
+            if not password.startswith('code:'):
+                self.prev['password'] = '***'
         self.userdb.log(self.user, self.prev, **kwargs)
 
     def set_username(self, username):
@@ -115,8 +137,8 @@ class UserContext:
             raise ValueError('email already in use')
         self.user['email'] = email
         if self.user.get('status') == pleko.constants.PENDING:
-            for pattern in self.userdb.config['REGISTRATION_REGEXP_WHITELIST']:
-                if re.match(pattern, email):
+            for regexp in self.userdb.config['USER_ENABLE_EMAIL_WHITELIST']:
+                if re.match(regexp, email):
                     self.set_status(pleko.constants.ENABLED)
                     break
 

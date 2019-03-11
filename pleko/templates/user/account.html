@@ -47,7 +47,11 @@
       </tr>
       <tr>
         <th class="text-right">Modified</th>
-        <td class="localtime">{{ user['modified'] }}</td>
+        <td>
+          <span class="localtime">{{ user['modified'] }}</span>
+          <a href="{{ url_for('.account_logs', username=user['username']) }}">
+            Logs</a>
+        </td>
       </tr>
       <tr>
         <th class="text-right">Created</th>

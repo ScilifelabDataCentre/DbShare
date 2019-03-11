@@ -104,6 +104,11 @@ class UserDb(pleko.userdb.BaseUserDb):
 
     def log(self, user, prev, **kwargs):
         "Log the changes in user account from the previous values."
+        prev = prev.copy()
+        try:
+            del prev['_rev']
+        except KeyError:
+            pass
         doc = dict(_id=pleko.utils.get_iuid(),
                    type='log',
                    user=user['username'],
@@ -111,3 +116,11 @@ class UserDb(pleko.userdb.BaseUserDb):
                    timestamp=pleko.utils.get_time())
         doc.update(kwargs)
         self.db.put(doc)
+
+    def get_logs(self, user):
+        "Get the log entries for the user; sorted latest first."
+        result = self.db.find({'user': user['username']},
+                              use_index=[DDOCNAME, 'log'])
+        docs = list(result['docs'])
+        docs.sort(key=lambda i: i['timestamp'], reverse=True)
+        return iter(docs)

@@ -132,3 +132,16 @@ class UserDb(pleko.userdb.BaseUserDb):
                              kwargs.get('remote_addr'),
                              kwargs.get('user_agent'),
                              pleko.utils.get_time()))
+
+    def get_logs(self, user):
+        "Get the log entries for the user; sorted latest first."
+        cursor = self.db.cursor()
+        sql = "SELECT prev, editor, remote_addr, user_agent, timestamp" \
+              " FROM logs WHERE user=? ORDER BY timestamp DESC"
+        cursor.execute(sql, (user['username'],))
+        return [dict(prev=json.loads(row[0]),
+                     editor=row[1],
+                     remote_addr=row[2],
+                     user_agent=row[3],
+                     timestamp=row[4])
+                for row in cursor]

@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+
+{% block head_title %}User {{ user['username'] }} logs{% endblock %}
+
+{% block body_title %}User {{ user['username'] }} logs{% endblock %}
+
+{% block main %}
+<table class="table">
+  <thead>
+    <tr>
+      <th>Previous values</th>
+      <th>Editor</th>
+      <th>Remote address</th>
+      <th>User agent</th>
+      <th>Timestamp</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for log in logs %}
+    <tr>
+      <td>{{ utils.json_html(log['prev']) | safe }}</td>
+      <td>{{ log['editor'] or '-' }}</td>
+      <td>{{ log['remote_addr'] or '-' }}</td>
+      <td>{{ log['user_agent'] or '-' }}</td>
+      <td class="localtime">{{ log['timestamp'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block meta %}
+<a href="{{ url_for('.account', username=user['username']) }}"
+   role="button" class="btn btn-secondary">Account</a>
+{% endblock %}
