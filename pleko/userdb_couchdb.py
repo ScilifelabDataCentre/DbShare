@@ -41,7 +41,7 @@ INDEXES = {
 
 
 class UserDb(pleko.userdb.BaseUserDb):
-    "CouchDB implementation of user account database."
+    "CouchDB implementation of the user account database."
 
     def __init__(self, config):
         "Connect to the CouchDB database."

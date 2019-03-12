@@ -11,7 +11,7 @@ import pleko.utils
 
 
 class UserDb(pleko.userdb.BaseUserDb):
-    "Sqlite3 implementation of user account database."
+    "Sqlite3 implementation of the user account database."
 
     def __init__(self, config):
         "Connect to the Sqlite3 database."
