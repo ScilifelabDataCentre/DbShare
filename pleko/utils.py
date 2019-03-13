@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import sqlite3
 import urllib.parse
 import uuid
 
@@ -90,3 +91,8 @@ def check_csrf_token():
 
 def json_html(data):
     return '<pre>%s</pre>' % json.dumps(data, indent=2)
+
+def get_masterdb(app=None):
+    if app is None:
+        app = flask.current_app
+    return sqlite3.connect(app.config['MASTERDB_FILEPATH'])

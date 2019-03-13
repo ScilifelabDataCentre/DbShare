@@ -9,13 +9,11 @@ import pleko
 import pleko.app
 import pleko.constants
 import pleko.user
-import pleko.userdb
 
 app = pleko.app.create_app()
 with app.app_context():
-    userdb = pleko.user.userdb.UserDb(app.config)
     try:
-        with userdb.get_context() as ctx:
+        with pleko.user.UserContext() as ctx:
             ctx.set_username(input('username > '))
             ctx.set_email(input('email > '))
             ctx.set_role(pleko.constants.ADMIN)

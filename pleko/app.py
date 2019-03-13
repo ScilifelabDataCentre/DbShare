@@ -1,5 +1,7 @@
 "The Pleko web app."
 
+import sqlite3
+
 import flask
 
 import pleko
@@ -22,6 +24,11 @@ def create_app():
     return app
 
 app = create_app()
+
+@app.before_request
+def connect_masterdb():
+    flask.g.db = sqlite3.connect(flask.current_app.config['MASTERDB_FILEPATH'])
+    flask.g.db.execute('PRAGMA foreign_keys = ON')
 
 @app.before_request
 def get_current_user():
