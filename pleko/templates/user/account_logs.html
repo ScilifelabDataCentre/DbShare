@@ -12,7 +12,7 @@
       <th>Editor</th>
       <th>Remote address</th>
       <th>User agent</th>
-      <th>Previous values</th>
+      <th>New values</th>
     </tr>
   </thead>
   <tbody>
@@ -22,14 +22,14 @@
       <td>{{ log['editor'] or '-' }}</td>
       <td>{{ log['remote_addr'] or '-' }}</td>
       <td>{{ log['user_agent'] or '-' }}</td>
-      <td>{{ utils.json_html(log['prev']) | safe }}</td>
+      <td>{{ utils.json_html(log['new']) | safe }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 {% endblock %}
 
-{% block meta %}
+{% block actions %}
 <a href="{{ url_for('.account', username=user['username']) }}"
    role="button" class="btn btn-secondary">Account</a>
 {% endblock %}

@@ -49,8 +49,8 @@
         <th class="text-right">Modified</th>
         <td>
           <span class="localtime">{{ user['modified'] }}</span>
-          <a href="{{ url_for('.account_logs', username=user['username']) }}">
-            Logs</a>
+	  <a href="{{ url_for('.account_logs', username=user['username']) }}"
+	     role="button" class="btn btn-sm btn-secondary">Logs</a>
         </td>
       </tr>
       <tr>
@@ -63,8 +63,14 @@
 {% endblock %}
 
 {% block actions %}
-{% if current_user %}
+{% if g.current_user %}
 <a href="{{ url_for('.edit', username=user['username']) }}"
    role="button" class="btn btn-primary">Edit</a>
+<form action="{{ url_for('.logout') }}"
+      method="POST"
+      class="mt-2">
+  {{ csrf_token() | safe }}
+  <button type="submit" class="btn btn-warning">Logout</button>
+</form>
 {% endif %}
 {% endblock %}

@@ -19,7 +19,7 @@
     <tr>
       <td>{{ resource['rid'] }}</td>
       <td>{{ resource['type'] }}</td>
-      <td>{{ resource['description'] }}</td>
+      <td>{{ resource.get('description') or '-' }}</td>
       <td>{{ resource['public'] and 'yes' or 'no'}}</td>
       <td>{{ resource['owner'] }}</td>
       <td class="localtime">{{ resource['modified'] }}</td>

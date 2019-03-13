@@ -23,3 +23,4 @@ USER_ROLES = (ADMIN, USER)
 # Resource types
 RDB = 'rdb'
 RESOURCE_TYPES = (RDB, )
+RESOURCE_DESCR = {RDB: 'relational database'}

@@ -30,7 +30,7 @@ def init_masterdb(db):
                " ON users (apikey)")
     db.execute("CREATE TABLE IF NOT EXISTS users_logs"
                "(username TEXT NOT NULL REFERENCES users (username),"
-               " prev TEXT NOT NULL,"
+               " new TEXT NOT NULL,"
                " editor TEXT,"
                " remote_addr TEXT,"
                " user_agent TEXT,"
@@ -60,19 +60,17 @@ def get_user(username=None, email=None, apikey=None, db=None):
           " role, status, profile, created, modified FROM users" + criterion
     cursor.execute(sql, (identifier,))
     rows = list(cursor)
-    if len(rows) == 1:
-        row = rows[0]
-        return {'username': row[0],
-                'email':    row[1],
-                'password': row[2],
-                'apikey':   row[3],
-                'role':     row[4],
-                'status':   row[5],
-                'profile':  json.loads(row[6]),
-                'created':  row[7],
-                'modified': row[8]}
-    else:
-        return None
+    if len(rows) != 1: return None
+    row = rows[0]
+    return {'username': row[0],
+            'email':    row[1],
+            'password': row[2],
+            'apikey':   row[3],
+            'role':     row[4],
+            'status':   row[5],
+            'profile':  json.loads(row[6]),
+            'created':  row[7],
+            'modified': row[8]}
     
 def get_current_user():
     """Return the user for the current session.
@@ -215,8 +213,8 @@ def send_password_code(user, action):
         "{} user account {}".format(flask.current_app.config['SITE_NAME'],
                                     action),
         recipients=[user['email']])
-    query = dict(username=user['username'],
-                 code=user['password'][len('code:'):])
+    query = {'username': user['username'],
+             'code': user['password'][len('code:'):]}
     message.body = "To set your password, go to {}".format(
         pleko.utils.get_absolute_url('.password', query=query))
     pleko.utils.mail.send(message)
@@ -274,14 +272,14 @@ def account_logs(username):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     cursor = flask.g.db.cursor()
-    sql = "SELECT prev, editor, remote_addr, user_agent, timestamp" \
+    sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
-    logs = [dict(prev=json.loads(row[0]),
-                 editor=row[1],
-                 remote_addr=row[2],
-                 user_agent=row[3],
-                 timestamp=row[4])
+    logs = [{'new': json.loads(row[0]),
+             'editor': row[1],
+             'remote_addr': row[2],
+             'user_agent': row[3],
+             'timestamp': row[4]}
             for row in cursor]
     return flask.render_template('user/account_logs.html', user=user, logs=logs)
 
@@ -380,12 +378,13 @@ class UserContext:
                 status = pleko.constants.ENABLED
             else:
                 status = pleko.constants.PENDING
-            self.user = dict(status=status, 
-                             created=pleko.utils.get_time())
-            self.prev = dict()
+            self.user = {'status': status, 
+                         'profile': {},
+                         'created': pleko.utils.get_time()}
+            self.orig = {}
         else:
             self.user = user
-            self.prev = user.copy()
+            self.orig = user.copy()
         self.db = pleko.utils.get_masterdb()
 
     def __enter__(self):
@@ -428,33 +427,25 @@ class UserContext:
                                       self.user.get('apikey'),
                                       self.user['role'],
                                       self.user['status'],
-                                      json.dumps(self.user.get('profile') or {},
+                                      json.dumps(self.user['profile'],
                                                  ensure_ascii=False),
                                       self.user['created'], 
                                       self.user['modified']))
             # Add log entry
-            try:
-                del self.prev['modified']
-            except KeyError:
-                pass
+            new = {}
             for key, value in self.user.items():
-                try:
-                    if value == self.prev[key]:
-                        del self.prev[key]
-                except KeyError:
-                    pass
+                if value != self.orig.get(key):
+                    new[key] = value
+            new.pop('modified')
             try:
-                password = self.prev['password']
+                password = new['password']
             except KeyError:
                 pass
             else:
                 if not password.startswith('code:'):
-                    self.prev['password'] = '***'
-            sql = "INSERT INTO users_logs (username, prev, editor," \
-                  " remote_addr, user_agent, timestamp)" \
-                  " VALUES (?, ?, ?, ?, ?, ?)"
+                    new['password'] = '***'
             try:
-                editor = flask.g.user['username']
+                editor = flask.g.current_user['username']
             except AttributeError:
                 editor = None
             if flask.has_request_context():
@@ -463,8 +454,11 @@ class UserContext:
             else:
                 remote_addr = None
                 user_agent = None
+            sql = "INSERT INTO users_logs (username, new, editor," \
+                  " remote_addr, user_agent, timestamp)" \
+                  " VALUES (?, ?, ?, ?, ?, ?)"
             self.db.execute(sql, (self.user['username'],
-                                  json.dumps(self.prev, ensure_ascii=False),
+                                  json.dumps(new, ensure_ascii=False),
                                   editor,
                                   remote_addr,
                                   user_agent,

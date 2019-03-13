@@ -49,7 +49,8 @@ def setup_template_context():
 @app.route('/')
 def index():
     "Home page."
-    return flask.render_template('index.html')
+    resources = pleko.resource.get_resources(public=not flask.g.is_admin)
+    return flask.render_template('index.html', resources=resources)
 
 
 # This code is used only during testing.
