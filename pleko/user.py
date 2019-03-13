@@ -1,4 +1,4 @@
-"User blueprint; user profile and login/logout."
+"User profile and login/logout. Flask blueprint."
 
 import functools
 import json
@@ -14,9 +14,8 @@ import pleko.constants
 import pleko.utils
 
 
-def init_app(app):
-    "Initialize the users tables in the master Sqlite3 database, if not done."
-    db = pleko.utils.get_masterdb(app)
+def init_masterdb(db):
+    "Initialize user tables in the master database, if not done."
     db.execute("CREATE TABLE IF NOT EXISTS users"
                "(username PRIMARY KEY,"
                " email TEXT NOT NULL UNIQUE,"

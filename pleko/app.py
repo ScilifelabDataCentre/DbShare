@@ -8,9 +8,10 @@ import pleko
 import pleko.constants
 import pleko.utils
 import pleko.user
+import pleko.resource
 
 def create_app():
-    "Return the configured app object."
+    "Return the configured app object. Initialize the masterdb, if not done."
     app = flask.Flask(__name__)
     app.config.from_mapping(pleko.default_config)
     app.config.from_json('config.json')
@@ -18,20 +19,21 @@ def create_app():
     app.url_map.converters['id'] = pleko.utils.IdentifierConverter
     app.jinja_env.trim_blocks = True
     app.jinja_env.lstrip_blocks = True
-    pleko.user.init_app(app)
-    app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
+    db = pleko.utils.get_masterdb(app)
+    pleko.user.init_masterdb(db)
+    pleko.resource.init_masterdb(db)
     pleko.utils.mail.init_app(app)
     return app
 
 app = create_app()
+app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
+app.register_blueprint(pleko.resource.blueprint, url_prefix='/resource')
+
 
 @app.before_request
-def connect_masterdb():
-    flask.g.db = sqlite3.connect(flask.current_app.config['MASTERDB_FILEPATH'])
-    flask.g.db.execute('PRAGMA foreign_keys = ON')
-
-@app.before_request
-def get_current_user():
+def prepare():
+    "Connect to the master database; get the current user."
+    flask.g.db = pleko.utils.get_masterdb()
     flask.g.current_user = pleko.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == pleko.constants.ADMIN

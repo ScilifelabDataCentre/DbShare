@@ -1,29 +1,30 @@
 # Pleko
-Experimental web-based toolbench for data handling
+
+Web-based toolbench for data resource management and publication.
 
 πλέκω: to plait, twine, twist, weave, braid
 
-## Sqlite3 database
+## Relational database (Sqlite3)
 
-`/{resourceid}`
+`/rdb/{rid}`
 
 List of tables, indexes, queries.
 Add tables, indexes, queries.
 Delete tables, indexes, queries.
 
-`/{resourceid}/table/{tableid}`
+`/rdb/{rid}/table/{tableid}`
 
 Table info, column list.
 Add column, index.
 Delete column, index.
 
-`/{resourceid}/table/{tableid}/upload`
+`/rdb/{rid}/table/{tableid}/upload`
 
 Load CSV file.
 
-`/{resourceid}/table/{tableid}/download`
+`/rdb/{rid}/table/{tableid}/download`
 
 Download CSV file.
 
-## CouchDB JSON documents database
+## JSON documents database (CouchDB)
 

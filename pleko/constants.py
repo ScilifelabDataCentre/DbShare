@@ -19,3 +19,7 @@ USER_STATUSES = (PENDING, ENABLED, DISABLED)
 ADMIN     = 'admin'
 # USER defined above
 USER_ROLES = (ADMIN, USER)
+
+# Resource types
+RDB = 'rdb'
+RESOURCE_TYPES = (RDB, )

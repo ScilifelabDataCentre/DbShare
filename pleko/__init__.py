@@ -1,6 +1,6 @@
 "Pleko: Experimental web-based toolbench for data handling."
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 
 default_config = dict(
     VERSION = __version__,

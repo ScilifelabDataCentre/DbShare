@@ -63,6 +63,8 @@
 {% endblock %}
 
 {% block actions %}
+{% if current_user %}
 <a href="{{ url_for('.edit', username=user['username']) }}"
    role="button" class="btn btn-primary">Edit</a>
+{% endif %}
 {% endblock %}

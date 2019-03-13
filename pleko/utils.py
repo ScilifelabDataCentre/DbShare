@@ -12,6 +12,7 @@ import werkzeug.routing
 
 import pleko.constants
 
+
 mail = flask_mail.Mail()
 
 class IuidConverter(werkzeug.routing.BaseConverter):
@@ -95,4 +96,6 @@ def json_html(data):
 def get_masterdb(app=None):
     if app is None:
         app = flask.current_app
-    return sqlite3.connect(app.config['MASTERDB_FILEPATH'])
+    db = sqlite3.connect(app.config['MASTERDB_FILEPATH'])
+    db.execute('PRAGMA foreign_keys = ON')
+    return db

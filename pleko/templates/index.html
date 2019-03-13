@@ -1,5 +1,45 @@
 {% extends 'base.html' %}
 
 {% block main %}
-Home page.
+<p>Web-based toolbench for data resource management and publication.</p>
+
+<table id="resources" class="table">
+  <thead>
+    <tr>
+      <th>Resource</th>
+      <th>Type</th>
+      <th>Description</th>
+      <th>Public</th>
+      <th>Owner</th>
+      <th>Modified</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for resource in resources %}
+    <tr>
+      <td>{{ resource['rid'] }}</td>
+      <td>{{ resource['type'] }}</td>
+      <td>{{ resource['description'] }}</td>
+      <td>{{ resource['public'] and 'yes' or 'no'}}</td>
+      <td>{{ resource['owner'] }}</td>
+      <td class="localtime">{{ resource['modified'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block actions %}
+<a href="{{ url_for('resource.index') }}"
+   role="button" class="btn btn-primary">Create resource</a>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#resources").DataTable( {
+      "pagingType": "full_numbers",
+    });
+  });
+</script>
 {% endblock %}
