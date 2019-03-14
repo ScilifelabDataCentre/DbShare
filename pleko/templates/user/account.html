@@ -9,10 +9,6 @@
   <div class="col-md-6">
     <table class="table">
       <tr>
-        <th class="text-right">Username</th>
-        <td>{{ user['username'] }}</td>
-      </tr>
-      <tr>
         <th class="text-right">Email</th>
         <td>{{ user['email'] }}</td>
       </tr>
@@ -45,20 +41,20 @@
         <th class="text-right">API key</th>
         <td>{{ user.get('apikey') or '-' }}</td>
       </tr>
-      <tr>
-        <th class="text-right">Modified</th>
-        <td>
-          <span class="localtime">{{ user['modified'] }}</span>
-	  <a href="{{ url_for('.account_logs', username=user['username']) }}"
-	     role="button" class="btn btn-sm btn-secondary">Logs</a>
-        </td>
-      </tr>
-      <tr>
-        <th class="text-right">Created</th>
-        <td class="localtime">{{ user['created'] }}</td>
-      </tr>
     </table>
   </div>
+</div>
+{% endblock %}
+
+{% block info %}
+<div class="mt-4">
+  Modified <span class="localtime">{{ user['modified'] }}</span>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.logs', username=user['username']) }}">Logs</a>
+</div>
+<div class="mt-2">
+  Created <span class="localtime">{{ user['created'] }}</span>
 </div>
 {% endblock %}
 

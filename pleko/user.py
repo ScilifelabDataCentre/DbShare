@@ -17,7 +17,7 @@ import pleko.utils
 def init_masterdb(db):
     "Initialize user tables in the master database, if not done."
     db.execute("CREATE TABLE IF NOT EXISTS users"
-               "(username PRIMARY KEY,"
+               "(username TEXT PRIMARY KEY,"
                " email TEXT NOT NULL UNIQUE,"
                " password TEXT,"
                " apikey TEXT,"
@@ -263,7 +263,7 @@ def account(username):
 
 @blueprint.route('/account/<id:username>/logs')
 @login_required
-def account_logs(username):
+def logs(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -281,12 +281,12 @@ def account_logs(username):
              'user_agent': row[3],
              'timestamp': row[4]}
             for row in cursor]
-    return flask.render_template('user/account_logs.html', user=user, logs=logs)
+    return flask.render_template('user/logs.html', user=user, logs=logs)
 
 def is_admin_or_self(user):
     "Is the current user admin, or the same as the given user?"
-    if flask.g.is_admin: return True
     if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
     return flask.g.current_user['username'] == user['username']
 
 def is_admin_and_not_self(user):

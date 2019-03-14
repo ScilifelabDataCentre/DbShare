@@ -1,8 +1,14 @@
 {% extends 'base.html' %}
 
-{% block head_title %}User {{ user['username'] }} logs{% endblock %}
+{% block head_title %}
+{{ resource['type'].capitalize() }} {{ resource['rid'] }} logs
+{% endblock %}
 
-{% block body_title %}User {{ user['username'] }} logs{% endblock %}
+{% block body_title %}
+{{ resource['type'].capitalize() }}
+<a href="{{ utils.get_resource_url(resource) }}">{{ resource['rid'] }}</a>
+logs
+{% endblock %}
 
 {% block main %}
 <table class="table">
@@ -27,9 +33,4 @@
     {% endfor %}
   </tbody>
 </table>
-{% endblock %}
-
-{% block actions %}
-<a href="{{ url_for('.account', username=user['username']) }}"
-   role="button" class="btn btn-secondary">Account</a>
 {% endblock %}

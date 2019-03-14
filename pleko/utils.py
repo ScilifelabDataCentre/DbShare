@@ -36,6 +36,12 @@ def get_absolute_url(endpoint, values={}, query={}):
         url += '?' + urllib.parse.urlencode(query)
     return url
 
+def get_resource_url(resource):
+    if resource['type'] == pleko.constants.RELDB:
+        return flask.url_for('reldb.index', rid=resource['rid'])
+    else:
+        raise ValueError('unknown resource type')
+
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."
     return uuid.uuid4().hex

@@ -2,25 +2,21 @@
 
 import re
 
-EMAIL_RX      = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
-IUID_RX       = re.compile(r'^[a-f0-9]{32,32}$')
 IDENTIFIER_RX = re.compile(r'^[a-z][a-z0-9_]*$', re.I)
+EMAIL_RX      = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
-# Entity types
-USER = 'user'
-LOG  = 'log'
+# User roles
+ADMIN = 'admin'
+USER  = 'user'
+USER_ROLES = (ADMIN, USER)
 
-# User statuses and roles
+# User statuses
 PENDING  = 'pending'
 ENABLED  = 'enabled'
 DISABLED = 'disabled'
 USER_STATUSES = (PENDING, ENABLED, DISABLED)
 
-ADMIN     = 'admin'
-# USER defined above
-USER_ROLES = (ADMIN, USER)
-
 # Resource types
-RDB = 'rdb'
-RESOURCE_TYPES = (RDB, )
-RESOURCE_DESCR = {RDB: 'relational database'}
+RELDB = 'reldb'
+RESOURCE_TYPES = (RELDB, )
+RESOURCE_DESCR = {RELDB: 'relational database'}

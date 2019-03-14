@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Reldb {{ resource['rid'] }}{% endblock %}
+
+{% block body_title %}Reldb {{ resource['rid'] }}{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md-8">
+    <p>
+      {{ resource.get('description') or '-' }}
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <table id="tables" class="table">
+      <thead>
+        <tr>
+          <th>Tables</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for table in tables %}
+        <tr>
+          <th>{{ table['name'] }}</th>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block info %}
+{% include 'resource/info.html' %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#tables").DataTable( {
+      "pagingType": "full_numbers",
+      "order": [[ 0, "asc"]],
+    });
+  });
+</script>
+{% endblock %}

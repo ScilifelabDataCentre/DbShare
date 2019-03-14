@@ -7,8 +7,8 @@
   <thead>
     <tr>
       <th>Resource</th>
-      <th>Type</th>
       <th>Description</th>
+      <th>Type</th>
       <th>Public</th>
       <th>Owner</th>
       <th>Modified</th>
@@ -17,9 +17,12 @@
   <tbody>
     {% for resource in resources %}
     <tr>
-      <td>{{ resource['rid'] }}</td>
-      <td>{{ resource['type'] }}</td>
+      <td>
+        <a href="{{ utils.get_resource_url(resource) }}">
+          {{ resource['rid'] }}</a>
+      </td>
       <td>{{ resource.get('description') or '-' }}</td>
+      <td>{{ resource['type'] }}</td>
       <td>{{ resource['public'] and 'yes' or 'no'}}</td>
       <td>{{ resource['owner'] }}</td>
       <td class="localtime">{{ resource['modified'] }}</td>

@@ -1,0 +1,15 @@
+<div class="mt-4">
+  Owner: {{ resource['owner'] }}
+</div>
+<div class="mt-2">
+  Public: {{ resource['public'] and 'yes' or 'no' }}
+</div>
+<div class="mt-2">
+  Modified <span class="localtime">{{ resource['modified'] }}</span>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('resource.logs', rid=resource['rid']) }}">Logs</a>
+</div>
+<div class="mt-2">
+  Created <span class="localtime">{{ resource['created'] }}</span>
+</div>
