@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Reldb {{ resource['rid'] }}{% endblock %}
+{% block head_title %}Relational database {{ resource['rid'] }}{% endblock %}
 
-{% block body_title %}Reldb {{ resource['rid'] }}{% endblock %}
+{% block body_title %}Relational database {{ resource['rid'] }}{% endblock %}
 
 {% block main %}
 <div class="row">
@@ -15,35 +15,49 @@
 
 <div class="row">
   <div class="col-md-6">
-    <table id="tables" class="table">
-      <thead>
-        <tr>
-          <th>Tables</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for table in tables %}
-        <tr>
-          <th>{{ table['name'] }}</th>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div class="card">
+      <div class="card-header bg-secondary text-white">Tables</div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Schema</th>
+              <th># rows</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if tables %}
+            {% for table in tables %}
+            <tr>
+              <td>
+                <a href="{{ url_for('.schema', rid=resource['rid'], tablename=table['name']) }}">
+                  {{ table['name'] }}</a>
+              </td>
+              <td>
+                {{ table['nrows'] }}
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td><i>no tables</i></td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}
 
-{% block info %}
-{% include 'resource/info.html' %}
+{% block actions %}
+{% if may_create_table %}
+<a href="{{ url_for('.create_table', rid=resource['rid']) }}"
+   role="button" class="btn btn-primary">Create table</a>
+{% endif %}
 {% endblock %}
 
-{% block javascript %}
-<script>
-  $(function() {
-    $("#tables").DataTable( {
-      "pagingType": "full_numbers",
-      "order": [[ 0, "asc"]],
-    });
-  });
-</script>
+{% block info %}
+{% include 'info.html' %}
 {% endblock %}

@@ -46,6 +46,12 @@ def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."
     return uuid.uuid4().hex
 
+def to_bool(s):
+    "Convert string value into boolean."
+    if not s: return False
+    s = s.lower()
+    return s in ('true', 't', 'yes', 'y')
+
 def get_time(offset=None):
     """Current date and time (UTC) in ISO format, with millisecond precision.
     Add the specified offset in seconds, if given.

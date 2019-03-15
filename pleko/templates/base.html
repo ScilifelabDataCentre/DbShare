@@ -50,7 +50,18 @@
           </li>
           {% endif %}
         </ul>
-        {% include "user/navbar.html" %}
+        <ul class="nav justify-content-end">
+          <li class="mr-2">
+            {% if g.current_user %}
+            <a href="{{ url_for('user.account', username=g.current_user['username']) }}"
+               class="btn btn-secondary">
+              {{ g.current_user['username'] }}</a>
+            {% else %}
+            <a href="{{ url_for('user.login') }}" class="btn btn-secondary">
+              Login</a>
+            {% endif %}
+          </li>
+        </ul>
       </div>
     </nav>
 

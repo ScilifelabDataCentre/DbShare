@@ -1,14 +1,14 @@
 "Pleko: Experimental web-based toolbench for data handling."
 
-__version__ = '0.4.2'
+__version__ = '0.4.3'
 
 default_config = dict(
     VERSION = __version__,
     SERVER_NAME = '127.0.0.1:5000',
     SITE_NAME = 'Pleko',
     GITHUB_URL = 'https://github.com/pekrau/Pleko',
-    MASTERDB_FILEPATH = 'masterdb.sqlite3',
-    RELDB_DIRPATH = 'reldb',
+    MASTERDB_FILEPATH = 'data/masterdb.sqlite3',
+    RELDB_DIRPATH = 'data/reldb',
     SECRET_KEY = None,
     SALT_LENGTH = 12,
     USER_ENABLE_IMMEDIATELY = False,

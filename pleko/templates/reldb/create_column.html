@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Create column in table {{ resource['rid'] }}.{{ tablename }}{% endblock %}
+
+{% block body_title %}Create column in table {{ resource['rid'] }}.{{ tablename }}{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md-6">
+    <div class="card border border-success">
+      <div class="card-body">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Column</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if columns %}
+            {% for column in columns %}
+            <tr>
+              <th>{{ column['name'] }}</th>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td><i>no columns</i></td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
