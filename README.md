@@ -1,30 +1,64 @@
 # Pleko
 
-Web-based toolbench for data resource management and publication.
+Web-based relational database system, based on Sqlite.
 
 πλέκω: to plait, twine, twist, weave, braid
 
-## Relational database (Sqlite3)
+## `/`
 
-`/rdb/{rid}`
+List of databases, depending on access for logged-in user.
 
-List of tables, indexes, queries.
-Add tables, indexes, queries.
-Delete tables, indexes, queries.
+## `/db`
 
-`/rdb/{rid}/table/{tableid}`
+Create a new database.
 
-Table info, column list.
-Add column, index.
-Delete column, index.
+## `/db/{dbid}`
 
-`/rdb/{rid}/table/{tableid}/upload`
+List of tables (# rows), indexes, views.
+
+## `/db/{dbid}/table`
+
+Create table.
+
+## `/db/{dbid}/upload`
+
+Upload CSV file, creating table.
+
+## `/db/{dbid}/table/{tid}`
+
+View table definition, # rows.
+Delete table.
+
+## `/db/{dbid}/table/{tid}/column`
+
+Create column.
+
+## `/db/{dbid}/table/{tid}/index`
+
+Create index.
+
+## `/db/{dbid}/table/{tid}/index/{iid}
+
+Delete index.`
+
+## `/db/{dbid}/table/{tid}/rows`
+
+Display table rows.
+
+## `/db/{dbid}/table/{tid}/upload`
 
 Load CSV file.
 
-`/rdb/{rid}/table/{tableid}/download`
+## `/db/{dbid}/table/{tid}/download`
 
 Download CSV file.
 
-## JSON documents database (CouchDB)
+## `/db/{dbid}/table/{tid}/view`
+
+Create view.
+
+## `/db/{dbid}/table/{tid}/view/{vid}`
+
+Display view rows.
+Delete view.
 
