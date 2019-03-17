@@ -14,11 +14,24 @@ Create a new database.
 
 ## `/db/{dbid}`
 
-List of tables (# rows), indexes, views.
+List of tables (# rows), views.
 
 ## `/db/{dbid}/table`
 
 Create table.
+
+## `/db/{dbid}/query`
+
+Query multiple tables.
+
+## `/db/{dbid}/view`
+
+Create view.
+
+## `/db/{dbid}/view/{vid}`
+
+Display view rows.
+Delete view.
 
 ## `/db/{dbid}/upload`
 
@@ -26,7 +39,7 @@ Upload CSV file, creating table.
 
 ## `/db/{dbid}/table/{tid}`
 
-View table definition, # rows.
+View table definition, indexes, etc.
 Delete table.
 
 ## `/db/{dbid}/table/{tid}/column`
@@ -39,11 +52,15 @@ Create index.
 
 ## `/db/{dbid}/table/{tid}/index/{iid}`
 
-Delete index.`
+Delete index.
 
 ## `/db/{dbid}/table/{tid}/rows`
 
 Display table rows.
+
+## `/db/{dbid}/table/{tid}/query`
+
+Query the table.
 
 ## `/db/{dbid}/table/{tid}/upload`
 
@@ -52,13 +69,4 @@ Load CSV file.
 ## `/db/{dbid}/table/{tid}/download`
 
 Download CSV file.
-
-## `/db/{dbid}/table/{tid}/view`
-
-Create view.
-
-## `/db/{dbid}/table/{tid}/view/{vid}`
-
-Display view rows.
-Delete view.
 
