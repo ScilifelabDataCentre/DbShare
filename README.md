@@ -37,7 +37,7 @@ Create column.
 
 Create index.
 
-## `/db/{dbid}/table/{tid}/index/{iid}
+## `/db/{dbid}/table/{tid}/index/{iid}`
 
 Delete index.`
 
