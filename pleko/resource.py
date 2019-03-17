@@ -4,16 +4,15 @@ import json
 
 import flask
 
-import pleko.utils
-from pleko.user import (get_current_user,
-                        login_required,
-                        admin_required)
+from pleko import utils
+from pleko.user import login_required
+import pleko.reldb
 
 
 def init_masterdb(db):
     "Initialize resource tables in the master database, if not done."
     db.execute("CREATE TABLE IF NOT EXISTS resources"
-               "(rid PRIMARY KEY,"
+               "(rid TEXT PRIMARY KEY,"
                " type TEXT NOT NULL,"
                " owner TEXT NOT NULL REFERENCES users (username),"
                " description TEXT,"
@@ -49,7 +48,7 @@ def get_resource(rid, db=None):
             'type':        row[0],
             'owner':       row[1],
             'description': row[2],
-            'public':      row[3],
+            'public':      bool(row[3]),
             'profile':     json.loads(row[4]),
             'created':     row[5],
             'modified':    row[6]}
@@ -57,7 +56,7 @@ def get_resource(rid, db=None):
 def get_resources(public=True, db=None):
     "Get a list of all resources."
     if db is None:
-        db = pleko.utils.get_masterdb()
+        db = utils.get_masterdb()
     sql = "SELECT rid, type, owner, description, public, profile," \
           " created, modified FROM resources"
     if public:
@@ -68,30 +67,89 @@ def get_resources(public=True, db=None):
              'type':        row[1],
              'owner':       row[2],
              'description': row[3],
-             'public':      row[4],
+             'public':      bool(row[4]),
              'profile':     json.loads(row[5]),
              'created':     row[6],
              'modified':    row[7]}
             for row in cursor]
+
+def has_read_access(resource):
+    "Does the current user (if any) have read access to the resource?"
+    if resource['public']: return True
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == resource['owner']
+
+def get_resource_check_read(rid, db=None):
+    """Get the resource and check that the current user as read access.
+    Raise ValueError if any problem.
+    """
+    resource = get_resource(rid, db=db)
+    if resource is None:
+        raise ValueError('no such resource')
+    if not has_read_access(resource):
+        raise ValueError('may not read the resource')
+    return resource
+
+def has_write_access(resource):
+    "Does the current user (if any) have write access to the resource?"
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == resource['owner']
+
+def get_resource_check_write(rid, db=None):
+    """Get the resource and check that the current user as write access.
+    Raise ValueError if any problem.
+    """
+    resource = get_resource(rid, db=db)
+    if resource is None:
+        raise ValueError('no such resource')
+    if not has_write_access(resource):
+        raise ValueError('may not write to the resource')
+    return resource
 
 
 blueprint = flask.Blueprint('resource', __name__)
 
 @blueprint.route('/', methods=["GET", "POST"])
 @login_required
-def index():
-    if pleko.utils.is_method_GET():
-        return flask.render_template('resource/index.html')
-    if pleko.utils.is_method_POST():
+def create():
+    if utils.is_method_GET():
+        return flask.render_template('create.html')
+    if utils.is_method_POST():
         try:
             with ResourceContext() as ctx:
-                ctx.set_rid(flask.request.form['rid'])
-                ctx.set_type(flask.request.form['type'])
+                rid = flask.request.form['rid']
+                ctx.set_rid(rid)
+                type = flask.request.form['type']
+                ctx.set_type(type)
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
 
+@blueprint.route('/<id:rid>/logs')
+def logs(rid):
+    resource = get_resource(rid=rid)
+    if resource is None:
+        flask.flash('no such resource', 'error')
+        return flask.redirect(flask.url_for('index'))
+    if not has_read_access(resource):
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('index'))
+    cursor = flask.g.db.cursor()
+    sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
+          " FROM resources_logs WHERE rid=? ORDER BY timestamp DESC"
+    cursor.execute(sql, (resource['rid'],))
+    logs = [{'new': json.loads(row[0]),
+             'editor': row[1],
+             'remote_addr': row[2],
+             'user_agent': row[3],
+             'timestamp': row[4]}
+            for row in cursor]
+    return flask.render_template('resource_logs.html',
+                                 resource=resource,
+                                 logs=logs)
 
 class ResourceContext:
     "Context for creating, modifying and saving a resource."
@@ -100,12 +158,12 @@ class ResourceContext:
         if resource is None:
             self.resource = {'owner': flask.g.current_user['username'],
                              'profile': {},
-                             'created': pleko.utils.get_time()}
+                             'created': utils.get_time()}
             self.orig = {}
         else:
             self.resource = resource
             self.orig = resource.copy()
-        self.db = pleko.utils.get_masterdb()
+        self.db = utils.get_masterdb()
 
     def __enter__(self):
         return self
@@ -115,7 +173,7 @@ class ResourceContext:
         for key in ['rid', 'type', 'owner']:
             if not self.resource.get(key):
                 raise ValueError("invalid resource: %s not set" % key)
-        self.resource['modified'] = pleko.utils.get_time()
+        self.resource['modified'] = utils.get_time()
         cursor = self.db.cursor()
         cursor.execute("SELECT COUNT(*) FROM resources WHERE rid=?",
                        (self.resource['rid'],))
@@ -133,8 +191,10 @@ class ResourceContext:
                                                  ensure_ascii=False),
                                       self.resource['modified'],
                                       self.resource['rid']))
-            # Add resource
+            # Create resource
             else:
+                if type == pleko.constants.RELDB:
+                    pleko.reldb.create(self.resource['rid'])
                 sql = "INSERT INTO resources" \
                       " (rid, type, owner, description, public," \
                       "  profile, created, modified)" \
@@ -172,7 +232,7 @@ class ResourceContext:
                                   editor,
                                   remote_addr,
                                   user_agent,
-                                  pleko.utils.get_time()))
+                                  utils.get_time()))
 
     def set_rid(self, rid):
         if 'rid' in self.resource:

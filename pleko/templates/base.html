@@ -50,7 +50,18 @@
           </li>
           {% endif %}
         </ul>
-        {% include "user/navbar.html" %}
+        <ul class="nav justify-content-end">
+          <li class="mr-2">
+            {% if g.current_user %}
+            <a href="{{ url_for('user.account', username=g.current_user['username']) }}"
+               class="btn btn-secondary">
+              {{ g.current_user['username'] }}</a>
+            {% else %}
+            <a href="{{ url_for('user.login') }}" class="btn btn-secondary">
+              Login</a>
+            {% endif %}
+          </li>
+        </ul>
       </div>
     </nav>
 
@@ -80,8 +91,14 @@
           {% endblock %}
         </div>
         <div class="col-sm-2">
-          {% block actions %}
-          {% endblock %}
+          <div>
+            {% block actions %}
+            {% endblock %}
+          </div>
+          <div>
+            {% block info %}
+            {% endblock %}
+          </div>
         </div>
       </div>
       {% block footer %}
@@ -108,7 +125,7 @@
     <script src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
     {# localtime 0.9.1 (static) #}
     <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
-    {% block javascript_code %}
+    {% block javascript %}
     {% endblock %}
   </body>
 </html>

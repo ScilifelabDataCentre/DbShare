@@ -9,6 +9,7 @@ import pleko.constants
 import pleko.utils
 import pleko.user
 import pleko.resource
+import pleko.reldb
 
 def create_app():
     "Return the configured app object. Initialize the masterdb, if not done."
@@ -28,6 +29,7 @@ def create_app():
 app = create_app()
 app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
 app.register_blueprint(pleko.resource.blueprint, url_prefix='/resource')
+app.register_blueprint(pleko.reldb.blueprint, url_prefix='/reldb')
 
 
 @app.before_request
