@@ -7,6 +7,7 @@ import flask
 import pleko
 import pleko.db
 import pleko.master
+import pleko.schema
 import pleko.table
 import pleko.user
 from pleko import constants
@@ -28,6 +29,7 @@ def create_app():
 app = create_app()
 app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
 app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
+app.register_blueprint(pleko.schema.blueprint, url_prefix='/schema')
 app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 
 

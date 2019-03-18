@@ -1,4 +1,4 @@
+pleko/data
 *.json
-*.sqlite3
 *.pyc
 *~

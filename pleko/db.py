@@ -1,4 +1,4 @@
-"Pleko database resources."
+"Pleko database web end-points."
 
 import copy
 import json
@@ -97,6 +97,7 @@ blueprint = flask.Blueprint('db', __name__)
 @blueprint.route('/', methods=["GET", "POST"])
 @login_required
 def create():
+    "Create a database."
     if utils.is_method_GET():
         return flask.render_template('db/create.html')
     elif utils.is_method_POST():
@@ -110,17 +111,28 @@ def create():
 
 @blueprint.route('/<id:dbid>')
 def index(dbid):
+    "Display database tables and metadata."
     try:
         db = get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
+    cursor = get_cnx(dbid).cursor()
+    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    cursor.execute(sql, ('table',))
+    tables = [{'tableid': row[0]} for row in cursor]
+    sql = "SELECT COUNT(*) FROM %s"
+    for table in tables:
+        cursor.execute(sql % table['tableid'])
+        table['nrows'] = cursor.fetchone()[0]
     return flask.render_template('db/index.html',
                                  db=db,
+                                 tables=tables,
                                  has_write_access=has_write_access(db))
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
+    "Display the logs for a database."
     try:
         db = get_check_read(dbid)
     except ValueError as error:

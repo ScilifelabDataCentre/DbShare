@@ -1,4 +1,4 @@
-"User profile and login/logout. Flask blueprint."
+"User profile and login/logout web end-points."
 
 import functools
 import json

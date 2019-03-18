@@ -1,11 +1,11 @@
-"Pleko table resources."
+"Pleko table web end-points."
 
 import flask
 
+import pleko.db
 import pleko.master
 from pleko import constants
 from pleko import utils
-from pleko.db import get_check_write
 from pleko.user import login_required
 
 
@@ -16,13 +16,23 @@ blueprint = flask.Blueprint('table', __name__)
 def create(dbid):
     "Create a table with columns in the database."
     try:
-        db = get_check_write(dbid)
+        db = pleko.db.get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
     if utils.is_method_GET():
         return flask.render_template('table/create.html', db=db)
     elif utils.is_method_POST():
+        tableid = flask.request.form.get('tableid')
+        if not tableid:
+            raise ValueError('no table identifier given')
+        if not constants.IDENTIFIER_RX.match(tableid):
+            raise ValueError('invalid table identifier')
+        cursor = pleko.db.get_cnx(dbid).cursor()
+        sql = "SELECT COUNT(*) FROM sqlite_master WHERE name=?"
+        cursor.execute(sql, (tableid,))
+        if cursor.fetchone()[0] != 0:
+            raise ValueError('table identifier already defined')
         identifiers = set()
         columns = []
         for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
@@ -43,9 +53,23 @@ def create(dbid):
             columns.append(column)
         if not columns:
             raise ValueError('no columns defined')
+        primarykey = flask.request.form.get('columnprimarykey')
+        if primarykey:
+            try:
+                primarykey = int(primarykey)
+                if primarykey < 0: raise ValueError
+                if primarykey >= len(columns): raise ValueError
+                columns[primarykey]['primarykey'] = True
+            except ValueError:
+                pass
         coldefs = []
         for column in columns:
-            coldef = "{identifier} {type}".format(column)
-            if column['primarykey']:
+            coldef = "{identifier} {type}".format(**column)
+            if column.get('primarykey'):
                 coldef += ' PRIMARY KEY'
-                %%%
+            if column['notnull']:
+                coldef += ' NOT NULL'
+            coldefs.append(coldef)
+        sql = "CREATE TABLE %s (%s)" % (tableid, ', '.join(coldefs))
+        cursor.execute(sql)
+        return flask.redirect(flask.url_for('db.index', dbid=dbid))

@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Schema for table {{ schema['tableid'] }} in database {{ db['dbid'] }}
+{% endblock %}
+
+{% block body_title %}
+Schema for table {{ schema['tableid'] }} in database 
+<a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
+{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">Columns</div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Identifier</th>
+	  <th>Type</th>
+	  <th></th>
+	  <th></th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['columnid'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	  <td>{{ column['primarykey'] and 'PRIMARY KEY' or '' }}</td>
+	  <td>{{ column['notnull'] and 'NOT NULL' or '' }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

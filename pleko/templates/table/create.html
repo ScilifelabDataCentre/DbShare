@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create a table in {{ db['dbid'] }}{% endblock %}
+{% block head_title %}Create a table in database {{ db['dbid'] }}{% endblock %}
 
 {% block body_title %}
-Create a table in
+Create a table in database
 <a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
 {% endblock %}
 
@@ -38,11 +38,11 @@ Create a table in
     <label for="column{{ n }}id" class="col-md-1 col-form-label text-center">
       {{ n + 1 }}</label>
     <div class="form-group col-md-3">
-      <input id="column{{ n }}id" name="columnid{{ n }}"
+      <input id="column{{ n }}id" name="column{{ n }}id"
              type="text" class="form-control">
     </div>
     <div class="form-group col-md-2">
-      <select id="column{{id}}type" name="column{{id}}type"
+      <select id="column{{ n }}type" name="column{{ n }}type"
               class="form-control">
         {% for type in constants.COLUMN_TYPES %}
         <option>{{ type }}</option>
