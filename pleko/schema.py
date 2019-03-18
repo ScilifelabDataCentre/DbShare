@@ -1,15 +1,26 @@
-"Pleko table schema web end-points."
-
-import copy
-import json
-import os.path
-import sqlite3
+"Pleko table schema endpoints."
 
 import flask
 
 import pleko.db
-from pleko import utils
 from pleko.user import login_required
+
+
+def get(cursor, tableid):
+    """Get the schema for the given table given the cursor for the database.
+    Raise ValueError if no such table."""
+    sql = 'PRAGMA table_info("%s")' % tableid
+    cursor.execute(sql)
+    rows = list(cursor)
+    if len(rows) == 0:
+        raise ValueError('no such table in database')
+    return {'tableid': tableid,
+            'columns': [{'columnid': row[1],
+                         'type': row[2],
+                         'notnull': bool(row[3]),
+                         'defaultvalue': row[4],
+                         'primarykey': bool(row[5])}
+                        for row in rows]}
 
 
 blueprint = flask.Blueprint('schema', __name__)
@@ -22,20 +33,20 @@ def table(dbid, tableid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cursor = pleko.db.get_cnx(dbid).cursor()
-    sql = 'PRAGMA table_info("%s")' % tableid
-    cursor.execute(sql)
-    rows = list(cursor)
-    if len(rows) == 0:
-        flask.flash('no such table in database', 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
-    schema = {'tableid': tableid,
-              'columns': [{'columnid': row[1],
-                           'type': row[2],
-                           'notnull': bool(row[3]),
-                           'defaultvalue': row[4],
-                           'primarykey': bool(row[5])}
-                          for row in rows]}
-    return flask.render_template('schema/table.html',
-                                 db=db,
-                                 schema=schema)
+    cnx = pleko.db.get_cnx(db['dbid'])
+    try:
+        cursor = cnx.cursor()
+        try:
+            schema = get(cursor, tableid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        sql = "SELECT COUNT(*) FROM %s" % tableid
+        cursor.execute(sql)
+        nrows = cursor.fetchone()[0]
+        return flask.render_template('schema/table.html',
+                                     db=db,
+                                     schema=schema,
+                                     nrows=nrows)
+    finally:
+        cnx.close()

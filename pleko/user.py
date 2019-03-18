@@ -1,4 +1,4 @@
-"User profile and login/logout web end-points."
+"User profile and login/logout endpoints."
 
 import functools
 import json

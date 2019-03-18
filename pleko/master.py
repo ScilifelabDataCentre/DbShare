@@ -64,3 +64,4 @@ def init(app):
                " timestamp TEXT NOT NULL)")
     cnx.execute("CREATE INDEX IF NOT EXISTS dbs_logs_dbid_ix"
                " ON dbs_logs (dbid)")
+    cnx.close()

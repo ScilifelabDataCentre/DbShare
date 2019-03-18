@@ -10,6 +10,10 @@ Schema for table {{ schema['tableid'] }} in database
 {% endblock %}
 
 {% block main %}
+<p>
+  <a href="{{ url_for('rows.index', dbid=db['dbid'], tableid=schema['tableid']) }}">
+    {{ nrows }} rows</a> in the table.
+</p>
 <div class="card border-primary">
   <div class="card-header bg-primary text-white">Columns</div>
   <div class="card-body">

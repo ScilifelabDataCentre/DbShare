@@ -1,4 +1,4 @@
-"Pleko database web end-points."
+"Pleko database endpoints."
 
 import copy
 import json
@@ -117,18 +117,22 @@ def index(dbid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cursor = get_cnx(dbid).cursor()
-    sql = "SELECT name FROM sqlite_master WHERE type=?"
-    cursor.execute(sql, ('table',))
-    tables = [{'tableid': row[0]} for row in cursor]
-    sql = "SELECT COUNT(*) FROM %s"
-    for table in tables:
-        cursor.execute(sql % table['tableid'])
-        table['nrows'] = cursor.fetchone()[0]
-    return flask.render_template('db/index.html',
-                                 db=db,
-                                 tables=tables,
-                                 has_write_access=has_write_access(db))
+    cnx = get_cnx(dbid)
+    try:
+        cursor = cnx.cursor()
+        sql = "SELECT name FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('table',))
+        tables = [{'tableid': row[0]} for row in cursor]
+        sql = "SELECT COUNT(*) FROM %s"
+        for table in tables:
+            cursor.execute(sql % table['tableid'])
+            table['nrows'] = cursor.fetchone()[0]
+        return flask.render_template('db/index.html',
+                                     db=db,
+                                     tables=tables,
+                                     has_write_access=has_write_access(db))
+    finally:
+        cnx.close()
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
@@ -179,64 +183,67 @@ class DbContext:
                        (self.db['dbid'],))
         rows = list(cursor)
         cnx = pleko.master.get()
-        with cnx:
-            # Update database in master
-            if rows[0][0]:
-                sql = "UPDATE dbs SET owner=?, description=?," \
-                      " public=?, profile=?, modified=?" \
-                      " WHERE dbname=?"
-                cnx.execute(sql, (self.db['owner'],
-                                  self.db.get('description'),
-                                  bool(self.db.get('public')),
-                                  json.dumps(self.db['profile'],
-                                             ensure_ascii=False),
-                                  self.db['modified'],
-                                  self.db['dbid']))
-            # Create database in master, meta info in JSON, and Sqlite file
-            else:
-                try:
-                    db = sqlite3.connect(dbpath(self.db['dbid']))
-                except sqlite3.Error as error:
-                    raise ValueError(str(error))
+        try:
+            with cnx:
+                # Update database in master
+                if rows[0][0]:
+                    sql = "UPDATE dbs SET owner=?, description=?," \
+                          " public=?, profile=?, modified=?" \
+                          " WHERE dbname=?"
+                    cnx.execute(sql, (self.db['owner'],
+                                      self.db.get('description'),
+                                      bool(self.db.get('public')),
+                                      json.dumps(self.db['profile'],
+                                                 ensure_ascii=False),
+                                      self.db['modified'],
+                                      self.db['dbid']))
+                # Create database in master, meta info in JSON, and Sqlite file
                 else:
-                    db.close()
-                sql = "INSERT INTO dbs" \
-                      " (dbid, owner, description, public, profile," \
-                      "  created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    try:
+                        db = sqlite3.connect(dbpath(self.db['dbid']))
+                    except sqlite3.Error as error:
+                        raise ValueError(str(error))
+                    else:
+                        db.close()
+                    sql = "INSERT INTO dbs" \
+                          " (dbid, owner, description, public, profile," \
+                          "  created, modified)" \
+                          " VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    cnx.execute(sql, (self.db['dbid'],
+                                      self.db['owner'],
+                                      self.db.get('description'),
+                                      bool(self.db.get('public')),
+                                      json.dumps(self.db['profile'],
+                                                 ensure_ascii=False),
+                                      self.db['created'], 
+                                      self.db['modified']))
+                # Add log entry
+                new = {}
+                for key, value in self.db.items():
+                    if value != self.orig.get(key):
+                        new[key] = value
+                new.pop('modified')
+                try:
+                    editor = flask.g.current_user['username']
+                except AttributeError:
+                    editor = None
+                if flask.has_request_context():
+                    remote_addr = str(flask.request.remote_addr)
+                    user_agent = str(flask.request.user_agent)
+                else:
+                    remote_addr = None
+                    user_agent = None
+                sql = "INSERT INTO dbs_logs (dbid, new, editor," \
+                      " remote_addr, user_agent, timestamp)" \
+                      " VALUES (?, ?, ?, ?, ?, ?)"
                 cnx.execute(sql, (self.db['dbid'],
-                                  self.db['owner'],
-                                  self.db.get('description'),
-                                  bool(self.db.get('public')),
-                                  json.dumps(self.db['profile'],
-                                             ensure_ascii=False),
-                                  self.db['created'], 
-                                  self.db['modified']))
-            # Add log entry
-            new = {}
-            for key, value in self.db.items():
-                if value != self.orig.get(key):
-                    new[key] = value
-            new.pop('modified')
-            try:
-                editor = flask.g.current_user['username']
-            except AttributeError:
-                editor = None
-            if flask.has_request_context():
-                remote_addr = str(flask.request.remote_addr)
-                user_agent = str(flask.request.user_agent)
-            else:
-                remote_addr = None
-                user_agent = None
-            sql = "INSERT INTO dbs_logs (dbid, new, editor," \
-                  " remote_addr, user_agent, timestamp)" \
-                  " VALUES (?, ?, ?, ?, ?, ?)"
-            cnx.execute(sql, (self.db['dbid'],
-                              json.dumps(new, ensure_ascii=False),
-                              editor,
-                              remote_addr,
-                              user_agent,
-                              utils.get_time()))
+                                  json.dumps(new, ensure_ascii=False),
+                                  editor,
+                                  remote_addr,
+                                  user_agent,
+                                  utils.get_time()))
+        finally:
+            cnx.close()
 
     def set_dbid(self, dbid):
         if 'dbid' in self.db:

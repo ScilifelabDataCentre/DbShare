@@ -14,7 +14,9 @@ Create a database.
 
 ## `/db/{dbid}`
 
-List of tables (with # rows), views.
+List of tables (with # rows).
+
+List of views. TODO
 
 Delete the database. TODO
 
@@ -36,11 +38,15 @@ Delete the index. TODO
 
 ## `/schema/{dbid}`
 
-View all table definitions, indexes, etc. PARTLY
+View tables (with # rows).
+
+View indexes. TODO
 
 ## `/schema/{dbid}/{tid}`
 
-View table definition, indexes, etc. PARTLY
+View table definition.
+
+View indexes. TODO
 
 Delete table. TODO
 
