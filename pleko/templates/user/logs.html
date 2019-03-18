@@ -4,7 +4,7 @@
 
 {% block body_title %}
 User
-<a href="{{ url_for('.account', username=user['username']) }}">
+<a href="{{ url_for('.profile', username=user['username']) }}">
   {{ user['username'] }}</a> logs
 {% endblock %}
 

@@ -53,60 +53,6 @@ def get_resource(rid, db=None):
             'created':     row[5],
             'modified':    row[6]}
 
-def get_resources(public=True, db=None):
-    "Get a list of all resources."
-    if db is None:
-        db = utils.get_masterdb()
-    sql = "SELECT rid, type, owner, description, public, profile," \
-          " created, modified FROM resources"
-    if public:
-        sql += " WHERE public=1"
-    cursor = db.cursor()
-    cursor.execute(sql)
-    return [{'rid':         row[0],
-             'type':        row[1],
-             'owner':       row[2],
-             'description': row[3],
-             'public':      bool(row[4]),
-             'profile':     json.loads(row[5]),
-             'created':     row[6],
-             'modified':    row[7]}
-            for row in cursor]
-
-def has_read_access(resource):
-    "Does the current user (if any) have read access to the resource?"
-    if resource['public']: return True
-    if not flask.g.current_user: return False
-    if flask.g.is_admin: return True
-    return flask.g.current_user['username'] == resource['owner']
-
-def get_resource_check_read(rid, db=None):
-    """Get the resource and check that the current user as read access.
-    Raise ValueError if any problem.
-    """
-    resource = get_resource(rid, db=db)
-    if resource is None:
-        raise ValueError('no such resource')
-    if not has_read_access(resource):
-        raise ValueError('may not read the resource')
-    return resource
-
-def has_write_access(resource):
-    "Does the current user (if any) have write access to the resource?"
-    if not flask.g.current_user: return False
-    if flask.g.is_admin: return True
-    return flask.g.current_user['username'] == resource['owner']
-
-def get_resource_check_write(rid, db=None):
-    """Get the resource and check that the current user as write access.
-    Raise ValueError if any problem.
-    """
-    resource = get_resource(rid, db=db)
-    if resource is None:
-        raise ValueError('no such resource')
-    if not has_write_access(resource):
-        raise ValueError('may not write to the resource')
-    return resource
 
 
 blueprint = flask.Blueprint('resource', __name__)

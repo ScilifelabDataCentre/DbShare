@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Relational database {{ db['dbid'] }}{% endblock %}
+
+{% block body_title %}Relational database {{ db['dbid'] }}{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md-8">
+    <p>
+      {{ db.get('description') or '-' }}
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header bg-primary text-white">Tables</div>
+      <div class="card-body">
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Schema</th>
+              <th># rows</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if tables %}
+            {% for table in tables %}
+            <tr>
+              <td>
+                <a href="{{ url_for('.schema', dbid=db['dbid'], tablename=table['name']) }}">
+                  {{ table['name'] }}</a>
+              </td>
+              <td>
+                {{ table['nrows'] }}
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td><i>no tables</i></td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+{% if has_write_access %}
+<p>
+  <a href="{{ url_for('table.create', dbid=db['dbid']) }}"
+     role="button" class="btn btn-primary">Create table</a>
+</p>
+{% endif %}
+{% endblock %}
+
+{% block info %}
+<div class="mt-4">
+  Owner:
+  {% if g.current_user %}
+  <a href="{{ url_for('user.profile', username=db['owner'])}}">
+    {{ db['owner'] }}</a>
+  {% else %}
+    {{ db['owner'] }}
+  {% endif %}
+</div>
+<div class="mt-2">
+  Public: {{ db['public'] and 'yes' or 'no' }}
+</div>
+<div class="mt-2">
+  Modified <span class="localtime">{{ db['modified'] }}</span>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('db.logs', dbid=db['dbid']) }}">Logs</a>
+</div>
+<div class="mt-2">
+  Created <span class="localtime">{{ db['created'] }}</span>
+</div>
+{% endblock %}

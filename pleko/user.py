@@ -10,35 +10,12 @@ import flask
 import flask_mail
 import werkzeug.security
 
+import pleko.master
 from pleko import constants
 from pleko import utils
 
 
-def init_masterdb(db):
-    "Initialize user tables in the master database, if not done."
-    db.execute("CREATE TABLE IF NOT EXISTS users"
-               "(username TEXT PRIMARY KEY,"
-               " email TEXT NOT NULL UNIQUE,"
-               " password TEXT,"
-               " apikey TEXT,"
-               " role TEXT NOT NULL,"
-               " status TEXT NOT NULL,"
-               " profile TEXT NOT NULL,"
-               " created TEXT NOT NULL,"
-               " modified TEXT NOT NULL)")
-    db.execute("CREATE INDEX IF NOT EXISTS users_apikey_ix"
-               " ON users (apikey)")
-    db.execute("CREATE TABLE IF NOT EXISTS users_logs"
-               "(username TEXT NOT NULL REFERENCES users (username),"
-               " new TEXT NOT NULL,"
-               " editor TEXT,"
-               " remote_addr TEXT,"
-               " user_agent TEXT,"
-               " timestamp TEXT NOT NULL)")
-    db.execute("CREATE INDEX IF NOT EXISTS users_logs_username_ix"
-               " ON users_logs (username)")
-
-def get_user(username=None, email=None, apikey=None, db=None):
+def get_user(username=None, email=None, apikey=None, cnx=None):
     """Return the user for the given username, email or apikey.
     Return None if no such user.
     """
@@ -53,14 +30,15 @@ def get_user(username=None, email=None, apikey=None, db=None):
         criterion = " WHERE apikey=?"
     else:
         raise ValueError('neither username, email nor apikey provided')
-    if db is None:
-        db = flask.g.db
-    cursor = db.cursor()
-    sql = "SELECT username, email, password, apikey," \
-          " role, status, profile, created, modified FROM users" + criterion
+    if cnx is None:
+        cursor = pleko.master.cursor()
+    else:
+        cursor = cnx.cursor()
+    sql = "SELECT username, email, password, apikey, role, status," \
+          " created, modified FROM users" + criterion
     cursor.execute(sql, (identifier,))
     rows = list(cursor)
-    if len(rows) != 1: return None
+    if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
     return {'username': row[0],
             'email':    row[1],
@@ -68,9 +46,8 @@ def get_user(username=None, email=None, apikey=None, db=None):
             'apikey':   row[3],
             'role':     row[4],
             'status':   row[5],
-            'profile':  json.loads(row[6]),
-            'created':  row[7],
-            'modified': row[8]}
+            'created':  row[6],
+            'modified': row[7]}
     
 def get_current_user():
     """Return the user for the current session.
@@ -90,7 +67,7 @@ def login_required(f):
     @functools.wraps(f)
     def wrap(*args, **kwargs):
         if not flask.g.current_user:
-            url = flask.url_for('.login')
+            url = flask.url_for('user.login')
             query = urllib.parse.urlencode({'next': flask.request.base_url})
             url += '?' + query
             return flask.redirect(url)
@@ -115,7 +92,7 @@ blueprint = flask.Blueprint('user', __name__)
 def login():
     "Login to a user account."
     if utils.is_method_GET():
-        return flask.render_template('login.html',
+        return flask.render_template('user/login.html',
                                      next=flask.request.args.get('next'))
     if utils.is_method_POST():
         username = flask.request.form.get('username')
@@ -158,7 +135,7 @@ def logout():
 def register():
     "Register a new user account."
     if utils.is_method_GET():
-        return flask.render_template('register.html')
+        return flask.render_template('user/register.html')
     elif utils.is_method_POST():
         try:
             with UserContext() as ctx:
@@ -180,7 +157,7 @@ def register():
                 "{} user account pending".format(config['SITE_NAME']),
                 recipients=db.get_admins_email())
             message.body = "To enable the user account, go to {}".format(
-                utils.get_absolute_url('.account',
+                utils.get_absolute_url('.profile',
                                        values={'username': user['username']}))
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
@@ -191,7 +168,7 @@ def register():
 def reset():
     "Reset the password for a user account and send email."
     if utils.is_method_GET():
-        return flask.render_template('reset.html')
+        return flask.render_template('user/reset.html')
     elif utils.is_method_POST():
         try:
             user = get_user(email=flask.request.form['email'])
@@ -223,7 +200,7 @@ def password():
     "Set the password for a user account, and login user."
     if utils.is_method_GET():
         return flask.render_template(
-            'password.html',
+            'user/password.html',
             username=flask.request.args.get('username'),
             code=flask.request.args.get('code'))
     elif utils.is_method_POST():
@@ -245,9 +222,9 @@ def password():
             do_login(username, password)
         return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/account/<id:username>')
+@blueprint.route('/profile/<id:username>')
 @login_required
-def account(username):
+def profile(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -256,11 +233,11 @@ def account(username):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     enable_disable = is_admin_and_not_self(user)
-    return flask.render_template('account.html',
+    return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=enable_disable)
 
-@blueprint.route('/account/<id:username>/logs')
+@blueprint.route('/profile/<id:username>/logs')
 @login_required
 def logs(username):
     user = get_user(username=username)
@@ -270,7 +247,7 @@ def logs(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
-    cursor = flask.g.db.cursor()
+    cursor = flask.g.cnx.cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
@@ -280,7 +257,7 @@ def logs(username):
              'user_agent': row[3],
              'timestamp': row[4]}
             for row in cursor]
-    return flask.render_template('account_logs.html', user=user, logs=logs)
+    return flask.render_template('user/logs.html', user=user, logs=logs)
 
 def is_admin_or_self(user):
     "Is the current user admin, or the same as the given user?"
@@ -297,7 +274,7 @@ def is_admin_and_not_self(user):
 @blueprint.route('/edit/<id:username>', methods=["GET", "POST"])
 @login_required
 def edit(username):
-    "Edit the user account."
+    "Edit the user profile."
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -306,7 +283,7 @@ def edit(username):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('index'))
     if utils.is_method_GET():
-        return flask.render_template('account_edit.html',
+        return flask.render_template('user/edit.html',
                                      user=user,
                                      change_role=is_admin_and_not_self(user))
     elif utils.is_method_POST():
@@ -319,15 +296,15 @@ def edit(username):
             if flask.request.form.get('apikey'):
                 ctx.set_apikey()
         return flask.redirect(
-            flask.url_for('.account', username=user['username']))
+            flask.url_for('.profile', username=user['username']))
 
-@blueprint.route('/accounts')
+@blueprint.route('/users')
 @login_required
 @admin_required
-def accounts():
-    cursor = flask.g.db.cursor()
+def users():
+    cursor = flask.g.cnx.cursor()
     sql = "SELECT username, email, password, apikey," \
-          " role, status, profile, created, modified FROM users"
+          " role, status, created, modified FROM users"
     cursor.execute(sql)
     users = [{'username': row[0],
               'email':    row[1],
@@ -335,13 +312,12 @@ def accounts():
               'apikey':   row[3],
               'role':     row[4],
               'status':   row[5],
-              'profile':  json.loads(row[6]),
-              'created':  row[7],
-              'modified': row[8]}
+              'created':  row[6],
+              'modified': row[7]}
              for row in cursor]
-    return flask.render_template('accounts.html', users=users)
+    return flask.render_template('user/users.html', users=users)
 
-@blueprint.route('/account/<id:username>/enable', methods=["POST"])
+@blueprint.route('/enable/<id:username>', methods=["POST"])
 @login_required
 @admin_required
 def enable(username):
@@ -353,9 +329,9 @@ def enable(username):
         ctx.set_status(constants.ENABLED)
         ctx.set_password()
     send_password_code(user, 'enabled')
-    return flask.redirect(flask.url_for('.account', username=username))
+    return flask.redirect(flask.url_for('.profile', username=username))
 
-@blueprint.route('/account/<id:username>/disable', methods=["POST"])
+@blueprint.route('/disable/<id:username>', methods=["POST"])
 @login_required
 @admin_required
 def disable(username):
@@ -365,7 +341,7 @@ def disable(username):
         return flask.redirect(flask.url_for('index'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.DISABLED)
-    return flask.redirect(flask.url_for('.account', username=username))
+    return flask.redirect(flask.url_for('.profile', username=username))
 
 
 class UserContext:
@@ -378,13 +354,12 @@ class UserContext:
             else:
                 status = constants.PENDING
             self.user = {'status': status, 
-                         'profile': {},
                          'created': utils.get_time()}
             self.orig = {}
         else:
             self.user = user
             self.orig = user.copy()
-        self.db = utils.get_masterdb()
+        self.cnx = pleko.master.get()
 
     def __enter__(self):
         return self
@@ -395,41 +370,37 @@ class UserContext:
             if not self.user.get(key):
                 raise ValueError("invalid user: %s not set" % key)
         self.user['modified'] = utils.get_time()
-        cursor = self.db.cursor()
+        cursor = self.cnx.cursor()
         cursor.execute("SELECT COUNT(*) FROM users WHERE username=?",
                        (self.user['username'],))
         rows = list(cursor)
-        with self.db:
+        with self.cnx:
             # Update user
             if rows[0][0]:
                 sql = "UPDATE users SET email=?, password=?," \
-                      " apikey=?, role=?, status=?, profile=?, modified=?" \
+                      " apikey=?, role=?, status=?, modified=?" \
                       " WHERE username=?"
-                self.db.execute(sql, (self.user['email'],
-                                      self.user['password'],
-                                      self.user.get('apikey'),
-                                      self.user['role'],
-                                      self.user['status'],
-                                      json.dumps(self.user['profile'],
-                                                 ensure_ascii=False),
-                                      self.user['modified'],
-                                      self.user['username']))
+                self.cnx.execute(sql, (self.user['email'],
+                                       self.user['password'],
+                                       self.user.get('apikey'),
+                                       self.user['role'],
+                                       self.user['status'],
+                                       self.user['modified'],
+                                       self.user['username']))
             # Add user
             else:
                 sql = "INSERT INTO users" \
                       " (username, email, password, apikey, role," \
-                      "  status, profile, created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                self.db.execute(sql, (self.user['username'],
-                                      self.user['email'],
-                                      self.user['password'],
-                                      self.user.get('apikey'),
-                                      self.user['role'],
-                                      self.user['status'],
-                                      json.dumps(self.user['profile'],
-                                                 ensure_ascii=False),
-                                      self.user['created'], 
-                                      self.user['modified']))
+                      "  status, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                self.cnx.execute(sql, (self.user['username'],
+                                       self.user['email'],
+                                       self.user['password'],
+                                       self.user.get('apikey'),
+                                       self.user['role'],
+                                       self.user['status'],
+                                       self.user['created'], 
+                                       self.user['modified']))
             # Add log entry
             new = {}
             for key, value in self.user.items():
@@ -456,7 +427,7 @@ class UserContext:
             sql = "INSERT INTO users_logs (username, new, editor," \
                   " remote_addr, user_agent, timestamp)" \
                   " VALUES (?, ?, ?, ?, ?, ?)"
-            self.db.execute(sql, (self.user['username'],
+            self.cnx.execute(sql, (self.user['username'],
                                   json.dumps(new, ensure_ascii=False),
                                   editor,
                                   remote_addr,
@@ -468,14 +439,14 @@ class UserContext:
             raise ValueError('username cannot be changed')
         if not constants.IDENTIFIER_RX.match(username):
             raise ValueError('invalid username; must be an identifier')
-        if get_user(username=username, db=self.db):
+        if get_user(username=username, cnx=self.cnx):
             raise ValueError('username already in use')
         self.user['username'] = username
 
     def set_email(self, email):
         if not constants.EMAIL_RX.match(email):
             raise ValueError('invalid email')
-        if get_user(email=email, db=self.db):
+        if get_user(email=email, cnx=self.cnx):
             raise ValueError('email already in use')
         self.user['email'] = email
         if self.user.get('status') == constants.PENDING:

@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Create a table in {{ db['dbid'] }}{% endblock %}
+
+{% block body_title %}
+Create a table in
+<a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
+{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.create', dbid=db['dbid']) }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <div class="form-group">
+    <label for="tid">Table identifier</label>
+    <input id="tableid" name="tableid"
+           type="text" class="form-control"
+           aria-describedby="tableidHelp">
+    <small id="tableidHelp" class="form-text text-muted">
+      An identifier begins with a letter followed by any number of
+      letters, digits or underscores. Character case is not
+      significant.
+    </small>
+  </div>
+  <div class="form-row">
+    <div class="form-group col-md-1 text-center">
+      <label for="column0">Column</label>
+    </div>
+    <div class="form-group col-md-3">
+      <label for="column0id">Identifier</label>
+    </div>
+    <div class="form-group col-md-2">
+      <label for="column0type">Type</label>
+    </div>
+  </div>
+  {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
+  <div class="form-row">
+    <label for="column{{ n }}id" class="col-md-1 col-form-label text-center">
+      {{ n + 1 }}</label>
+    <div class="form-group col-md-3">
+      <input id="column{{ n }}id" name="columnid{{ n }}"
+             type="text" class="form-control">
+    </div>
+    <div class="form-group col-md-2">
+      <select id="column{{id}}type" name="column{{id}}type"
+              class="form-control">
+        {% for type in constants.COLUMN_TYPES %}
+        <option>{{ type }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <div class="form-check form-check-inline pt-1">
+        <input id="column{{ n }}primarykey" name="columnprimarykey"
+               type="radio" class="form-check-input"
+               value="{{ n }}">
+        <label class="form-check-label" for="column{{ n }}primarykey">
+          PRIMARY KEY</label>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="form-check form-check-inline pt-1">
+        <input id="column{{ n }}notnull" name="column{{ n }}notnull"
+               type="checkbox" class="form-check-input"
+               value="true">
+        <label class="form-check-label" for="column{{ n }}notnull">
+          NOT NULL</label>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  <div class="form-row">
+    <div class="col-md-2 offset-md-6">
+      <div class="form-check form-check-inline">
+        <input id="noprimarykey" name="columnprimarykey"
+               type="radio" class="form-check-input"
+               value="{{ -1 }}" checked>
+        <label class="form-check-label" for="noprimarykey">None</label>
+      </div>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">Create</button>
+</form>
+{% endblock %}

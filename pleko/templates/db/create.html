@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Create a database{% endblock %}
+
+{% block body_title %}Create a database{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.create') }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <div class="form-group row">
+    <label for="dbid" class="col-sm-2 col-form-label text-right">
+      Identifier</label>
+    <div class="col-sm-6">
+      <input type="text" class="form-control"
+             id="dbid" name="dbid"
+             aria-describedby="dbidHelp">
+      <small id="dbidHelp" class="form-text text-muted">
+        An identifier begins with a letter, continues with any number of
+        letter, digit or underscore. Character case is not significant.
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <label for="description" class="col-sm-2 col-form-label text-right">
+      Description</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control"
+	     id="description" name="description">
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-sm-2 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Create</button>
+    </div>
+  </div>
+</form>
+{% endblock %}

@@ -1,31 +1,31 @@
 {% extends 'base.html' %}
 
 {% block main %}
-<p>Web-based toolbench for data resource management and publication.</p>
+<p>
+  Web-based relational database system powered by Sqlite.
+</p>
 
 <table id="resources" class="table">
   <thead>
     <tr>
       <th>Resource</th>
       <th>Description</th>
-      <th>Type</th>
       <th>Public</th>
       <th>Owner</th>
       <th>Modified</th>
     </tr>
   </thead>
   <tbody>
-    {% for resource in resources %}
+    {% for db in dbs %}
     <tr>
       <td>
-        <a href="{{ utils.get_resource_url(resource) }}">
-          {{ resource['rid'] }}</a>
+        <a href="{{ url_for('db.index', dbid=db['dbid']) }}">
+          {{ db['dbid'] }}</a>
       </td>
-      <td>{{ resource.get('description') or '-' }}</td>
-      <td>{{ resource['type'] }}</td>
-      <td>{{ resource['public'] and 'yes' or 'no'}}</td>
-      <td>{{ resource['owner'] }}</td>
-      <td class="localtime">{{ resource['modified'] }}</td>
+      <td>{{ db.get('description') or '-' }}</td>
+      <td>{{ db['public'] and 'yes' or 'no'}}</td>
+      <td>{{ db['owner'] }}</td>
+      <td class="localtime">{{ db['modified'] }}</td>
     </tr>
     {% endfor %}
   </tbody>
@@ -33,8 +33,8 @@
 {% endblock %}
 
 {% block actions %}
-<a href="{{ url_for('resource.create') }}"
-   role="button" class="btn btn-primary">Create resource</a>
+<a href="{{ url_for('db.create') }}"
+   role="button" class="btn btn-primary">Create database</a>
 {% endblock %}
 
 {% block javascript %}

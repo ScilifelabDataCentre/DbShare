@@ -1,6 +1,6 @@
 "Pleko: Experimental web-based toolbench for data handling."
 
-__version__ = '0.4.3'
+__version__ = '0.5.0'
 
 default_config = dict(
     VERSION = __version__,
@@ -8,11 +8,12 @@ default_config = dict(
     SITE_NAME = 'Pleko',
     GITHUB_URL = 'https://github.com/pekrau/Pleko',
     MASTERDB_FILEPATH = 'data/masterdb.sqlite3',
-    RELDB_DIRPATH = 'data/reldb',
+    DBS_DIRPATH = 'data/dbs',
     SECRET_KEY = None,
     SALT_LENGTH = 12,
+    MIN_PASSWORD_LENGTH = 6,
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
     USER_ENABLE_IMMEDIATELY = False,
     USER_ENABLE_EMAIL_WHITELIST = [], # Regexp's
-    MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60 # seconds; 1 week
+    TABLE_INITIAL_COLUMNS = 6
 )

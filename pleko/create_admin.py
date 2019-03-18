@@ -7,8 +7,8 @@ import flask
 
 import pleko
 import pleko.app
-import pleko.constants
 import pleko.user
+from pleko import constants
 
 app = pleko.app.create_app()
 with app.app_context():
@@ -16,8 +16,8 @@ with app.app_context():
         with pleko.user.UserContext() as ctx:
             ctx.set_username(input('username > '))
             ctx.set_email(input('email > '))
-            ctx.set_role(pleko.constants.ADMIN)
-            ctx.set_status(pleko.constants.ENABLED)
+            ctx.set_role(constants.ADMIN)
+            ctx.set_status(constants.ENABLED)
             ctx.set_password(getpass.getpass('password > '))
     except ValueError as error:
         sys.exit("Error: %s" % error)

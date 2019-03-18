@@ -16,9 +16,5 @@ ENABLED  = 'enabled'
 DISABLED = 'disabled'
 USER_STATUSES = (PENDING, ENABLED, DISABLED)
 
-# Resource types
-RELDB = 'reldb'
-RESOURCE_TYPES = (RELDB, )
-
-# Reldb constants
-RELDB_COLUMN_TYPES = ('INTEGER', 'REAL', 'TEXT', 'BLOB')
+# Database constants
+COLUMN_TYPES = ('INTEGER', 'REAL', 'TEXT', 'BLOB')

@@ -1,6 +1,6 @@
 # Pleko
 
-Web-based relational database system, based on Sqlite.
+Web-based relational database system powered by Sqlite.
 
 πλέκω: to plait, twine, twist, weave, braid
 
@@ -10,63 +10,67 @@ List of databases, depending on access for logged-in user.
 
 ## `/db`
 
-Create a new database.
+Create a database.
 
 ## `/db/{dbid}`
 
 List of tables (# rows), views.
+Delete the database.
 
-## `/db/{dbid}/table`
+## `/table/{dbid}`
 
-Create table.
+Create a table in the database.
 
-## `/db/{dbid}/query`
+## `/column/{dbid}/{tid}`
 
-Query multiple tables.
+Create a column in the table.
 
-## `/db/{dbid}/view`
+## `/index/{dbid}/{tid}`
 
-Create view.
+Create an index in the table.
 
-## `/db/{dbid}/view/{vid}`
+## `/index/{dbid}/{tid}/{iid}`
 
-Display view rows.
-Delete view.
+Delete the index.
 
-## `/db/{dbid}/upload`
+## `/schema/{dbid}`
 
-Upload CSV file, creating table.
+View all table definitions, indexes, etc.
 
-## `/db/{dbid}/table/{tid}`
+## `/schema/{dbid}/{tid}`
 
 View table definition, indexes, etc.
 Delete table.
 
-## `/db/{dbid}/table/{tid}/column`
+## `/row/{dbid}/{tid}`
 
-Create column.
+Create a row in the table.
 
-## `/db/{dbid}/table/{tid}/index`
+## `/rows/{dbid}/{tid}`
 
-Create index.
+Display rows from the table.
 
-## `/db/{dbid}/table/{tid}/index/{iid}`
+## `/query/{dbid}`
 
-Delete index.
+Perform a query.
 
-## `/db/{dbid}/table/{tid}/rows`
+## `/view/{dbid}`
 
-Display table rows.
+Create a view.
 
-## `/db/{dbid}/table/{tid}/query`
+## `/view/{dbid}/{vid}`
 
-Query the table.
+Display view rows.
+Delete view.
 
-## `/db/{dbid}/table/{tid}/upload`
+## `/upload/{dbid}`
 
-Load CSV file.
+Upload a data file, creating a table.
 
-## `/db/{dbid}/table/{tid}/download`
+## `/upload/{dbid}/{tid}`
 
-Download CSV file.
+Upload a data file, adding rows to the table.
 
+## `/download/{dbid}/{tid}`
+
+Download a data file from the table.
