@@ -34,7 +34,7 @@
                   {{ table['tableid'] }}</a>
               </td>
               <td>
-		<a href="{{ url_for('rows.index', dbid=db['dbid'], tableid=table['tableid']) }}">
+		<a href="{{ url_for('table.rows', dbid=db['dbid'], tableid=table['tableid']) }}">
 		  {{ table['nrows'] }}</a>
               </td>
             </tr>

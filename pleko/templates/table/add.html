@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Add row to table {{ schema['tableid'] }} in database {{ db['dbid'] }}
+{% endblock %}
+
+{% block body_title %}
+Add row to table
+<a href="{{ url_for('.rows', dbid=db['dbid'], tableid=schema['tableid']) }}">
+  {{ schema['tableid'] }}</a>
+in database
+<a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
+{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.add', dbid=db['dbid'], tableid=schema['tableid']) }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  {% for column in schema['columns'] %}
+  <div class="form-group row">
+    <label for="{{ column['id'] }}"
+           class="col-sm-2 col-form-label text-right font-weight-bold">
+      {{ column['id'] }}</label>
+    {% if column['type'] == constants.INTEGER %}
+    <div class="col-sm-4">
+      <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+             {{ column['notnull'] and 'required' or '' }}
+             type="number" step="1" class="form-control">
+    </div>
+    {% elif column['type'] == constants.REAL %}
+    <div class="col-sm-4">
+      <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+             {{ column['notnull'] and 'required' or '' }}
+             type="number" class="form-control">
+    </div>
+    {% elif column['type'] == constants.TEXT %}
+    <div class="col-sm-8">
+      <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+             {{ column['notnull'] and 'required' or '' }}
+             type="text" class="form-control">
+    </div>
+    {% elif column['type'] == constants.BLOB %}
+    <div class="col-sm-8">
+      <textarea id="{{ column['id'] }}" name="{{ column['id'] }}"
+                {{ column['notnull'] and 'required' or '' }}
+                class="form-control" rows="4">
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+  <div class="form-group row">
+    <div class="col-sm-2 offset-sm-2">
+      <button type="submit" class="btn btn-primary">Add</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block actions %}
+<p>
+  <a href="{{ url_for('.rows', dbid=db['dbid'], tableid=schema['tableid']) }}"
+     role="button" class="btn btn-secondary">Cancel</a>
+</p>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $("#{{ schema['columns'][0]['id'] }}").focus();
+</script>
+{% endblock %}

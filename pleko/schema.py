@@ -16,7 +16,7 @@ def get(cursor, tableid):
     if len(rows) == 0:
         raise ValueError('no such table in database')
     return {'tableid': tableid,
-            'columns': [{'columnid': row[1],
+            'columns': [{'id': row[1],
                          'type': row[2],
                          'notnull': bool(row[3]),
                          'defaultvalue': row[4],

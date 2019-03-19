@@ -1,5 +1,7 @@
 "Pleko table endpoints."
 
+import sqlite3
+
 import flask
 
 import pleko.db
@@ -77,3 +79,96 @@ def create(dbid):
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
         finally:
             cnx.close()
+
+@blueprint.route('/<id:dbid>/<id:tableid>')
+def rows(dbid, tableid):
+    "Display rows in the table."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    has_write_access = pleko.db.has_write_access(db)
+    cnx = pleko.db.get_cnx(dbid)
+    try:
+        cursor = cnx.cursor()
+        try:
+            schema = pleko.schema.get(cursor, tableid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        sql = "SELECT * FROM %s" % tableid
+        cursor.execute(sql)
+        rows = list(cursor)
+        return flask.render_template('table/rows.html', 
+                                     db=db,
+                                     schema=schema,
+                                     rows=rows,
+                                     has_write_access=has_write_access)
+    finally:
+        cnx.close()
+
+@blueprint.route('/<id:dbid>/<id:tableid>/add', methods=['GET', 'POST'])
+def add(dbid, tableid):
+    "Add a row to the table."
+    try:
+        db = pleko.db.get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    cnx = pleko.db.get_cnx(dbid)
+    try:
+        cursor = cnx.cursor()
+        try:
+            schema = pleko.schema.get(cursor, tableid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+
+        if utils.is_method_GET():
+            return flask.render_template('table/add.html', 
+                                         db=db,
+                                         schema=schema)
+
+        elif utils.is_method_POST():
+            errors = {}
+            values = []
+            for column in schema['columns']:
+                try:
+                    value = flask.request.form.get(column['id'])
+                    if not value:
+                        if column['notnull']:
+                            raise ValueError('value required for')
+                        else:
+                            value = None
+                    elif column['type'] == constants.INTEGER:
+                        value = int(value)
+                    elif column['type'] == constants.REAL:
+                        value = float(value)
+                    values.append(value)
+                except (ValueError, TypeError) as error:
+                    errors[column['id']] = str(error)
+            if errors:
+                for item in errors.items():
+                    flask.flash("%s: %s" % item, 'error')
+                return flask.render_template('table/add.html', 
+                                             db=db,
+                                             schema=schema)
+            try:
+                with cnx:
+                    sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                          (tableid,
+                           ','.join([c['id'] for c in schema['columns']]),
+                           ','.join('?' * len(values)))
+                    cursor.execute(sql, values)
+            except sqlite3.Error as error:
+                flask.flash(str(error), 'error')
+                return flask.redirect(flask.url_for('.add',
+                                                    dbid=dbid,
+                                                    tableid=tableid))
+            else:
+                return flask.redirect(flask.url_for('.rows',
+                                                    dbid=dbid,
+                                                    tableid=tableid))
+    finally:
+        cnx.close()

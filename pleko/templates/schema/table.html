@@ -11,8 +11,8 @@ Schema for table {{ schema['tableid'] }} in database
 
 {% block main %}
 <p>
-  <a href="{{ url_for('rows.index', dbid=db['dbid'], tableid=schema['tableid']) }}">
-    {{ nrows }} rows</a> in the table.
+  <a href="{{ url_for('table.rows', dbid=db['dbid'], tableid=schema['tableid']) }}">
+    A total of {{ nrows }} rows</a> in the table.
 </p>
 <div class="card border-primary">
   <div class="card-header bg-primary text-white">Columns</div>
@@ -29,7 +29,7 @@ Schema for table {{ schema['tableid'] }} in database
       <tbody>
 	{% for column in schema['columns'] %}
 	<tr>
-	  <td>{{ column['columnid'] }}</td>
+	  <td>{{ column['id'] }}</td>
 	  <td>{{ column['type'] }}</td>
 	  <td>{{ column['primarykey'] and 'PRIMARY KEY' or '' }}</td>
 	  <td>{{ column['notnull'] and 'NOT NULL' or '' }}</td>
