@@ -48,7 +48,7 @@ def init(app):
     cnx.execute("CREATE INDEX IF NOT EXISTS users_logs_username_ix"
                " ON users_logs (username)")
     cnx.execute("CREATE TABLE IF NOT EXISTS dbs"
-               "(dbid TEXT PRIMARY KEY,"
+               "(id TEXT PRIMARY KEY,"
                " owner TEXT NOT NULL REFERENCES users (username),"
                " description TEXT,"
                " public INTEGER NOT NULL,"
@@ -56,12 +56,12 @@ def init(app):
                " created TEXT NOT NULL,"
                " modified TEXT NOT NULL)")
     cnx.execute("CREATE TABLE IF NOT EXISTS dbs_logs"
-               "(dbid TEXT NOT NULL REFERENCES dbs (dbid),"
+               "(id TEXT NOT NULL REFERENCES dbs (id),"
                " new TEXT NOT NULL,"
                " editor TEXT,"
                " remote_addr TEXT,"
                " user_agent TEXT,"
                " timestamp TEXT NOT NULL)")
-    cnx.execute("CREATE INDEX IF NOT EXISTS dbs_logs_dbid_ix"
-               " ON dbs_logs (dbid)")
+    cnx.execute("CREATE INDEX IF NOT EXISTS dbs_logs_id_ix"
+               " ON dbs_logs (id)")
     cnx.close()

@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Database {{ db['dbid'] }}{% endblock %}
+{% block head_title %}Database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}Database {{ db['dbid'] }}{% endblock %}
+{% block body_title %}Database {{ db['id'] }}{% endblock %}
 
 {% block main %}
 <div class="row">
@@ -30,11 +30,11 @@
             {% for table in tables %}
             <tr>
               <td>
-                <a href="{{ url_for('schema.table', dbid=db['dbid'], tableid=table['tableid']) }}">
+                <a href="{{ url_for('schema.table', dbid=db['id'], tableid=table['tableid']) }}">
                   {{ table['tableid'] }}</a>
               </td>
               <td>
-		<a href="{{ url_for('table.rows', dbid=db['dbid'], tableid=table['tableid']) }}">
+		<a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['tableid']) }}">
 		  {{ table['nrows'] }}</a>
               </td>
             </tr>
@@ -55,10 +55,10 @@
 {% block actions %}
 {% if has_write_access %}
 <p>
-  <a href="{{ url_for('table.create', dbid=db['dbid']) }}"
+  <a href="{{ url_for('table.create', dbid=db['id']) }}"
      role="button" class="btn btn-primary">Create table</a>
 </p>
-<form action="{{ url_for('.index', dbid=db['dbid']) }}"
+<form action="{{ url_for('.index', dbid=db['id']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   <input type="hidden" name="_http_method" value="DELETE">
@@ -87,7 +87,7 @@
     Modified <span class="localtime">{{ db['modified'] }}</span>
   </div>
   <div class="mt-2">
-    <a href="{{ url_for('db.logs', dbid=db['dbid']) }}">Logs</a>
+    <a href="{{ url_for('db.logs', dbid=db['id']) }}">Logs</a>
   </div>
   <div class="mt-2">
     Created <span class="localtime">{{ db['created'] }}</span>

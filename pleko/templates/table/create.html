@@ -1,16 +1,16 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create a table in database {{ db['dbid'] }}{% endblock %}
+{% block head_title %}Create a table in database {{ db['id'] }}{% endblock %}
 
 {% block body_title %}
 Create a table in database
-<a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
+<a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
 {% endblock %}
 
 {% block main %}
 <div class="card border-primary">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbid=db['dbid']) }}"
+    <form action="{{ url_for('.create', dbid=db['id']) }}"
           method="POST">
       {{ csrf_token() | safe }}
       <div class="form-row">
@@ -88,7 +88,7 @@ Create a table in database
 
 {% block actions %}
 <p>
-  <a href="{{ url_for('db.index', dbid=db['dbid']) }}"
+  <a href="{{ url_for('db.index', dbid=db['id']) }}"
      role="button" class="btn btn-secondary">Cancel</a>
 </p>
 {% endblock %}

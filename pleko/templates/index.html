@@ -18,8 +18,7 @@
     {% for db in dbs %}
     <tr>
       <td>
-        <a href="{{ url_for('db.index', dbid=db['dbid']) }}">
-          {{ db['dbid'] }}</a>
+        <a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
       </td>
       <td>{{ db.get('description') or '-' }}</td>
       <td>{{ db['public'] and 'yes' or 'no'}}</td>

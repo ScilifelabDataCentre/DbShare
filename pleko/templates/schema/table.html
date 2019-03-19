@@ -1,17 +1,17 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Schema for table {{ schema['tableid'] }} in database {{ db['dbid'] }}
+Schema for table {{ schema['tableid'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
 Schema for table {{ schema['tableid'] }} in database 
-<a href="{{ url_for('db.index', dbid=db['dbid']) }}">{{ db['dbid'] }}</a>
+<a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
 {% endblock %}
 
 {% block main %}
 <p>
-  <a href="{{ url_for('table.rows', dbid=db['dbid'], tableid=schema['tableid']) }}">
+  <a href="{{ url_for('table.rows', dbid=db['id'], tableid=schema['tableid']) }}">
     A total of {{ nrows }} rows</a> in the table.
 </p>
 <div class="card border-primary">
@@ -43,7 +43,7 @@ Schema for table {{ schema['tableid'] }} in database
 
 {% block actions %}
 {% if has_write_access %}
-<form action="{{ url_for('.table', dbid=db['dbid'], tableid=schema['tableid']) }}"
+<form action="{{ url_for('.table', dbid=db['id'], tableid=schema['tableid']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   <input type="hidden" name="_http_method" value="DELETE">

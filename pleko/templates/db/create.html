@@ -9,12 +9,10 @@
       method="POST">
   {{ csrf_token() | safe }}
   <div class="form-group row">
-    <label for="dbid" class="col-md-2 col-form-label text-right">
+    <label for="id" class="col-md-2 col-form-label text-right">
       Identifier</label>
     <div class="col-md-6">
-      <input type="text" class="form-control" autofocus
-             id="dbid" name="dbid"
-             aria-describedby="dbidHelp">
+      <input id="id" name="id" type="text" class="form-control" autofocus>
     </div>
   </div>
   <div class="form-group row">
