@@ -48,7 +48,7 @@ View table definition.
 
 View indexes. TODO
 
-Delete table. TODO
+Delete table.
 
 ## `/row/{dbid}/{tid}`
 

@@ -101,6 +101,7 @@ def create():
     "Create a database."
     if utils.is_method_GET():
         return flask.render_template('db/create.html')
+
     elif utils.is_method_POST():
         try:
             with DbContext() as ctx:
@@ -135,6 +136,7 @@ def index(dbid):
                                          has_write_access=has_write_access(db))
         finally:
             cnx.close()
+
     elif utils.is_method_DELETE():
         try:
             db = get_check_write(dbid)
@@ -142,13 +144,16 @@ def index(dbid):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
         cnx = pleko.master.get_cnx()
-        with cnx:
-            sql = 'DELETE FROM dbs_logs WHERE dbid=?'
-            cnx.execute(sql, (dbid,))
-            sql = 'DELETE FROM dbs WHERE dbid=?'
-            cnx.execute(sql, (dbid,))
-            os.remove(dbpath(dbid))
-        return flask.redirect(flask.url_for('index'))
+        try:
+            with cnx:
+                sql = 'DELETE FROM dbs_logs WHERE dbid=?'
+                cnx.execute(sql, (dbid,))
+                sql = 'DELETE FROM dbs WHERE dbid=?'
+                cnx.execute(sql, (dbid,))
+                os.remove(dbpath(dbid))
+            return flask.redirect(flask.url_for('index'))
+        finally:
+            cnx.close()
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):

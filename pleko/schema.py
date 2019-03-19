@@ -3,6 +3,7 @@
 import flask
 
 import pleko.db
+from pleko import utils
 from pleko.user import login_required
 
 
@@ -25,28 +26,49 @@ def get(cursor, tableid):
 
 blueprint = flask.Blueprint('schema', __name__)
 
-@blueprint.route('/<id:dbid>/<id:tableid>')
+@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
 @login_required
 def table(dbid, tableid):
-    try:
-        db = pleko.db.get_check_read(dbid)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
-    cnx = pleko.db.get_cnx(db['dbid'])
-    try:
-        cursor = cnx.cursor()
+    if utils.is_method_GET():
         try:
-            schema = get(cursor, tableid)
+            db = pleko.db.get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        has_write_access = pleko.db.has_write_access(db)
+        cnx = pleko.db.get_cnx(dbid)
+        try:
+            cursor = cnx.cursor()
+            try:
+                schema = get(cursor, tableid)
+            except ValueError as error:
+                flask.flash(str(error), 'error')
+                return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            sql = "SELECT COUNT(*) FROM %s" % tableid
+            cursor.execute(sql)
+            nrows = cursor.fetchone()[0]
+            return flask.render_template('schema/table.html',
+                                         db=db,
+                                         schema=schema,
+                                         nrows=nrows,
+                                         has_write_access=has_write_access)
+        finally:
+            cnx.close()
+
+    elif utils.is_method_DELETE():
+        try:
+            db = pleko.db.get_check_write(dbid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        cnx = pleko.db.get_cnx(dbid)
+        try:
+            cursor = cnx.cursor()
+            try:
+                sql = "DROP TABLE %s" % tableid
+                cursor.execute(sql)
+            except sqlite3.Error as error:
+                flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
-        sql = "SELECT COUNT(*) FROM %s" % tableid
-        cursor.execute(sql)
-        nrows = cursor.fetchone()[0]
-        return flask.render_template('schema/table.html',
-                                     db=db,
-                                     schema=schema,
-                                     nrows=nrows)
-    finally:
-        cnx.close()
+        finally:
+            cnx.close()

@@ -40,3 +40,17 @@ Schema for table {{ schema['tableid'] }} in database
   </div>
 </div>
 {% endblock %}
+
+{% block actions %}
+{% if has_write_access %}
+<form action="{{ url_for('.table', dbid=db['dbid'], tableid=schema['tableid']) }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <input type="hidden" name="_http_method" value="DELETE">
+  <button type="submit" class="btn btn-danger"
+          onclick="confirm('Really delete? Cannot be undone.')">
+    Delete table</button>
+</form>
+{% endif %}
+{% endblock %}
+
