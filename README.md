@@ -16,7 +16,7 @@ Create a database.
 
 List of tables (with # rows).
 
-List of views. TODO
+List of views.
 
 Delete the database.
 
@@ -26,21 +26,21 @@ Create a table in the database.
 
 ## `/schema/{dbid}`
 
-View tables (with # rows).
+Display tables (with # rows).
 
-View indexes. TODO
+Display indexes.
 
 ## `/schema/{dbid}/{tableid}`
 
-View table definition.
+Display table definition.
 
-View indexes. TODO
+Display indexes.
 
 Delete table.
 
 ## `/table/{dbid}/{tableid}`
 
-Display rows from the table. TODO
+Display rows from the table.
 
 ## `/table/{dbid}/{tableid}/add`
 
@@ -48,38 +48,34 @@ Add a row to the table.
 
 ## `/column/{dbid}/{tableid}`
 
-Add a column to the table. TODO
+Add a column to the table.
 
 ## `/index/{dbid}/{tableid}`
 
-Create an index in the table. TODO
+Create an index in the table.
 
 ## `/index/{dbid}/{tableid}/{indexid}`
 
-Delete the index. TODO
+Delete an index.
 
 ## `/query/{dbid}`
 
-Perform a query. TODO
+Perform a query.
 
 ## `/view/{dbid}`
 
-Create a view. TODO
+Create a view.
 
 ## `/view/{dbid}/{vid}`
 
-Display view rows. TODO
+Display view rows.
 
-Delete view. TODO
+Delete view.
 
 ## `/upload/{dbid}`
 
-Upload a data file, creating a table. TODO
+Upload a data file, creating a table.
 
 ## `/upload/{dbid}/{tableid}`
 
-Upload a data file, adding rows to the table. TODO
-
-## `/download/{dbid}/{tableid}`
-
-Download a data file from the table. TODO
+Upload a data file, adding rows to the table.

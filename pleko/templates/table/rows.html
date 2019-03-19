@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Table {{ schema['tableid'] }} in database {{ db['id'] }}
+Table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
 Table
-<a href="{{ url_for('schema.table', dbid=db['id'], tableid=schema['tableid']) }}">
-  {{ schema['tableid'] }}</a>
+<a href="{{ url_for('schema.table', dbid=db['id'], tableid=schema['id']) }}">
+  {{ schema['id'] }}</a>
 in database 
 <a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
 {% endblock %}
@@ -38,7 +38,7 @@ in database
 {% block actions %}
 {% if has_write_access %}
 <p>
-  <a href="{{ url_for('.add', dbid=db['id'], tableid=schema['tableid']) }}"
+  <a href="{{ url_for('.add', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary">
     Add row</a>
 </p>

@@ -1,19 +1,19 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Add row to table {{ schema['tableid'] }} in database {{ db['id'] }}
+Add row to table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
 Add row to table
-<a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['tableid']) }}">
-  {{ schema['tableid'] }}</a>
+<a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}">
+  {{ schema['id'] }}</a>
 in database
 <a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
 {% endblock %}
 
 {% block main %}
-<form action="{{ url_for('.add', dbid=db['id'], tableid=schema['tableid']) }}"
+<form action="{{ url_for('.add', dbid=db['id'], tableid=schema['id']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   {% for column in schema['columns'] %}
@@ -31,7 +31,7 @@ in database
     <div class="col-sm-4">
       <input id="{{ column['id'] }}" name="{{ column['id'] }}"
              {{ column['notnull'] and 'required' or '' }}
-             type="number" class="form-control">
+             type="text" class="form-control">
     </div>
     {% elif column['type'] == constants.TEXT %}
     <div class="col-sm-8">
@@ -58,7 +58,7 @@ in database
 
 {% block actions %}
 <p>
-  <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['tableid']) }}"
+  <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-secondary">Cancel</a>
 </p>
 {% endblock %}

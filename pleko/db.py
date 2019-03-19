@@ -109,7 +109,7 @@ def create():
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
 
 @blueprint.route('/<id:dbid>', methods=['GET', 'POST', 'DELETE'])
 def index(dbid):
@@ -125,10 +125,10 @@ def index(dbid):
             cursor = cnx.cursor()
             sql = "SELECT name FROM sqlite_master WHERE type=?"
             cursor.execute(sql, ('table',))
-            tables = [{'tableid': row[0]} for row in cursor]
+            tables = [{'id': row[0]} for row in cursor]
             sql = "SELECT COUNT(*) FROM %s"
             for table in tables:
-                cursor.execute(sql % table['tableid'])
+                cursor.execute(sql % table['id'])
                 table['nrows'] = cursor.fetchone()[0]
             return flask.render_template('db/index.html',
                                          db=db,
@@ -154,6 +154,29 @@ def index(dbid):
             return flask.redirect(flask.url_for('index'))
         finally:
             cnx.close()
+
+@blueprint.route('/<id:dbid>/rename', methods=['GET', 'POST'])
+@login_required
+def rename(dbid):
+    "Rename the database."
+    try:
+        db = get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+
+    if utils.is_method_GET():
+        return flask.render_template('db/rename.html', db=db)
+
+    elif utils.is_method_POST():
+        try:
+            with DbContext(db) as ctx:
+                ctx.set_id(flask.request.form['id'])
+                ctx.set_description(flask.request.form.get('description'))
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+        
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
@@ -209,7 +232,7 @@ class DbContext:
                 if rows[0][0]:
                     sql = "UPDATE dbs SET owner=?, description=?," \
                           " public=?, profile=?, modified=?" \
-                          " WHERE dbname=?"
+                          " WHERE id=?"
                     cnx.execute(sql, (self.db['owner'],
                                       self.db.get('description'),
                                       bool(self.db.get('public')),
@@ -266,13 +289,27 @@ class DbContext:
             cnx.close()
 
     def set_id(self, id):
-        if 'id' in self.db:
-            raise ValueError('database identifier cannot be changed')
+        "Set or change the database identifier."
         if not pleko.constants.IDENTIFIER_RX.match(id):
             raise ValueError('invalid database identifier')
         if get_db(id):
             raise ValueError('database identifier already in use')
+        try:
+            oldid =self.db['id']
+        except KeyError:
+            pass
+        else:
+            cnx = pleko.master.get()
+            with cnx:
+                cnx.execute('PRAGMA foreign_keys = OFF')
+                sql = "UPDATE dbs SET id=? WHERE id=?"
+                cnx.execute(sql, (id, oldid))
+                sql = "UPDATE dbs_logs SET id=? WHERE id=?"
+                cnx.execute(sql, (id, oldid))
+                cnx.execute('PRAGMA foreign_keys = ON')
+            os.rename(dbpath(oldid), dbpath(id))
         self.db['id'] = id
 
     def set_description(self, description):
+        "Set the database description."
         self.db['description'] = description or None

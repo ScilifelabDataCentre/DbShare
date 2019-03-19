@@ -30,11 +30,11 @@
             {% for table in tables %}
             <tr>
               <td>
-                <a href="{{ url_for('schema.table', dbid=db['id'], tableid=table['tableid']) }}">
-                  {{ table['tableid'] }}</a>
+                <a href="{{ url_for('schema.table', dbid=db['id'], tableid=table['id']) }}">
+                  {{ table['id'] }}</a>
               </td>
               <td>
-		<a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['tableid']) }}">
+		<a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}">
 		  {{ table['nrows'] }}</a>
               </td>
             </tr>
@@ -54,18 +54,24 @@
 
 {% block actions %}
 {% if has_write_access %}
-<p>
+<div>
   <a href="{{ url_for('table.create', dbid=db['id']) }}"
      role="button" class="btn btn-primary">Create table</a>
-</p>
-<form action="{{ url_for('.index', dbid=db['id']) }}"
-      method="POST">
-  {{ csrf_token() | safe }}
-  <input type="hidden" name="_http_method" value="DELETE">
-  <button type="submit" class="btn btn-danger"
-          onclick="confirm('Really delete? Cannot be undone.')">
-    Delete database</button>
-</form>
+</div>
+<div class="mt-4">
+  <a href="{{ url_for('.rename', dbid=db['id']) }}"
+     role="button" class="btn btn-warning">Rename database</a>
+</div>
+<div class="mt-2">
+  <form action="{{ url_for('.index', dbid=db['id']) }}"
+	method="POST">
+    {{ csrf_token() | safe }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger"
+            onclick="confirm('Really delete? Cannot be undone.')">
+      Delete database</button>
+  </form>
+</div>
 {% endif %}
 {% endblock %}
 
