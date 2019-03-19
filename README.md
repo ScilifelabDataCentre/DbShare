@@ -18,7 +18,7 @@ List of tables (with # rows).
 
 List of views. TODO
 
-Delete the database. TODO
+Delete the database.
 
 ## `/table/{dbid}`
 

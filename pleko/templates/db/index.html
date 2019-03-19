@@ -58,6 +58,14 @@
   <a href="{{ url_for('table.create', dbid=db['dbid']) }}"
      role="button" class="btn btn-primary">Create table</a>
 </p>
+<form action="{{ url_for('.index', dbid=db['dbid']) }}"
+      method="POST">
+  {{ csrf_token() | safe }}
+  <input type="hidden" name="_http_method" value="DELETE">
+  <button type="submit" class="btn btn-danger"
+          onclick="confirm('Really delete? Cannot be undone.')">
+    Delete database</button>
+</form>
 {% endif %}
 {% endblock %}
 

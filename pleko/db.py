@@ -2,6 +2,7 @@
 
 import copy
 import json
+import os
 import os.path
 import sqlite3
 
@@ -86,15 +87,15 @@ def get_check_write(dbid):
     """
     db = get_db(dbid)
     if db is None:
-        raise ValueError('no such db')
+        raise ValueError('no such database')
     if not has_write_access(db):
-        raise ValueError('may not write to the db')
+        raise ValueError('may not write to the database')
     return db
 
 
 blueprint = flask.Blueprint('db', __name__)
 
-@blueprint.route('/', methods=["GET", "POST"])
+@blueprint.route('/', methods=['GET', 'POST'])
 @login_required
 def create():
     "Create a database."
@@ -109,30 +110,45 @@ def create():
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/<id:dbid>')
+@blueprint.route('/<id:dbid>', methods=['GET', 'POST', 'DELETE'])
 def index(dbid):
-    "Display database tables and metadata."
-    try:
-        db = get_check_read(dbid)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
+    "Display database tables and metadata. Delete database."
+    if utils.is_method_GET():
+        try:
+            db = get_check_read(dbid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        cnx = get_cnx(dbid)
+        try:
+            cursor = cnx.cursor()
+            sql = "SELECT name FROM sqlite_master WHERE type=?"
+            cursor.execute(sql, ('table',))
+            tables = [{'tableid': row[0]} for row in cursor]
+            sql = "SELECT COUNT(*) FROM %s"
+            for table in tables:
+                cursor.execute(sql % table['tableid'])
+                table['nrows'] = cursor.fetchone()[0]
+            return flask.render_template('db/index.html',
+                                         db=db,
+                                         tables=tables,
+                                         has_write_access=has_write_access(db))
+        finally:
+            cnx.close()
+    elif utils.is_method_DELETE():
+        try:
+            db = get_check_write(dbid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        cnx = pleko.master.get_cnx()
+        with cnx:
+            sql = 'DELETE FROM dbs_logs WHERE dbid=?'
+            cnx.execute(sql, (dbid,))
+            sql = 'DELETE FROM dbs WHERE dbid=?'
+            cnx.execute(sql, (dbid,))
+            os.remove(dbpath(dbid))
         return flask.redirect(flask.url_for('index'))
-    cnx = get_cnx(dbid)
-    try:
-        cursor = cnx.cursor()
-        sql = "SELECT name FROM sqlite_master WHERE type=?"
-        cursor.execute(sql, ('table',))
-        tables = [{'tableid': row[0]} for row in cursor]
-        sql = "SELECT COUNT(*) FROM %s"
-        for table in tables:
-            cursor.execute(sql % table['tableid'])
-            table['nrows'] = cursor.fetchone()[0]
-        return flask.render_template('db/index.html',
-                                     db=db,
-                                     tables=tables,
-                                     has_write_access=has_write_access(db))
-    finally:
-        cnx.close()
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
@@ -247,11 +263,11 @@ class DbContext:
 
     def set_dbid(self, dbid):
         if 'dbid' in self.db:
-            raise ValueError('db identifier cannot be changed')
+            raise ValueError('database identifier cannot be changed')
         if not pleko.constants.IDENTIFIER_RX.match(dbid):
-            raise ValueError('invalid db identifier')
+            raise ValueError('invalid database identifier')
         if get_db(dbid):
-            raise ValueError('db identifier already in use')
+            raise ValueError('database identifier already in use')
         self.db['dbid'] = dbid
 
     def set_description(self, description):
