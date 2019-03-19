@@ -80,33 +80,52 @@ def create(dbid):
         finally:
             cnx.close()
 
-@blueprint.route('/<id:dbid>/<id:tableid>')
+@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
 def rows(dbid, tableid):
     "Display rows in the table."
-    try:
-        db = pleko.db.get_check_read(dbid)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
-    has_write_access = pleko.db.has_write_access(db)
-    cnx = pleko.db.get_cnx(dbid)
-    try:
-        cursor = cnx.cursor()
+    if utils.is_method_GET():
         try:
-            schema = pleko.schema.get(cursor, tableid)
+            db = pleko.db.get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        has_write_access = pleko.db.has_write_access(db)
+        cnx = pleko.db.get_cnx(dbid)
+        try:
+            cursor = cnx.cursor()
+            try:
+                schema = pleko.schema.get(cursor, tableid)
+            except ValueError as error:
+                flask.flash(str(error), 'error')
+                return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            sql = "SELECT * FROM %s" % tableid
+            cursor.execute(sql)
+            rows = list(cursor)
+            return flask.render_template('table/rows.html', 
+                                         db=db,
+                                         schema=schema,
+                                         rows=rows,
+                                         has_write_access=has_write_access)
+        finally:
+            cnx.close()
+
+    elif utils.is_method_DELETE():
+        try:
+            db = pleko.db.get_check_write(dbid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('index'))
+        cnx = pleko.db.get_cnx(dbid)
+        try:
+            cursor = cnx.cursor()
+            try:
+                sql = "DROP TABLE %s" % tableid
+                cursor.execute(sql)
+            except sqlite3.Error as error:
+                flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
-        sql = "SELECT * FROM %s" % tableid
-        cursor.execute(sql)
-        rows = list(cursor)
-        return flask.render_template('table/rows.html', 
-                                     db=db,
-                                     schema=schema,
-                                     rows=rows,
-                                     has_write_access=has_write_access)
-    finally:
-        cnx.close()
+        finally:
+            cnx.close()
 
 @blueprint.route('/<id:dbid>/<id:tableid>/add', methods=['GET', 'POST'])
 def add(dbid, tableid):

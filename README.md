@@ -28,19 +28,17 @@ Create a table in the database.
 
 Display tables (with # rows).
 
-Display indexes.
-
 ## `/schema/{dbid}/{tableid}`
 
 Display table definition.
 
 Display indexes.
 
-Delete table.
-
 ## `/table/{dbid}/{tableid}`
 
 Display rows from the table.
+
+Delete table.
 
 ## `/table/{dbid}/{tableid}/add`
 

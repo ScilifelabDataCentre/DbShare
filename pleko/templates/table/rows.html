@@ -37,10 +37,20 @@ in database
 
 {% block actions %}
 {% if has_write_access %}
-<p>
+<div>
   <a href="{{ url_for('.add', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary">
     Add row</a>
-</p>
+</div>
+<div class="mt-4">
+  <form action="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+	method="POST">
+    {{ csrf_token() | safe }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger"
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete table</button>
+  </form>
+</div>
 {% endif %}
 {% endblock %}

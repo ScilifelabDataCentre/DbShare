@@ -68,7 +68,7 @@
     {{ csrf_token() | safe }}
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger"
-            onclick="confirm('Really delete? Cannot be undone.')">
+            onclick="return confirm('Really delete? Cannot be undone.')">
       Delete database</button>
   </form>
 </div>

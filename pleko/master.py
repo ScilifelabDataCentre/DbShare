@@ -17,7 +17,7 @@ def get_cnx(app=None):
     if app is None:
         app = flask.current_app
     cnx = sqlite3.connect(app.config['MASTERDB_FILEPATH'])
-    cnx.execute('PRAGMA foreign_keys = ON')
+    cnx.execute('PRAGMA foreign_keys=ON')
     return cnx
 
 def cursor(app=None):

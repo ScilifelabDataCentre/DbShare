@@ -301,12 +301,12 @@ class DbContext:
         else:
             cnx = pleko.master.get()
             with cnx:
-                cnx.execute('PRAGMA foreign_keys = OFF')
+                cnx.execute('PRAGMA foreign_keys=OFF')
                 sql = "UPDATE dbs SET id=? WHERE id=?"
                 cnx.execute(sql, (id, oldid))
                 sql = "UPDATE dbs_logs SET id=? WHERE id=?"
                 cnx.execute(sql, (id, oldid))
-                cnx.execute('PRAGMA foreign_keys = ON')
+                cnx.execute('PRAGMA foreign_keys=ON')
             os.rename(dbpath(oldid), dbpath(id))
         self.db['id'] = id
 
