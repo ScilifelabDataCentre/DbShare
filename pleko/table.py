@@ -10,6 +10,22 @@ from pleko import constants
 from pleko import utils
 from pleko.user import login_required
 
+def get_schema(cursor, tableid):
+    """Get the schema for the given table given the cursor for the database.
+    Raise ValueError if no such table."""
+    sql = 'PRAGMA table_info("%s")' % tableid
+    cursor.execute(sql)
+    rows = list(cursor)
+    if len(rows) == 0:
+        raise ValueError('no such table in database')
+    return {'id': tableid,
+            'columns': [{'id': row[1],
+                         'type': row[2],
+                         'notnull': bool(row[3]),
+                         'defaultvalue': row[4],
+                         'primarykey': bool(row[5])}
+                        for row in rows]}
+
 
 blueprint = flask.Blueprint('table', __name__)
 
@@ -80,6 +96,32 @@ def create(dbid):
         finally:
             cnx.close()
 
+@blueprint.route('/<id:dbid>/<id:tableid>/schema')
+def schema(dbid, tableid):
+    "Display the schema for table."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    cnx = pleko.db.get_cnx(dbid)
+    try:
+        cursor = cnx.cursor()
+        try:
+            schema = get_schema(cursor, tableid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        sql = "SELECT COUNT(*) FROM %s" % tableid
+        cursor.execute(sql)
+        nrows = cursor.fetchone()[0]
+        return flask.render_template('table/schema.html',
+                                     db=db,
+                                     schema=schema,
+                                     nrows=nrows)
+    finally:
+        cnx.close()
+
 @blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
 def rows(dbid, tableid):
     "Display rows in the table."
@@ -94,7 +136,7 @@ def rows(dbid, tableid):
         try:
             cursor = cnx.cursor()
             try:
-                schema = pleko.schema.get(cursor, tableid)
+                schema = get_schema(cursor, tableid)
             except ValueError as error:
                 flask.flash(str(error), 'error')
                 return flask.redirect(flask.url_for('db.index', dbid=dbid))
@@ -127,8 +169,8 @@ def rows(dbid, tableid):
         finally:
             cnx.close()
 
-@blueprint.route('/<id:dbid>/<id:tableid>/add', methods=['GET', 'POST'])
-def add(dbid, tableid):
+@blueprint.route('/<id:dbid>/<id:tableid>/row', methods=['GET', 'POST'])
+def row(dbid, tableid):
     "Add a row to the table."
     try:
         db = pleko.db.get_check_write(dbid)
@@ -139,7 +181,7 @@ def add(dbid, tableid):
     try:
         cursor = cnx.cursor()
         try:
-            schema = pleko.schema.get(cursor, tableid)
+            schema = get_schema(cursor, tableid)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
@@ -182,7 +224,7 @@ def add(dbid, tableid):
                     cursor.execute(sql, values)
             except sqlite3.Error as error:
                 flask.flash(str(error), 'error')
-                return flask.redirect(flask.url_for('.add',
+                return flask.redirect(flask.url_for('.row',
                                                     dbid=dbid,
                                                     tableid=tableid))
             else:

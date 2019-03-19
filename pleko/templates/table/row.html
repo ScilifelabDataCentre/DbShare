@@ -13,7 +13,7 @@ in database
 {% endblock %}
 
 {% block main %}
-<form action="{{ url_for('.add', dbid=db['id'], tableid=schema['id']) }}"
+<form action="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   {% for column in schema['columns'] %}

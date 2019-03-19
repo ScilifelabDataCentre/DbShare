@@ -18,24 +18,19 @@
     <div class="card border-primary">
       <div class="card-header bg-primary text-white">Tables</div>
       <div class="card-body">
-        <table class="table table-sm">
-          <thead>
-            <tr>
-              <th>Schema</th>
-              <th># rows</th>
-            </tr>
-          </thead>
+        <table class="table table-borderless">
           <tbody>
             {% if tables %}
             {% for table in tables %}
             <tr>
-              <td>
-                <a href="{{ url_for('schema.table', dbid=db['id'], tableid=table['id']) }}">
-                  {{ table['id'] }}</a>
-              </td>
+	      <th>{{ table['id'] }}</th>
               <td>
 		<a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}">
-		  {{ table['nrows'] }}</a>
+		  Table ({{ table['nrows'] }} rows)</a>
+              </td>
+              <td>
+                <a href="{{ url_for('table.schema', dbid=db['id'], tableid=table['id']) }}">
+                  Schema</a>
               </td>
             </tr>
             {% endfor %}
@@ -50,24 +45,34 @@
     </div>
   </div>
 </div>
+<div class="row">
+  <div class="col-md-6">
+    <div class="card border-success mt-4">
+      <div class="card-header bg-success text-white">Views</div>
+      <div class="card-body">
+	XXX
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block actions %}
 {% if has_write_access %}
 <div>
   <a href="{{ url_for('table.create', dbid=db['id']) }}"
-     role="button" class="btn btn-primary">Create table</a>
+     role="button" class="btn btn-primary btn-block">Create table</a>
 </div>
-<div class="mt-4">
+<div class="mt-2">
   <a href="{{ url_for('.rename', dbid=db['id']) }}"
-     role="button" class="btn btn-warning">Rename database</a>
+     role="button" class="btn btn-warning btn-block">Rename database</a>
 </div>
 <div class="mt-2">
   <form action="{{ url_for('.index', dbid=db['id']) }}"
 	method="POST">
     {{ csrf_token() | safe }}
     <input type="hidden" name="_http_method" value="DELETE">
-    <button type="submit" class="btn btn-danger"
+    <button type="submit" class="btn btn-danger btn-block"
             onclick="return confirm('Really delete? Cannot be undone.')">
       Delete database</button>
   </form>
@@ -76,8 +81,8 @@
 {% endblock %}
 
 {% block info %}
-<div class="small">
-  <div class="mt-4">
+<div class="small mt-4">
+  <div>
     Owner:
     {% if g.current_user %}
     <a href="{{ url_for('user.profile', username=db['owner'])}}">
@@ -86,16 +91,16 @@
     {{ db['owner'] }}
     {% endif %}
   </div>
-  <div class="mt-2">
+  <div class="mt-1">
     Public: {{ db['public'] and 'yes' or 'no' }}
   </div>
-  <div class="mt-2">
+  <div class="mt-1">
     Modified <span class="localtime">{{ db['modified'] }}</span>
   </div>
-  <div class="mt-2">
+  <div class="mt-1">
     <a href="{{ url_for('db.logs', dbid=db['id']) }}">Logs</a>
   </div>
-  <div class="mt-2">
+  <div class="mt-1">
     Created <span class="localtime">{{ db['created'] }}</span>
   </div>
 </div>

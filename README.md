@@ -20,41 +20,45 @@ List of views.
 
 Delete the database.
 
+## `/db/{dbid}/upload`
+
+Upload a data file, creating a table in the database.
+
 ## `/table/{dbid}`
 
 Create a table in the database.
-
-## `/schema/{dbid}`
-
-Display tables (with # rows).
-
-## `/schema/{dbid}/{tableid}`
-
-Display table definition.
-
-Display indexes.
 
 ## `/table/{dbid}/{tableid}`
 
 Display rows from the table.
 
-Delete table.
+Delete the table.
 
-## `/table/{dbid}/{tableid}/add`
+## `/table/{dbid}/{tableid}/schema`
+
+Display table definition.
+
+Display its indexes.
+
+## `/table/{dbid}/{tableid}/row`
 
 Add a row to the table.
 
-## `/column/{dbid}/{tableid}`
+## `/table/{dbid}/{tableid}/column`
 
 Add a column to the table.
 
-## `/index/{dbid}/{tableid}`
+## `/table/{dbid}/{tableid}/index`
 
 Create an index in the table.
 
-## `/index/{dbid}/{tableid}/{indexid}`
+## `/table/{dbid}/{tableid}/index/{indexid}`
 
-Delete an index.
+Delete the index.
+
+## `/table/{dbid}/{tableid}/upload`
+
+Upload a data file, adding rows to the table.
 
 ## `/query/{dbid}`
 
@@ -68,12 +72,4 @@ Create a view.
 
 Display view rows.
 
-Delete view.
-
-## `/upload/{dbid}`
-
-Upload a data file, creating a table.
-
-## `/upload/{dbid}/{tableid}`
-
-Upload a data file, adding rows to the table.
+Delete the view.

@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Schema table {{ schema['id'] }} in database {{ db['id'] }}
+{% endblock %}
+
+{% block body_title %}
+Schema table {{ schema['id'] }}
+<small class="text-muted">in database {{ db['id'] }}</small>
+{% endblock %}
+
+{% block main %}
+<div class="card border-info">
+  <div class="card-header bg-info text-white">Columns</div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Identifier</th>
+	  <th>Type</th>
+	  <th></th>
+	  <th></th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['id'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	  <td>{{ column['primarykey'] and 'PRIMARY KEY' or '' }}</td>
+	  <td>{{ column['notnull'] and 'NOT NULL' or '' }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<div class="card border-warning mt-4">
+  <div class="card-header bg-warning text-white">Indexes</div>
+  <div class="card-body">
+    XXX
+  </div>
+</div>
+{% endblock %}
+
+{% block links %}
+<div>
+  <a href="{{ url_for('table.rows', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Table<br>({{ nrows }} rows)</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('db.index', dbid=db['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">Database</a>
+</div>
+{% endblock %}

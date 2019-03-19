@@ -5,11 +5,8 @@ Table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Table
-<a href="{{ url_for('schema.table', dbid=db['id'], tableid=schema['id']) }}">
-  {{ schema['id'] }}</a>
-in database 
-<a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
+Table {{ schema['id'] }}
+<small class="text-muted">in database {{ db['id'] }}</small>
 {% endblock %}
 
 {% block main %}
@@ -35,11 +32,22 @@ in database
 </table>
 {% endblock %}
 
+{% block links %}
+<div>
+  <a href="{{ url_for('table.schema', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">Schema</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('db.index', dbid=db['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">Database</a>
+</div>
+{% endblock %}
+
 {% block actions %}
 {% if has_write_access %}
 <div>
-  <a href="{{ url_for('.add', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-primary">
+  <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-primary btn-block">
     Add row</a>
 </div>
 <div class="mt-4">
@@ -47,7 +55,7 @@ in database
 	method="POST">
     {{ csrf_token() | safe }}
     <input type="hidden" name="_http_method" value="DELETE">
-    <button type="submit" class="btn btn-danger"
+    <button type="submit" class="btn btn-danger btn-block"
             onclick="return confirm('Really delete? Cannot be undone.')">
       Delete table</button>
   </form>

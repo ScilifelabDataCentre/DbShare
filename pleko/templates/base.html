@@ -67,7 +67,7 @@
 
     <div class="container-fluid">
       <div class="row">
-        <div class="col-sm-9 offset-sm-1">
+        <div class="col-md-9 offset-md-1">
           <h2 class="pt-2">{% block body_title %}Pleko{% endblock %}</h2>
           {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
@@ -80,22 +80,26 @@
           </div>
           {% endfor %}
         </div>
-        <div class="col-sm-2">
+        <div class="col-md-2">
           {% block meta %}
           {% endblock %}
         </div>
       </div>
       <div class="row">
-        <div class="col-sm-10">
+        <div class="col-md-10">
           {% block main %}
           {% endblock %}
         </div>
-        <div class="col-sm-2">
+        <div class="col-md-2">
           <div>
+            {% block links %}
+            {% endblock %}
+          </div>
+          <div class="mt-4">
             {% block actions %}
             {% endblock %}
           </div>
-          <div>
+          <div class="mt-2">
             {% block info %}
             {% endblock %}
           </div>
@@ -104,7 +108,7 @@
       {% block footer %}
       <hr>
       <div class="row">
-        <div class="col-sm-2 offset-sm-10 text-right">
+        <div class="col-md-2 offset-md-10 text-right">
           Pleko <a href="{{ config['GITHUB_URL'] }}">{{ config['VERSION'] }}</a>
         </div>
       </div>
