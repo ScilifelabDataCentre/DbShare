@@ -34,6 +34,7 @@ app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):
+    "Output None as HTML '<NULL>' in safe mode."
     if value is None:
         return jinja2.utils.Markup('<i>&lt;NULL&gt;</i>')
     else:

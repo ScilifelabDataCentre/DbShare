@@ -236,6 +236,8 @@ def upload(dbid):
                 else:
                     raise ValueError('table identifier already in use')
                 schema = {'id': tableid}
+
+                # Preprocess CSV data
                 lines = csvfile.read().decode('utf-8').split('\n')
                 records = list(csv.reader(lines))
                 header = records.pop(0)
@@ -246,11 +248,13 @@ def upload(dbid):
                         raise ValueError('invalid header column identifier')
                 if len(header) != len(set(header)):
                     raise ValueError('non-unique header column identifier')
-                schema['columns'] = [{'id': id} for id in header]
                 # Eliminate empty records
                 records = [r for r in records if r]
+
                 # Infer column types and constraints
+                schema['columns'] = [{'id': id} for id in header]
                 for i, column in enumerate(schema['columns']):
+
                     # First attempt: integer
                     column['notnull'] = True
                     type = None
@@ -265,6 +269,7 @@ def upload(dbid):
                             column['notnull'] = False
                     else:
                         type = constants.INTEGER
+
                     # Next attempt: float
                     if type is None:
                         for n, record in enumerate(records):
@@ -278,6 +283,7 @@ def upload(dbid):
                                 column['notnull'] = False
                         else:
                             type = constants.REAL
+
                     # Default: text
                     if type is None:
                         column['type'] = constants.TEXT
@@ -288,7 +294,9 @@ def upload(dbid):
                                     break
                     else:
                         column['type'] = type
+
                 pleko.table.create_table(cursor, schema)
+
                 # Actually convert values in records
                 for i, column in enumerate(schema['columns']):
                     type = column['type']
@@ -310,6 +318,7 @@ def upload(dbid):
                         for n, record in enumerate(records):
                             if not record[i]:
                                 record[i] = None
+                # Insert the data
                 with cnx:
                     sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                           (tableid,
@@ -318,6 +327,7 @@ def upload(dbid):
                     print(sql)
                     cursor.executemany(sql, records)
                 flask.flash("Added %s rows" % len(records), 'message')
+
             except (ValueError, IndexError, sqlite3.Error) as error:
                 flask.flash(str(error), 'error')
                 return flask.redirect(flask.url_for('.upload',
