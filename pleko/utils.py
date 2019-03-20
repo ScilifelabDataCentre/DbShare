@@ -10,7 +10,7 @@ import flask
 import flask_mail
 import werkzeug.routing
 
-import pleko.constants
+from pleko import constants
 
 
 mail = flask_mail.Mail()
@@ -18,14 +18,14 @@ mail = flask_mail.Mail()
 class IuidConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an IUID."
     def to_python(self, value):
-        if not pleko.constants.IUID_RX.match(value):
+        if not constants.IUID_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
 
 class IdentifierConverter(werkzeug.routing.BaseConverter):
     "URL route converter for an identifier."
     def to_python(self, value):
-        if not pleko.constants.IDENTIFIER_RX.match(value):
+        if not constants.IDENTIFIER_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
 
@@ -95,6 +95,3 @@ def check_csrf_token():
     token = flask.session.pop('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
-
-def json_html(data):
-    return '<pre>%s</pre>' % json.dumps(data, indent=2)

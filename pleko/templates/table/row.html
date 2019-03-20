@@ -5,11 +5,8 @@ Add row to table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Add row to table
-<a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}">
-  {{ schema['id'] }}</a>
-in database
-<a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
+Add row to table {{ schema['id'] }}
+<small>in database {{ db['id'] }}</small>
 {% endblock %}
 
 {% block main %}
@@ -74,7 +71,7 @@ in database
 {% block actions %}
 <p>
   <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-secondary">Cancel</a>
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
 </p>
 {% endblock %}
 

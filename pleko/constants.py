@@ -22,3 +22,6 @@ REAL    = 'REAL'
 TEXT    = 'TEXT'
 BLOB    = 'BLOB'
 COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
+
+# Misc
+CSV_MIMETYPE = 'text/csv'

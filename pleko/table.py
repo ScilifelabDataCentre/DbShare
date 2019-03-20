@@ -1,5 +1,6 @@
 "Pleko table endpoints."
 
+import csv
 import sqlite3
 
 import flask
@@ -26,6 +27,23 @@ def get_schema(cursor, tableid):
                          'primarykey': bool(row[5])}
                         for row in rows]}
 
+def convert_csv_records(records, schema):
+    """Convert the string values in the CSV input records according
+    to the Sqlite column type given by the schema.
+    """
+    try:
+        for i, column in enumerate(schema['columns']):
+            type = column['type']
+            if type == constants.INTEGER:
+                for n, record in enumerate(records):
+                    record[i] = int(record[i])
+            elif type == constants.REAL:
+                for n, record in enumerate(records):
+                    record[i] = float(record[i])
+    except (ValueError, TypeError, IndexError) as error:
+        raise ValueError("line %s, column %s (%s): %s" %
+                         (n+1, i+1, column['id'], str(error)))
+
 
 blueprint = flask.Blueprint('table', __name__)
 
@@ -41,7 +59,7 @@ def create(dbid):
     if utils.is_method_GET():
         return flask.render_template('table/create.html', db=db)
     elif utils.is_method_POST():
-        tableid = flask.request.form.get('tableid')
+        tableid = flask.request.form.get('id')
         if not tableid:
             raise ValueError('no table identifier given')
         if not constants.IDENTIFIER_RX.match(tableid):
@@ -220,7 +238,7 @@ def row(dbid, tableid):
                     sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                           (tableid,
                            ','.join([c['id'] for c in schema['columns']]),
-                           ','.join('?' * len(values)))
+                           ','.join('?' * len(schema['columns'])))
                     cursor.execute(sql, values)
             except sqlite3.Error as error:
                 flask.flash(str(error), 'error')
@@ -231,5 +249,57 @@ def row(dbid, tableid):
                 return flask.redirect(flask.url_for('.rows',
                                                     dbid=dbid,
                                                     tableid=tableid))
+    finally:
+        cnx.close()
+
+@blueprint.route('/<id:dbid>/<id:tableid>/upload', methods=['GET', 'POST'])
+def upload(dbid, tableid):
+    "Add CSV data to the table."
+    try:
+        db = pleko.db.get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    cnx = pleko.db.get_cnx(dbid)
+    try:
+        cursor = cnx.cursor()
+        try:
+            schema = get_schema(cursor, tableid)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+
+        if utils.is_method_GET():
+            return flask.render_template('table/upload.html', 
+                                         db=db,
+                                         schema=schema)
+
+        elif utils.is_method_POST():
+            try:
+                csvfile = flask.request.files['csvfile']
+                lines = csvfile.read().decode('utf-8').split('\n')
+                records = list(csv.reader(lines))
+                header = records.pop(0)
+                for n, column in enumerate(schema['columns']):
+                    if header[n] != column['id']:
+                        raise ValueError('header/column identifier mismatch')
+                records = [r for r in records if r]
+                convert_csv_records(records, schema)
+                with cnx:
+                    sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                          (tableid,
+                           ','.join([c['id'] for c in schema['columns']]),
+                           ','.join('?' * len(schema['columns'])))
+                    cursor.executemany(sql, records)
+                flask.flash("Added %s rows" % len(records), 'message')
+            except (ValueError, IndexError, sqlite3.Error) as error:
+                flask.flash(str(error), 'error')
+                return flask.redirect(flask.url_for('.upload',
+                                                    dbid=dbid,
+                                                    tableid=tableid))
+            return flask.redirect(flask.url_for('.rows',
+                                                dbid=dbid,
+                                                tableid=tableid))
+
     finally:
         cnx.close()
