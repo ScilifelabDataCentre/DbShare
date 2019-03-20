@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Upload CSV file to table {{ schema['id'] }} in database {{ db['id'] }}
+Create a table from CSV data in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Upload CSV file to table {{ schema['id'] }}
-<small>in database {{ db['id'] }}</small>
+Create a table from CSV data in database {{ db['id'] }}
 {% endblock %}
 
 {% block main %}
@@ -14,22 +13,14 @@ Upload CSV file to table {{ schema['id'] }}
   <ul>
     <li>
       The CSV file must contain exactly one header line containing
-      matching table column identifiers.
+      identifiers for the table columns.
     </li>
     <li>
-      The values of every CSV record must match the types of the table
-      columns.
+      The values of the CSV records are inspected to infer the
+      appropriate type for the table columns.
     </li>
-    <li>
-      The CSV records are added as rows to the table.
-    </li>
-    <li>
-      If a table column constraint is violated by a CSV record, the
-      entire operation is aborted, and no values are added.
-    </li>
-  </ul>
 </p>
-<form action="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
+<form action="{{ url_for('.upload', dbid=db['id']) }}"
       enctype="multipart/form-data"
       method="POST">
   {{ csrf_token() | safe }}
@@ -47,6 +38,15 @@ Upload CSV file to table {{ schema['id'] }}
     </div>
   </div>
   <div class="form-group row">
+    <div class="col-md-2 text-right">
+      <label for="tableid" class="col-form-label font-weight-bold">
+        Table identifier</label>
+    </div>
+    <div class="col-md-4">
+      <input id="tableid" name="tableid" type="text" class="form-control">
+    </div>
+  </div>
+  <div class="form-group row">
     <div class="col-md-2 offset-md-2">
       <button type="submit" class="btn btn-primary btn-lg btn-block">Upload</button>
     </div>
@@ -56,7 +56,7 @@ Upload CSV file to table {{ schema['id'] }}
 
 {% block actions %}
 <p>
-  <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.index', dbid=db['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </p>
 {% endblock %}

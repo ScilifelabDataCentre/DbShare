@@ -200,6 +200,64 @@ def logs(dbid):
                                  db=db,
                                  logs=logs)
 
+@blueprint.route('/<id:dbid>/upload', methods=['GET', 'POST'])
+def upload(dbid):
+    "Create a table from the data in a CSV file."
+    try:
+        db = get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+
+    if utils.is_method_GET():
+        return flask.render_template('db/upload.html', db=db)
+
+    elif utils.is_method_POST():
+        try:
+            cnx = get_cnx(dbid)
+            try:
+                csvfile = flask.request.files['csvfile']
+                print('filename', csvfile.filename)
+                lines = csvfile.read().decode('utf-8').split('\n')
+                records = list(csv.reader(lines))
+                header = records.pop(0)
+                if len(header) != 0:
+                    raise ValueError('empty header record in the CSV file')
+                if len(header) != len(set(header)):
+                    raise ValueError('non-unique header column identifier')
+                for id in header:
+                    if not constants.IDENTIFIER_RX.match(id):
+                        raise ValueError('invalid header column identifier')
+                # Eliminate empty records
+                records = [r for r in records if r]
+                # Infer types and constraints XXX
+                for i, column in enumerate(schema['columns']):
+                    type = column['type']
+                    if type == constants.INTEGER:
+                        for n, record in enumerate(records):
+                            record[i] = int(record[i])
+                    elif type == constants.REAL:
+                        for n, record in enumerate(records):
+                            record[i] = float(record[i])
+                with cnx:
+                    sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                          (tableid,
+                           ','.join([c['id'] for c in schema['columns']]),
+                           ','.join('?' * len(schema['columns'])))
+                    cnx.cursor().executemany(sql, records)
+                flask.flash("Added %s rows" % len(records), 'message')
+            except (ValueError, IndexError, sqlite3.Error) as error:
+                flask.flash(str(error), 'error')
+                return flask.redirect(flask.url_for('.upload',
+                                                    dbid=dbid,
+                                                    tableid=tableid))
+            return flask.redirect(flask.url_for('.rows',
+                                                dbid=dbid,
+                                                tableid=tableid))
+        finally:
+            cnx.close()
+
+
 class DbContext:
     "Context for creating, modifying and saving a database metadata."
 

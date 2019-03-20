@@ -27,23 +27,6 @@ def get_schema(cursor, tableid):
                          'primarykey': bool(row[5])}
                         for row in rows]}
 
-def convert_csv_records(records, schema):
-    """Convert the string values in the CSV input records according
-    to the Sqlite column type given by the schema.
-    """
-    try:
-        for i, column in enumerate(schema['columns']):
-            type = column['type']
-            if type == constants.INTEGER:
-                for n, record in enumerate(records):
-                    record[i] = int(record[i])
-            elif type == constants.REAL:
-                for n, record in enumerate(records):
-                    record[i] = float(record[i])
-    except (ValueError, TypeError, IndexError) as error:
-        raise ValueError("line %s, column %s (%s): %s" %
-                         (n+1, i+1, column['id'], str(error)))
-
 
 blueprint = flask.Blueprint('table', __name__)
 
@@ -283,8 +266,20 @@ def upload(dbid, tableid):
                 for n, column in enumerate(schema['columns']):
                     if header[n] != column['id']:
                         raise ValueError('header/column identifier mismatch')
+                # Eliminate empty records
                 records = [r for r in records if r]
-                convert_csv_records(records, schema)
+                try:
+                    for i, column in enumerate(schema['columns']):
+                        type = column['type']
+                        if type == constants.INTEGER:
+                            for n, record in enumerate(records):
+                                record[i] = int(record[i])
+                        elif type == constants.REAL:
+                            for n, record in enumerate(records):
+                                record[i] = float(record[i])
+                except (ValueError, TypeError, IndexError) as error:
+                    raise ValueError("line %s, column %s (%s): %s" %
+                                     (n+1, i+1, column['id'], str(error)))
                 with cnx:
                     sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                           (tableid,

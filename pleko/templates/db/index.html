@@ -64,6 +64,10 @@
      role="button" class="btn btn-primary btn-block">Create table</a>
 </div>
 <div class="mt-2">
+  <a href="{{ url_for('.upload', dbid=db['id']) }}"
+     role="button" class="btn btn-primary btn-block">Upload CSV file</a>
+</div>
+<div class="mt-2">
   <a href="{{ url_for('.rename', dbid=db['id']) }}"
      role="button" class="btn btn-warning btn-block">Rename database</a>
 </div>
