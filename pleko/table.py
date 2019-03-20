@@ -187,7 +187,7 @@ def row(dbid, tableid):
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
 
         if utils.is_method_GET():
-            return flask.render_template('table/add.html', 
+            return flask.render_template('table/row.html', 
                                          db=db,
                                          schema=schema)
 
@@ -212,7 +212,7 @@ def row(dbid, tableid):
             if errors:
                 for item in errors.items():
                     flask.flash("%s: %s" % item, 'error')
-                return flask.render_template('table/add.html', 
+                return flask.render_template('table/row.html', 
                                              db=db,
                                              schema=schema)
             try:
