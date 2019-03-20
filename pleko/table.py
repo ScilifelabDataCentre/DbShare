@@ -27,6 +27,20 @@ def get_schema(cursor, tableid):
                          'primarykey': bool(row[5])}
                         for row in rows]}
 
+def create_table(cursor, schema):
+    "Create the table according to the schema."
+    coldefs = []
+    for column in schema['columns']:
+        coldef = "{id} {type}".format(**column)
+        if column.get('primarykey'):
+            coldef += ' PRIMARY KEY'
+        if column['notnull']:
+            coldef += ' NOT NULL'
+        coldefs.append(coldef)
+    sql = "CREATE TABLE %s (%s)" % (schema['id'], ', '.join(coldefs))
+    print(sql)
+    cursor.execute(sql)
+
 
 blueprint = flask.Blueprint('table', __name__)
 
@@ -42,29 +56,29 @@ def create(dbid):
     if utils.is_method_GET():
         return flask.render_template('table/create.html', db=db)
     elif utils.is_method_POST():
-        tableid = flask.request.form.get('id')
-        if not tableid:
+        schema = {'id': flask.request.form.get('id')}
+        if not schema['id']:
             raise ValueError('no table identifier given')
-        if not constants.IDENTIFIER_RX.match(tableid):
+        if not constants.IDENTIFIER_RX.match(schema['id']):
             raise ValueError('invalid table identifier')
         cnx = pleko.db.get_cnx(dbid)
         try:
             cursor = cnx.cursor()
             sql = "SELECT COUNT(*) FROM sqlite_master WHERE name=?"
-            cursor.execute(sql, (tableid,))
+            cursor.execute(sql, (schema['id'],))
             if cursor.fetchone()[0] != 0:
-                raise ValueError('table identifier already defined')
-            identifiers = set()
+                raise ValueError('table identifier already in use')
+            ids = set()
             columns = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
-                identifier = flask.request.form.get("column%sid" % n)
-                if not identifier: break
-                if not constants.IDENTIFIER_RX.match(identifier):
+                id = flask.request.form.get("column%sid" % n)
+                if not id: break
+                if not constants.IDENTIFIER_RX.match(id):
                     raise ValueError("invalid identifier in column %s" % (n+1))
-                if identifier in identifiers:
+                if id in ids:
                     raise ValueError("repeated identifier in column %s" % (n+1))
-                identifiers.add(identifier)
-                column = {'identifier': identifier}
+                ids.add(id)
+                column = {'id': id}
                 type = flask.request.form.get("column%stype" % n)
                 if type not in constants.COLUMN_TYPES:
                     raise ValueError("invalid type in column %s" % (n+1))
@@ -83,16 +97,7 @@ def create(dbid):
                     columns[primarykey]['primarykey'] = True
                 except ValueError:
                     pass
-            coldefs = []
-            for column in columns:
-                coldef = "{identifier} {type}".format(**column)
-                if column.get('primarykey'):
-                    coldef += ' PRIMARY KEY'
-                if column['notnull']:
-                    coldef += ' NOT NULL'
-                coldefs.append(coldef)
-            sql = "CREATE TABLE %s (%s)" % (tableid, ', '.join(coldefs))
-            cursor.execute(sql)
+            create_table(cursor, schema)
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
         finally:
             cnx.close()
@@ -271,12 +276,34 @@ def upload(dbid, tableid):
                 try:
                     for i, column in enumerate(schema['columns']):
                         type = column['type']
+                        notnull = column['notnull']
                         if type == constants.INTEGER:
                             for n, record in enumerate(records):
-                                record[i] = int(record[i])
+                                value = record[i]
+                                if value:
+                                    record[i] = int(value)
+                                elif notnull:
+                                    raise ValueError('NULL disallowed')
+                                else:
+                                    record[i] = None
                         elif type == constants.REAL:
                             for n, record in enumerate(records):
-                                record[i] = float(record[i])
+                                value = record[i]
+                                if value:
+                                    record[i] = float(value)
+                                elif notnull:
+                                    raise ValueError('NULL disallowed')
+                                else:
+                                    record[i] = None
+                        else:
+                            for n, record in enumerate(records):
+                                value = record[i]
+                                if value:
+                                    record[i] = value
+                                elif notnull:
+                                    raise ValueError('NULL disallowed')
+                                else:
+                                    record[i] = None
                 except (ValueError, TypeError, IndexError) as error:
                     raise ValueError("line %s, column %s (%s): %s" %
                                      (n+1, i+1, column['id'], str(error)))

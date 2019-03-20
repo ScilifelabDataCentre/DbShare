@@ -4,7 +4,7 @@
 <p>
   Web-based relational database system powered by Sqlite.
 </p>
-<table id="resources" class="table">
+<table id="dbs" class="table">
   <thead>
     <tr>
       <th>Database</th>
@@ -38,7 +38,7 @@
 {% block javascript %}
 <script>
   $(function() {
-    $("#resources").DataTable( {
+    $("#dbs").DataTable( {
       "pagingType": "full_numbers",
     });
   });

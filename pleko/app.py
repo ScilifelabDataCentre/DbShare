@@ -3,6 +3,7 @@
 import sqlite3
 
 import flask
+import jinja2.utils
 
 import pleko
 import pleko.db
@@ -30,6 +31,13 @@ app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
 app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
 app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 
+
+@app.template_filter('or_null_safe')
+def or_null_safe(value):
+    if value is None:
+        return jinja2.utils.Markup('<i>&lt;NULL&gt;</i>')
+    else:
+        return value
 
 @app.before_request
 def prepare():

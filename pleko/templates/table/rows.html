@@ -10,7 +10,7 @@ Table {{ schema['id'] }}
 {% endblock %}
 
 {% block main %}
-<table class="table table-sm">
+<table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>
       {% for column in schema['columns'] %}
@@ -22,9 +22,7 @@ Table {{ schema['id'] }}
     {% for row in rows %}
     <tr>
       {% for value in row %}
-      <td>
-        {{ value }}
-      </td>
+      <td>{{ value | or_null_safe }}</td>
       {% endfor %}
     </tr>
     {% endfor %}
@@ -66,4 +64,14 @@ Table {{ schema['id'] }}
   </form>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#rows").DataTable( {
+      "pagingType": "full_numbers",
+    });
+  });
+</script>
 {% endblock %}
