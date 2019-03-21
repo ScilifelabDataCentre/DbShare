@@ -7,6 +7,7 @@ default_config = dict(
     SERVER_NAME = '127.0.0.1:5000',
     SITE_NAME = 'Pleko',
     GITHUB_URL = 'https://github.com/pekrau/Pleko',
+    SQLITE_URL = 'https://www.sqlite.org/',
     MASTERDB_FILEPATH = 'data/masterdb.sqlite3',
     DBS_DIRPATH = 'data/dbs',
     SECRET_KEY = None,

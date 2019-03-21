@@ -108,8 +108,9 @@
       {% block footer %}
       <hr>
       <div class="row">
-        <div class="col-md-2 offset-md-10 text-right">
-          Pleko <a href="{{ config['GITHUB_URL'] }}">{{ config['VERSION'] }}</a>
+        <div class="col-md-4 offset-md-8 text-right">
+          <a href="{{ config['SQLITE_URL'] }}">Sqlite {{ config['SQLITE_VERSION'] }}</a>,
+          <a href="{{ config['GITHUB_URL'] }}">Pleko {{ config['VERSION'] }}</a>
         </div>
       </div>
       {% endblock %}
