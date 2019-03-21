@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Rename database {{ db['id'] }}{% endblock %}
+{% block head_title %}Clone database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}Rename database {{ db['id'] }}{% endblock %}
+{% block body_title %}Clone database {{ db['id'] }}{% endblock %}
 
 {% block main %}
-<form action="{{ url_for('.rename', dbid=db['id']) }}"
+<form action="{{ url_for('.clone', dbid=db['id']) }}"
       method="POST">
   {{ csrf_token() | safe }}
   <div class="form-group row">
@@ -26,8 +26,8 @@
   </div>
   <div class="form-group row">
     <div class="col-md-2 offset-md-2">
-      <button type="submit" 
-              class="btn btn-primary btn-lg btn-block">Rename</button>
+      <button type="submit"
+              class="btn btn-primary btn-lg btn-block">Clone</button>
     </div>
   </div>
 </form>

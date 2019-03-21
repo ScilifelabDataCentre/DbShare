@@ -5,6 +5,7 @@ import csv
 import json
 import os
 import os.path
+import shutil
 import sqlite3
 
 import flask
@@ -204,6 +205,7 @@ def logs(dbid):
                                  logs=logs)
 
 @blueprint.route('/<id:dbid>/upload', methods=['GET', 'POST'])
+@login_required
 def upload(dbid):
     "Create a table from the data in a CSV file."
     try:
@@ -339,6 +341,32 @@ def upload(dbid):
         finally:
             cnx.close()
 
+@blueprint.route('/<id:dbid>/clone', methods=['GET', 'POST'])
+@login_required
+def clone(dbid):
+    "Create a clone of the database."
+    try:
+        db = get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+
+    if utils.is_method_GET():
+        return flask.render_template('db/clone.html', db=db)
+
+    elif utils.is_method_POST():
+        try:
+            with DbContext() as ctx:
+                ctx.set_id(flask.request.form['id'])
+                ctx.set_description(flask.request.form.get('description'))
+                ctx.db['profile'] = db['profile']
+                ctx.db['origin'] = dbid # Will show up in logs
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.clone', dbid=dbid))
+        shutil.copy(dbpath(dbid), dbpath(ctx.db['id']))
+        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+
 
 class DbContext:
     "Context for creating, modifying and saving a database metadata."
@@ -346,6 +374,7 @@ class DbContext:
     def __init__(self, db=None):
         if db is None:
             self.db = {'owner':   flask.g.current_user['username'],
+                       'public': False,
                        'profile': {},
                        'created': utils.get_time()}
             self.orig = {}
@@ -362,26 +391,18 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        cursor = pleko.master.cursor()
-        cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?", (self.db['id'],))
-        rows = list(cursor)
         cnx = pleko.master.get()
         try:
+            cursor = cnx.cursor()
+            cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?",
+                           (self.db['id'],))
+            row = cursor.fetchone()
+            # If new database, then do not overwrite existing
+            if not self.orig and row[0] != 0:
+                raise ValueError('database identifier already in use')
             with cnx:
-                # Update database in master
-                if rows[0][0]:
-                    sql = "UPDATE dbs SET owner=?, description=?," \
-                          " public=?, profile=?, modified=?" \
-                          " WHERE id=?"
-                    cnx.execute(sql, (self.db['owner'],
-                                      self.db.get('description'),
-                                      bool(self.db.get('public')),
-                                      json.dumps(self.db['profile'],
-                                                 ensure_ascii=False),
-                                      self.db['modified'],
-                                      self.db['id']))
-                # Create database in master, meta info in JSON, and Sqlite file
-                else:
+                # Create database in master, and Sqlite file
+                if row[0] == 0:
                     try:
                         db = sqlite3.connect(dbpath(self.db['id']))
                     except sqlite3.Error as error:
@@ -400,6 +421,18 @@ class DbContext:
                                                  ensure_ascii=False),
                                       self.db['created'], 
                                       self.db['modified']))
+                # Update database in master
+                else:
+                    sql = "UPDATE dbs SET owner=?, description=?," \
+                          " public=?, profile=?, modified=?" \
+                          " WHERE id=?"
+                    cnx.execute(sql, (self.db['owner'],
+                                      self.db.get('description'),
+                                      bool(self.db.get('public')),
+                                      json.dumps(self.db['profile'],
+                                                 ensure_ascii=False),
+                                      self.db['modified'],
+                                      self.db['id']))
                 # Add log entry
                 new = {}
                 for key, value in self.db.items():

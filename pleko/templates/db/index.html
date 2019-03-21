@@ -69,7 +69,11 @@
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.rename', dbid=db['id']) }}"
-     role="button" class="btn btn-warning btn-block">Rename database</a>
+     role="button" class="btn btn-info btn-block">Rename database</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.clone', dbid=db['id']) }}"
+     role="button" class="btn btn-info btn-block">Clone database</a>
 </div>
 <div class="mt-2">
   <form action="{{ url_for('.index', dbid=db['id']) }}"

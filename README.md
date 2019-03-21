@@ -20,6 +20,10 @@ List of views.
 
 Delete the database.
 
+## `/db/{dbid}/clone`
+
+Create a clone of the database.
+
 ## `/db/{dbid}/upload`
 
 Upload a data file, creating a table in the database.
