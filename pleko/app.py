@@ -65,6 +65,11 @@ def index():
 @app.after_request
 def finalize(response):
     flask.g.cnx.close()
+    try:
+        # This is set by a call to db.get_cnx
+        flask.g.dbcnx.close()
+    except AttributeError:
+        pass
     return response
 
 

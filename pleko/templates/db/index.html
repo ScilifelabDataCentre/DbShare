@@ -2,7 +2,7 @@
 
 {% block head_title %}Database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}Database {{ db['id'] }}{% endblock %}
+{% block body_title %}Database <strong>{{ db['id'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="row">
@@ -18,7 +18,7 @@
     <div class="card border-primary">
       <div class="card-header bg-primary text-white">Tables</div>
       <div class="card-body">
-        <table class="table table-borderless">
+        <table class="table table-sm table-hover table-borderless">
           <tbody>
             {% if tables %}
             {% for table in tables %}

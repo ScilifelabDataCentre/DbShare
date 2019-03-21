@@ -3,8 +3,7 @@
 {% block head_title %}Create a table in database {{ db['id'] }}{% endblock %}
 
 {% block body_title %}
-Create a table in database
-<a href="{{ url_for('db.index', dbid=db['id']) }}">{{ db['id'] }}</a>
+Create a table in database <strong>{{ db['id'] }}</strong>
 {% endblock %}
 
 {% block main %}

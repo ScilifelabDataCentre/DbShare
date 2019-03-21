@@ -5,8 +5,8 @@ Schema table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Schema table {{ schema['id'] }}
-<small class="text-muted">in database {{ db['id'] }}</small>
+Schema table <strong>{{ schema['id'] }}</strong>
+<span class="text-muted">in database {{ db['id'] }}</span>
 {% endblock %}
 
 {% block main %}
@@ -51,6 +51,17 @@ Schema table {{ schema['id'] }}
 </div>
 <div class="mt-2">
   <a href="{{ url_for('db.index', dbid=db['id']) }}"
-     role="button" class="btn btn-outline-primary btn-block">Database</a>
+     role="button" class="btn btn-outline-primary btn-block">
+    Database<br>{{ db['id'] }}</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-primary btn-block">
+    Add row</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-info btn-block">
+    Clone table</a>
 </div>
 {% endblock %}

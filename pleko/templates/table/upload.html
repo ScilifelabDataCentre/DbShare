@@ -10,48 +10,55 @@ Upload CSV file to table {{ schema['id'] }}
 {% endblock %}
 
 {% block main %}
-<p>
-  <ul>
-    <li>
-      The CSV file must contain exactly one header line containing
-      matching table column identifiers.
-    </li>
-    <li>
-      The values of every CSV record must match the types of the table
-      columns.
-    </li>
-    <li>
-      The CSV records are added as rows to the table.
-    </li>
-    <li>
-      If a table column constraint is violated by a CSV record, the
-      entire operation is aborted, and no values are added.
-    </li>
-  </ul>
-</p>
-<form action="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
-      enctype="multipart/form-data"
-      method="POST">
-  {{ csrf_token() | safe }}
-  <div class="form-group">
-    <div class="row">
-      <div class="col-md-2 text-right">
-        <label for="csvfile"
-               class="col-form-label font-weight-bold">
-          CSV file</label>
-      </div>
-      <div class="col-md-6">
-        <input id="csvfile" name="csvfile"
-               type="file" class="form-control-file" autofocus>
-      </div>
-    </div>
+<div class="card border-primary">
+  <div class="card-header">
+    <p>
+      <ul>
+        <li>
+          The CSV file must contain exactly one header line containing
+          matching table column identifiers.
+        </li>
+        <li>
+          The values of every CSV record must match the types of the
+          table columns.
+        </li>
+        <li>
+          The CSV records are added as rows to the table.
+        </li>
+        <li>
+          If a table column constraint is violated by a CSV record,
+          the entire operation is aborted, and no values are added.
+        </li>
+      </ul>
+    </p>
   </div>
-  <div class="form-group row">
-    <div class="col-md-2 offset-md-2">
-      <button type="submit" class="btn btn-primary btn-lg btn-block">Upload</button>
-    </div>
+  <div class="card-body">
+    <form action="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
+          enctype="multipart/form-data"
+          method="POST">
+      {{ csrf_token() | safe }}
+      <div class="form-group">
+        <div class="row">
+          <div class="col-md-2 text-right">
+            <label for="csvfile"
+                   class="col-form-label font-weight-bold">
+              CSV file</label>
+          </div>
+          <div class="col-md-6">
+            <input id="csvfile" name="csvfile"
+                   type="file" class="form-control-file" autofocus>
+          </div>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-2 offset-md-2">
+          <button type="submit" 
+                  class="btn btn-primary btn-lg btn-block">Upload</button>
+        </div>
+      </div>
+    </form>
   </div>
-</form>
+</div>
 {% endblock %}
 
 {% block actions %}

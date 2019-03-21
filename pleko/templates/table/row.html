@@ -10,62 +10,67 @@ Add row to table {{ schema['id'] }}
 {% endblock %}
 
 {% block main %}
-<form action="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
-      method="POST">
-  {{ csrf_token() | safe }}
-  {% for column in schema['columns'] %}
-  <div class="form-group">
-    <div class="row">
-      <div class="col-md-2 text-right">
-        <label for="{{ column['id'] }}"
-               class="col-form-label font-weight-bold">
-          {{ column['id'] }}</label>
+<div class="card border-primary">
+  <div class="card-body">
+    <form action="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+          method="POST">
+      {{ csrf_token() | safe }}
+      {% for column in schema['columns'] %}
+      <div class="form-group">
+        <div class="row">
+          <div class="col-md-2 text-right">
+            <label for="{{ column['id'] }}"
+                   class="col-form-label font-weight-bold">
+              {{ column['id'] }}</label>
+          </div>
+          {% if column['type'] == constants.INTEGER %}
+          <div class="col-md-4">
+            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+                   aria-describedby="{{ column['id'] }}Help"
+                   {{ column['notnull'] and 'required' or '' }}
+                   type="number" step="1" class="form-control">
+          </div>
+          {% elif column['type'] == constants.REAL %}
+          <div class="col-md-4">
+            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+                   aria-describedby="{{ column['id'] }}Help"
+                   {{ column['notnull'] and 'required' or '' }}
+                   type="text" class="form-control">
+          </div>
+          {% elif column['type'] == constants.TEXT %}
+          <div class="col-md-8">
+            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
+                   aria-describedby="{{ column['id'] }}Help"
+                   {{ column['notnull'] and 'required' or '' }}
+                   type="text" class="form-control">
+          </div>
+          {% elif column['type'] == constants.BLOB %}
+          <div class="col-md-8">
+            <textarea id="{{ column['id'] }}" name="{{ column['id'] }}"
+                      aria-describedby="{{ column['id'] }}Help"
+                      {{ column['notnull'] and 'required' or '' }}
+                      class="form-control" rows="4">
+          </div>
+          {% endif %}
+          <div class="col-md">
+            <small id="{{ column['id'] }}Help" class="form-text text-muted">
+              {{ column['type'] }}
+              {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
+              {{ column['notnull'] and 'NOT NULL' or '' }}
+            </small>
+          </div>
+        </div>
       </div>
-      {% if column['type'] == constants.INTEGER %}
-      <div class="col-md-4">
-        <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-               aria-describedby="{{ column['id'] }}Help"
-               {{ column['notnull'] and 'required' or '' }}
-               type="number" step="1" class="form-control">
+      {% endfor %}
+      <div class="form-group row">
+        <div class="col-md-2 offset-md-2">
+          <button type="submit"
+                  class="btn btn-primary btn-lg btn-block">Add</button>
+        </div>
       </div>
-      {% elif column['type'] == constants.REAL %}
-      <div class="col-md-4">
-        <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-               aria-describedby="{{ column['id'] }}Help"
-               {{ column['notnull'] and 'required' or '' }}
-               type="text" class="form-control">
-      </div>
-      {% elif column['type'] == constants.TEXT %}
-      <div class="col-md-8">
-        <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-               aria-describedby="{{ column['id'] }}Help"
-               {{ column['notnull'] and 'required' or '' }}
-               type="text" class="form-control">
-      </div>
-      {% elif column['type'] == constants.BLOB %}
-      <div class="col-md-8">
-        <textarea id="{{ column['id'] }}" name="{{ column['id'] }}"
-                  aria-describedby="{{ column['id'] }}Help"
-                  {{ column['notnull'] and 'required' or '' }}
-                  class="form-control" rows="4">
-      </div>
-      {% endif %}
-      <div class="col-md">
-        <small id="{{ column['id'] }}Help" class="form-text text-muted">
-          {{ column['type'] }}
-          {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
-          {{ column['notnull'] and 'NOT NULL' or '' }}
-        </small>
-      </div>
-    </div>
+    </form>
   </div>
-  {% endfor %}
-  <div class="form-group row">
-    <div class="col-md-2 offset-md-2">
-      <button type="submit" class="btn btn-primary btn-lg btn-block">Add</button>
-    </div>
-  </div>
-</form>
+</div>
 {% endblock %}
 
 {% block actions %}

@@ -59,7 +59,9 @@ def dbpath(id):
     
 def get_cnx(id):
     "Get a connection for the given database identifier."
-    return sqlite3.connect(dbpath(id))
+    # This will be closed by app.finalize
+    flask.g.dbcnx = sqlite3.connect(dbpath(id))
+    return flask.g.dbcnx
 
 def has_read_access(db):
     "Does the current user (if any) have read access to the database?"
@@ -124,20 +126,16 @@ def index(dbid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
-        cnx = get_cnx(dbid)
-        try:
-            cursor = cnx.cursor()
-            sql = "SELECT name FROM sqlite_master WHERE type=?"
-            cursor.execute(sql, ('table',))
-            tables = [{'id': row[0]} for row in cursor]
-            for table in tables:
-                table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
-            return flask.render_template('db/index.html',
-                                         db=db,
-                                         tables=tables,
-                                         has_write_access=has_write_access(db))
-        finally:
-            cnx.close()
+        cursor = get_cnx(dbid).cursor()
+        sql = "SELECT name FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('table',))
+        tables = [{'id': row[0]} for row in cursor]
+        for table in tables:
+            table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
+        return flask.render_template('db/index.html',
+                                     db=db,
+                                     tables=tables,
+                                     has_write_access=has_write_access(db))
 
     elif utils.is_method_DELETE():
         try:
@@ -146,16 +144,13 @@ def index(dbid):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
         cnx = pleko.master.get_cnx()
-        try:
-            with cnx:
-                sql = 'DELETE FROM dbs_logs WHERE id=?'
-                cnx.execute(sql, (dbid,))
-                sql = 'DELETE FROM dbs WHERE id=?'
-                cnx.execute(sql, (dbid,))
-                os.remove(dbpath(dbid))
-            return flask.redirect(flask.url_for('index'))
-        finally:
-            cnx.close()
+        with cnx:
+            sql = 'DELETE FROM dbs_logs WHERE id=?'
+            cnx.execute(sql, (dbid,))
+            sql = 'DELETE FROM dbs WHERE id=?'
+            cnx.execute(sql, (dbid,))
+            os.remove(dbpath(dbid))
+        return flask.redirect(flask.url_for('index'))
 
 @blueprint.route('/<id:dbid>/rename', methods=['GET', 'POST'])
 @login_required
@@ -219,125 +214,119 @@ def upload(dbid):
         try:
             cnx = get_cnx(dbid)
             cursor = cnx.cursor()
+            csvfile = flask.request.files['csvfile']
             try:
-                csvfile = flask.request.files['csvfile']
-                try:
-                    tableid = flask.request.form['tableid']
-                    if not tableid: raise KeyError
-                except KeyError:
-                    tableid = os.path.basename(csvfile.filename)
-                    print(tableid)
-                    tableid = os.path.splitext(tableid)[0]
-                    print(tableid)
-                try:
-                    pleko.table.get_schema(cursor, tableid)
-                except ValueError:
-                    pass
+                tableid = flask.request.form['tableid']
+                if not tableid: raise KeyError
+            except KeyError:
+                tableid = os.path.basename(csvfile.filename)
+                tableid = os.path.splitext(tableid)[0]
+            try:
+                pleko.table.get_schema(tableid, cursor)
+            except ValueError:
+                pass
+            else:
+                raise ValueError('table identifier already in use')
+            schema = {'id': tableid}
+
+            # Preprocess CSV data
+            lines = csvfile.read().decode('utf-8').split('\n')
+            records = list(csv.reader(lines))
+            header = records.pop(0)
+            if len(header) == 0:
+                raise ValueError('empty header record in the CSV file')
+            for id in header:
+                if not constants.IDENTIFIER_RX.match(id):
+                    raise ValueError('invalid header column identifier')
+            if len(header) != len(set(header)):
+                raise ValueError('non-unique header column identifier')
+            # Eliminate empty records
+            records = [r for r in records if r]
+
+            # Infer column types and constraints
+            schema['columns'] = [{'id': id} for id in header]
+            for i, column in enumerate(schema['columns']):
+
+                # First attempt: integer
+                column['notnull'] = True
+                type = None
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value:
+                        try:
+                            int(value)
+                        except (ValueError, TypeError):
+                            break
+                    else:
+                        column['notnull'] = False
                 else:
-                    raise ValueError('table identifier already in use')
-                schema = {'id': tableid}
+                    type = constants.INTEGER
 
-                # Preprocess CSV data
-                lines = csvfile.read().decode('utf-8').split('\n')
-                records = list(csv.reader(lines))
-                header = records.pop(0)
-                if len(header) == 0:
-                    raise ValueError('empty header record in the CSV file')
-                for id in header:
-                    if not constants.IDENTIFIER_RX.match(id):
-                        raise ValueError('invalid header column identifier')
-                if len(header) != len(set(header)):
-                    raise ValueError('non-unique header column identifier')
-                # Eliminate empty records
-                records = [r for r in records if r]
-
-                # Infer column types and constraints
-                schema['columns'] = [{'id': id} for id in header]
-                for i, column in enumerate(schema['columns']):
-
-                    # First attempt: integer
-                    column['notnull'] = True
-                    type = None
+                # Next attempt: float
+                if type is None:
                     for n, record in enumerate(records):
                         value = record[i]
                         if value:
                             try:
-                                int(value)
+                                float(value)
                             except (ValueError, TypeError):
                                 break
                         else:
                             column['notnull'] = False
                     else:
-                        type = constants.INTEGER
+                        type = constants.REAL
 
-                    # Next attempt: float
-                    if type is None:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                try:
-                                    float(value)
-                                except (ValueError, TypeError):
-                                    break
-                            else:
-                                column['notnull'] = False
-                        else:
-                            type = constants.REAL
-
-                    # Default: text
-                    if type is None:
-                        column['type'] = constants.TEXT
-                        if column['notnull']:
-                            for record in records:
-                                if not record[i]:
-                                    column['notnull'] = False
-                                    break
-                    else:
-                        column['type'] = type
-
-                pleko.table.create_table(cursor, schema)
-
-                # Actually convert values in records
-                for i, column in enumerate(schema['columns']):
-                    type = column['type']
-                    if type == constants.INTEGER:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                record[i] = int(value)
-                            else:
-                                record[i] = None
-                    elif type == constants.REAL:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                record[i] = float(value)
-                            else:
-                                record[i] = None
-                    else:
-                        for n, record in enumerate(records):
+                # Default: text
+                if type is None:
+                    column['type'] = constants.TEXT
+                    if column['notnull']:
+                        for record in records:
                             if not record[i]:
-                                record[i] = None
-                # Insert the data
-                with cnx:
-                    sql = "INSERT INTO %s (%s) VALUES (%s)" % \
-                          (tableid,
-                           ','.join([c['id'] for c in schema['columns']]),
-                           ','.join('?' * len(schema['columns'])))
-                    print(sql)
-                    cursor.executemany(sql, records)
-                flask.flash("Added %s rows" % len(records), 'message')
+                                column['notnull'] = False
+                                break
+                else:
+                    column['type'] = type
 
-            except (ValueError, IndexError, sqlite3.Error) as error:
-                flask.flash(str(error), 'error')
-                return flask.redirect(flask.url_for('.upload',
-                                                    dbid=dbid,
-                                                    tableid=tableid))
-            return flask.redirect(flask.url_for('table.rows',
+            pleko.table.create_table(schema, cursor)
+
+            # Actually convert values in records
+            for i, column in enumerate(schema['columns']):
+                type = column['type']
+                if type == constants.INTEGER:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value:
+                            record[i] = int(value)
+                        else:
+                            record[i] = None
+                elif type == constants.REAL:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value:
+                            record[i] = float(value)
+                        else:
+                            record[i] = None
+                else:
+                    for n, record in enumerate(records):
+                        if not record[i]:
+                            record[i] = None
+            # Insert the data
+            with cnx:
+                sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                      (tableid,
+                       ','.join([c['id'] for c in schema['columns']]),
+                       ','.join('?' * len(schema['columns'])))
+                cursor.executemany(sql, records)
+            flask.flash("Added %s rows" % len(records), 'message')
+
+        except (ValueError, IndexError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.upload',
                                                 dbid=dbid,
                                                 tableid=tableid))
-        finally:
-            cnx.close()
+        return flask.redirect(flask.url_for('table.rows',
+                                            dbid=dbid,
+                                            tableid=tableid))
 
 @blueprint.route('/<id:dbid>/clone', methods=['GET', 'POST'])
 @login_required
@@ -389,79 +378,76 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        cnx = pleko.master.get()
-        try:
-            cursor = cnx.cursor()
-            cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?",
-                           (self.db['id'],))
-            row = cursor.fetchone()
-            # If new database, then do not overwrite existing
-            if not self.orig and row[0] != 0:
-                raise ValueError('database identifier already in use')
-            with cnx:
-                # Create database in master, and Sqlite file
-                if row[0] == 0:
-                    try:
-                        db = sqlite3.connect(dbpath(self.db['id']))
-                    except sqlite3.Error as error:
-                        raise ValueError(str(error))
-                    else:
-                        db.close()
-                    sql = "INSERT INTO dbs" \
-                          " (id, owner, description, public, profile," \
-                          "  created, modified)" \
-                          " VALUES (?, ?, ?, ?, ?, ?, ?)"
-                    cnx.execute(sql, (self.db['id'],
-                                      self.db['owner'],
-                                      self.db.get('description'),
-                                      bool(self.db.get('public')),
-                                      json.dumps(self.db['profile'],
-                                                 ensure_ascii=False),
-                                      self.db['created'], 
-                                      self.db['modified']))
-                # Update database in master
-                else:
-                    sql = "UPDATE dbs SET owner=?, description=?," \
-                          " public=?, profile=?, modified=?" \
-                          " WHERE id=?"
-                    cnx.execute(sql, (self.db['owner'],
-                                      self.db.get('description'),
-                                      bool(self.db.get('public')),
-                                      json.dumps(self.db['profile'],
-                                                 ensure_ascii=False),
-                                      self.db['modified'],
-                                      self.db['id']))
-                # Add log entry
-                new = {}
-                for key, value in self.db.items():
-                    if value != self.orig.get(key):
-                        new[key] = value
-                new.pop('modified')
+        cnx = pleko.master.get() # Don't close this; may be needed elsewhere
+        cursor = cnx.cursor()
+        cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?",
+                       (self.db['id'],))
+        row = cursor.fetchone()
+        # If new database, then do not overwrite existing
+        if not self.orig and row[0] != 0:
+            raise ValueError('database identifier already in use')
+        with cnx:
+            # Create database in master, and Sqlite file
+            if row[0] == 0:
                 try:
-                    editor = flask.g.current_user['username']
-                except AttributeError:
-                    editor = None
-                if flask.has_request_context():
-                    remote_addr = str(flask.request.remote_addr)
-                    user_agent = str(flask.request.user_agent)
+                    db = sqlite3.connect(dbpath(self.db['id']))
+                except sqlite3.Error as error:
+                    raise ValueError(str(error))
                 else:
-                    remote_addr = None
-                    user_agent = None
-                sql = "INSERT INTO dbs_logs (id, new, editor," \
-                      " remote_addr, user_agent, timestamp)" \
-                      " VALUES (?, ?, ?, ?, ?, ?)"
+                    db.close()
+                sql = "INSERT INTO dbs" \
+                      " (id, owner, description, public, profile," \
+                      "  created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?)"
                 cnx.execute(sql, (self.db['id'],
-                                  json.dumps(new, ensure_ascii=False),
-                                  editor,
-                                  remote_addr,
-                                  user_agent,
-                                  utils.get_time()))
-        finally:
-            cnx.close()
+                                  self.db['owner'],
+                                  self.db.get('description'),
+                                  bool(self.db.get('public')),
+                                  json.dumps(self.db['profile'],
+                                             ensure_ascii=False),
+                                  self.db['created'], 
+                                  self.db['modified']))
+            # Update database in master
+            else:
+                sql = "UPDATE dbs SET owner=?, description=?," \
+                      " public=?, profile=?, modified=?" \
+                      " WHERE id=?"
+                cnx.execute(sql, (self.db['owner'],
+                                  self.db.get('description'),
+                                  bool(self.db.get('public')),
+                                  json.dumps(self.db['profile'],
+                                             ensure_ascii=False),
+                                  self.db['modified'],
+                                  self.db['id']))
+            # Add log entry
+            new = {}
+            for key, value in self.db.items():
+                if value != self.orig.get(key):
+                    new[key] = value
+            new.pop('modified')
+            try:
+                editor = flask.g.current_user['username']
+            except AttributeError:
+                editor = None
+            if flask.has_request_context():
+                remote_addr = str(flask.request.remote_addr)
+                user_agent = str(flask.request.user_agent)
+            else:
+                remote_addr = None
+                user_agent = None
+            sql = "INSERT INTO dbs_logs (id, new, editor," \
+                  " remote_addr, user_agent, timestamp)" \
+                  " VALUES (?, ?, ?, ?, ?, ?)"
+            cnx.execute(sql, (self.db['id'],
+                              json.dumps(new, ensure_ascii=False),
+                              editor,
+                              remote_addr,
+                              user_agent,
+                              utils.get_time()))
 
     def set_id(self, id):
         "Set or change the database identifier."
-        if not pleko.constants.IDENTIFIER_RX.match(id):
+        if not constants.IDENTIFIER_RX.match(id):
             raise ValueError('invalid database identifier')
         if get_db(id):
             raise ValueError('database identifier already in use')
