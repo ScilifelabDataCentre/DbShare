@@ -4,7 +4,7 @@
 <p>
   Web-based relational database system powered by Sqlite.
 </p>
-<table id="dbs" class="table">
+<table id="dbs" class="table table-sm">
   <thead>
     <tr>
       <th>Database</th>
@@ -32,7 +32,7 @@
 
 {% block actions %}
 <a href="{{ url_for('db.create') }}"
-   role="button" class="btn btn-primary">Create database</a>
+   role="button" class="btn btn-primary btn-block">Create database</a>
 {% endblock %}
 
 {% block javascript %}

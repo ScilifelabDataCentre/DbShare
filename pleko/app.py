@@ -8,6 +8,7 @@ import jinja2.utils
 import pleko
 import pleko.db
 import pleko.master
+import pleko.query
 import pleko.table
 import pleko.user
 from pleko import constants
@@ -30,6 +31,7 @@ app = create_app()
 app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
 app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
 app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
+app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
 
 
 @app.template_filter('or_null_safe')

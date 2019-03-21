@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Query database {{ db['id'] }}{% endblock %}
+
+{% block body_title %}Query database <strong>{{ db['id'] }}</strong>{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md-8">
+    <div class="card border-success">
+      <div class="card-body">
+        <form action="{{ url_for('.rows', dbid=db['id']) }}"
+              method="POST">
+          {{ csrf_token() | safe }}
+          <div class="form-group row">
+            <label for="select" class="col-md-2 col-form-label text-right">
+              SELECT</label>
+            <div class="col-md-10">
+              <textarea id="select" name="select"
+                        class="form-control" rows="2" autofocus></textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="from" class="col-md-2 col-form-label text-right">
+              FROM</label>
+            <div class="col-md-10">
+              <textarea id="from" name="from"
+                        class="form-control" rows="2" autofocus></textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="where" class="col-md-2 col-form-label text-right">
+              WHERE</label>
+            <div class="col-md-10">
+              <textarea id="where" name="where"
+                        class="form-control" rows="2" autofocus></textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div class="col-md-2 offset-md-2">
+              <button type="submit"
+                      class="btn btn-success btn-lg btn-block">Query</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    {% for table in tables %}
+    <div class="card border-secondary mb-1">
+      <div class="card-header">
+        <button type="button" 
+                class="btn btn-outline-secondary" data-toggle="collapse"
+                data-target="#{{ table['id'] }}"
+                aria-expanded="false" aria-controls="{{ table['id'] }}">
+          Table <strong>{{ table['id'] }}</strong></button>
+        <a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}"
+           class="btn btn-sm btn-outline-primary" role="button" target="_blank">
+          {{ table['nrows'] }} rows</a>
+      </div>
+      <div id="{{ table['id'] }}" class="collapse">
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            {% for column in table['schema']['columns'] %}
+            <tr>
+              <th class="text-right">{{ column['id'] }}</th>
+              <td>
+                {{ column['type'] }}
+                {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
+                {{ column.get('notnull') and 'NOT NULL' or '' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<p>
+  <a href="{{ url_for('db.index', dbid=db['id']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</p>
+{% endblock %}

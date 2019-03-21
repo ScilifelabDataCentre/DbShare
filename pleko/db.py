@@ -52,15 +52,30 @@ def get_db(id):
             'created':     row[4],
             'modified':    row[5]}
 
-def dbpath(id):
+def get_tables(dbid, schema=False):
+    """Get the tables in the database with their number of rows.
+    If schema is True, get the table schemas.
+    """
+    cursor = get_cnx(dbid).cursor()
+    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    cursor.execute(sql, ('table',))
+    tables = [{'id': row[0]} for row in cursor]
+    for table in tables:
+        table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
+    if schema:
+        for table in tables:
+            table['schema'] = pleko.table.get_schema(table['id'], cursor)
+    return tables
+
+def dbpath(dbid):
     "Return the file path for the given database identifier."
-    path = os.path.join(flask.current_app.config['DBS_DIRPATH'], id)
+    path = os.path.join(flask.current_app.config['DBS_DIRPATH'], dbid)
     return path + '.sqlite3'
     
-def get_cnx(id):
+def get_cnx(dbid):
     "Get a connection for the given database identifier."
     # This will be closed by app.finalize
-    flask.g.dbcnx = sqlite3.connect(dbpath(id))
+    flask.g.dbcnx = sqlite3.connect(dbpath(dbid))
     return flask.g.dbcnx
 
 def has_read_access(db):
@@ -70,11 +85,11 @@ def has_read_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_read(id):
+def get_check_read(dbid):
     """Get the database and check that the current user as read access.
     Raise ValueError if any problem.
     """
-    db = get_db(id)
+    db = get_db(dbid)
     if db is None:
         raise ValueError('no such database')
     if not has_read_access(db):
@@ -87,11 +102,11 @@ def has_write_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_write(id):
+def get_check_write(dbid):
     """Get the database and check that the current user as write access.
     Raise ValueError if any problem.
     """
-    db = get_db(id)
+    db = get_db(dbid)
     if db is None:
         raise ValueError('no such database')
     if not has_write_access(db):
@@ -126,15 +141,9 @@ def index(dbid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
-        cursor = get_cnx(dbid).cursor()
-        sql = "SELECT name FROM sqlite_master WHERE type=?"
-        cursor.execute(sql, ('table',))
-        tables = [{'id': row[0]} for row in cursor]
-        for table in tables:
-            table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
         return flask.render_template('db/index.html',
                                      db=db,
-                                     tables=tables,
+                                     tables=get_tables(dbid),
                                      has_write_access=has_write_access(db))
 
     elif utils.is_method_DELETE():
