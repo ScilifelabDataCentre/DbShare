@@ -27,17 +27,26 @@ def get_schema(cursor, tableid):
                          'primarykey': bool(row[5])}
                         for row in rows]}
 
+def get_nrows(tableid, cursor):
+    "Get the number of rows in the table."
+    cursor.execute("SELECT COUNT(*) FROM %s" % tableid)
+    return cursor.fetchone()[0]
+
 def create_table(cursor, schema):
     "Create the table according to the schema."
-    coldefs = []
+    clauses = []
     for column in schema['columns']:
         coldef = "{id} {type}".format(**column)
-        if column.get('primarykey'):
-            coldef += ' PRIMARY KEY'
         if column['notnull']:
             coldef += ' NOT NULL'
-        coldefs.append(coldef)
-    sql = "CREATE TABLE %s (%s)" % (schema['id'], ', '.join(coldefs))
+        clauses.append(coldef)
+    primarykey = []
+    for column in schema['columns']:
+        if column['primarykey']:
+            primarykey.append(column['id'])
+    if primarykey:
+        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
+    sql = "CREATE TABLE %s (%s)" % (schema['id'], ', '.join(clauses))
     print(sql)
     cursor.execute(sql)
 
@@ -69,7 +78,7 @@ def create(dbid):
             if cursor.fetchone()[0] != 0:
                 raise ValueError('table identifier already in use')
             ids = set()
-            columns = []
+            schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 id = flask.request.form.get("column%sid" % n)
                 if not id: break
@@ -83,20 +92,13 @@ def create(dbid):
                 if type not in constants.COLUMN_TYPES:
                     raise ValueError("invalid type in column %s" % (n+1))
                 column['type'] = type
+                column['primarykey'] = utils.to_bool(
+                    flask.request.form.get("column%sprimarykey" % n))
                 column['notnull'] = utils.to_bool(
                     flask.request.form.get("column%snotnull" % n))
-                columns.append(column)
-            if not columns:
+                schema['columns'].append(column)
+            if not schema['columns']:
                 raise ValueError('no columns defined')
-            primarykey = flask.request.form.get('columnprimarykey')
-            if primarykey:
-                try:
-                    primarykey = int(primarykey)
-                    if primarykey < 0: raise ValueError
-                    if primarykey >= len(columns): raise ValueError
-                    columns[primarykey]['primarykey'] = True
-                except ValueError:
-                    pass
             create_table(cursor, schema)
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
         finally:
@@ -118,13 +120,10 @@ def schema(dbid, tableid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
-        sql = "SELECT COUNT(*) FROM %s" % tableid
-        cursor.execute(sql)
-        nrows = cursor.fetchone()[0]
         return flask.render_template('table/schema.html',
                                      db=db,
                                      schema=schema,
-                                     nrows=nrows)
+                                     nrows=get_nrows(tableid, cursor))
     finally:
         cnx.close()
 
@@ -234,7 +233,9 @@ def row(dbid, tableid):
                                                     dbid=dbid,
                                                     tableid=tableid))
             else:
-                return flask.redirect(flask.url_for('.rows',
+                flask.flash("%s rows in table" % get_nrows(tableid, cursor),
+                            'message')
+                return flask.redirect(flask.url_for('.row',
                                                     dbid=dbid,
                                                     tableid=tableid))
     finally:

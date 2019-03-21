@@ -130,10 +130,8 @@ def index(dbid):
             sql = "SELECT name FROM sqlite_master WHERE type=?"
             cursor.execute(sql, ('table',))
             tables = [{'id': row[0]} for row in cursor]
-            sql = "SELECT COUNT(*) FROM %s"
             for table in tables:
-                cursor.execute(sql % table['id'])
-                table['nrows'] = cursor.fetchone()[0]
+                table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
             return flask.render_template('db/index.html',
                                          db=db,
                                          tables=tables,
