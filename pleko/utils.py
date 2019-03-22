@@ -34,6 +34,8 @@ def dbpath(dbid, dirpath=None):
     "Return the file path for the given database identifier."
     if dirpath is None:
         dirpath = flask.current_app.config['DATABASES_DIRPATH']
+    dirpath = os.path.expanduser(dirpath)
+    dirpath = os.path.expandvars(dirpath)
     return os.path.join(dirpath, dbid) + '.sqlite3'
     
 def get_absolute_url(endpoint, values={}, query={}):
