@@ -46,7 +46,7 @@ def or_null_safe(value):
 @app.before_request
 def prepare():
     "Connect to the master database; get the current user."
-    flask.g.cnx = pleko.master.get()
+    flask.g.cnx = pleko.master.get_cnx()
     flask.g.current_user = pleko.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN

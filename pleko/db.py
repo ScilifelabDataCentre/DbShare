@@ -67,15 +67,11 @@ def get_tables(dbid, schema=False):
             table['schema'] = pleko.table.get_schema(table['id'], cursor)
     return tables
 
-def dbpath(dbid):
-    "Return the file path for the given database identifier."
-    path = os.path.join(flask.current_app.config['DBS_DIRPATH'], dbid)
-    return path + '.sqlite3'
-    
 def get_cnx(dbid):
     "Get a connection for the given database identifier."
     # This will be closed by app.finalize
-    flask.g.dbcnx = sqlite3.connect(dbpath(dbid))
+    flask.g.dbcnx = sqlite3.connect(utils.dbpath(dbid))
+    flask.g.dbcnx.execute('PRAGMA foreign_keys=ON')
     return flask.g.dbcnx
 
 def has_read_access(db):
@@ -158,7 +154,7 @@ def index(dbid):
             cnx.execute(sql, (dbid,))
             sql = 'DELETE FROM dbs WHERE id=?'
             cnx.execute(sql, (dbid,))
-            os.remove(dbpath(dbid))
+            os.remove(utils.dbpath(dbid))
         return flask.redirect(flask.url_for('index'))
 
 @blueprint.route('/<id:dbid>/rename', methods=['GET', 'POST'])
@@ -360,7 +356,7 @@ def clone(dbid):
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbid=dbid))
-        shutil.copy(dbpath(dbid), dbpath(ctx.db['id']))
+        shutil.copy(utils.dbpath(dbid), utils.dbpath(ctx.db['id']))
         return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
 
 
@@ -387,7 +383,7 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        cnx = pleko.master.get() # Don't close this; may be needed elsewhere
+        cnx = pleko.master.get_cnx() # Don't close this; may be needed elsewhere
         cursor = cnx.cursor()
         cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?",
                        (self.db['id'],))
@@ -399,7 +395,7 @@ class DbContext:
             # Create database in master, and Sqlite file
             if row[0] == 0:
                 try:
-                    db = sqlite3.connect(dbpath(self.db['id']))
+                    db = sqlite3.connect(utils.dbpath(self.db['id']))
                 except sqlite3.Error as error:
                     raise ValueError(str(error))
                 else:
@@ -465,7 +461,7 @@ class DbContext:
         except KeyError:
             pass
         else:
-            cnx = pleko.master.get()
+            cnx = pleko.master.get_cnx()
             with cnx:
                 cnx.execute('PRAGMA foreign_keys=OFF')
                 sql = "UPDATE dbs SET id=? WHERE id=?"
@@ -473,7 +469,7 @@ class DbContext:
                 sql = "UPDATE dbs_logs SET id=? WHERE id=?"
                 cnx.execute(sql, (id, oldid))
                 cnx.execute('PRAGMA foreign_keys=ON')
-            os.rename(dbpath(oldid), dbpath(id))
+            os.rename(utils.dbpath(oldid), utils.dbpath(id))
         self.db['id'] = id
 
     def set_description(self, description):

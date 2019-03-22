@@ -4,29 +4,30 @@ import sqlite3
 
 import flask
 
+from pleko import utils
 
-def get(app=None):
+MASTER_DBID = '_master'
+
+def get_cnx(app=None):
     "Return the existing connection to the master database, else a new one."
     try:
         return flask.g.cnx
     except AttributeError:
-        return get_cnx(app=app)
-
-def get_cnx(app=None):
-    "Return a new connection to the master database."
-    if app is None:
-        app = flask.current_app
-    cnx = sqlite3.connect(app.config['MASTERDB_FILEPATH'])
-    cnx.execute('PRAGMA foreign_keys=ON')
-    return cnx
+        if app is None:
+            app = flask.current_app
+        cnx = sqlite3.connect(utils.dbpath(MASTER_DBID))
+        cnx.execute('PRAGMA foreign_keys=ON')
+        return cnx
 
 def cursor(app=None):
     "Return a cursor for the master database."
-    return get(app=app).cursor()
+    return get_cnx(app=app).cursor()
 
 def init(app):
     "Initialize tables in the master database, if not done."
-    cnx = get_cnx(app=app)
+    cnx = sqlite3.connect(utils.dbpath(MASTER_DBID,
+                                       dirpath=app.config['DATABASES_DIRPATH']))
+    # XXX Convert this into schema when index and foreign key implemented
     cnx.execute("CREATE TABLE IF NOT EXISTS users"
                "(username TEXT PRIMARY KEY,"
                " email TEXT NOT NULL UNIQUE,"

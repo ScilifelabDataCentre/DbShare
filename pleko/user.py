@@ -359,7 +359,7 @@ class UserContext:
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = pleko.master.get()
+        self.cnx = pleko.master.get_cnx()
 
     def __enter__(self):
         return self

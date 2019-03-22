@@ -2,6 +2,7 @@
 
 import datetime
 import json
+import os.path
 import sqlite3
 import urllib.parse
 import uuid
@@ -29,6 +30,12 @@ class IdentifierConverter(werkzeug.routing.BaseConverter):
             raise werkzeug.routing.ValidationError
         return value
 
+def dbpath(dbid, dirpath=None):
+    "Return the file path for the given database identifier."
+    if dirpath is None:
+        dirpath = flask.current_app.config['DATABASES_DIRPATH']
+    return os.path.join(dirpath, dbid) + '.sqlite3'
+    
 def get_absolute_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."
     url = flask.url_for(endpoint, _external=True, **values)

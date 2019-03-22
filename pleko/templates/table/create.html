@@ -14,19 +14,28 @@ Create a table in database <strong>{{ db['id'] }}</strong>
       {{ csrf_token() | safe }}
       <div class="form-row">
         <div class="form-group col-md-4">
-          <label for="id">Table identifier</label>
+          <label for="id" class="font-weight-bold">Table identifier</label>
           <input id="id" name="id" type="text" class="form-control" autofocus>
         </div>
       </div>
       <div class="form-row pt-4">
         <div class="form-group col-md-3">
-          <label for="column0id">Column identifier</label>
+          <label for="column0id" class="font-weight-bold">Column identifier</label>
         </div>
         <div class="form-group col-md-2">
-          <label for="column0type">Type</label>
+          <label for="column0type" class="font-weight-bold">Type</label>
         </div>
-        <div class="form-group col-md-4">
-          <label for="column0type">Constraints</label>
+        <div class="form-group col-md-1">
+          <label for="column0primarykey" 
+                 class="font-weight-bold">PRIMARY KEY</label>
+        </div>
+        <div class="form-group col-md-1">
+          <label for="column0notnull"
+                 class="font-weight-bold">NOT NULL</label>
+        </div>
+        <div class="form-group col-md-1">
+          <label for="column0unique" 
+                 class="font-weight-bold">UNIQUE</label>
         </div>
       </div>
       {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
@@ -43,22 +52,25 @@ Create a table in database <strong>{{ db['id'] }}</strong>
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-2">
-          <div class="form-check form-check-inline pt-1">
+        <div class="col-md-1">
+          <div class="form-check form-check-inline p-2">
             <input id="column{{ n }}primarykey" name="column{{ n }}primarykey"
                    type="checkbox" class="form-check-input"
                    value="true">
-            <label class="form-check-label" for="column{{ n }}primarykey">
-              PRIMARY KEY</label>
           </div>
         </div>
-        <div class="col-md-2">
-          <div class="form-check form-check-inline pt-1">
+        <div class="col-md-1">
+          <div class="form-check form-check-inline p-2">
             <input id="column{{ n }}notnull" name="column{{ n }}notnull"
                    type="checkbox" class="form-check-input"
                    value="true">
-            <label class="form-check-label" for="column{{ n }}notnull">
-              NOT NULL</label>
+          </div>
+        </div>
+        <div class="col-md-1">
+          <div class="form-check form-check-inline p-2">
+            <input id="column{{ n }}unique" name="column{{ n }}unique"
+                   type="checkbox" class="form-check-input"
+                   value="true">
           </div>
         </div>
       </div>

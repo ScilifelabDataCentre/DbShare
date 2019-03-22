@@ -34,23 +34,29 @@ def get_nrows(tableid, cursor):
 
 def create_table(schema, cursor):
     "Create the table according to the schema."
-    clauses = []
+    # Collect columns forming primary key
     primarykey = []
     for column in schema['columns']:
         if column.get('primarykey'):
             primarykey.append(column['id'])
+    # Column definitions, including column constraints
+    clauses = []
     for column in schema['columns']:
-        coldef = "{id} {type}".format(**column)
+        coldef = [column['id'], column['type']]
         if column['id'] in primarykey:
             column['notnull'] = True
+            if len(primarykey) == 1:
+                coldef.append('PRIMARY KEY')
         if column['notnull']:
-            coldef += ' NOT NULL'
-        clauses.append(coldef)
-    if primarykey:
-        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
+            coldef.append('NOT NULL')
+        if column['unique']:
+            coldef.append('UNIQUE')
+        clauses.append(' '.join(coldef))
+    # Table constraints
+    if len(primarykey) >= 2:
+        clauses.append("CONSTRAINT _pk_%s PRIMARY KEY (%s)" %
+                       (schema['id'], ','.join(primarykey)))
     sql = "CREATE TABLE %s (%s)" % (schema['id'], ', '.join(clauses))
-    # XXX
-    print(sql)
     cursor.execute(sql)
 
 
@@ -101,6 +107,8 @@ def create(dbid):
                     flask.request.form.get("column%sprimarykey" % n))
                 column['notnull'] = utils.to_bool(
                     flask.request.form.get("column%snotnull" % n))
+                column['unique'] = utils.to_bool(
+                    flask.request.form.get("column%sunique" % n))
                 schema['columns'].append(column)
             if not schema['columns']:
                 raise ValueError('no columns defined')
