@@ -109,8 +109,10 @@
       <hr>
       <div class="row">
         <div class="col-md-4 offset-md-8 text-right">
-          <a href="{{ config['SQLITE_URL'] }}">Sqlite {{ config['SQLITE_VERSION'] }}</a>,
-          <a href="{{ config['GITHUB_URL'] }}">Pleko {{ config['VERSION'] }}</a>
+          <a href="{{ config['SQLITE_URL'] }}">Sqlite</a>
+          {{ config['SQLITE_VERSION'] }},
+          <a href="{{ config['GITHUB_URL'] }}">Pleko</a>
+          {{ config['VERSION'] }}
         </div>
       </div>
       {% endblock %}

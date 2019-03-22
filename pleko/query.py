@@ -23,6 +23,12 @@ def index(dbid):
     statement = {'select': flask.request.args.get('select') or '',
                  'from': flask.request.args.get('from') or '',
                  'where': flask.request.args.get('where') or ''}
+    try:
+        statement['limit'] = flask.request.args['limit']
+        if statement['limit'].lower() == 'none':
+            statement['limit'] = None
+    except KeyError:
+        statement['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
     return flask.render_template('query/index.html',
                                  db=db,
                                  statement=statement,
@@ -41,16 +47,22 @@ def rows(dbid):
         statement = {}
         statement['select'] = flask.request.form['select']
         if not statement['select']: raise KeyError('no SELECT part')
+        columns = [c.strip() for c in statement['select'].split(',')]
         statement['from']= flask.request.form['from']
         if not statement['from']: raise KeyError('no FROM part')
-        statement['where'] = flask.request.form['where'] or None
         sql = "SELECT {select} FROM {from}".format(**statement)
+        statement['where'] = flask.request.form['where'] or None
         if statement['where']:
             sql += ' WHERE ' + statement['where']
+        statement['limit'] = flask.request.form['limit'] or None
+        if statement['limit']:
+            sql += ' LIMIT ' + statement['limit']
         cnx = pleko.db.get_cnx(dbid)
         cursor = cnx.cursor()
         cursor.execute(sql)
         rows = list(cursor)
+        if columns[0] == '*':
+            columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(utils.get_absolute_url('.index',
@@ -60,4 +72,6 @@ def rows(dbid):
                                  db=db,
                                  statement=statement,
                                  sql=sql,
-                                 rows=rows)
+                                 columns=columns,
+                                 rows=rows,
+                                 nrows=len(rows))

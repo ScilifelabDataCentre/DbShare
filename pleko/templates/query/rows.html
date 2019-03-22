@@ -5,14 +5,25 @@ Query results from database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Query results from database <strong>database {{ db['id'] }}</strong>
+Query results from database <strong>{{ db['id'] }}</strong>
 {% endblock %}
 
 {% block main %}
 <p>
-  <code>{{ sql }}</code>
+  <code>{{ sql }}</code> &rarr; {{ nrows }} rows
 </p>
 <table id="rows" class="table table-sm table-hover">
+  <thead>
+    <tr>
+      {% if columns %}
+      {% for column in columns %}
+      <th>{{ column }}</th>
+      {% endfor %}
+      {% else %}
+      <th>Column</th>
+      {% endif %}
+    </tr>
+  </thead>
   <tbody>
     {% for row in rows %}
     <tr>
@@ -32,6 +43,7 @@ Query results from database <strong>database {{ db['id'] }}</strong>
     <input type="hidden" name="select" value="{{ statement.get('select') or ''}}">
     <input type="hidden" name="from" value="{{ statement.get('from') or ''}}">
     <input type="hidden" name="where" value="{{ statement.get('where') or ''}}">
+    <input type="hidden" name="limit" value="{{ statement.get('limit') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>
 </div>
@@ -52,6 +64,7 @@ Query results from database <strong>database {{ db['id'] }}</strong>
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
       "pageLength": 25,
+      "ordering": false,
     });
   });
 </script>
