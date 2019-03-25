@@ -36,7 +36,7 @@
             {% endfor %}
             {% else %}
             <tr>
-              <td><i>no tables</i></td>
+              <td><i>none</i></td>
             </tr>
             {% endif %}
           </tbody>
@@ -64,7 +64,7 @@
             {% endfor %}
             {% else %}
             <tr>
-              <td><i>no views</i></td>
+              <td><i>none</i></td>
             </tr>
             {% endif %}
           </tbody>
@@ -90,7 +90,7 @@
             {% endfor %}
             {% else %}
             <tr>
-              <td><i>no indexes</i></td>
+              <td><i>none</i></td>
             </tr>
             {% endif %}
           </tbody>
@@ -123,10 +123,29 @@
   <a href="{{ url_for('.clone', dbid=db['id']) }}"
      role="button" class="btn btn-info btn-block">Clone database</a>
 </div>
+{% if db['public'] %}
+<div class="mt-2">
+  <form action="{{ url_for('.private', dbid=db['id']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block">
+      Set private</button>
+  </form>
+</div>
+{% else %}
+<div class="mt-2">
+  <form action="{{ url_for('.public', dbid=db['id']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block">
+      Set public</button>
+  </form>
+</div>
+{% endif %}
 <div class="mt-2">
   <form action="{{ url_for('.index', dbid=db['id']) }}"
 	method="POST">
-    {{ csrf_token() | safe }}
+    {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
             onclick="return confirm('Really delete? Cannot be undone.')">

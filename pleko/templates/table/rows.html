@@ -69,7 +69,7 @@ Table <strong>{{ schema['id'] }}</strong>
 <div class="mt-4">
   <form action="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
 	method="POST">
-    {{ csrf_token() | safe }}
+    {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
             onclick="return confirm('Really delete? Cannot be undone.')">

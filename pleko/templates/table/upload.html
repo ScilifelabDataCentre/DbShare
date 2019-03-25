@@ -36,7 +36,7 @@ Upload CSV file to table {{ schema['id'] }}
     <form action="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
           enctype="multipart/form-data"
           method="POST">
-      {{ csrf_token() | safe }}
+      {{ csrf_token() }}
       <div class="form-group">
         <div class="row">
           <div class="col-md-2 text-right">

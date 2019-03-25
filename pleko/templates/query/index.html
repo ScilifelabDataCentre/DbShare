@@ -11,7 +11,7 @@
       <div class="card-body">
         <form action="{{ url_for('.rows', dbid=db['id']) }}"
               method="POST">
-          {{ csrf_token() | safe }}
+          {{ csrf_token() }}
           <div class="form-group row">
             <label for="select" class="col-md-2 col-form-label text-right">
               SELECT</label>

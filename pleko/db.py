@@ -102,12 +102,6 @@ def create_index(cnx, schema):
     sql = ' '.join(sql)
     cnx.execute(sql)
 
-def set_tables_nrows(db):
-    "Set the number of rows in the tables in the database."
-    dbcnx = get_cnx(db['id']).cursor()
-    for table in db['tables'].values():
-        table['nrows'] = pleko.table.get_nrows(table['id'], dbcnx)
-
 def get_cnx(dbid):
     "Get a connection for the given database identifier."
     try:
@@ -409,6 +403,38 @@ def clone(dbid):
             return flask.redirect(flask.url_for('.clone', dbid=dbid))
         shutil.copy(utils.dbpath(dbid), utils.dbpath(ctx.db['id']))
         return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+
+@blueprint.route('/<id:dbid>/public', methods=['POST'])
+@login_required
+def public(dbid):
+    "Set the database to public access."
+    try:
+        db = get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    try:
+        with DbContext(db) as ctx:
+            ctx.db['public'] = True
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    return flask.redirect(flask.url_for('.index', dbid=db['id']))
+
+@blueprint.route('/<id:dbid>/private', methods=['POST'])
+@login_required
+def private(dbid):
+    "Set the database to private access."
+    try:
+        db = get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    try:
+        with DbContext(db) as ctx:
+            ctx.db['public'] = False
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    return flask.redirect(flask.url_for('.index', dbid=db['id']))
 
 
 class DbContext:

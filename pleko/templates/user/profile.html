@@ -24,13 +24,13 @@
           {% if user['status'] != constants.ENABLED %}
           <form action="{{ url_for('.enable', username=user['username']) }}"
                 method="POST">
-            {{ csrf_token() | safe }}
+            {{ csrf_token() }}
             <button type="submit" class="btn btn-success">Enable</button>
           </form>
           {% elif user['status'] == constants.ENABLED %}
           <form action="{{ url_for('.disable', username=user['username']) }}"
                 method="POST">
-            {{ csrf_token() | safe }}
+            {{ csrf_token() }}
             <button type="submit" class="btn btn-danger">Disable</button>
           </form>
           {% endif %}
@@ -53,7 +53,7 @@
 <form action="{{ url_for('.logout') }}"
       method="POST"
       class="mt-2">
-  {{ csrf_token() | safe }}
+  {{ csrf_token() }}
   <button type="submit" class="btn btn-warning btn-block">Logout</button>
 </form>
 {% endif %}

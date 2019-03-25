@@ -7,7 +7,7 @@
 {% block main %}
 <form action="{{ url_for('.rename', dbid=db['id']) }}"
       method="POST">
-  {{ csrf_token() | safe }}
+  {{ csrf_token() }}
   <div class="form-group row">
     <label for="id" class="col-md-2 col-form-label text-right">
       Identifier</label>

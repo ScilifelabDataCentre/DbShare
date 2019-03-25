@@ -93,12 +93,12 @@ def is_method_DELETE(csrf=True):
         return False
 
 def csrf_token():
-    """Output HTML for cross-site request forgery (CSRF) protection.
-    Must be used with filter 'safe'."""
+    "Output HTML for cross-site request forgery (CSRF) protection."
     if '_csrf_token' not in flask.session:
         flask.session['_csrf_token'] = get_iuid()
-    return '<input type="hidden" name="_csrf_token" value="{}">'.format(
-        flask.session['_csrf_token'])
+    html = '<input type="hidden" name="_csrf_token" value="%s">' % \
+           flask.session['_csrf_token']
+    return jinja2.utils.Markup(html)
 
 def check_csrf_token():
     "Check the CSRF token for POST HTML."

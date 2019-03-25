@@ -7,7 +7,7 @@
 {% block main %}
 <form action="{{ url_for('.edit', username=user['username']) }}"
       method="POST">
-  {{ csrf_token() | safe }}
+  {{ csrf_token() }}
   <div class="form-group row">
     <label for="email" class="col-sm-2 col-form-label text-right">Email</label>
     <div class="col-sm-6">

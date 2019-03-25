@@ -7,7 +7,7 @@
 {% block main %}
 <form action="{{ url_for('.reset') }}"
       method="POST">
-  {{ csrf_token() | safe }}
+  {{ csrf_token() }}
   <div class="form-group row">
     <label for="email" class="col-sm-2 col-form-label">Email</label>
     <div class="col-sm-6">
