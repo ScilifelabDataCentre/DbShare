@@ -4,9 +4,70 @@ import sqlite3
 
 import flask
 
+from pleko import constants
 from pleko import utils
+import pleko.db
 
 MASTER_DBID = '_master'
+
+MASTER_TABLES = [
+    dict(id='users',
+         columns=[dict(id='username', type=constants.TEXT, primarykey= True),
+                  dict(id='email', type=constants.TEXT, notnull=True),
+                  dict(id='password', type=constants.TEXT),
+                  dict(id='apikey', type=constants.TEXT),
+                  dict(id='role', type=constants.TEXT, notnull=True),
+                  dict(id='status', type=constants.TEXT, notnull=True),
+                  dict(id='created', type=constants.TEXT, notnull=True),
+                  dict(id='modified', type=constants.TEXT, notnull=True)
+         ]
+    ),
+    dict(id='users_logs',
+         columns=[dict(id='username', type=constants.TEXT, notnull=True),
+                  dict(id='new', type=constants.TEXT, notnull=True),
+                  dict(id='editor', type=constants.TEXT),
+                  dict(id='remote_addr', type=constants.TEXT),
+                  dict(id='user_agent', type=constants.TEXT),
+                  dict(id='timestamp', type=constants.TEXT, notnull=True)
+         ],
+         foreignkeys=[dict(id='users_fk',
+                           columns=['username'],
+                           ref='users',
+                           refcolumns=['username'])]
+    ),
+    dict(id='dbs',
+         columns=[dict(id='id', type=constants.TEXT, primarykey=True),
+                  dict(id='owner', type=constants.TEXT, notnull=True),
+                  dict(id='description', type=constants.TEXT),
+                  dict(id='public', type=constants.INTEGER, notnull=True),
+                  dict(id='tables', type=constants.TEXT, notnull=True),
+                  dict(id='indexes', type=constants.TEXT, notnull=True),
+                  dict(id='views', type=constants.TEXT, notnull=True),
+                  dict(id='access', type=constants.TEXT, notnull=True),
+                  dict(id='created', type=constants.TEXT, notnull=True),
+                  dict(id='modified', type=constants.TEXT, notnull=True)
+         ]),
+    dict(id='dbs_logs',
+         columns=[dict(id='id', type=constants.TEXT, notnull=True),
+                  dict(id='new', type=constants.TEXT, notnull=True),
+                  dict(id='editor', type=constants.TEXT),
+                  dict(id='remote_addr', type=constants.TEXT),
+                  dict(id='user_agent', type=constants.TEXT),
+                  dict(id='timestamp', type=constants.TEXT, notnull=True)
+         ],
+         foreignkeys=[dict(id='dbs_fk',
+                           columns=['id'],
+                           ref='dbs',
+                           refcolumns=['id'])]
+    ),
+]
+
+MASTER_INDEXES = [
+    dict(id='users_email', table='users', columns=['email'], unique=True),
+    dict(id='users_apikey', table='users', columns=['apikey']),
+    dict(id='users_logs_username', table='users_logs', columns=['username']),
+    dict(id='dbs_logs_id', table='dbs_logs', columns=['id'])
+]
 
 def get_cnx(app=None):
     "Return the existing connection to the master database, else a new one."
@@ -19,7 +80,7 @@ def get_cnx(app=None):
         cnx.execute('PRAGMA foreign_keys=ON')
         return cnx
 
-def cursor(app=None):
+def get_cursor(app=None):
     "Return a cursor for the master database."
     return get_cnx(app=app).cursor()
 
@@ -27,42 +88,9 @@ def init(app):
     "Initialize tables in the master database, if not done."
     cnx = sqlite3.connect(utils.dbpath(MASTER_DBID,
                                        dirpath=app.config['DATABASES_DIRPATH']))
-    # XXX Convert this into schema when index and foreign key implemented
-    cnx.execute("CREATE TABLE IF NOT EXISTS users"
-               "(username TEXT PRIMARY KEY,"
-               " email TEXT NOT NULL UNIQUE,"
-               " password TEXT,"
-               " apikey TEXT,"
-               " role TEXT NOT NULL,"
-               " status TEXT NOT NULL,"
-               " created TEXT NOT NULL,"
-               " modified TEXT NOT NULL)")
-    cnx.execute("CREATE INDEX IF NOT EXISTS users_apikey_ix"
-               " ON users (apikey)")
-    cnx.execute("CREATE TABLE IF NOT EXISTS users_logs"
-               "(username TEXT NOT NULL REFERENCES users (username),"
-               " new TEXT NOT NULL,"
-               " editor TEXT,"
-               " remote_addr TEXT,"
-               " user_agent TEXT,"
-               " timestamp TEXT NOT NULL)")
-    cnx.execute("CREATE INDEX IF NOT EXISTS users_logs_username_ix"
-               " ON users_logs (username)")
-    cnx.execute("CREATE TABLE IF NOT EXISTS dbs"
-               "(id TEXT PRIMARY KEY,"
-               " owner TEXT NOT NULL REFERENCES users (username),"
-               " description TEXT,"
-               " public INTEGER NOT NULL,"
-               " profile TEXT NOT NULL,"
-               " created TEXT NOT NULL,"
-               " modified TEXT NOT NULL)")
-    cnx.execute("CREATE TABLE IF NOT EXISTS dbs_logs"
-               "(id TEXT NOT NULL REFERENCES dbs (id),"
-               " new TEXT NOT NULL,"
-               " editor TEXT,"
-               " remote_addr TEXT,"
-               " user_agent TEXT,"
-               " timestamp TEXT NOT NULL)")
-    cnx.execute("CREATE INDEX IF NOT EXISTS dbs_logs_id_ix"
-               " ON dbs_logs (id)")
+    for schema in MASTER_TABLES:
+        pleko.db.create_table(cnx, schema)
+    for schema in MASTER_INDEXES:
+        pleko.db.create_index(cnx, schema)
     cnx.close()
+    

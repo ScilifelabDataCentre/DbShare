@@ -44,13 +44,57 @@
       </div>
     </div>
   </div>
-</div>
-<div class="row">
   <div class="col-md-6">
-    <div class="card border-success mt-4">
+    <div class="card border-success">
       <div class="card-header bg-success text-white">Views</div>
       <div class="card-body">
-	XXX
+        <table class="table table-sm table-hover table-borderless">
+          <tbody>
+            {% if db['views'] %}
+            {% for view in db['views'] %}
+            <tr>
+	      <th>{{ view['id'] }}</th>
+              <td>
+                Rows
+              </td>
+              <td>
+                Schema
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td><i>no views</i></td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card border-secondary mt-4">
+      <div class="card-header bg-secondary text-white">Indexes</div>
+      <div class="card-body">
+        <table class="table table-sm table-hover table-borderless">
+          <tbody>
+            {% if db['indexes'] %}
+            {% for index in db['indexes'] %}
+            <tr>
+	      <th>{{ index['id'] }}</th>
+              <td>
+                Rows
+              </td>
+              <td>
+                Schema
+              </td>
+            </tr>
+            {% endfor %}
+            {% else %}
+            <tr>
+              <td><i>no indexes</i></td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
       </div>
     </div>
   </div>

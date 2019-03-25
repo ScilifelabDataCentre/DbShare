@@ -31,7 +31,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     else:
         raise ValueError('neither username, email nor apikey provided')
     if cnx is None:
-        cursor = pleko.master.cursor()
+        cursor = pleko.master.get_cursor()
     else:
         cursor = cnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \

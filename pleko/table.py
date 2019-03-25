@@ -11,53 +11,11 @@ from pleko import constants
 from pleko import utils
 from pleko.user import login_required
 
-def get_schema(tableid, cursor):
-    """Get the schema for the given table given the cursor for the database.
-    Raise ValueError if no such table."""
-    sql = 'PRAGMA table_info("%s")' % tableid
-    cursor.execute(sql)
-    rows = list(cursor)
-    if len(rows) == 0:
-        raise ValueError('no such table in database')
-    return {'id': tableid,
-            'columns': [{'id': row[1],
-                         'type': row[2],
-                         'notnull': bool(row[3]),
-                         'defaultvalue': row[4],
-                         'primarykey': bool(row[5])}
-                        for row in rows]}
-
-def get_nrows(tableid, cursor):
+def get_nrows(tableid, dbcnx):
     "Get the number of rows in the table."
+    cursor = dbcnx.cursor()
     cursor.execute("SELECT COUNT(*) FROM %s" % tableid)
     return cursor.fetchone()[0]
-
-def create_table(schema, cursor):
-    "Create the table according to the schema."
-    # Collect columns forming primary key
-    primarykey = []
-    for column in schema['columns']:
-        if column.get('primarykey'):
-            primarykey.append(column['id'])
-    # Column definitions, including column constraints
-    clauses = []
-    for column in schema['columns']:
-        coldef = [column['id'], column['type']]
-        if column['id'] in primarykey:
-            column['notnull'] = True
-            if len(primarykey) == 1:
-                coldef.append('PRIMARY KEY')
-        if column['notnull']:
-            coldef.append('NOT NULL')
-        if column['unique']:
-            coldef.append('UNIQUE')
-        clauses.append(' '.join(coldef))
-    # Table constraints
-    if len(primarykey) >= 2:
-        clauses.append("CONSTRAINT _pk_%s PRIMARY KEY (%s)" %
-                       (schema['id'], ','.join(primarykey)))
-    sql = "CREATE TABLE %s (%s)" % (schema['id'], ', '.join(clauses))
-    cursor.execute(sql)
 
 
 blueprint = flask.Blueprint('table', __name__)
@@ -126,17 +84,16 @@ def schema(dbid, tableid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cnx = pleko.db.get_cnx(dbid)
-    cursor = cnx.cursor()
     try:
-        schema = get_schema(tableid, cursor)
-    except ValueError as error:
+        schema = db['tables'][tableid]
+    except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
+    nrows = get_nrows(tableid, pleko.db.get_cnx(dbid))
     return flask.render_template('table/schema.html',
                                  db=db,
                                  schema=schema,
-                                 nrows=get_nrows(tableid, cursor))
+                                 nrows=nrows)
 
 @blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
 def rows(dbid, tableid):
@@ -148,13 +105,13 @@ def rows(dbid, tableid):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
         has_write_access = pleko.db.has_write_access(db)
-        cnx = pleko.db.get_cnx(dbid)
-        cursor = cnx.cursor()
         try:
-            schema = get_schema(tableid, cursor)
-        except ValueError as error:
+            schema = db['tables'][tableid]
+        except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        cnx = pleko.db.get_cnx(dbid)
+        cursor = cnx.cursor()
         sql = "SELECT * FROM %s" % tableid
         cursor.execute(sql)
         return flask.render_template('table/rows.html', 
@@ -169,11 +126,10 @@ def rows(dbid, tableid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
-        cnx = pleko.db.get_cnx(dbid)
         try:
-            sql = "DROP TABLE %s" % tableid
-            cnx.execute(sql)
-        except sqlite3.Error as error:
+            with pleko.db.DbContext(db) as ctx:
+                ctx.delete_table(dbid)
+        except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
 
@@ -185,12 +141,11 @@ def row(dbid, tableid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cnx = pleko.db.get_cnx(dbid)
 
     if utils.is_method_GET():
         try:
-            schema = get_schema(tableid, cnx.cursor())
-        except ValueError as error:
+            schema = db['tables'][tableid]
+        except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
         return flask.render_template('table/row.html', 
@@ -198,11 +153,9 @@ def row(dbid, tableid):
                                      schema=schema)
     
     elif utils.is_method_POST():
-        cursor = cnx.cursor()
         try:
-            schema = get_schema(tableid, cursor)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
+            schema = db['tables'][tableid]
+        except KeyError as error:
             return flask.redirect(flask.url_for('db.index', dbid=dbid))
         errors = {}
         values = []
@@ -227,8 +180,10 @@ def row(dbid, tableid):
             return flask.render_template('table/row.html', 
                                          db=db,
                                          schema=schema)
+        dbcnx = pleko.db.get_cnx(dbid)
+        cursor = cnx.cursor()
         try:
-            with cnx:
+            with dbcnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                       (tableid,
                        ','.join([c['id'] for c in schema['columns']]),
@@ -240,8 +195,7 @@ def row(dbid, tableid):
                                                 dbid=dbid,
                                                 tableid=tableid))
         else:
-            flask.flash("%s rows in table" % get_nrows(tableid, cursor),
-                        'message')
+            flask.flash("%s rows in table" % get_nrows(tableid,dbcnx),'message')
             return flask.redirect(flask.url_for('.row',
                                                 dbid=dbid,
                                                 tableid=tableid))
@@ -254,11 +208,9 @@ def upload(dbid, tableid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cnx = pleko.db.get_cnx(dbid)
-    cursor = cnx.cursor()
     try:
-        schema = get_schema(tableid, cursor)
-    except ValueError as error:
+        schema = db['tables'][tableid]
+    except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
 
@@ -312,6 +264,8 @@ def upload(dbid, tableid):
             except (ValueError, TypeError, IndexError) as error:
                 raise ValueError("line %s, column %s (%s): %s" %
                                  (n+1, i+1, column['id'], str(error)))
+            cnx = pleko.db.get_cnx(dbid)
+            cursor = cnx.cursor()
             with cnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                       (tableid,
@@ -338,11 +292,9 @@ def clone(dbid, tableid):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
 
-    cnx = pleko.db.get_cnx(dbid)
-    cursor = cnx.cursor()
     try:
-        schema = get_schema(tableid, cursor)
-    except ValueError as error:
+        schema = db['tables'][tableid]
+    except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))
 
@@ -356,13 +308,12 @@ def clone(dbid, tableid):
             schema['id'] = flask.request.form['id']
             if not constants.IDENTIFIER_RX.match(schema['id']):
                 raise ValueError('invalid database identifier')
-            try:
-                get_schema(schema['id'], cursor)
-            except ValueError:
-                pass
-            else:
+            if schema['id'] in db['tables']:
                 raise ValueError('table identifier already in use')
-            create_table(schema, cursor)
+            with pleko.db.DbContext(db) as ctx:
+                ctx.add_table(schema)
+            cnx = ctx.cnx
+            cursor = cnx.cursor()
             with cnx:
                 colids = ','.join([c['id'] for c in schema['columns']])
                 sql = "INSERT INTO %s (%s) SELECT %s FROM %s" % (schema['id'],

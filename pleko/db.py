@@ -19,17 +19,22 @@ from pleko.user import login_required
 
 def get_dbs(public=True):
     "Get a list of all databases."
-    sql = "SELECT id, owner, description, public, created, modified FROM dbs"
+    sql = "SELECT id, owner, description, public, tables, indexes, views," \
+          " access, created, modified FROM dbs"
     if public:
         sql += " WHERE public=1"
-    cursor = pleko.master.cursor()
+    cursor = pleko.master.get_cursor()
     cursor.execute(sql)
     return [{'id':          row[0],
              'owner':       row[1],
              'description': row[2],
              'public':      bool(row[3]),
-             'created':     row[4],
-             'modified':    row[5]}
+             'tables':      json.loads(row[4]),
+             'indexes':     json.loads(row[5]),
+             'views':       json.loads(row[6]),
+             'access':      json.loads(row[7]),
+             'created':     row[8],
+             'modified':    row[9]}
             for row in cursor]
 
 def get_db(id):
@@ -37,9 +42,9 @@ def get_db(id):
     Return None if no such database.
     Does *not* check access.
     """
-    cursor = pleko.master.cursor()
-    sql = "SELECT owner, description, public, profile," \
-          " created, modified FROM dbs WHERE id=?"
+    cursor = pleko.master.get_cursor()
+    sql = "SELECT owner, description, public, tables, indexes, views," \
+          " access, created, modified FROM dbs WHERE id=?"
     cursor.execute(sql, (id,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
@@ -48,31 +53,70 @@ def get_db(id):
             'owner':       row[0],
             'description': row[1],
             'public':      bool(row[2]),
-            'profile':     json.loads(row[3]),
-            'created':     row[4],
-            'modified':    row[5]}
+            'tables':      json.loads(row[3]),
+            'indexes':     json.loads(row[4]),
+            'views':       json.loads(row[5]),
+            'access':      json.loads(row[6]),
+            'created':     row[7],
+            'modified':    row[8]}
 
-def get_tables(dbid, schema=False):
-    """Get the tables in the database with their number of rows.
-    If schema is True, get the table schemas.
-    """
-    cursor = get_cnx(dbid).cursor()
-    sql = "SELECT name FROM sqlite_master WHERE type=?"
-    cursor.execute(sql, ('table',))
-    tables = [{'id': row[0]} for row in cursor]
-    for table in tables:
-        table['nrows'] = pleko.table.get_nrows(table['id'], cursor)
-    if schema:
-        for table in tables:
-            table['schema'] = pleko.table.get_schema(table['id'], cursor)
-    return tables
+def create_table(cnx, schema):
+    "Create the table given by its schema in the connected database."
+    # Collect columns forming primary key
+    primarykey = []
+    for column in schema['columns']:
+        if column.get('primarykey'):
+            primarykey.append(column['id'])
+    # Column definitions, including column constraints
+    clauses = []
+    for column in schema['columns']:
+        coldef = [column['id'], column['type']]
+        if column['id'] in primarykey:
+            column['notnull'] = True
+            if len(primarykey) == 1:
+                coldef.append('PRIMARY KEY')
+        if column.get('notnull'):
+            coldef.append('NOT NULL')
+        clauses.append(' '.join(coldef))
+    # Primary key
+    if len(primarykey) >= 2:
+        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
+    # Foreign keys
+    for foreignkey in schema.get('foreignkeys', []):
+        clauses.append("FOREIGN KEY (%s) REFERENCES %s (%s)" %
+                       (','.join(foreignkey['columns']),
+                        foreignkey['ref'],
+                        ','.join(foreignkey['refcolumns'])))
+    sql = "CREATE TABLE IF NOT EXISTS %s (%s)" % (schema['id'],
+                                                  ', '.join(clauses))
+    cnx.execute(sql)
+
+def create_index(cnx, schema):
+    "Create an index given by its schema in the connected database."
+    sql = ['CREATE']
+    if schema.get('unique'):
+        sql.append('UNIQUE')
+    sql.append('INDEX IF NOT EXISTS')
+    sql.append("%s ON %s" % (schema['id'], schema['table']))
+    sql.append("(%s)" % ','.join(schema['columns']))
+    sql = ' '.join(sql)
+    cnx.execute(sql)
+
+def set_tables_nrows(db):
+    "Set the number of rows in the tables in the database."
+    dbcnx = get_cnx(db['id']).cursor()
+    for table in db['tables'].values():
+        table['nrows'] = pleko.table.get_nrows(table['id'], dbcnx)
 
 def get_cnx(dbid):
     "Get a connection for the given database identifier."
-    # This will be closed by app.finalize
-    flask.g.dbcnx = sqlite3.connect(utils.dbpath(dbid))
-    flask.g.dbcnx.execute('PRAGMA foreign_keys=ON')
-    return flask.g.dbcnx
+    try:
+        return flask.g.dbcnx[dbid]
+    except KeyError:
+        # This will be closed by app.finalize
+        dbcnx = flask.g.dbcnx[dbid] = sqlite3.connect(utils.dbpath(dbid))
+        dbcnx.execute('PRAGMA foreign_keys=ON')
+        return dbcnx
 
 def has_read_access(db):
     "Does the current user (if any) have read access to the database?"
@@ -130,16 +174,25 @@ def create():
 
 @blueprint.route('/<id:dbid>', methods=['GET', 'POST', 'DELETE'])
 def index(dbid):
-    "Display database tables and metadata. Delete database."
+    "Display the database tables and metadata. Delete the database."
     if utils.is_method_GET():
         try:
             db = get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
+        dbcnx = pleko.db.get_cnx(db['id'])
+        for table in db['tables'].values():
+            table['nrows'] = pleko.table.get_nrows(table['id'], dbcnx)
+        keyfunc = lambda v: v['id']
         return flask.render_template('db/index.html',
                                      db=db,
-                                     tables=get_tables(dbid),
+                                     tables=sorted(db['tables'].values(),
+                                                   key=keyfunc),
+                                     indexes=sorted(db['indexes'].values(),
+                                                    key=keyfunc),
+                                     views=sorted(db['views'].values(),
+                                                  key=keyfunc),
                                      has_write_access=has_write_access(db))
 
     elif utils.is_method_DELETE():
@@ -148,7 +201,6 @@ def index(dbid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
-        cnx = pleko.master.get_cnx()
         with cnx:
             sql = 'DELETE FROM dbs_logs WHERE id=?'
             cnx.execute(sql, (dbid,))
@@ -178,7 +230,6 @@ def rename(dbid):
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
-        
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
@@ -188,7 +239,7 @@ def logs(dbid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('index'))
-    cursor = pleko.master.cursor()
+    cursor = pleko.master.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE id=? ORDER BY timestamp DESC"
     cursor.execute(sql, (db['id'],))
@@ -198,7 +249,7 @@ def logs(dbid):
              'user_agent':  row[3],
              'timestamp':   row[4]}
             for row in cursor]
-    return flask.render_template('db_logs.html',
+    return flask.render_template('db/logs.html',
                                  db=db,
                                  logs=logs)
 
@@ -217,8 +268,6 @@ def upload(dbid):
 
     elif utils.is_method_POST():
         try:
-            cnx = get_cnx(dbid)
-            cursor = cnx.cursor()
             csvfile = flask.request.files['csvfile']
             try:
                 tableid = flask.request.form['tableid']
@@ -226,11 +275,7 @@ def upload(dbid):
             except KeyError:
                 tableid = os.path.basename(csvfile.filename)
                 tableid = os.path.splitext(tableid)[0]
-            try:
-                pleko.table.get_schema(tableid, cursor)
-            except ValueError:
-                pass
-            else:
+            if tableid in db['tables']:
                 raise ValueError('table identifier already in use')
             schema = {'id': tableid}
 
@@ -292,7 +337,8 @@ def upload(dbid):
                 else:
                     column['type'] = type
 
-            pleko.table.create_table(schema, cursor)
+            with DbContext(db) as ctx:
+                ctx.add_table(schema)
 
             # Actually convert values in records
             for i, column in enumerate(schema['columns']):
@@ -316,6 +362,8 @@ def upload(dbid):
                         if not record[i]:
                             record[i] = None
             # Insert the data
+            cnx = get_cnx(schema['id'])
+            cursor = cnx.cursor()
             with cnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                       (tableid,
@@ -351,8 +399,10 @@ def clone(dbid):
             with DbContext() as ctx:
                 ctx.set_id(flask.request.form['id'])
                 ctx.set_description(flask.request.form.get('description'))
-                ctx.db['profile'] = db['profile']
-                ctx.db['origin'] = dbid # Will show up in logs
+                ctx.db['tables']  = db['tables']
+                ctx.db['indexes'] = db['indexes']
+                ctx.db['access']  = db['access']
+                ctx.db['origin']  = dbid # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbid=dbid))
@@ -361,18 +411,24 @@ def clone(dbid):
 
 
 class DbContext:
-    "Context for creating, modifying and saving a database metadata."
+    "Context for creating, modifying and saving metadata for a database."
 
     def __init__(self, db=None):
         if db is None:
             self.db = {'owner':   flask.g.current_user['username'],
-                       'public': False,
-                       'profile': {},
+                       'public':  False,
+                       'tables':  {}, # Key: tableid
+                       'indexes': {}, # Key: indexid
+                       'views':   {}, # Key: viewid
+                       'access':  {},
                        'created': utils.get_time()}
             self.orig = {}
         else:
             self.db = db
             self.orig = copy.deepcopy(db)
+            self.dbcnx = get_cnx(db['id'])
+        # Don't close this at exit; will be done externally to context
+        self.cnx = pleko.master.get_cnx()
 
     def __enter__(self):
         return self
@@ -383,15 +439,13 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        cnx = pleko.master.get_cnx() # Don't close this; may be needed elsewhere
-        cursor = cnx.cursor()
-        cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?",
-                       (self.db['id'],))
+        cursor = self.cnx.cursor()
+        cursor.execute("SELECT COUNT(*) FROM dbs WHERE id=?", (self.db['id'],))
         row = cursor.fetchone()
         # If new database, then do not overwrite existing
         if not self.orig and row[0] != 0:
             raise ValueError('database identifier already in use')
-        with cnx:
+        with self.cnx:
             # Create database in master, and Sqlite file
             if row[0] == 0:
                 try:
@@ -401,29 +455,33 @@ class DbContext:
                 else:
                     db.close()
                 sql = "INSERT INTO dbs" \
-                      " (id, owner, description, public, profile," \
-                      "  created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?)"
-                cnx.execute(sql, (self.db['id'],
-                                  self.db['owner'],
-                                  self.db.get('description'),
-                                  bool(self.db.get('public')),
-                                  json.dumps(self.db['profile'],
-                                             ensure_ascii=False),
-                                  self.db['created'], 
-                                  self.db['modified']))
+                      " (id, owner, description, public, tables, indexes," \
+                      "  views, access, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                self.cnx.execute(sql, (self.db['id'],
+                                       self.db['owner'],
+                                       self.db.get('description'),
+                                       bool(self.db.get('public')),
+                                       json.dumps(self.db['tables']),
+                                       json.dumps(self.db['indexes']),
+                                       json.dumps(self.db['views']),
+                                       json.dumps(self.db['access']),
+                                       self.db['created'], 
+                                       self.db['modified']))
             # Update database in master
             else:
-                sql = "UPDATE dbs SET owner=?, description=?," \
-                      " public=?, profile=?, modified=?" \
+                sql = "UPDATE dbs SET owner=?, description=?, public=?, " \
+                      " tables=?, indexes=?, views=?, access=?, modified=?" \
                       " WHERE id=?"
-                cnx.execute(sql, (self.db['owner'],
-                                  self.db.get('description'),
-                                  bool(self.db.get('public')),
-                                  json.dumps(self.db['profile'],
-                                             ensure_ascii=False),
-                                  self.db['modified'],
-                                  self.db['id']))
+                self.cnx.execute(sql, (self.db['owner'],
+                                       self.db.get('description'),
+                                       bool(self.db.get('public')),
+                                       json.dumps(self.db['tables']),
+                                       json.dumps(self.db['indexes']),
+                                       json.dumps(self.db['views']),
+                                       json.dumps(self.db['access']),
+                                       self.db['modified'],
+                                       self.db['id']))
             # Add log entry
             new = {}
             for key, value in self.db.items():
@@ -443,12 +501,12 @@ class DbContext:
             sql = "INSERT INTO dbs_logs (id, new, editor," \
                   " remote_addr, user_agent, timestamp)" \
                   " VALUES (?, ?, ?, ?, ?, ?)"
-            cnx.execute(sql, (self.db['id'],
-                              json.dumps(new, ensure_ascii=False),
-                              editor,
-                              remote_addr,
-                              user_agent,
-                              utils.get_time()))
+            self.cnx.execute(sql, (self.db['id'],
+                                   json.dumps(new),
+                                   editor,
+                                   remote_addr,
+                                   user_agent,
+                                   utils.get_time()))
 
     def set_id(self, id):
         "Set or change the database identifier."
@@ -457,21 +515,65 @@ class DbContext:
         if get_db(id):
             raise ValueError('database identifier already in use')
         try:
-            oldid =self.db['id']
+            oldid = self.db['id']
         except KeyError:
             pass
         else:
-            cnx = pleko.master.get_cnx()
-            with cnx:
-                cnx.execute('PRAGMA foreign_keys=OFF')
+            with self.cnx:
+                self.cnx.execute('PRAGMA foreign_keys=OFF')
                 sql = "UPDATE dbs SET id=? WHERE id=?"
-                cnx.execute(sql, (id, oldid))
+                self.cnx.execute(sql, (id, oldid))
                 sql = "UPDATE dbs_logs SET id=? WHERE id=?"
-                cnx.execute(sql, (id, oldid))
-                cnx.execute('PRAGMA foreign_keys=ON')
+                self.cnx.execute(sql, (id, oldid))
+                self.cnx.execute('PRAGMA foreign_keys=ON')
             os.rename(utils.dbpath(oldid), utils.dbpath(id))
         self.db['id'] = id
 
     def set_description(self, description):
         "Set the database description."
         self.db['description'] = description or None
+
+    def add_table(self, schema):
+        "Create the table in the database and add to the database definition."
+        if schema['id'] in self.db['tables']:
+            raise ValueError('table identifier already in use')
+        create_table(self.dbcnx, schema)
+        self.db['tables'][schema['id']] = schema
+
+    def delete_table(self, tableid):
+        "Delete the table from the database and from the database definition."
+        try:
+            self.db['tables'].pop(tableid)
+        except KeyError:
+            raise ValueError('no such table in database')
+        for index in list(self.db['indexes'].values()):
+            if index['table'] == tableid:
+                self.db['indexes'].pop(index['id'])
+                self.dbcnx.execute("DROP INDEX %s" % index['id'])
+        self.dbcnx.execute("DROP TABLE %s" % tableid)
+
+    def add_index(self, schema):
+        "Create an index in the database and add to the database definition."
+        if schema['table'] not in self.db['tables']:
+            raise ValueError("no such table %s for index %s" % (schema['table'],
+                                                                schema['id']))
+        if schema['id'] in self.db['indexes']:
+            raise ValueError("index %s already defined" % schema['id'])
+        create_index(self.dbcnx, schema)
+        self.db['indexes'][schema['id']] = schema
+
+    def delete_index(self, indexid):
+        "Delete an index in the database."
+        try:
+            self.db['indexes'].pop(indexid)
+        except KeyError:
+            raise ValueError('no such index in database')
+        self.dbcnx.execute("DROP INDEX %s" % indexid)
+
+    def create_view(self, schema):
+        "Create a view in the database."
+        raise NotImplementedError
+
+    def delete_view(self, viewid):
+        "Delete a view in the database."
+        raise NotImplementedError

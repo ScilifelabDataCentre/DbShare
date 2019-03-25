@@ -1,14 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}
-{{ resource['type'].capitalize() }} {{ resource['rid'] }} logs
-{% endblock %}
+{% block head_title %}Database {{ db['id'] }} logs{% endblock %}
 
-{% block body_title %}
-{{ resource['type'].capitalize() }}
-<a href="{{ utils.get_resource_url(resource) }}">{{ resource['rid'] }}</a>
-logs
-{% endblock %}
+{% block body_title %}Database {{ db['id'] }} logs{% endblock %}
 
 {% block main %}
 <table class="table">
@@ -28,9 +22,16 @@ logs
       <td>{{ log['editor'] or '-' }}</td>
       <td>{{ log['remote_addr'] or '-' }}</td>
       <td>{{ log['user_agent'] or '-' }}</td>
-      <td>{{ utils.json_html(log['new']) | safe }}</td>
+      <td>{{ utils.json_html(log['new']) }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block actions %}
+<p>
+  <a href="{{ url_for('.index', dbid=db['id']) }}"
+     role="button" class="btn btn-secondary btn-block">Back</a>
+</p>
 {% endblock %}

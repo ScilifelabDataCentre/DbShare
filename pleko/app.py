@@ -15,7 +15,7 @@ from pleko import constants
 from pleko import utils
 
 def create_app():
-    "Return the configured app object. Initialize the masterdb, if not done."
+    "Return the configured app object. Initialize the master, if not done."
     app = flask.Flask(__name__)
     app.config.from_mapping(pleko.default_config)
     app.config.from_json('config.json')
@@ -47,6 +47,7 @@ def or_null_safe(value):
 def prepare():
     "Connect to the master database; get the current user."
     flask.g.cnx = pleko.master.get_cnx()
+    flask.g.dbcnx = {}
     flask.g.current_user = pleko.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
@@ -68,11 +69,8 @@ def index():
 @app.after_request
 def finalize(response):
     flask.g.cnx.close()
-    try:
-        # This is set by a call to db.get_cnx
-        flask.g.dbcnx.close()
-    except AttributeError:
-        pass
+    for dbcnx in flask.g.dbcnx.values():
+        dbcnx.close()
     return response
 
 

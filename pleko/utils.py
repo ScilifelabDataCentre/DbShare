@@ -9,6 +9,7 @@ import uuid
 
 import flask
 import flask_mail
+import jinja2.utils
 import werkzeug.routing
 
 from pleko import constants
@@ -104,3 +105,7 @@ def check_csrf_token():
     token = flask.session.pop('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
+
+def json_html(data):
+    "Output data as JSON for HTML display."
+    return jinja2.utils.Markup("<pre>%s</pre>" % json.dumps(data, indent=2))

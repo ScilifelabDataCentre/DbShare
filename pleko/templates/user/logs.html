@@ -2,11 +2,7 @@
 
 {% block head_title %}User {{ user['username'] }} logs{% endblock %}
 
-{% block body_title %}
-User
-<a href="{{ url_for('.profile', username=user['username']) }}">
-  {{ user['username'] }}</a> logs
-{% endblock %}
+{% block body_title %}User {{ user['username'] }} logs{% endblock %}
 
 {% block main %}
 <table class="table">
@@ -26,9 +22,16 @@ User
       <td>{{ log['editor'] or '-' }}</td>
       <td>{{ log['remote_addr'] or '-' }}</td>
       <td>{{ log['user_agent'] or '-' }}</td>
-      <td>{{ utils.json_html(log['new']) | safe }}</td>
+      <td>{{ utils.json_html(log['new']) }}</td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block actions %}
+<p>
+  <a href="{{ url_for('.profile', username=user['username']) }}"
+     role="button" class="btn btn-secondary btn-block">Back</a>
+</p>
 {% endblock %}
