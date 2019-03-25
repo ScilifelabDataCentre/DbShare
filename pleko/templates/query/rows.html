@@ -43,6 +43,7 @@ Query results from database <strong>{{ db['id'] }}</strong>
     <input type="hidden" name="select" value="{{ statement.get('select') or ''}}">
     <input type="hidden" name="from" value="{{ statement.get('from') or ''}}">
     <input type="hidden" name="where" value="{{ statement.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ statement.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ statement.get('limit') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>

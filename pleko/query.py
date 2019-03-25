@@ -22,7 +22,8 @@ def index(dbid):
         return flask.redirect(flask.url_for('index'))
     statement = {'select': flask.request.args.get('select') or '',
                  'from': flask.request.args.get('from') or '',
-                 'where': flask.request.args.get('where') or ''}
+                 'where': flask.request.args.get('where') or '',
+                 'orderby': flask.request.args.get('orderby') or ''}
     try:
         statement['limit'] = flask.request.args['limit']
         if statement['limit'].lower() == 'none':
@@ -57,6 +58,9 @@ def rows(dbid):
         statement['where'] = flask.request.form['where'] or None
         if statement['where']:
             sql += ' WHERE ' + statement['where']
+        statement['orderby'] = flask.request.form['orderby'] or None
+        if statement['orderby']:
+            sql += ' ORDER BY ' + statement['orderby']
         statement['limit'] = flask.request.form['limit'] or None
         if statement['limit']:
             sql += ' LIMIT ' + statement['limit']
