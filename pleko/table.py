@@ -128,7 +128,7 @@ def rows(dbid, tableid):
             return flask.redirect(flask.url_for('index'))
         try:
             with pleko.db.DbContext(db) as ctx:
-                ctx.delete_table(dbid)
+                ctx.delete_table(tableid)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.index', dbid=dbid))

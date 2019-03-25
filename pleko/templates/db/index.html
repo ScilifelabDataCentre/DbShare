@@ -102,11 +102,11 @@
 {% endblock %}
 
 {% block actions %}
-{% if has_write_access %}
 <div>
   <a href="{{ url_for('query.index', dbid=db['id']) }}"
      role="button" class="btn btn-success btn-block">Query</a>
 </div>
+{% if has_write_access %}
 <div class="mt-2">
   <a href="{{ url_for('table.create', dbid=db['id']) }}"
      role="button" class="btn btn-primary btn-block">Create table</a>

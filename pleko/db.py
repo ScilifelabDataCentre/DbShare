@@ -201,6 +201,7 @@ def index(dbid):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('index'))
+        cnx = pleko.master.get_cnx()
         with cnx:
             sql = 'DELETE FROM dbs_logs WHERE id=?'
             cnx.execute(sql, (dbid,))
@@ -362,7 +363,7 @@ def upload(dbid):
                         if not record[i]:
                             record[i] = None
             # Insert the data
-            cnx = get_cnx(schema['id'])
+            cnx = get_cnx(db['id'])
             cursor = cnx.cursor()
             with cnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \

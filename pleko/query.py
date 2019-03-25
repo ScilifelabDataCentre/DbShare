@@ -30,13 +30,12 @@ def index(dbid):
     except KeyError:
         statement['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
     cnx = pleko.db.get_cnx(dbid)
-    cursor = cnx.cursor()
     for table in db['tables'].values():
-        table['nrows'] = pleko.table.get_nrows(table['id'], cursor=cursor)
+        table['nrows'] = pleko.table.get_nrows(table['id'], cnx)
     return flask.render_template('query/index.html',
                                  db=db,
                                  statement=statement,
-                                 tables=db['tables'])
+                                 tables=sorted(db['tables'].values()))
 
 @blueprint.route('/<id:dbid>/rows', methods=['POST'])
 def rows(dbid):

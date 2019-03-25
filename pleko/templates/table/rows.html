@@ -43,8 +43,15 @@ Table <strong>{{ schema['id'] }}</strong>
 {% endblock %}
 
 {% block actions %}
-{% if has_write_access %}
 <div>
+  <form action="{{ url_for('query.index', dbid=db['id']) }}"
+        method="GET">
+    <input type="hidden" name="from" value="{{ schema['id'] }}">
+    <button type="submit" class="btn btn-success btn-block">Query</button>
+  </form>
+</div>
+{% if has_write_access %}
+<div class="mt-2">
   <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary btn-block">
     Add row</a>
