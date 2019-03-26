@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Clone view {{ schema['id'] }} in database {{ db['id'] }}
+{% endblock %}
+
+{% block body_title %}
+Clone view <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
+{% endblock %}
+
+{% block main %}
+<div class="card border-success">
+  <div class="card-body">
+    <form action="{{ url_for('.clone', dbid=db['id'], viewid=schema['id']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="id" class="col-md-2 col-form-label text-right">
+          Identifier</label>
+        <div class="col-md-6">
+          <input id="id" name="id" type="text" class="form-control" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-2 offset-md-2">
+          <button type="submit"
+                  class="btn btn-success btn-lg btn-block">Clone</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</div>
+{% endblock %}

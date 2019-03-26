@@ -42,19 +42,21 @@ Schema for table <strong>{{ schema['id'] }}</strong> in database</span>
      role="button" class="btn btn-outline-primary btn-block">
     Table<br>{{ nrows }} rows</a>
 </div>
-<div class="mt-2">
+<div class="py-2">
   <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     Database<br>{{ db['id'] }}</a>
 </div>
-<div class="mt-2">
+{% if has_write_access %}
+<div class="pt-2">
   <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary btn-block">
     Add row</a>
 </div>
-<div class="mt-2">
+<div class="pt-2">
   <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-info btn-block">
     Clone table</a>
 </div>
+{% endif %}
 {% endblock %}

@@ -15,53 +15,6 @@ from pleko import constants
 from pleko import utils
 
 
-def get_user(username=None, email=None, apikey=None, cnx=None):
-    """Return the user for the given username, email or apikey.
-    Return None if no such user.
-    """
-    if username:
-        identifier = username
-        criterion = " WHERE username=?"
-    elif email:
-        identifier = email
-        criterion = " WHERE email=?"
-    elif apikey:
-        identifier = apikey
-        criterion = " WHERE apikey=?"
-    else:
-        return None
-    if cnx is None:
-        cursor = pleko.master.get_cursor()
-    else:
-        cursor = cnx.cursor()
-    sql = "SELECT username, email, password, apikey, role, status," \
-          " created, modified FROM users" + criterion
-    cursor.execute(sql, (identifier,))
-    rows = list(cursor)
-    if len(rows) != 1: return None # 'rowcount' does not work?!
-    row = rows[0]
-    return {'username': row[0],
-            'email':    row[1],
-            'password': row[2],
-            'apikey':   row[3],
-            'role':     row[4],
-            'status':   row[5],
-            'created':  row[6],
-            'modified': row[7]}
-    
-def get_current_user():
-    """Return the user for the current session.
-    Return None if no such user, or disabled.
-    """
-    user = get_user(username=flask.session.get('username'),
-                    apikey=flask.request.headers.get('x-apikey'))
-    if user is None: return None
-    if user['status'] == constants.ENABLED:
-        return user
-    else:
-        flask.session.pop('username', None)
-        return None
-
 def login_required(f):
     "Decorator for checking if logged in. Send to login page if not."
     @functools.wraps(f)
@@ -479,3 +432,53 @@ class UserContext:
     def set_apikey(self):
         "Set a new API key."
         self.user['apikey'] = utils.get_iuid()
+
+
+# Utility functions
+
+def get_user(username=None, email=None, apikey=None, cnx=None):
+    """Return the user for the given username, email or apikey.
+    Return None if no such user.
+    """
+    if username:
+        identifier = username
+        criterion = " WHERE username=?"
+    elif email:
+        identifier = email
+        criterion = " WHERE email=?"
+    elif apikey:
+        identifier = apikey
+        criterion = " WHERE apikey=?"
+    else:
+        return None
+    if cnx is None:
+        cursor = pleko.master.get_cursor()
+    else:
+        cursor = cnx.cursor()
+    sql = "SELECT username, email, password, apikey, role, status," \
+          " created, modified FROM users" + criterion
+    cursor.execute(sql, (identifier,))
+    rows = list(cursor)
+    if len(rows) != 1: return None # 'rowcount' does not work?!
+    row = rows[0]
+    return {'username': row[0],
+            'email':    row[1],
+            'password': row[2],
+            'apikey':   row[3],
+            'role':     row[4],
+            'status':   row[5],
+            'created':  row[6],
+            'modified': row[7]}
+    
+def get_current_user():
+    """Return the user for the current session.
+    Return None if no such user, or disabled.
+    """
+    user = get_user(username=flask.session.get('username'),
+                    apikey=flask.request.headers.get('x-apikey'))
+    if user is None: return None
+    if user['status'] == constants.ENABLED:
+        return user
+    else:
+        flask.session.pop('username', None)
+        return None

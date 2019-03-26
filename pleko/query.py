@@ -10,34 +10,6 @@ from pleko import constants
 from pleko import utils
 
 
-def get_select_from_form():
-    """Get the select data from the current request form data.
-    Raise KeyError if a required part is missing.
-    """
-    result = {}
-    result['select'] = flask.request.form['select']
-    if not result['select']:
-        raise KeyError('no SELECT part')
-    result['columns'] = [c.strip() for c in result['select'].split(',')]
-    result['from']= flask.request.form['from']
-    if not result['from']: 
-        raise KeyError('no FROM part')
-    result['where'] = flask.request.form['where'] or ''
-    result['orderby'] = flask.request.form['orderby'] or ''
-    result['limit'] = flask.request.form['limit'] or ''
-    return result
-
-def get_sql_select(statement):
-    "Create the SQL SELECT statement from its parts."
-    parts = ["SELECT {select} FROM {from}".format(**statement)]
-    if statement['where']:
-        parts.append('WHERE ' + statement['where'])
-    if statement['orderby']:
-        parts.append('ORDER BY ' + statement['orderby'])
-    if statement['limit']:
-        parts.append('LIMIT ' + statement['limit'])
-    return ' '.join(parts)
-
 blueprint = flask.Blueprint('query', __name__)
 
 @blueprint.route('/<id:dbid>')
@@ -102,3 +74,34 @@ def rows(dbid):
                                  sql=sql,
                                  rows=rows,
                                  nrows=len(rows))
+
+
+# Utility functions
+
+def get_select_from_form():
+    """Get the select data from the current request form data.
+    Raise KeyError if a required part is missing.
+    """
+    result = {}
+    result['select'] = flask.request.form['select']
+    if not result['select']:
+        raise KeyError('no SELECT part')
+    result['columns'] = [c.strip() for c in result['select'].split(',')]
+    result['from']= flask.request.form['from']
+    if not result['from']: 
+        raise KeyError('no FROM part')
+    result['where'] = flask.request.form['where'] or ''
+    result['orderby'] = flask.request.form['orderby'] or ''
+    result['limit'] = flask.request.form['limit'] or ''
+    return result
+
+def get_sql_select(statement):
+    "Create the SQL SELECT statement from its parts."
+    parts = ["SELECT {select} FROM {from}".format(**statement)]
+    if statement['where']:
+        parts.append('WHERE ' + statement['where'])
+    if statement['orderby']:
+        parts.append('ORDER BY ' + statement['orderby'])
+    if statement['limit']:
+        parts.append('LIMIT ' + statement['limit'])
+    return ' '.join(parts)

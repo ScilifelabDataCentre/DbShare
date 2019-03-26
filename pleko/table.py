@@ -70,11 +70,13 @@ def schema(dbid, tableid):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    has_write_access = pleko.db.has_write_access(db)
     nrows = pleko.db.get_nrows(tableid, pleko.db.get_cnx(dbid))
     return flask.render_template('table/schema.html',
                                  db=db,
                                  schema=schema,
-                                 nrows=nrows)
+                                 nrows=nrows,
+                                 has_write_access=has_write_access)
 
 @blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
 def rows(dbid, tableid):

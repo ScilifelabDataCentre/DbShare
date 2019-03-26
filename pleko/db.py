@@ -18,162 +18,6 @@ from pleko import constants
 from pleko import utils
 
 
-def get_dbs(public=True):
-    "Get a list of all databases."
-    sql = "SELECT id, owner, description, public, tables, indexes, views," \
-          " access, created, modified FROM dbs"
-    if public:
-        sql += " WHERE public=1"
-    cursor = pleko.master.get_cursor()
-    cursor.execute(sql)
-    result = [{'id':          row[0],
-               'owner':       row[1],
-               'description': row[2],
-               'public':      bool(row[3]),
-               'tables':      json.loads(row[4]),
-               'indexes':     json.loads(row[5]),
-               'views':       json.loads(row[6]),
-               'access':      json.loads(row[7]),
-               'created':     row[8],
-               'modified':    row[9]}
-              for row in cursor]
-    for db in result:
-        db['size'] = os.path.getsize(utils.dbpath(db['id']))
-    return result
-
-def get_db(id):
-    """Return the database metadata for the given identifier.
-    Return None if no such database.
-    Does *not* check access.
-    """
-    cursor = pleko.master.get_cursor()
-    sql = "SELECT owner, description, public, tables, indexes, views," \
-          " access, created, modified FROM dbs WHERE id=?"
-    cursor.execute(sql, (id,))
-    rows = list(cursor)
-    if len(rows) != 1: return None # 'rowcount' does not work?!
-    row = rows[0]
-    return {'id':          id,
-            'owner':       row[0],
-            'description': row[1],
-            'public':      bool(row[2]),
-            'tables':      json.loads(row[3]),
-            'indexes':     json.loads(row[4]),
-            'views':       json.loads(row[5]),
-            'access':      json.loads(row[6]),
-            'created':     row[7],
-            'modified':    row[8],
-            'size':        os.path.getsize(utils.dbpath(id))}
-
-def create_table(cnx, schema, if_not_exists=False):
-    """Create a table given by its schema, in the connected database.
-    Raise ValueError if any problem.
-    """
-    if not schema.get('id'):
-        raise ValueError('no table identifier defined')
-    if not constants.IDENTIFIER_RX.match(schema['id']):
-        raise ValueError('invalid table identifier')
-    if not schema.get('columns'):
-        raise ValueError('no columns defined')
-    ids = set()
-    for column in schema['columns']:
-        if column['id'] in ids:
-            raise ValueError("column identifier %s repeated" % column['id'])
-        ids.add(column['id'])
-    # Collect columns forming primary key
-    primarykey = []
-    for column in schema['columns']:
-        if column.get('primarykey'):
-            primarykey.append(column['id'])
-    # Column definitions, including column constraints
-    clauses = []
-    for column in schema['columns']:
-        coldef = [column['id'], column['type']]
-        if column['id'] in primarykey:
-            column['notnull'] = True
-            if len(primarykey) == 1:
-                coldef.append('PRIMARY KEY')
-        if column.get('notnull'):
-            coldef.append('NOT NULL')
-        clauses.append(' '.join(coldef))
-    # Primary key
-    if len(primarykey) >= 2:
-        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
-    # Foreign keys
-    for foreignkey in schema.get('foreignkeys', []):
-        clauses.append("FOREIGN KEY (%s) REFERENCES %s (%s)" %
-                       (','.join(foreignkey['columns']),
-                        foreignkey['ref'],
-                        ','.join(foreignkey['refcolumns'])))
-    sql = "CREATE TABLE %s %s (%s)" % (if_not_exists and 'IF NOT EXISTS' or '',
-                                       schema['id'],
-                                       ', '.join(clauses))
-    cnx.execute(sql)
-
-def create_index(cnx, schema, if_not_exists=False):
-    "Create an index given by its schema in the connected database."
-    sql = ['CREATE']
-    if schema.get('unique'):
-        sql.append('UNIQUE')
-    sql.append('INDEX')
-    if if_not_exists:
-        sql.append('IF NOT EXISTS')
-    sql.append("%s ON %s" % (schema['id'], schema['table']))
-    sql.append("(%s)" % ','.join(schema['columns']))
-    cnx.execute(' '.join(sql))
-
-def get_cnx(dbid):
-    "Get a connection for the given database identifier."
-    try:
-        return flask.g.dbcnx[dbid]
-    except KeyError:
-        # This will be closed by app.finalize
-        dbcnx = flask.g.dbcnx[dbid] = sqlite3.connect(utils.dbpath(dbid))
-        dbcnx.execute('PRAGMA foreign_keys=ON')
-        return dbcnx
-
-def has_read_access(db):
-    "Does the current user (if any) have read access to the database?"
-    if db['public']: return True
-    if not flask.g.current_user: return False
-    if flask.g.is_admin: return True
-    return flask.g.current_user['username'] == db['owner']
-
-def get_check_read(dbid):
-    """Get the database and check that the current user as read access.
-    Raise ValueError if any problem.
-    """
-    db = get_db(dbid)
-    if db is None:
-        raise ValueError('no such database')
-    if not has_read_access(db):
-        raise ValueError('may not read the database')
-    return db
-
-def has_write_access(db):
-    "Does the current user (if any) have write access to the database?"
-    if not flask.g.current_user: return False
-    if flask.g.is_admin: return True
-    return flask.g.current_user['username'] == db['owner']
-
-def get_check_write(dbid):
-    """Get the database and check that the current user as write access.
-    Raise ValueError if any problem.
-    """
-    db = get_db(dbid)
-    if db is None:
-        raise ValueError('no such database')
-    if not has_write_access(db):
-        raise ValueError('may not write to the database')
-    return db
-
-def get_nrows(id, dbcnx):
-    "Get the number of rows in the table or view."
-    cursor = dbcnx.cursor()
-    cursor.execute("SELECT COUNT(*) FROM %s" % id)
-    return cursor.fetchone()[0]
-
-
 blueprint = flask.Blueprint('db', __name__)
 
 @blueprint.route('/', methods=['GET', 'POST'])
@@ -469,6 +313,19 @@ def private(dbid):
     return flask.redirect(flask.url_for('.home', dbid=db['id']))
 
 
+@blueprint.route('/<id:dbid>/download')
+def download(dbid):
+    "Download the Sqlite3 database file."
+    try:
+        db = get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+    return flask.send_file(utils.dbpath(dbid),
+                           mimetype='application/x-sqlite3',
+                           as_attachment=True)
+
+
 class DbContext:
     "Context for creating, modifying and saving metadata for a database."
 
@@ -655,3 +512,161 @@ class DbContext:
         except KeyError:
             raise ValueError('no such view in database')
         self.dbcnx.execute("DROP VIEW %s" % viewid)
+
+
+# Utility functions
+
+def get_dbs(public=True):
+    "Get a list of all databases."
+    sql = "SELECT id, owner, description, public, tables, indexes, views," \
+          " access, created, modified FROM dbs"
+    if public:
+        sql += " WHERE public=1"
+    cursor = pleko.master.get_cursor()
+    cursor.execute(sql)
+    result = [{'id':          row[0],
+               'owner':       row[1],
+               'description': row[2],
+               'public':      bool(row[3]),
+               'tables':      json.loads(row[4]),
+               'indexes':     json.loads(row[5]),
+               'views':       json.loads(row[6]),
+               'access':      json.loads(row[7]),
+               'created':     row[8],
+               'modified':    row[9]}
+              for row in cursor]
+    for db in result:
+        db['size'] = os.path.getsize(utils.dbpath(db['id']))
+    return result
+
+def get_db(id):
+    """Return the database metadata for the given identifier.
+    Return None if no such database.
+    Does *not* check access.
+    """
+    cursor = pleko.master.get_cursor()
+    sql = "SELECT owner, description, public, tables, indexes, views," \
+          " access, created, modified FROM dbs WHERE id=?"
+    cursor.execute(sql, (id,))
+    rows = list(cursor)
+    if len(rows) != 1: return None # 'rowcount' does not work?!
+    row = rows[0]
+    return {'id':          id,
+            'owner':       row[0],
+            'description': row[1],
+            'public':      bool(row[2]),
+            'tables':      json.loads(row[3]),
+            'indexes':     json.loads(row[4]),
+            'views':       json.loads(row[5]),
+            'access':      json.loads(row[6]),
+            'created':     row[7],
+            'modified':    row[8],
+            'size':        os.path.getsize(utils.dbpath(id))}
+
+def create_table(cnx, schema, if_not_exists=False):
+    """Create a table given by its schema, in the connected database.
+    Raise ValueError if any problem.
+    """
+    if not schema.get('id'):
+        raise ValueError('no table identifier defined')
+    if not constants.IDENTIFIER_RX.match(schema['id']):
+        raise ValueError('invalid table identifier')
+    if not schema.get('columns'):
+        raise ValueError('no columns defined')
+    ids = set()
+    for column in schema['columns']:
+        if column['id'] in ids:
+            raise ValueError("column identifier %s repeated" % column['id'])
+        ids.add(column['id'])
+    # Collect columns forming primary key
+    primarykey = []
+    for column in schema['columns']:
+        if column.get('primarykey'):
+            primarykey.append(column['id'])
+    # Column definitions, including column constraints
+    clauses = []
+    for column in schema['columns']:
+        coldef = [column['id'], column['type']]
+        if column['id'] in primarykey:
+            column['notnull'] = True
+            if len(primarykey) == 1:
+                coldef.append('PRIMARY KEY')
+        if column.get('notnull'):
+            coldef.append('NOT NULL')
+        clauses.append(' '.join(coldef))
+    # Primary key
+    if len(primarykey) >= 2:
+        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
+    # Foreign keys
+    for foreignkey in schema.get('foreignkeys', []):
+        clauses.append("FOREIGN KEY (%s) REFERENCES %s (%s)" %
+                       (','.join(foreignkey['columns']),
+                        foreignkey['ref'],
+                        ','.join(foreignkey['refcolumns'])))
+    sql = "CREATE TABLE %s %s (%s)" % (if_not_exists and 'IF NOT EXISTS' or '',
+                                       schema['id'],
+                                       ', '.join(clauses))
+    cnx.execute(sql)
+
+def create_index(cnx, schema, if_not_exists=False):
+    "Create an index given by its schema in the connected database."
+    sql = ['CREATE']
+    if schema.get('unique'):
+        sql.append('UNIQUE')
+    sql.append('INDEX')
+    if if_not_exists:
+        sql.append('IF NOT EXISTS')
+    sql.append("%s ON %s" % (schema['id'], schema['table']))
+    sql.append("(%s)" % ','.join(schema['columns']))
+    cnx.execute(' '.join(sql))
+
+def get_cnx(dbid):
+    "Get a connection for the given database identifier."
+    try:
+        return flask.g.dbcnx[dbid]
+    except KeyError:
+        # This will be closed by app.finalize
+        dbcnx = flask.g.dbcnx[dbid] = sqlite3.connect(utils.dbpath(dbid))
+        dbcnx.execute('PRAGMA foreign_keys=ON')
+        return dbcnx
+
+def has_read_access(db):
+    "Does the current user (if any) have read access to the database?"
+    if db['public']: return True
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == db['owner']
+
+def get_check_read(dbid):
+    """Get the database and check that the current user as read access.
+    Raise ValueError if any problem.
+    """
+    db = get_db(dbid)
+    if db is None:
+        raise ValueError('no such database')
+    if not has_read_access(db):
+        raise ValueError('may not read the database')
+    return db
+
+def has_write_access(db):
+    "Does the current user (if any) have write access to the database?"
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == db['owner']
+
+def get_check_write(dbid):
+    """Get the database and check that the current user as write access.
+    Raise ValueError if any problem.
+    """
+    db = get_db(dbid)
+    if db is None:
+        raise ValueError('no such database')
+    if not has_write_access(db):
+        raise ValueError('may not write to the database')
+    return db
+
+def get_nrows(id, dbcnx):
+    "Get the number of rows in the table or view."
+    cursor = dbcnx.cursor()
+    cursor.execute("SELECT COUNT(*) FROM %s" % id)
+    return cursor.fetchone()[0]
