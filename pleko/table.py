@@ -3,6 +3,7 @@
 import copy
 import csv
 import sqlite3
+import tempfile
 
 import flask
 
@@ -310,3 +311,18 @@ def clone(dbid, tableid):
         return flask.redirect(flask.url_for('.rows',
                                             dbid=dbid,
                                             tableid=newschema['id']))
+
+@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST'])
+def download(dbid, tableid):
+    "Download the rows in the table as a CSV file."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('index'))
+
+    if utils.is_method_GET():
+        raise NotImplementedError
+
+    elif utils.is_method_POST():
+        raise NotImplementedError

@@ -14,6 +14,7 @@ Web-based relational database system powered by Sqlite.
 - A database may be private or public.
 - Databases are independent of one another.
 - Display the tables, views and indexes in a database.
+- Download the Sqlite3 table for a database.
 
 ## Tables
 
@@ -27,6 +28,7 @@ Web-based relational database system powered by Sqlite.
 - Create a table from a CSV file.
 - Clone a table.
 - Delete a table.
+- (Download a table as CSV file.)
 
 ## Queries
 
@@ -41,6 +43,7 @@ Web-based relational database system powered by Sqlite.
 - Display the schema of a view.
 - Delete a view.
 - (Clone a view.)
+- (Download a view as CSV file.)
 
 ## Indexes
 
