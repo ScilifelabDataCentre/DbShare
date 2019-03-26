@@ -13,13 +13,13 @@ from pleko import utils
 blueprint = flask.Blueprint('query', __name__)
 
 @blueprint.route('/<id:dbid>')
-def index(dbid):
-    "Query database."
+def home(dbid):
+    "Query the database."
     try:
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     statement = {'select': flask.request.args.get('select') or '',
                  'from': flask.request.args.get('from') or '',
                  'where': flask.request.args.get('where') or '',
@@ -33,10 +33,11 @@ def index(dbid):
     cnx = pleko.db.get_cnx(dbid)
     for table in db['tables'].values():
         table['nrows'] = pleko.table.get_nrows(table['id'], cnx)
-    return flask.render_template('query/index.html',
+    return flask.render_template('query/home.html',
                                  db=db,
                                  statement=statement,
-                                 tables=sorted(db['tables'].values()))
+                                 tables=sorted(db['tables'].values(),
+                                               key=lambda t: t['id']))
 
 @blueprint.route('/<id:dbid>/rows', methods=['POST'])
 def rows(dbid):
@@ -46,7 +47,7 @@ def rows(dbid):
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         statement = {}
         statement['select'] = flask.request.form['select']
@@ -72,7 +73,7 @@ def rows(dbid):
             columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(utils.get_absolute_url('.index',
+        return flask.redirect(utils.get_absolute_url('.home',
                                                      values={'dbid':dbid},
                                                      query=statement))
     return flask.render_template('query/rows.html',

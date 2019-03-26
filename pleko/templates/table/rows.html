@@ -36,7 +36,7 @@ Table <strong>{{ schema['id'] }}</strong>
      role="button" class="btn btn-outline-primary btn-block">Schema</a>
 </div>
 <div class="mt-2">
-  <a href="{{ url_for('db.index', dbid=db['id']) }}"
+  <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     Database<br>{{ db['id'] }}</a>
 </div>
@@ -44,7 +44,7 @@ Table <strong>{{ schema['id'] }}</strong>
 
 {% block actions %}
 <div>
-  <form action="{{ url_for('query.index', dbid=db['id']) }}"
+  <form action="{{ url_for('query.home', dbid=db['id']) }}"
         method="GET">
     <input type="hidden" name="from" value="{{ schema['id'] }}">
     <button type="submit" class="btn btn-success btn-block">Query</button>

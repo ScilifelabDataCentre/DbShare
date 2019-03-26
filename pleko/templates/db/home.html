@@ -114,7 +114,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('query.index', dbid=db['id']) }}"
+  <a href="{{ url_for('query.home', dbid=db['id']) }}"
      role="button" class="btn btn-success btn-block">Query</a>
 </div>
 {% if has_write_access %}
@@ -150,7 +150,7 @@
 </div>
 {% endif %}
 <div class="mt-2">
-  <form action="{{ url_for('.index', dbid=db['id']) }}"
+  <form action="{{ url_for('.home', dbid=db['id']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

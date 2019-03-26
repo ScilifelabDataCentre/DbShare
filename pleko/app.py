@@ -61,10 +61,10 @@ def setup_template_context():
                 utils=utils)
 
 @app.route('/')
-def index():
+def home():
     "Home page. List accessible databases."
     dbs = pleko.db.get_dbs(public=not flask.g.is_admin)
-    return flask.render_template('index.html', dbs=dbs)
+    return flask.render_template('home.html', dbs=dbs)
 
 @app.after_request
 def finalize(response):

@@ -20,7 +20,7 @@ def get_nrows(tableid, dbcnx):
 
 blueprint = flask.Blueprint('table', __name__)
 
-@blueprint.route('/<id:dbid>', methods=["GET", "POST"])
+@blueprint.route('/<id:dbid>', methods=['GET', 'POST'])
 @login_required
 def create(dbid):
     "Create a table with columns in the database."
@@ -28,7 +28,7 @@ def create(dbid):
         db = pleko.db.get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
     if utils.is_method_GET():
         return flask.render_template('table/create.html', db=db)
@@ -71,7 +71,7 @@ def create(dbid):
             if not schema['columns']:
                 raise ValueError('no columns defined')
             create_table(schema, cursor)
-            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbid=dbid))
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create', dbid=dbid))
@@ -88,7 +88,7 @@ def schema(dbid, tableid):
         schema = db['tables'][tableid]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
     nrows = get_nrows(tableid, pleko.db.get_cnx(dbid))
     return flask.render_template('table/schema.html',
                                  db=db,
@@ -109,7 +109,7 @@ def rows(dbid, tableid):
             schema = db['tables'][tableid]
         except KeyError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbid=dbid))
         cnx = pleko.db.get_cnx(dbid)
         cursor = cnx.cursor()
         sql = "SELECT * FROM %s" % tableid
@@ -131,7 +131,7 @@ def rows(dbid, tableid):
                 ctx.delete_table(tableid)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
 @blueprint.route('/<id:dbid>/<id:tableid>/row', methods=['GET', 'POST'])
 def row(dbid, tableid):
@@ -147,7 +147,7 @@ def row(dbid, tableid):
             schema = db['tables'][tableid]
         except KeyError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbid=dbid))
         return flask.render_template('table/row.html', 
                                      db=db,
                                      schema=schema)
@@ -156,7 +156,7 @@ def row(dbid, tableid):
         try:
             schema = db['tables'][tableid]
         except KeyError as error:
-            return flask.redirect(flask.url_for('db.index', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbid=dbid))
         errors = {}
         values = []
         for column in schema['columns']:
@@ -212,7 +212,7 @@ def upload(dbid, tableid):
         schema = db['tables'][tableid]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
     if utils.is_method_GET():
         return flask.render_template('table/upload.html', 
@@ -282,7 +282,7 @@ def upload(dbid, tableid):
                                             dbid=dbid,
                                             tableid=tableid))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/clone', methods=["GET", "POST"])
+@blueprint.route('/<id:dbid>/<id:tableid>/clone', methods=['GET', 'POST'])
 @login_required
 def clone(dbid, tableid):
     "Create a clone of the table."
@@ -290,13 +290,13 @@ def clone(dbid, tableid):
         db = pleko.db.get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
     try:
         schema = db['tables'][tableid]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
     if utils.is_method_GET():
         return flask.render_template('table/clone.html',

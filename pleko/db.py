@@ -164,10 +164,10 @@ def create():
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+        return flask.redirect(flask.url_for('.home', dbid=ctx.db['id']))
 
 @blueprint.route('/<id:dbid>', methods=['GET', 'POST', 'DELETE'])
-def index(dbid):
+def home(dbid):
     "Display the database tables and metadata. Delete the database."
     if utils.is_method_GET():
         try:
@@ -179,7 +179,7 @@ def index(dbid):
         for table in db['tables'].values():
             table['nrows'] = pleko.table.get_nrows(table['id'], dbcnx)
         keyfunc = lambda v: v['id']
-        return flask.render_template('db/index.html',
+        return flask.render_template('db/home.html',
                                      db=db,
                                      tables=sorted(db['tables'].values(),
                                                    key=keyfunc),
@@ -212,7 +212,7 @@ def rename(dbid):
         db = get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.index', dbid=dbid))
+        return flask.redirect(flask.url_for('.home', dbid=dbid))
 
     if utils.is_method_GET():
         return flask.render_template('db/rename.html', db=db)
@@ -224,7 +224,7 @@ def rename(dbid):
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+        return flask.redirect(flask.url_for('.home', dbid=ctx.db['id']))
 
 @blueprint.route('/<id:dbid>/logs')
 def logs(dbid):
@@ -402,7 +402,7 @@ def clone(dbid):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbid=dbid))
         shutil.copy(utils.dbpath(dbid), utils.dbpath(ctx.db['id']))
-        return flask.redirect(flask.url_for('.index', dbid=ctx.db['id']))
+        return flask.redirect(flask.url_for('.home', dbid=ctx.db['id']))
 
 @blueprint.route('/<id:dbid>/public', methods=['POST'])
 @login_required
@@ -418,7 +418,9 @@ def public(dbid):
             ctx.db['public'] = True
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
-    return flask.redirect(flask.url_for('.index', dbid=db['id']))
+    else:
+        flask.flash('Database set to public access.', 'message')
+    return flask.redirect(flask.url_for('.home', dbid=db['id']))
 
 @blueprint.route('/<id:dbid>/private', methods=['POST'])
 @login_required
@@ -434,7 +436,9 @@ def private(dbid):
             ctx.db['public'] = False
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
-    return flask.redirect(flask.url_for('.index', dbid=db['id']))
+    else:
+        flask.flash('Database public access revoked.', 'message')
+    return flask.redirect(flask.url_for('.home', dbid=db['id']))
 
 
 class DbContext:
