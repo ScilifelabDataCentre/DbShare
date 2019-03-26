@@ -1,5 +1,6 @@
 "Pleko table endpoints."
 
+import copy
 import csv
 import sqlite3
 
@@ -7,15 +8,15 @@ import flask
 
 import pleko.db
 import pleko.master
+import pleko.user
 from pleko import constants
 from pleko import utils
-from pleko.user import login_required
 
 
 blueprint = flask.Blueprint('table', __name__)
 
 @blueprint.route('/<id:dbid>', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def create(dbid):
     "Create a table with columns in the database."
     try:
@@ -264,7 +265,7 @@ def upload(dbid, tableid):
                                             tableid=tableid))
 
 @blueprint.route('/<id:dbid>/<id:tableid>/clone', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def clone(dbid, tableid):
     "Create a clone of the table."
     try:
@@ -286,13 +287,10 @@ def clone(dbid, tableid):
 
     elif utils.is_method_POST():
         try:
-            schema['id'] = flask.request.form['id']
-            if not constants.IDENTIFIER_RX.match(schema['id']):
-                raise ValueError('invalid database identifier')
-            if schema['id'] in db['tables']:
-                raise ValueError('table identifier already in use')
+            newschema = copy.deepcopy(schema)
+            newschema['id'] = flask.request.form['id']
             with pleko.db.DbContext(db) as ctx:
-                ctx.add_table(schema)
+                ctx.add_table(newschema)
             cnx = ctx.cnx
             cursor = cnx.cursor()
             with cnx:
@@ -309,4 +307,4 @@ def clone(dbid, tableid):
                                                 tableid=tableid))
         return flask.redirect(flask.url_for('.rows',
                                             dbid=dbid,
-                                            tableid=schema['id']))
+                                            tableid=newschema['id']))

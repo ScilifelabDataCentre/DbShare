@@ -1,11 +1,13 @@
 "Pleko view endpoint."
 
+import copy
 import sqlite3
 
 import flask
 
 import pleko.db
 import pleko.table
+import pleko.user
 from pleko import constants
 from pleko import utils
 
@@ -96,18 +98,22 @@ def rows(dbid, viewid):
         except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbid=dbid))
-        cnx = pleko.db.get_cnx(dbid)
-        cursor = cnx.cursor()
-        sql = "SELECT * FROM %s" % viewid
-        cursor.execute(sql)
-        rows = list(cursor)
-        if schema['select']['columns'][0] == '*':
-            try:
-                columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
-            except IndexError:
-                columns = ['columns']
-        else:
-            columns = schema['select']['columns']
+        try:
+            cnx = pleko.db.get_cnx(dbid)
+            cursor = cnx.cursor()
+            sql = "SELECT * FROM %s" % viewid
+            cursor.execute(sql)
+            rows = list(cursor)
+            if schema['select']['columns'][0] == '*':
+                try:
+                    columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
+                except IndexError:
+                    columns = ['columns']
+            else:
+                columns = schema['select']['columns']
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.schema', viewid=viewid))
         return flask.render_template('view/rows.html', 
                                      db=db,
                                      schema=schema,
@@ -127,3 +133,39 @@ def rows(dbid, viewid):
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbid=dbid))
+
+@blueprint.route('/<id:dbid>/<id:viewid>/clone', methods=['GET', 'POST'])
+@pleko.user.login_required
+def clone(dbid, viewid):
+    "Create a clone of the view."
+    try:
+        db = pleko.db.get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+
+    try:
+        schema = db['views'][viewid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+
+    if utils.is_method_GET():
+        return flask.render_template('view/clone.html',
+                                     db=db,
+                                     schema=schema)
+
+    elif utils.is_method_POST():
+        try:
+            newschema = copy.deepcopy(schema)
+            newschema['id'] = flask.request.form['id']
+            with pleko.db.DbContext(db) as ctx:
+                ctx.add_view(newschema)
+        except (ValueError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.clone',
+                                                dbid=dbid,
+                                                viewid=viewid))
+        return flask.redirect(flask.url_for('.rows',
+                                            dbid=dbid,
+                                            viewid=newschema['id']))

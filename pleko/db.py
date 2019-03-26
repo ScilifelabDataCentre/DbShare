@@ -13,9 +13,9 @@ import flask
 import pleko.master
 import pleko.table
 import pleko.query
+import pleko.user
 from pleko import constants
 from pleko import utils
-from pleko.user import login_required
 
 
 def get_dbs(public=True):
@@ -177,7 +177,7 @@ def get_nrows(id, dbcnx):
 blueprint = flask.Blueprint('db', __name__)
 
 @blueprint.route('/', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def create():
     "Create a database."
     if utils.is_method_GET():
@@ -233,7 +233,7 @@ def home(dbid):
         return flask.redirect(flask.url_for('index'))
 
 @blueprint.route('/<id:dbid>/rename', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def rename(dbid):
     "Rename the database."
     try:
@@ -277,7 +277,7 @@ def logs(dbid):
                                  logs=logs)
 
 @blueprint.route('/<id:dbid>/upload', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def upload(dbid):
     "Create a table from the data in a CSV file."
     try:
@@ -405,7 +405,7 @@ def upload(dbid):
                                             tableid=tableid))
 
 @blueprint.route('/<id:dbid>/clone', methods=['GET', 'POST'])
-@login_required
+@pleko.user.login_required
 def clone(dbid):
     "Create a clone of the database."
     try:
@@ -433,7 +433,7 @@ def clone(dbid):
         return flask.redirect(flask.url_for('.home', dbid=ctx.db['id']))
 
 @blueprint.route('/<id:dbid>/public', methods=['POST'])
-@login_required
+@pleko.user.login_required
 def public(dbid):
     "Set the database to public access."
     try:
@@ -451,7 +451,7 @@ def public(dbid):
     return flask.redirect(flask.url_for('.home', dbid=db['id']))
 
 @blueprint.route('/<id:dbid>/private', methods=['POST'])
-@login_required
+@pleko.user.login_required
 def private(dbid):
     "Set the database to private access."
     try:

@@ -40,6 +40,11 @@ View result <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
     Database<br>{{ db['id'] }}</a>
 </div>
 {% if has_write_access %}
+<div class="mt-2">
+  <a href="{{ url_for('.clone', dbid=db['id'], viewid=schema['id']) }}"
+     role="button" class="btn btn-success btn-block">
+    Clone view</a>
+</div>
 <div class="mt-4">
   <form action="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
 	method="POST">
