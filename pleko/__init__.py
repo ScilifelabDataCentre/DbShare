@@ -1,4 +1,4 @@
-"Pleko: Experimental web-based toolbench for data handling."
+"Pleko: Web-based relational database system powered by Sqlite3."
 
 __version__ = '0.6.4'
 

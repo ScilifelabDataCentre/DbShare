@@ -1,6 +1,6 @@
 # Pleko
 
-Web-based relational database system powered by Sqlite.
+Web-based relational database system powered by Sqlite3.
 
 πλέκω: to plait, twine, twist, weave, braid
 
@@ -20,18 +20,18 @@ Web-based relational database system powered by Sqlite.
 
 - Create a table, defining the columns.
 - Add single rows.
-- Edit a row. **TODO**
-- Delete a row. **TODO**
+- Edit a row. *TODO*
+- Delete a row. *TODO*
 - Display the rows in a table.
 - Display the schema of a table.
 - Upload CSV data to a table, adding rows.
-- Upload CSV data to a table, updating rows. **TODO**
+- Upload CSV data to a table, updating rows. *TODO*
 - Create a table from a CSV file.
 - Clone a table.
 - Delete a table.
 - Download a table as CSV file.
-- Add a column to a table. **TODO**
-- Define a foreign key. **TODO**
+- Add a column to a table. *TODO*
+- Define a foreign key. *TODO*
 
 ## Queries
 
@@ -42,7 +42,7 @@ Web-based relational database system powered by Sqlite.
 ## Views
 
 - Create a view.
-- Edit a view. **TODO**
+- Edit a view. *TODO*
 - Display the rows of a view.
 - Display the schema of a view.
 - Delete a view.
@@ -51,18 +51,18 @@ Web-based relational database system powered by Sqlite.
 
 ## Indexes
 
-- Create an index. **TODO**
-- View the schema of an index. **TODO**
-- Delete an index. **TODO**
+- Create an index. *TODO*
+- View the schema of an index. *TODO*
+- Delete an index. *TODO*
 
 ## Plots
 
-**TODO**
+*TODO*
 
 ## Access privileges
 
-**TODO**
+*TODO*
 
 ## API (JSON)
 
-**TODO**
+*TODO*
