@@ -20,15 +20,18 @@ Web-based relational database system powered by Sqlite.
 
 - Create a table, defining the columns.
 - Add single rows.
-- (Edit a row.)
-- (Delete a row.)
+- Edit a row. **TODO**
+- Delete a row. **TODO**
 - Display the rows in a table.
 - Display the schema of a table.
-- Upload CSV data to a table.
+- Upload CSV data to a table, adding rows.
+- Upload CSV data to a table, updating rows. **TODO**
 - Create a table from a CSV file.
 - Clone a table.
 - Delete a table.
-- (Download a table as CSV file.)
+- Download a table as CSV file.
+- Add a column to a table. **TODO**
+- Define a foreign key. **TODO**
 
 ## Queries
 
@@ -39,26 +42,27 @@ Web-based relational database system powered by Sqlite.
 ## Views
 
 - Create a view.
+- Edit a view. **TODO**
 - Display the rows of a view.
 - Display the schema of a view.
 - Delete a view.
-- (Clone a view.)
-- (Download a view as CSV file.)
+- Clone a view.
+- Download a view as CSV file.
 
 ## Indexes
 
-- (Create an index.)
-- (View the schema of an index.)
-- (Delete an index.)
+- Create an index. **TODO**
+- View the schema of an index. **TODO**
+- Delete an index. **TODO**
 
 ## Plots
 
-To be defined.
+**TODO**
 
 ## Access privileges
 
-To be defined.
+**TODO**
 
 ## API (JSON)
 
-To be defined.
+**TODO**

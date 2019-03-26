@@ -165,7 +165,7 @@ def row(dbid, tableid):
                                          db=db,
                                          schema=schema)
         dbcnx = pleko.db.get_cnx(dbid)
-        cursor = cnx.cursor()
+        cursor = dbcnx.cursor()
         try:
             with dbcnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \

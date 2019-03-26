@@ -9,8 +9,8 @@ Schema for table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
 {% endblock %}
 
 {% block main %}
-<div class="card border-info">
-  <div class="card-header bg-info text-white">Columns</div>
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">Columns</div>
   <div class="card-body">
     <table class="table">
       <thead>
@@ -55,7 +55,7 @@ Schema for table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-info btn-block">
+     role="button" class="btn btn-primary btn-block">
     Clone table</a>
 </div>
 {% endif %}
