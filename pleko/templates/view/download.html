@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Download CSV file of view {{ schema['id'] }} in database {{ db['id'] }}
+{% endblock %}
+
+{% block body_title %}
+Download CSV file of view <strong>{{ schema['id'] }}</strong>
+in database {{ db['id'] }}
+{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-header">CSV file formatting</div>
+  <div class="card-body">
+    <form action="{{ url_for('.download_csv', dbid=db['id'], viewid=schema['id']) }}"
+          method="GET">
+      <div class="form-group row">
+	<div class="col-sm-2 text-right">Header</div>
+	<div class="col-sm-10">
+	  <div class="form-check">
+            <input id="header" name="header" type="checkbox"
+		   class="form-check-input" value="true" checked>
+            <label class="form-check-label" for="header">
+	      Include a header record.
+            </label>
+	  </div>
+	</div>
+      </div>
+      <div class="form-group row">
+        <label for="delimiter" 
+	       class="col-md-2 col-form-label text-right">Delimiter</label>
+	<div class="col-md-3">
+	  <select id="delimiter" name="delimiter" class="form-control">
+	    <option value=",">comma</option>
+	    <option value="<tab>">tab</option>
+	    <option value=":">colon</option>
+	    <option value=";">semi-colon</option>
+	    <option value="|">vertical bar</option>
+	    <option value="<space>">space (blank)</option>
+	  </select>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-secondary btn-lg btn-block">
+            Download</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</div>
+{% endblock %}

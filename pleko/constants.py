@@ -24,4 +24,5 @@ BLOB    = 'BLOB'
 COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
 # Misc
+CSV_DELIMITERS = ',\t:; |'
 CSV_MIMETYPE = 'text/csv'

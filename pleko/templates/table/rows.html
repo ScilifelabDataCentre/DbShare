@@ -38,16 +38,20 @@ Table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
   </form>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('table.schema', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.download', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-secondary btn-block">Download CSV</a>
+</div>
+<div class="pt-2">
+  <a href="{{ url_for('.schema', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">Schema</a>
 </div>
-<div class="py-2">
+<div class="pt-2">
   <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     Database<br>{{ db['id'] }}</a>
 </div>
 {% if has_write_access %}
-<div class="pt-2">
+<div class="pt-4">
   <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary btn-block">
     Add row</a>

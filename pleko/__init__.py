@@ -1,13 +1,15 @@
 "Pleko: Experimental web-based toolbench for data handling."
 
-__version__ = '0.6.2'
+__version__ = '0.6.4'
 
 default_config = dict(
     VERSION = __version__,
     SERVER_NAME = '127.0.0.1:5000',
     SITE_NAME = 'Pleko',
     GITHUB_URL = 'https://github.com/pekrau/Pleko',
+    FLASK_URL = 'http://flask.pocoo.org/',
     SQLITE_URL = 'https://www.sqlite.org/',
+    BOOTSTRAP_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
     DATABASES_DIRPATH = 'data',
     SECRET_KEY = None,
     SALT_LENGTH = 12,

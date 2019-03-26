@@ -93,7 +93,7 @@
         </table>
       </div>
     </div>
-    <div class="card border-secondary pt-4">
+    <div class="card border-secondary mt-4">
       <div class="card-header border-secondary">Indexes</div>
       <div class="card-body">
         <table class="table table-sm table-hover table-borderless">
@@ -128,12 +128,12 @@
   <a href="{{ url_for('query.home', dbid=db['id']) }}"
      role="button" class="btn btn-success btn-block">Query</a>
 </div>
-<div class="py-2">
+<div class="pt-2">
   <a href="{{ url_for('.download', dbid=db['id']) }}"
      role="button" class="btn btn-secondary btn-block">Download</a>
 </div>
 {% if has_write_access %}
-<div class="pt-2">
+<div class="pt-4">
   <a href="{{ url_for('.upload', dbid=db['id']) }}"
      role="button" class="btn btn-primary btn-block">Upload CSV file</a>
 </div>

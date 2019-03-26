@@ -10,30 +10,29 @@
     <form action="{{ url_for('.create', dbid=db['id']) }}"
           method="POST">
       {{ csrf_token() }}
-      <div class="form-row">
-        <div class="form-group col-md-4">
-          <label for="id" class="font-weight-bold">Table identifier</label>
+      <div class="form-group row">
+        <div class="col-md-3 text-right">
+          <label for="id" class="col-form-label">Table identifier</label>
+	</div>
+	<div class="col-md-6">
           <input id="id" name="id" type="text" class="form-control" autofocus>
         </div>
       </div>
       <div class="form-row pt-4">
         <div class="form-group col-md-3">
-          <label for="column0id" class="font-weight-bold">Column identifier</label>
+          <label for="column0id">Column identifier</label>
         </div>
         <div class="form-group col-md-2">
-          <label for="column0type" class="font-weight-bold">Type</label>
+          <label for="column0type">Type</label>
         </div>
         <div class="form-group col-md-1">
-          <label for="column0primarykey" 
-                 class="font-weight-bold">PRIMARY KEY</label>
+          <label for="column0primarykey">PRIMARY KEY</label>
         </div>
         <div class="form-group col-md-1">
-          <label for="column0notnull"
-                 class="font-weight-bold">NOT NULL</label>
+          <label for="column0notnull">NOT NULL</label>
         </div>
         <div class="form-group col-md-1">
-          <label for="column0unique" 
-                 class="font-weight-bold">UNIQUE</label>
+          <label for="column0unique">UNIQUE</label>
         </div>
       </div>
       {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
@@ -74,7 +73,7 @@
       </div>
       {% endfor %}
       <div class="form-row">
-        <div class="col-md-2">
+        <div class="col-md-3">
           <button type="submit" class="btn btn-primary btn-lg btn-block">
             Create</button>
         </div>

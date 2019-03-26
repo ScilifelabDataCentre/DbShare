@@ -44,7 +44,7 @@ def home(dbid):
             db = get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         dbcnx = pleko.db.get_cnx(db['id'])
         for table in db['tables'].values():
             table['nrows'] = get_nrows(table['id'], dbcnx)
@@ -66,7 +66,7 @@ def home(dbid):
             db = get_check_write(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         cnx = pleko.master.get_cnx()
         with cnx:
             sql = 'DELETE FROM dbs_logs WHERE id=?'
@@ -74,7 +74,7 @@ def home(dbid):
             sql = 'DELETE FROM dbs WHERE id=?'
             cnx.execute(sql, (dbid,))
             os.remove(utils.dbpath(dbid))
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/<id:dbid>/rename', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -105,7 +105,7 @@ def logs(dbid):
         db = get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     cursor = pleko.master.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE id=? ORDER BY timestamp DESC"
@@ -128,7 +128,7 @@ def upload(dbid):
         db = get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
         return flask.render_template('db/upload.html', db=db)
@@ -256,7 +256,7 @@ def clone(dbid):
         db = get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
         return flask.render_template('db/clone.html', db=db)
@@ -268,6 +268,7 @@ def clone(dbid):
                 ctx.set_description(flask.request.form.get('description'))
                 ctx.db['tables']  = db['tables']
                 ctx.db['indexes'] = db['indexes']
+                ctx.db['views']   = db['views']
                 ctx.db['access']  = db['access']
                 ctx.db['origin']  = dbid # Will show up in logs
         except (KeyError, ValueError) as error:
@@ -284,7 +285,7 @@ def public(dbid):
         db = get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
             ctx.db['public'] = True
@@ -302,7 +303,7 @@ def private(dbid):
         db = get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
             ctx.db['public'] = False
@@ -320,7 +321,7 @@ def download(dbid):
         db = get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     return flask.send_file(utils.dbpath(dbid),
                            mimetype='application/x-sqlite3',
                            as_attachment=True)

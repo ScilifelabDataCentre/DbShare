@@ -2,8 +2,8 @@
 
 import copy
 import csv
+import io
 import sqlite3
-import tempfile
 
 import flask
 
@@ -65,7 +65,7 @@ def schema(dbid, tableid):
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tableid]
     except KeyError as error:
@@ -87,7 +87,7 @@ def rows(dbid, tableid):
             db = pleko.db.get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
             schema = db['tables'][tableid]
@@ -109,7 +109,7 @@ def rows(dbid, tableid):
             db = pleko.db.get_check_write(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
                 ctx.delete_table(tableid)
@@ -124,7 +124,7 @@ def row(dbid, tableid):
         db = pleko.db.get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
         try:
@@ -192,7 +192,7 @@ def upload(dbid, tableid):
         db = pleko.db.get_check_write(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tableid]
     except KeyError as error:
@@ -290,19 +290,19 @@ def clone(dbid, tableid):
 
     elif utils.is_method_POST():
         try:
-            newschema = copy.deepcopy(schema)
-            newschema['id'] = flask.request.form['id']
+            schema = copy.deepcopy(schema)
+            schema['id'] = flask.request.form['id']
             with pleko.db.DbContext(db) as ctx:
-                ctx.add_table(newschema)
-            cnx = ctx.cnx
-            cursor = cnx.cursor()
-            with cnx:
+                ctx.add_table(schema)
+            dbcnx = ctx.dbcnx
+            cursor = dbcnx.cursor()
+            with dbcnx:
                 colids = ','.join([c['id'] for c in schema['columns']])
                 sql = "INSERT INTO %s (%s) SELECT %s FROM %s" % (schema['id'],
                                                                  colids,
                                                                  colids,
                                                                  tableid)
-                cnx.execute(sql)
+                dbcnx.execute(sql)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone',
@@ -310,19 +310,64 @@ def clone(dbid, tableid):
                                                 tableid=tableid))
         return flask.redirect(flask.url_for('.rows',
                                             dbid=dbid,
-                                            tableid=newschema['id']))
+                                            tableid=schema['id']))
 
-@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST'])
+@blueprint.route('/<id:dbid>/<id:tableid>/download')
 def download(dbid, tableid):
-    "Download the rows in the table as a CSV file."
+    "Download the rows in the table to a file."
     try:
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tableid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    return flask.render_template('table/download.html', db=db,schema=schema)
 
-    if utils.is_method_GET():
-        raise NotImplementedError
-
-    elif utils.is_method_POST():
-        raise NotImplementedError
+@blueprint.route('/<id:dbid>/<id:tableid>/csv')
+def download_csv(dbid, tableid):
+    "Output a CSV file of the rows in the table."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tableid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    try:
+        header = utils.to_bool(flask.request.args.get('header'))
+        delimiter = flask.request.args.get('delimiter') or ','
+        if delimiter == '<tab>':
+            delimiter = '\t'
+        elif delimiter == '<space>':
+            delimiter = ' '
+        if not delimiter in constants.CSV_DELIMITERS:
+            raise ValueError('invalid CSV delimiter character')
+        columns = [c['id'] for c in schema['columns']]
+        outfile = io.StringIO()
+        writer = csv.writer(outfile, delimiter=delimiter)
+        if header:
+            writer.writerow(columns)
+        cnx = pleko.db.get_cnx(dbid)
+        cursor = cnx.cursor()
+        sql = "SELECT %s FROM %s" % (','.join(columns), tableid)
+        cursor.execute(sql)
+        for row in cursor:
+            writer.writerow(row)
+    except (ValueError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.download',
+                                            dbid=dbid,
+                                            tableid=tableid))
+    outfile.seek(0)
+    response = flask.make_response(outfile.read())
+    response.headers.set('Content-Type', constants.CSV_MIMETYPE)
+    response.headers.set('Content-Disposition', 'attachment', 
+                         filename="%s.csv" % tableid)
+    return response

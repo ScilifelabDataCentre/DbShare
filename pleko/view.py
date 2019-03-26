@@ -1,6 +1,8 @@
 "Pleko view endpoint."
 
 import copy
+import csv
+import io
 import sqlite3
 
 import flask
@@ -71,7 +73,7 @@ def schema(dbid, viewid):
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewid]
     except KeyError as error:
@@ -91,7 +93,7 @@ def rows(dbid, viewid):
             db = pleko.db.get_check_read(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
             schema = db['views'][viewid]
@@ -126,7 +128,7 @@ def rows(dbid, viewid):
             db = pleko.db.get_check_write(dbid)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('index'))
+            return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
                 ctx.delete_view(viewid)
@@ -157,10 +159,10 @@ def clone(dbid, viewid):
 
     elif utils.is_method_POST():
         try:
-            newschema = copy.deepcopy(schema)
-            newschema['id'] = flask.request.form['id']
+            schema = copy.deepcopy(schema)
+            schema['id'] = flask.request.form['id']
             with pleko.db.DbContext(db) as ctx:
-                ctx.add_view(newschema)
+                ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone',
@@ -168,4 +170,64 @@ def clone(dbid, viewid):
                                                 viewid=viewid))
         return flask.redirect(flask.url_for('.rows',
                                             dbid=dbid,
-                                            viewid=newschema['id']))
+                                            viewid=schema['id']))
+
+@blueprint.route('/<id:dbid>/<id:viewid>/download')
+def download(dbid, viewid):
+    "Download the rows in the view to a file."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['views'][viewid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    return flask.render_template('view/download.html', db=db,schema=schema)
+
+@blueprint.route('/<id:dbid>/<id:viewid>/csv')
+def download_csv(dbid, viewid):
+    "Output a CSV file of the rows in the view."
+    try:
+        db = pleko.db.get_check_read(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['views'][viewid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    try:
+        header = utils.to_bool(flask.request.args.get('header'))
+        delimiter = flask.request.args.get('delimiter') or ','
+        if delimiter == '<tab>':
+            delimiter = '\t'
+        elif delimiter == '<space>':
+            delimiter = ' '
+        if not delimiter in constants.CSV_DELIMITERS:
+            raise ValueError('invalid CSV delimiter character')
+        columns = schema['select']['columns']
+        outfile = io.StringIO()
+        writer = csv.writer(outfile, delimiter=delimiter)
+        if header:
+            writer.writerow(columns)
+        cnx = pleko.db.get_cnx(dbid)
+        cursor = cnx.cursor()
+        sql = "SELECT %s FROM %s" % (','.join(columns), viewid)
+        cursor.execute(sql)
+        for row in cursor:
+            writer.writerow(row)
+    except (ValueError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.download',
+                                            dbid=dbid,
+                                            viewid=viewid))
+    outfile.seek(0)
+    response = flask.make_response(outfile.read())
+    response.headers.set('Content-Type', constants.CSV_MIMETYPE)
+    response.headers.set('Content-Disposition', 'attachment', 
+                         filename="%s.csv" % viewid)
+    return response

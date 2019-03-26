@@ -58,7 +58,7 @@ def login():
             try:
                 next = urllib.parse.urlsplit(flask.request.form['next'])
             except KeyError:
-                return flask.redirect(flask.url_for('index'))
+                return flask.redirect(flask.url_for('home'))
             else:
                 next = urllib.parse.urljoin(flask.request.host_url, next.path)
                 return flask.redirect(next)
@@ -82,7 +82,7 @@ def do_login(username, password):
 def logout():
     "Logout from the user account."
     del flask.session['username']
-    return flask.redirect(flask.url_for('index'))
+    return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register():
@@ -115,7 +115,7 @@ def register():
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
                         ' it has been enabled by the admin.')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/reset', methods=['GET', 'POST'])
 def reset():
@@ -134,7 +134,7 @@ def reset():
                 ctx.set_password()
             send_password_code(user, 'password reset')
         flask.flash('An email has been sent if the user account exists.')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
 def send_password_code(user, action):
     "Send an email with the one-time code to the user's email address."
@@ -173,7 +173,7 @@ def password():
             with UserContext(user) as ctx:
                 ctx.set_password(password)
             do_login(username, password)
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/profile/<id:username>')
 @login_required
@@ -181,10 +181,10 @@ def profile(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     enable_disable = is_admin_and_not_self(user)
     return flask.render_template('user/profile.html',
                                  user=user,
@@ -196,10 +196,10 @@ def logs(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     cursor = flask.g.cnx.cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
@@ -231,10 +231,10 @@ def edit(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     if utils.is_method_GET():
         return flask.render_template('user/edit.html',
                                      user=user,
@@ -277,7 +277,7 @@ def enable(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.ENABLED)
         ctx.set_password()
@@ -291,7 +291,7 @@ def disable(username):
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('index'))
+        return flask.redirect(flask.url_for('home'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.DISABLED)
     return flask.redirect(flask.url_for('.profile', username=username))

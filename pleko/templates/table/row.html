@@ -19,8 +19,7 @@ Add row to table {{ schema['id'] }}
       <div class="form-group">
         <div class="row">
           <div class="col-md-2 text-right">
-            <label for="{{ column['id'] }}"
-                   class="col-form-label font-weight-bold">
+            <label for="{{ column['id'] }}" class="col-form-label">
               {{ column['id'] }}</label>
           </div>
           {% if column['type'] == constants.INTEGER %}
