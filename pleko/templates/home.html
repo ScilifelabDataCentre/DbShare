@@ -2,7 +2,7 @@
 
 {% block main %}
 <div class="m-4">
-  Web-based relational database system powered by Sqlite.
+  Web-based relational database system powered by Sqlite3.
 </div>
 <table id="dbs" class="table table-sm">
   <thead>
@@ -27,7 +27,7 @@
       <td class="text-right">
         <span class="text-monospace mr-2">{{ db['size'] }}</span>
       </td>
-      <td class="localtime">{{ db['modified'] }}</td>
+      <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>
     {% endfor %}
   </tbody>
