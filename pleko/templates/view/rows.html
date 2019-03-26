@@ -1,20 +1,19 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-View {{ schema['id'] }} in database {{ db['id'] }}
+View result {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-View <strong>{{ schema['id'] }}</strong>
-<span class="text-muted">in database {{ db['id'] }}</span>
+View result <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
 {% endblock %}
 
 {% block main %}
 <table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>
-      {% for column in schema['columns'] %}
-      <th>{{ column['id'] }}</th>
+      {% for column in columns %}
+      <th>{{ column }}</th>
       {% endfor %}
     </tr>
   </thead>

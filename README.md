@@ -19,6 +19,8 @@ Web-based relational database system powered by Sqlite.
 
 - Create a table, defining the columns.
 - Add single rows.
+- (Edit a row.)
+- (Delete a row.)
 - Display the rows in a table.
 - Display the schema of a table.
 - Upload CSV data to a table.

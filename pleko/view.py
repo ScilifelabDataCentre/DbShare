@@ -100,10 +100,19 @@ def rows(dbid, viewid):
         cursor = cnx.cursor()
         sql = "SELECT * FROM %s" % viewid
         cursor.execute(sql)
+        rows = list(cursor)
+        if schema['select']['columns'][0] == '*':
+            try:
+                columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
+            except IndexError:
+                columns = ['columns']
+        else:
+            columns = schema['select']['columns']
         return flask.render_template('view/rows.html', 
                                      db=db,
                                      schema=schema,
-                                     rows=list(cursor),
+                                     rows=rows,
+                                     columns=columns,
                                      has_write_access=has_write_access)
 
     elif utils.is_method_DELETE():

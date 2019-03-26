@@ -84,7 +84,12 @@ def rows(dbid):
         cursor.execute(sql)
         rows = list(cursor)
         if select['columns'][0] == '*':
-            columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
+            try:
+                columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
+            except IndexError:
+                columns = ['columns']
+        else:
+            columns = select['columns']
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(utils.get_absolute_url('.home',
@@ -93,6 +98,7 @@ def rows(dbid):
     return flask.render_template('query/rows.html',
                                  db=db,
                                  select=select,
+                                 columns=columns,
                                  sql=sql,
                                  rows=rows,
                                  nrows=len(rows))

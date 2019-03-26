@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Query results from database {{ db['id'] }}
+Query result from database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Query results from database <strong>{{ db['id'] }}</strong>
+Query result from database <strong>{{ db['id'] }}</strong>
 {% endblock %}
 
 {% block main %}
@@ -15,13 +15,9 @@ Query results from database <strong>{{ db['id'] }}</strong>
 <table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>
-      {% if select['columns'] %}
-      {% for column in select['columns'] %}
+      {% for column in columns %}
       <th>{{ column }}</th>
       {% endfor %}
-      {% else %}
-      <th>Column</th>
-      {% endif %}
     </tr>
   </thead>
   <tbody>
