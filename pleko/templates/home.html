@@ -11,6 +11,7 @@
       <th>Description</th>
       <th>Public</th>
       <th>Owner</th>
+      <th>Size</th>
       <th>Modified</th>
     </tr>
   </thead>
@@ -23,6 +24,9 @@
       <td>{{ db.get('description') or '-' }}</td>
       <td>{{ db['public'] and 'yes' or 'no'}}</td>
       <td>{{ db['owner'] }}</td>
+      <td class="text-right">
+        <span class="text-monospace mr-2">{{ db['size'] }}</span>
+      </td>
       <td class="localtime">{{ db['modified'] }}</td>
     </tr>
     {% endfor %}

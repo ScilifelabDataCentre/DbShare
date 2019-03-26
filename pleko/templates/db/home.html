@@ -147,7 +147,7 @@
 	method="POST">
     {{ csrf_token() }}
     <button type="submit" class="btn btn-warning btn-block">
-      Set private</button>
+      Set private access</button>
   </form>
 </div>
 {% else %}
@@ -156,7 +156,7 @@
 	method="POST">
     {{ csrf_token() }}
     <button type="submit" class="btn btn-warning btn-block">
-      Set public</button>
+      Set public access</button>
   </form>
 </div>
 {% endif %}
@@ -176,7 +176,10 @@
 {% block info %}
 <div class="small mt-4">
   <div>
-    Owner:
+    Access {{ db['public'] and 'public' or 'private' }}
+  </div>
+  <div class="mt-1">
+    Owner
     {% if g.current_user %}
     <a href="{{ url_for('user.profile', username=db['owner'])}}">
       {{ db['owner'] }}</a>
@@ -185,7 +188,7 @@
     {% endif %}
   </div>
   <div class="mt-1">
-    Public: {{ db['public'] and 'yes' or 'no' }}
+    Size <span class="text-monospace">{{ db['size'] }}</span> bytes
   </div>
   <div class="mt-1">
     Modified <span class="localtime">{{ db['modified'] }}</span>

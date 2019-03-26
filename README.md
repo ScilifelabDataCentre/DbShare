@@ -4,76 +4,56 @@ Web-based relational database system powered by Sqlite.
 
 πλέκω: to plait, twine, twist, weave, braid
 
-## `/`
+## Databases
 
-List of databases, depending on access for logged-in user.
+- Create a database containing tables, views and indexes.
+- Rename a database.
+- Clone a database.
+- Delete a database.
+- A database is owned by the user account that created it.
+- A database may be private or public.
+- Databases are independent of one another.
+- Display the tables, views and indexes in a database.
 
-## `/db`
+## Tables
 
-Create a database.
+- Create a table, defining the columns.
+- Add single rows.
+- Display the rows in a table.
+- Display the schema of a table.
+- Upload CSV data to a table.
+- Create a table from a CSV file.
+- Clone a table.
+- Delete a table.
 
-## `/db/{dbid}`
+## Queries
 
-List of tables (with # rows).
+- Query the tables in a database.
+- Edit the query.
+- Make a view out of the query.
 
-List of views.
+## Views
 
-Delete the database.
+- Create a view.
+- Display the rows of a view.
+- Display the schema of a view.
+- Delete a view.
+- (Clone a view.)
 
-## `/db/{dbid}/clone`
+## Indexes
 
-Create a clone of the database.
+- (Create an index.)
+- (View the schema of an index.)
+- (Delete an index.)
 
-## `/db/{dbid}/upload`
+## Plots
 
-Upload a data file, creating a table in the database.
+To be defined.
 
-## `/table/{dbid}`
+## Access privileges
 
-Create a table in the database.
+To be defined.
 
-## `/table/{dbid}/{tableid}`
+## API (JSON)
 
-Display rows from the table.
-
-Delete the table.
-
-## `/table/{dbid}/{tableid}/schema`
-
-Display table definition.
-
-Display its indexes.
-
-## `/table/{dbid}/{tableid}/row`
-
-Add a row to the table.
-
-## `/table/{dbid}/{tableid}/column`
-
-Add a column to the table.
-
-## `/table/{dbid}/{tableid}/index`
-
-Create an index in the table.
-
-## `/table/{dbid}/{tableid}/index/{indexid}`
-
-Delete the index.
-
-## `/table/{dbid}/{tableid}/upload`
-
-Upload a data file, adding rows to the table.
-
-## `/query/{dbid}`
-
-Perform a query.
-
-## `/view/{dbid}`
-
-Create a view.
-
-## `/view/{dbid}/{vid}`
-
-Display view rows.
-
-Delete the view.
+To be defined.

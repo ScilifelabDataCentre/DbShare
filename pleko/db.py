@@ -26,17 +26,20 @@ def get_dbs(public=True):
         sql += " WHERE public=1"
     cursor = pleko.master.get_cursor()
     cursor.execute(sql)
-    return [{'id':          row[0],
-             'owner':       row[1],
-             'description': row[2],
-             'public':      bool(row[3]),
-             'tables':      json.loads(row[4]),
-             'indexes':     json.loads(row[5]),
-             'views':       json.loads(row[6]),
-             'access':      json.loads(row[7]),
-             'created':     row[8],
-             'modified':    row[9]}
-            for row in cursor]
+    result = [{'id':          row[0],
+               'owner':       row[1],
+               'description': row[2],
+               'public':      bool(row[3]),
+               'tables':      json.loads(row[4]),
+               'indexes':     json.loads(row[5]),
+               'views':       json.loads(row[6]),
+               'access':      json.loads(row[7]),
+               'created':     row[8],
+               'modified':    row[9]}
+              for row in cursor]
+    for db in result:
+        db['size'] = os.path.getsize(utils.dbpath(db['id']))
+    return result
 
 def get_db(id):
     """Return the database metadata for the given identifier.
@@ -59,7 +62,8 @@ def get_db(id):
             'views':       json.loads(row[5]),
             'access':      json.loads(row[6]),
             'created':     row[7],
-            'modified':    row[8]}
+            'modified':    row[8],
+            'size':        os.path.getsize(utils.dbpath(id))}
 
 def create_table(cnx, schema, if_not_exists=False):
     """Create a table given by its schema, in the connected database.
