@@ -1,25 +1,43 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Query database {{ db['id'] }}{% endblock %}
+{% block head_title %}Create a view of database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}Query database <strong>{{ db['id'] }}</strong>{% endblock %}
+{% block body_title %}Create a view of database {{ db['id'] }}{% endblock %}
 
 {% block main %}
 <div class="row">
   <div class="col-md-8">
     <div class="card border-success">
       <div class="card-body">
-        <form action="{{ url_for('.rows', dbid=db['id']) }}"
+        <form action="{{ url_for('.create', dbid=db['id']) }}"
               method="POST">
           {{ csrf_token() }}
           <div class="form-group row">
+            <label for="id"
+                   class="col-md-2 col-form-label text-right font-weight-bold">
+              View identifier</label>
+            <div class="col-md-4">
+              <input id="id" name="id" 
+                     type="text" class="form-control" autofocus>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="description"
+                   class="col-md-2 col-form-label text-right font-weight-bold">
+              Description</label>
+            <div class="col-md-10">
+              <textarea id="description" name="description"
+                        class="form-control" rows="2"></textarea>
+            </div>
+          </div>
+          <div class="form-group row">
             <label for="select"
-                   class="col-md-2 col-form-label font-weight-bold text-right">
+                   class="col-md-2 col-form-label text-right font-weight-bold">
               SELECT</label>
             <div class="col-md-10">
               <textarea id="select" name="select"
-                        class="form-control" rows="2" autofocus
-			>{{ statement.get('select') or '' }}</textarea>
+                        class="form-control" rows="2"
+			>{{ select.get('select') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -28,16 +46,16 @@
               FROM</label>
             <div class="col-md-10">
               <textarea id="from" name="from" class="form-control" rows="2"
-			>{{ statement.get('from') or '' }}</textarea>
+			>{{ select.get('from') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
-            <label for="where"
+            <label for="where" 
                    class="col-md-2 col-form-label text-right font-weight-bold">
               WHERE</label>
             <div class="col-md-10">
               <textarea id="where" name="where" class="form-control" rows="2"
-			>{{ statement.get('where') or '' }}</textarea>
+			>{{ select.get('where') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -47,7 +65,7 @@
             <div class="col-md-10">
               <input id="orderby" name="orderby" 
                      type="text" class="form-control"
-                     value="{{ statement.get('orderby') or '' }}">
+                     value="{{ select.get('orderby') or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -57,13 +75,13 @@
             <div class="col-md-4">
               <input id="limit" name="limit" 
                      type="number" class="form-control"
-                     value="{{ statement.get('limit') or '' }}">
+                     value="{{ select.get('limit') or '' }}">
             </div>
           </div>
           <div class="form-group row">
             <div class="col-md-4 offset-md-2">
               <button type="submit"
-                      class="btn btn-success btn-lg btn-block">Query</button>
+                      class="btn btn-primary btn-lg btn-block">Create</button>
             </div>
           </div>
         </form>
@@ -109,16 +127,5 @@
 <div>
   <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
-</div>
-<div class="mt-2">
-  <form action="{{ url_for('view.create', dbid=db['id']) }}"
-        method="GET">
-    <input type="hidden" name="select" value="{{ statement.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ statement.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ statement.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ statement.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ statement.get('limit') or ''}}">
-    <button type="submit" class="btn btn-primary btn-block">Create view</button>
-  </form>
 </div>
 {% endblock %}

@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Schema for view {{ schema['id'] }} of database {{ db['id'] }}{% endblock %}
+
+{% block body_title %}
+Schema for view <strong>{{ schema['id'] }}</strong> of database {{ db['id'] }}
+{% endblock %}
+
+{% block main %}
+<table class="table">
+  <tr>
+    <th>Description</th>
+    <td>{{ schema.get('description') or '' }}</td>
+  </tr>
+  <tr>
+    <th>SELECT</th>
+    <td>{{ schema['select']['select'] }}</td>
+  </tr>
+  <tr>
+    <th>FROM</th>
+    <td>{{ schema['select']['from'] }}</td>
+  </tr>
+  <tr>
+    <th>WHERE</th>
+    <td>{{ schema['select']['where'] }}</td>
+  </tr>
+  <tr>
+    <th>ORDER BY</th>
+    <td>{{ schema['select']['orderby'] }}</td>
+  </tr>
+  <tr>
+    <th>LIMIT</th>
+    <td>{{ schema['select']['limit'] }}</td>
+  </tr>
+</table>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
+     role="button" class="btn btn-outline-success btn-block">
+    View<br>{{ nrows }} rows</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('db.home', dbid=db['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Database<br>{{ db['id'] }}</a>
+</div>
+{% endblock %}

@@ -89,8 +89,8 @@ def init(app):
     cnx = sqlite3.connect(utils.dbpath(MASTER_DBID,
                                        dirpath=app.config['DATABASES_DIRPATH']))
     for schema in MASTER_TABLES:
-        pleko.db.create_table(cnx, schema)
+        pleko.db.create_table(cnx, schema, if_not_exists=True)
     for schema in MASTER_INDEXES:
-        pleko.db.create_index(cnx, schema)
+        pleko.db.create_index(cnx, schema, if_not_exists=True)
     cnx.close()
     

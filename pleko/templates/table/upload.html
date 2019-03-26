@@ -12,25 +12,23 @@ Upload CSV file to table {{ schema['id'] }}
 {% block main %}
 <div class="card border-primary">
   <div class="card-header">
-    <p>
-      <ul>
-        <li>
-          The CSV file must contain exactly one header line containing
-          matching table column identifiers.
-        </li>
-        <li>
-          The values of every CSV record must match the types of the
-          table columns.
-        </li>
-        <li>
-          The CSV records are added as rows to the table.
-        </li>
-        <li>
-          If a table column constraint is violated by a CSV record,
-          the entire operation is aborted, and no values are added.
-        </li>
-      </ul>
-    </p>
+    <ul class="m-2">
+      <li>
+        The CSV file must contain exactly one header line containing
+        matching table column identifiers.
+      </li>
+      <li>
+        The values of every CSV record must match the types of the
+        table columns.
+      </li>
+      <li>
+        The CSV records are added as rows to the table.
+      </li>
+      <li>
+        If a table column constraint is violated by a CSV record, the
+        entire operation is aborted, and no values are added.
+      </li>
+    </ul>
   </div>
   <div class="card-body">
     <form action="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
@@ -62,8 +60,8 @@ Upload CSV file to table {{ schema['id'] }}
 {% endblock %}
 
 {% block actions %}
-<p>
+<div>
   <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
-</p>
+</div>
 {% endblock %}

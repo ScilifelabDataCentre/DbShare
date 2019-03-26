@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Schema table {{ schema['id'] }} in database {{ db['id'] }}
+Schema for table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Schema table <strong>{{ schema['id'] }}</strong>
-<span class="text-muted">in database {{ db['id'] }}</span>
+Schema for table <strong>{{ schema['id'] }}</strong> in database</span>
 {% endblock %}
 
 {% block main %}
@@ -37,11 +36,11 @@ Schema table <strong>{{ schema['id'] }}</strong>
 </div>
 {% endblock %}
 
-{% block links %}
+{% block actions %}
 <div>
   <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    Table<br>({{ nrows }} rows)</a>
+    Table<br>{{ nrows }} rows</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('db.home', dbid=db['id']) }}"

@@ -12,6 +12,7 @@ import flask
 
 import pleko.master
 import pleko.table
+import pleko.query
 from pleko import constants
 from pleko import utils
 from pleko.user import login_required
@@ -60,8 +61,21 @@ def get_db(id):
             'created':     row[7],
             'modified':    row[8]}
 
-def create_table(cnx, schema):
-    "Create the table given by its schema in the connected database."
+def create_table(cnx, schema, if_not_exists=False):
+    """Create a table given by its schema, in the connected database.
+    Raise ValueError if any problem.
+    """
+    if not schema.get('id'):
+        raise ValueError('no table identifier defined')
+    if not constants.IDENTIFIER_RX.match(schema['id']):
+        raise ValueError('invalid table identifier')
+    if not schema.get('columns'):
+        raise ValueError('no columns defined')
+    ids = set()
+    for column in schema['columns']:
+        if column['id'] in ids:
+            raise ValueError("column identifier %s repeated" % column['id'])
+        ids.add(column['id'])
     # Collect columns forming primary key
     primarykey = []
     for column in schema['columns']:
@@ -87,20 +101,22 @@ def create_table(cnx, schema):
                        (','.join(foreignkey['columns']),
                         foreignkey['ref'],
                         ','.join(foreignkey['refcolumns'])))
-    sql = "CREATE TABLE IF NOT EXISTS %s (%s)" % (schema['id'],
-                                                  ', '.join(clauses))
+    sql = "CREATE TABLE %s %s (%s)" % (if_not_exists and 'IF NOT EXISTS' or '',
+                                       schema['id'],
+                                       ', '.join(clauses))
     cnx.execute(sql)
 
-def create_index(cnx, schema):
+def create_index(cnx, schema, if_not_exists=False):
     "Create an index given by its schema in the connected database."
     sql = ['CREATE']
     if schema.get('unique'):
         sql.append('UNIQUE')
-    sql.append('INDEX IF NOT EXISTS')
+    sql.append('INDEX')
+    if if_not_exists:
+        sql.append('IF NOT EXISTS')
     sql.append("%s ON %s" % (schema['id'], schema['table']))
     sql.append("(%s)" % ','.join(schema['columns']))
-    sql = ' '.join(sql)
-    cnx.execute(sql)
+    cnx.execute(' '.join(sql))
 
 def get_cnx(dbid):
     "Get a connection for the given database identifier."
@@ -147,6 +163,12 @@ def get_check_write(dbid):
         raise ValueError('may not write to the database')
     return db
 
+def get_nrows(id, dbcnx):
+    "Get the number of rows in the table or view."
+    cursor = dbcnx.cursor()
+    cursor.execute("SELECT COUNT(*) FROM %s" % id)
+    return cursor.fetchone()[0]
+
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -177,7 +199,9 @@ def home(dbid):
             return flask.redirect(flask.url_for('index'))
         dbcnx = pleko.db.get_cnx(db['id'])
         for table in db['tables'].values():
-            table['nrows'] = pleko.table.get_nrows(table['id'], dbcnx)
+            table['nrows'] = get_nrows(table['id'], dbcnx)
+        for view in db['views'].values():
+            view['nrows'] = get_nrows(view['id'], dbcnx)
         keyfunc = lambda v: v['id']
         return flask.render_template('db/home.html',
                                      db=db,
@@ -567,7 +591,9 @@ class DbContext:
     def add_table(self, schema):
         "Create the table in the database and add to the database definition."
         if schema['id'] in self.db['tables']:
-            raise ValueError('table identifier already in use')
+            raise ValueError('identifier already in use for table')
+        if schema['id'] in self.db['views']:
+            raise ValueError('identifier already in use for view')
         create_table(self.dbcnx, schema)
         self.db['tables'][schema['id']] = schema
 
@@ -601,10 +627,27 @@ class DbContext:
             raise ValueError('no such index in database')
         self.dbcnx.execute("DROP INDEX %s" % indexid)
 
-    def create_view(self, schema):
-        "Create a view in the database."
-        raise NotImplementedError
+    def add_view(self, schema):
+        "Create a view in the database and add to the database definition."
+        if not schema.get('id'):
+            raise ValueError('no view identifier defined')
+        if not constants.IDENTIFIER_RX.match(schema['id']):
+            raise ValueError('invalid view identifier')
+        if schema['id'] in self.db['tables']:
+            raise ValueError('identifier already in use for table')
+        if schema['id'] in self.db['views']:
+            raise ValueError('identifier already in use for view')
+        if not schema.get('select'):
+            raise ValueError('no SELECT statement defined')
+        select = pleko.query.get_sql_select(schema['select'])
+        sql = "CREATE VIEW %s AS %s" % (schema['id'], select)
+        self.dbcnx.execute(sql)
+        self.db['views'][schema['id']] = schema
 
     def delete_view(self, viewid):
         "Delete a view in the database."
-        raise NotImplementedError
+        try:
+            self.db['views'].pop(viewid)
+        except KeyError:
+            raise ValueError('no such view in database')
+        self.dbcnx.execute("DROP VIEW %s" % viewid)

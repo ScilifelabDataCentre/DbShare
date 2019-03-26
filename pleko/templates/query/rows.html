@@ -9,14 +9,14 @@ Query results from database <strong>{{ db['id'] }}</strong>
 {% endblock %}
 
 {% block main %}
-<p>
+<div class="m-3">
   <code>{{ sql }}</code> &rarr; {{ nrows }} rows
-</p>
+</div>
 <table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>
-      {% if columns %}
-      {% for column in columns %}
+      {% if select['columns'] %}
+      {% for column in select['columns'] %}
       <th>{{ column }}</th>
       {% endfor %}
       {% else %}
@@ -36,15 +36,20 @@ Query results from database <strong>{{ db['id'] }}</strong>
 </table>
 {% endblock %}
 
-{% block links %}
+{% block actions %}
 <div>
+  <a href="{{ url_for('db.home', dbid=db['id']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Database<br>{{ db['id'] }}</a>
+</div>
+<div class="mt-2">
   <form action="{{ url_for('.home', dbid=db['id']) }}"
         method="GET">
-    <input type="hidden" name="select" value="{{ statement.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ statement.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ statement.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ statement.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ statement.get('limit') or ''}}">
+    <input type="hidden" name="select" value="{{ select.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ select.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ select.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ select.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ select.get('limit') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>
 </div>
@@ -53,9 +58,15 @@ Query results from database <strong>{{ db['id'] }}</strong>
      role="button" class="btn btn-success btn-block">New query</a>
 </div>
 <div class="mt-2">
-  <a href="{{ url_for('db.home', dbid=db['id']) }}"
-     role="button" class="btn btn-outline-primary btn-block">
-    Database<br>{{ db['id'] }}</a>
+  <form action="{{ url_for('view.create', dbid=db['id']) }}"
+        method="GET">
+    <input type="hidden" name="select" value="{{ select.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ select.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ select.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ select.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ select.get('limit') or ''}}">
+    <button type="submit" class="btn btn-primary btn-block">Create view</button>
+  </form>
 </div>
 {% endblock %}
 

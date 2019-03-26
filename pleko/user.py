@@ -88,7 +88,7 @@ def admin_required(f):
 
 blueprint = flask.Blueprint('user', __name__)
 
-@blueprint.route('/login', methods=["GET", "POST"])
+@blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     "Login to a user account."
     if utils.is_method_GET():
@@ -125,13 +125,13 @@ def do_login(username, password):
     flask.session['username'] = user['username']
     flask.session.permanent = True
 
-@blueprint.route('/logout', methods=["POST"])
+@blueprint.route('/logout', methods=['POST'])
 def logout():
     "Logout from the user account."
     del flask.session['username']
     return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/register', methods=["GET", "POST"])
+@blueprint.route('/register', methods=['GET', 'POST'])
 def register():
     "Register a new user account."
     if utils.is_method_GET():
@@ -164,7 +164,7 @@ def register():
                         ' it has been enabled by the admin.')
         return flask.redirect(flask.url_for('index'))
 
-@blueprint.route('/reset', methods=["GET", "POST"])
+@blueprint.route('/reset', methods=['GET', 'POST'])
 def reset():
     "Reset the password for a user account and send email."
     if utils.is_method_GET():
@@ -195,7 +195,7 @@ def send_password_code(user, action):
         utils.get_absolute_url('.password', query=query))
     utils.mail.send(message)
 
-@blueprint.route('/password', methods=["GET", "POST"])
+@blueprint.route('/password', methods=['GET', 'POST'])
 def password():
     "Set the password for a user account, and login user."
     if utils.is_method_GET():
@@ -271,7 +271,7 @@ def is_admin_and_not_self(user):
         return flask.g.current_user['username'] != user['username']
     return False
 
-@blueprint.route('/edit/<id:username>', methods=["GET", "POST"])
+@blueprint.route('/edit/<id:username>', methods=['GET', 'POST'])
 @login_required
 def edit(username):
     "Edit the user profile."
@@ -317,7 +317,7 @@ def users():
              for row in cursor]
     return flask.render_template('user/users.html', users=users)
 
-@blueprint.route('/enable/<id:username>', methods=["POST"])
+@blueprint.route('/enable/<id:username>', methods=['POST'])
 @login_required
 @admin_required
 def enable(username):
@@ -331,7 +331,7 @@ def enable(username):
     send_password_code(user, 'enabled')
     return flask.redirect(flask.url_for('.profile', username=username))
 
-@blueprint.route('/disable/<id:username>', methods=["POST"])
+@blueprint.route('/disable/<id:username>', methods=['POST'])
 @login_required
 @admin_required
 def disable(username):

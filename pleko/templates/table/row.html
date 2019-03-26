@@ -74,10 +74,10 @@ Add row to table {{ schema['id'] }}
 {% endblock %}
 
 {% block actions %}
-<p>
+<div>
   <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
-</p>
+</div>
 {% endblock %}
 
 {% block javascript %}

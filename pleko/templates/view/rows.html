@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Table {{ schema['id'] }} in database {{ db['id'] }}
+View {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
+View <strong>{{ schema['id'] }}</strong>
+<span class="text-muted">in database {{ db['id'] }}</span>
 {% endblock %}
 
 {% block main %}
@@ -31,45 +32,23 @@ Table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('table.schema', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-outline-primary btn-block">Schema</a>
+  <a href="{{ url_for('view.schema', dbid=db['id'], viewid=schema['id']) }}"
+     role="button" class="btn btn-outline-success btn-block">Schema</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     Database<br>{{ db['id'] }}</a>
 </div>
-<div class="mt-2">
-  <form action="{{ url_for('query.home', dbid=db['id']) }}"
-        method="GET">
-    <input type="hidden" name="from" value="{{ schema['id'] }}">
-    <button type="submit" class="btn btn-success btn-block">Query</button>
-  </form>
-</div>
 {% if has_write_access %}
-<div class="mt-2">
-  <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-primary btn-block">
-    Add row</a>
-</div>
-<div class="mt-2">
-  <a href="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-primary btn-block">
-    Upload CSV file</a>
-</div>
-<div class="mt-2">
-  <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-info btn-block">
-    Clone table</a>
-</div>
 <div class="mt-4">
-  <form action="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+  <form action="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
             onclick="return confirm('Really delete? Cannot be undone.')">
-      Delete table</button>
+      Delete view</button>
   </form>
 </div>
 {% endif %}

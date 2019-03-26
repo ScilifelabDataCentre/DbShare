@@ -11,12 +11,6 @@ from pleko import constants
 from pleko import utils
 from pleko.user import login_required
 
-def get_nrows(tableid, dbcnx):
-    "Get the number of rows in the table."
-    cursor = dbcnx.cursor()
-    cursor.execute("SELECT COUNT(*) FROM %s" % tableid)
-    return cursor.fetchone()[0]
-
 
 blueprint = flask.Blueprint('table', __name__)
 
@@ -35,27 +29,13 @@ def create(dbid):
 
     elif utils.is_method_POST():
         try:
-            cnx = pleko.db.get_cnx(dbid)
             schema = {'id': flask.request.form.get('id')}
-            if not schema['id']:
-                raise ValueError('no table identifier given')
-            if not constants.IDENTIFIER_RX.match(schema['id']):
-                raise ValueError('invalid table identifier')
-            cursor = cnx.cursor()
-            sql = "SELECT COUNT(*) FROM sqlite_master WHERE name=?"
-            cursor.execute(sql, (schema['id'],))
-            if cursor.fetchone()[0] != 0:
-                raise ValueError('table identifier already in use')
-            ids = set()
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 id = flask.request.form.get("column%sid" % n)
                 if not id: break
                 if not constants.IDENTIFIER_RX.match(id):
                     raise ValueError("invalid identifier in column %s" % (n+1))
-                if id in ids:
-                    raise ValueError("repeated identifier in column %s" % (n+1))
-                ids.add(id)
                 column = {'id': id}
                 type = flask.request.form.get("column%stype" % n)
                 if type not in constants.COLUMN_TYPES:
@@ -68,17 +48,17 @@ def create(dbid):
                 column['unique'] = utils.to_bool(
                     flask.request.form.get("column%sunique" % n))
                 schema['columns'].append(column)
-            if not schema['columns']:
-                raise ValueError('no columns defined')
-            create_table(schema, cursor)
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            with pleko.db.DbContext(db) as ctx:
+                ctx.add_table(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create', dbid=dbid))
+        else:
+            return flask.redirect(flask.url_for('db.home', dbid=dbid))
 
 @blueprint.route('/<id:dbid>/<id:tableid>/schema')
 def schema(dbid, tableid):
-    "Display the schema for table."
+    "Display the schema for a table."
     try:
         db = pleko.db.get_check_read(dbid)
     except ValueError as error:
@@ -89,7 +69,7 @@ def schema(dbid, tableid):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbid=dbid))
-    nrows = get_nrows(tableid, pleko.db.get_cnx(dbid))
+    nrows = pleko.db.get_nrows(tableid, pleko.db.get_cnx(dbid))
     return flask.render_template('table/schema.html',
                                  db=db,
                                  schema=schema,
@@ -195,7 +175,8 @@ def row(dbid, tableid):
                                                 dbid=dbid,
                                                 tableid=tableid))
         else:
-            flask.flash("%s rows in table" % get_nrows(tableid,dbcnx),'message')
+            flask.flash("%s rows in table" % pleko.db.get_nrows(tableid,dbcnx),
+                        'message')
             return flask.redirect(flask.url_for('.row',
                                                 dbid=dbid,
                                                 tableid=tableid))

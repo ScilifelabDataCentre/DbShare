@@ -5,8 +5,7 @@ Clone table {{ schema['id'] }} in database {{ db['id'] }}
 {% endblock %}
 
 {% block body_title %}
-Clone table <strong>{{ schema['id'] }}</strong>
-<span class="text-muted">in database {{ db['id'] }}</span>
+Clone table <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
 {% endblock %}
 
 {% block main %}
@@ -34,8 +33,8 @@ Clone table <strong>{{ schema['id'] }}</strong>
 {% endblock %}
 
 {% block actions %}
-<p>
+<div>
   <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
-</p>
+</div>
 {% endblock %}

@@ -2,9 +2,7 @@
 
 {% block head_title %}Create a table in database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}
-Create a table in database <strong>{{ db['id'] }}</strong>
-{% endblock %}
+{% block body_title %}Create a table in database {{ db['id'] }}{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
@@ -87,8 +85,8 @@ Create a table in database <strong>{{ db['id'] }}</strong>
 {% endblock %}
 
 {% block actions %}
-<p>
+<div>
   <a href="{{ url_for('db.home', dbid=db['id']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
-</p>
+</div>
 {% endblock %}
