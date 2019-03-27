@@ -6,7 +6,7 @@ Web-based relational database system powered by Sqlite3.
 
 ## Databases
 
-- Create a database containing tables, views and indexes.
+- Create a database to contain tables, views and indexes.
 - Rename a database.
 - Clone a database.
 - Delete a database.
@@ -32,6 +32,7 @@ Web-based relational database system powered by Sqlite3.
 - Download a table as CSV file.
 - Add a column to a table. *TODO*
 - Define a foreign key. *TODO*
+- Allow smart join of tables. *TODO*
 
 ## Queries
 

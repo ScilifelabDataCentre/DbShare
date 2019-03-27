@@ -1,12 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}
-Clone view {{ schema['id'] }} in database {{ db['id'] }}
-{% endblock %}
+{% block head_title %}Clone view {{ schema['id'] }}{% endblock %}
 
-{% block body_title %}
-Clone view <strong>{{ schema['id'] }}</strong> in database {{ db['id'] }}
-{% endblock %}
+{% block body_title %}Clone view <strong>{{ schema['id'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="card border-success">
