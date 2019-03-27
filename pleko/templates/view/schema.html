@@ -39,4 +39,20 @@
      role="button" class="btn btn-outline-success btn-block">
     View<br>{{ nrows }} rows</a>
 </div>
+<div class="pt-2">
+  <form action="{{ url_for('query.home', dbid=db['id']) }}"
+        method="GET">
+    <input type="hidden" name="select" 
+           value="{{ schema['query'].get('select') or ''}}">
+    <input type="hidden" name="from"
+           value="{{ schema['query'].get('from') or ''}}">
+    <input type="hidden" name="where" 
+           value="{{ schema['query'].get('where') or ''}}">
+    <input type="hidden" name="orderby" 
+           value="{{ schema['query'].get('orderby') or ''}}">
+    <input type="hidden" name="limit"
+           value="{{ schema['query'].get('limit') or ''}}">
+    <button type="submit" class="btn btn-success btn-block">Query</button>
+  </form>
+</div>
 {% endblock %}

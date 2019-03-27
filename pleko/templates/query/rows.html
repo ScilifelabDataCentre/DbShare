@@ -38,7 +38,7 @@ Rows from query of database <strong>{{ db['id'] }}</strong>
      role="button" class="btn btn-outline-primary btn-block">
     Database<br>{{ db['id'] }}</a>
 </div>
-<div class="mt-2">
+<div class="pt-2">
   <form action="{{ url_for('.home', dbid=db['id']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -49,11 +49,11 @@ Rows from query of database <strong>{{ db['id'] }}</strong>
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>
 </div>
-<div class="mt-2">
+<div class="pt-2">
   <a href="{{ url_for('.home', dbid=db['id']) }}"
      role="button" class="btn btn-success btn-block">New query</a>
 </div>
-<div class="mt-2">
+<div class="pt-2">
   <form action="{{ url_for('view.create', dbid=db['id']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
