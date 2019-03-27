@@ -492,10 +492,10 @@ class DbContext:
             raise ValueError('identifier already in use for table')
         if schema['id'] in self.db['views']:
             raise ValueError('identifier already in use for view')
-        if not schema.get('select'):
-            raise ValueError('no SELECT statement defined')
-        select = pleko.query.get_sql_select(schema['select'])
-        sql = "CREATE VIEW %s AS %s" % (schema['id'], select)
+        if not schema.get('query'):
+            raise ValueError('no query statement defined')
+        query = pleko.query.get_sql_query(schema['query'])
+        sql = "CREATE VIEW %s AS %s" % (schema['id'], query)
         self.dbcnx.execute(sql)
         self.db['views'][schema['id']] = schema
 

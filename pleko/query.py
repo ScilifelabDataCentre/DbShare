@@ -20,24 +20,11 @@ def home(dbid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    statement = {'select': flask.request.args.get('select') or '',
-                 'from': flask.request.args.get('from') or '',
-                 'where': flask.request.args.get('where') or '',
-                 'orderby': flask.request.args.get('orderby') or ''}
-    try:
-        statement['limit'] = flask.request.args['limit']
-        if statement['limit'].lower() == 'none':
-            statement['limit'] = None
-    except KeyError:
-        statement['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
+    query = get_query_from_request()
     cnx = pleko.db.get_cnx(dbid)
     for table in db['tables'].values():
         table['nrows'] = pleko.db.get_nrows(table['id'], cnx)
-    return flask.render_template('query/home.html',
-                                 db=db,
-                                 statement=statement,
-                                 tables=sorted(db['tables'].values(),
-                                               key=lambda t: t['id']))
+    return flask.render_template('query/home.html', db=db, query=query)
 
 @blueprint.route('/<id:dbid>/rows', methods=['POST'])
 def rows(dbid):
@@ -49,27 +36,27 @@ def rows(dbid):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        select = get_select_from_form()
+        query = get_query_from_request(check=True)
         cnx = pleko.db.get_cnx(dbid)
         cursor = cnx.cursor()
-        sql = get_sql_select(select)
+        sql = get_sql_query(query)
         cursor.execute(sql)
         rows = list(cursor)
-        if select['columns'][0] == '*':
+        if query['columns'][0] == '*':
             try:
                 columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
             except IndexError:
                 columns = ['columns']
         else:
-            columns = select['columns']
+            columns = query['columns']
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(utils.get_absolute_url('.home',
                                                      values={'dbid':dbid},
-                                                     query=select))
+                                                     query=query))
     return flask.render_template('query/rows.html',
                                  db=db,
-                                 select=select,
+                                 query=query,
                                  columns=columns,
                                  sql=sql,
                                  rows=rows,
@@ -78,24 +65,30 @@ def rows(dbid):
 
 # Utility functions
 
-def get_select_from_form():
-    """Get the select data from the current request form data.
+def get_query_from_request(check=False):
+    """Get the query data from the current request values (=form or args) data.
     Raise KeyError if a required part is missing.
     """
     result = {}
-    result['select'] = flask.request.form['select']
-    if not result['select']:
+    result['select'] = flask.request.values.get('select') or ''
+    if check and not result['select']:
         raise KeyError('no SELECT part')
     result['columns'] = [c.strip() for c in result['select'].split(',')]
-    result['from']= flask.request.form['from']
-    if not result['from']: 
+    result['from']= flask.request.values.get('from')
+    if check and not result['from']: 
         raise KeyError('no FROM part')
-    result['where'] = flask.request.form['where'] or ''
-    result['orderby'] = flask.request.form['orderby'] or ''
-    result['limit'] = flask.request.form['limit'] or ''
+    result['where'] = flask.request.values.get('where') or ''
+    result['orderby'] = flask.request.values.get('orderby') or ''
+    result['limit'] = flask.request.values.get('limit') or ''
+    try:
+        result['limit'] = flask.request.values['limit']
+        if result['limit'].lower() == 'none':
+            result['limit'] = ''
+    except KeyError:
+        result['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
     return result
 
-def get_sql_select(statement):
+def get_sql_query(statement):
     "Create the SQL SELECT statement from its parts."
     parts = ["SELECT {select} FROM {from}".format(**statement)]
     if statement['where']:

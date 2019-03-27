@@ -2,7 +2,7 @@
 
 {% block head_title %}Rename database {{ db['id'] }}{% endblock %}
 
-{% block body_title %}Rename database {{ db['id'] }}{% endblock %}
+{% block body_title %}Rename database <strong>{{ db['id'] }}</strong>{% endblock %}
 
 {% block main %}
 <form action="{{ url_for('.rename', dbid=db['id']) }}"

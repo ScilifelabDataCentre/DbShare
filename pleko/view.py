@@ -24,26 +24,13 @@ def create(dbid):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    select = {'select': flask.request.args.get('select') or '',
-              'from': flask.request.args.get('from') or '',
-              'where': flask.request.args.get('where') or '',
-              'orderby': flask.request.args.get('orderby') or ''}
-    try:
-        select['limit'] = flask.request.args['limit']
-        if select['limit'].lower() == 'none':
-            select['limit'] = None
-    except KeyError:
-        select['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
+    query = pleko.query.get_query_from_request()
     cnx = pleko.db.get_cnx(dbid)
 
     if utils.is_method_GET():
         for table in db['tables'].values():
             table['nrows'] = pleko.db.get_nrows(table['id'], cnx)
-            return flask.render_template('view/create.html',
-                                         db=db,
-                                         select=select,
-                                         tables=sorted(db['tables'].values(),
-                                                       key=lambda t: t['id']))
+        return flask.render_template('view/create.html', db=db, query=query)
 
     elif utils.is_method_POST():
         try:
@@ -57,12 +44,15 @@ def create(dbid):
             cursor.execute(sql, (schema['id'], 'view'))
             if cursor.fetchone()[0] != 0:
                 raise ValueError('view identifier already in use')
-            schema['select'] = pleko.query.get_select_from_form()
+            schema['query'] = pleko.query.get_query_from_request(check=True)
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.create', dbid=dbid))
+            return flask.redirect(
+                utils.get_absolute_url('.create',
+                                       values=dict(dbid=dbid),
+                                       query=schema['query']))
         else:
             return flask.redirect(flask.url_for('db.home', dbid=dbid))
         
@@ -106,13 +96,13 @@ def rows(dbid, viewid):
             sql = "SELECT * FROM %s" % viewid
             cursor.execute(sql)
             rows = list(cursor)
-            if schema['select']['columns'][0] == '*':
+            if schema['query']['columns'][0] == '*':
                 try:
                     columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
                 except IndexError:
                     columns = ['columns']
             else:
-                columns = schema['select']['columns']
+                columns = schema['query']['columns']
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema', viewid=viewid))
@@ -209,7 +199,7 @@ def download_csv(dbid, viewid):
             delimiter = ' '
         if not delimiter in constants.CSV_DELIMITERS:
             raise ValueError('invalid CSV delimiter character')
-        columns = schema['select']['columns']
+        columns = schema['query']['columns']
         outfile = io.StringIO()
         writer = csv.writer(outfile, delimiter=delimiter)
         if header:

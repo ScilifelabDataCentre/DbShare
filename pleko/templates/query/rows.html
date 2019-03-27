@@ -41,11 +41,11 @@ Rows from query of database <strong>{{ db['id'] }}</strong>
 <div class="mt-2">
   <form action="{{ url_for('.home', dbid=db['id']) }}"
         method="GET">
-    <input type="hidden" name="select" value="{{ select.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ select.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ select.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ select.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ select.get('limit') or ''}}">
+    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>
 </div>
@@ -56,11 +56,11 @@ Rows from query of database <strong>{{ db['id'] }}</strong>
 <div class="mt-2">
   <form action="{{ url_for('view.create', dbid=db['id']) }}"
         method="GET">
-    <input type="hidden" name="select" value="{{ select.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ select.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ select.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ select.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ select.get('limit') or ''}}">
+    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <button type="submit" class="btn btn-primary btn-block">Create view</button>
   </form>
 </div>

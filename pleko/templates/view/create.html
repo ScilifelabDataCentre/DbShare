@@ -34,7 +34,7 @@
               SELECT</label>
             <div class="col-md-10">
               <textarea id="select" name="select" class="form-control" rows="2"
-			>{{ select.get('select') or '' }}</textarea>
+			>{{ query.get('select') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -42,7 +42,7 @@
               FROM</label>
             <div class="col-md-10">
               <textarea id="from" name="from" class="form-control" rows="2"
-			>{{ select.get('from') or '' }}</textarea>
+			>{{ query.get('from') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -50,7 +50,7 @@
               WHERE</label>
             <div class="col-md-10">
               <textarea id="where" name="where" class="form-control" rows="2"
-			>{{ select.get('where') or '' }}</textarea>
+			>{{ query.get('where') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -59,7 +59,7 @@
             <div class="col-md-10">
               <input id="orderby" name="orderby" 
                      type="text" class="form-control"
-                     value="{{ select.get('orderby') or '' }}">
+                     value="{{ query.get('orderby') or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -68,7 +68,7 @@
             <div class="col-md-4">
               <input id="limit" name="limit" 
                      type="number" class="form-control"
-                     value="{{ select.get('limit') or '' }}">
+                     value="{{ query.get('limit') or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -82,7 +82,7 @@
     </div>
   </div>
   <div class="col-md">
-    {% for table in tables %}
+    {% for table in utils.sorted_schema(db['tables']) %}
     <div class="card border-secondary mb-1">
       <div class="card-header">
         <button type="button" 

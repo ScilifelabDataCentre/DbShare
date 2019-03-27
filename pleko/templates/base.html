@@ -69,7 +69,7 @@
           </li>
           {% endif %}
           {% if g.is_admin %}
-          <li class="nav-item dropdown">
+          <li class="nav-item dropdown ml-4">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">
@@ -78,8 +78,6 @@
             <div class="dropdown-menu" aria-labelledby="navbarAdmin">
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
                 Users</a>
-              <div class="dropdown-divider"></div>
-              <a class="dropdown-item" href="#">Something else here</a>
             </div>
           </li>
           {% endif %}

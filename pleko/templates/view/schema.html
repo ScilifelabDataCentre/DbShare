@@ -1,36 +1,34 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Schema for view {{ schema['id'] }} of database {{ db['id'] }}{% endblock %}
+{% block head_title %}Schema for view {{ schema['id'] }}{% endblock %}
 
-{% block body_title %}
-Schema for view <strong>{{ schema['id'] }}</strong> of database {{ db['id'] }}
-{% endblock %}
+{% block body_title %}Schema for view <strong>{{ schema['id'] }}</strong>{% endblock %}
 
 {% block main %}
 <table class="table">
   <tr>
-    <th>Description</th>
+    <th width="25%">Description</th>
     <td>{{ schema.get('description') or '' }}</td>
   </tr>
   <tr>
     <th>SELECT</th>
-    <td>{{ schema['select']['select'] }}</td>
+    <td>{{ schema['query']['select'] }}</td>
   </tr>
   <tr>
     <th>FROM</th>
-    <td>{{ schema['select']['from'] }}</td>
+    <td>{{ schema['query']['from'] }}</td>
   </tr>
   <tr>
     <th>WHERE</th>
-    <td>{{ schema['select']['where'] }}</td>
+    <td>{{ schema['query']['where'] }}</td>
   </tr>
   <tr>
     <th>ORDER BY</th>
-    <td>{{ schema['select']['orderby'] }}</td>
+    <td>{{ schema['query']['orderby'] }}</td>
   </tr>
   <tr>
     <th>LIMIT</th>
-    <td>{{ schema['select']['limit'] }}</td>
+    <td>{{ schema['query']['limit'] }}</td>
   </tr>
 </table>
 {% endblock %}

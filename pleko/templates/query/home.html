@@ -18,7 +18,7 @@
             <div class="col-md-10">
               <textarea id="select" name="select"
                         class="form-control" rows="2" autofocus
-			>{{ statement.get('select') or '' }}</textarea>
+			>{{ query.get('select') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -27,7 +27,7 @@
               FROM</label>
             <div class="col-md-10">
               <textarea id="from" name="from" class="form-control" rows="2"
-			>{{ statement.get('from') or '' }}</textarea>
+			>{{ query.get('from') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -35,7 +35,7 @@
               WHERE</label>
             <div class="col-md-10">
               <textarea id="where" name="where" class="form-control" rows="2"
-			>{{ statement.get('where') or '' }}</textarea>
+			>{{ query.get('where') or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">
@@ -44,7 +44,7 @@
             <div class="col-md-10">
               <input id="orderby" name="orderby" 
                      type="text" class="form-control"
-                     value="{{ statement.get('orderby') or '' }}">
+                     value="{{ query.get('orderby') or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -53,7 +53,7 @@
             <div class="col-md-4">
               <input id="limit" name="limit" 
                      type="number" class="form-control"
-                     value="{{ statement.get('limit') or '' }}">
+                     value="{{ query.get('limit') or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -67,7 +67,7 @@
     </div>
   </div>
   <div class="col-md">
-    {% for table in tables %}
+    {% for table in utils.sorted_schema(db['tables']) %}
     <div class="card border-secondary mb-1">
       <div class="card-header">
         <button type="button" 
@@ -109,11 +109,11 @@
 <div class="mt-2">
   <form action="{{ url_for('view.create', dbid=db['id']) }}"
         method="GET">
-    <input type="hidden" name="select" value="{{ statement.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ statement.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ statement.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ statement.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ statement.get('limit') or ''}}">
+    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <button type="submit" class="btn btn-primary btn-block">Create view</button>
   </form>
 </div>
