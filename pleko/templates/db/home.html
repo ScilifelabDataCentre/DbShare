@@ -29,8 +29,8 @@
       <div class="card-body">
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% if tables %}
-            {% for table in tables %}
+            {% if db['tables'] %}
+            {% for table in utils.sorted_schema(db['tables']) %}
             <tr>
 	      <th>{{ table['id'] }}</th>
               <td>
@@ -70,8 +70,8 @@
       <div class="card-body">
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% if views %}
-            {% for view in views %}
+            {% if db['views'] %}
+            {% for view in utils.sorted_schema(db['views']) %}
             <tr>
 	      <th>{{ view['id'] }}</th>
               <td>
@@ -98,8 +98,8 @@
       <div class="card-body">
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% if indexes %}
-            {% for index in indexes %}
+            {% if db['indexes'] %}
+            {% for index in utils.sorted_schema_list(db['indexes']) %}
             <tr>
 	      <th>{{ index['id'] }}</th>
               <td>

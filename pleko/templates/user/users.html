@@ -5,7 +5,7 @@
 {% block body_title %}Users{% endblock %}
 
 {% block main %}
-<table id="users" class="display nowrap table table-sm">
+<table id="users" class="table table-sm">
   <thead>
     <tr>
       <th>User</th>
@@ -35,8 +35,7 @@
   $(function() {
     $("#users").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 25,
-      "scrollX": true,
+      "pageLength": 25
     });
   });
 </script>

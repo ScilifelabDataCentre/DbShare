@@ -9,7 +9,7 @@
     <tr>
       <th>Database</th>
       <th>Description</th>
-      <th>Public</th>
+      <th>Access</th>
       <th>Owner</th>
       <th>Size</th>
       <th>Modified</th>
@@ -22,7 +22,7 @@
         <a href="{{ url_for('db.home', dbid=db['id']) }}">{{ db['id'] }}</a>
       </td>
       <td>{{ db.get('description') or '-' }}</td>
-      <td>{{ db['public'] and 'yes' or 'no'}}</td>
+      <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['owner'] }}</td>
       <td class="text-right">
         <span class="text-monospace mr-2">{{ db['size'] }}</span>

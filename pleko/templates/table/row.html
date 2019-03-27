@@ -1,13 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}
-Add row to table {{ schema['id'] }} in database {{ db['id'] }}
-{% endblock %}
+{% block head_title %}Add row to table {{ schema['id'] }}{% endblock %}
 
-{% block body_title %}
-Add row to table {{ schema['id'] }}
-<small>in database {{ db['id'] }}</small>
-{% endblock %}
+{% block body_title %}Add row to table {{ schema['id'] }}{% endblock %}
 
 {% block main %}
 <div class="card border-primary">

@@ -31,6 +31,11 @@ class IdentifierConverter(werkzeug.routing.BaseConverter):
             raise werkzeug.routing.ValidationError
         return value
 
+def sorted_schema(schemadict):
+    """Return a sorted list of the schema dictionaries
+    according to the 'id' elements."""
+    return sorted(schemadict.values(), key=lambda d: d['id'])
+
 def dbpath(dbid, dirpath=None):
     "Return the file path for the given database identifier."
     if dirpath is None:

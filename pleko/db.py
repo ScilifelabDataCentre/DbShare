@@ -50,15 +50,8 @@ def home(dbid):
             table['nrows'] = get_nrows(table['id'], dbcnx)
         for view in db['views'].values():
             view['nrows'] = get_nrows(view['id'], dbcnx)
-        keyfunc = lambda v: v['id']
-        return flask.render_template('db/home.html',
+        return flask.render_template('db/home.html', 
                                      db=db,
-                                     tables=sorted(db['tables'].values(),
-                                                   key=keyfunc),
-                                     indexes=sorted(db['indexes'].values(),
-                                                    key=keyfunc),
-                                     views=sorted(db['views'].values(),
-                                                  key=keyfunc),
                                      has_write_access=has_write_access(db))
 
     elif utils.is_method_DELETE():

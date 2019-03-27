@@ -34,6 +34,37 @@
           <li class="nav-item">
             <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
+          {% if db is defined %}
+          <li class="nav-item ml-4">
+            <a href="{{ url_for('db.home', dbid=db['id']) }}"
+               role="button" class="nav-link btn btn-primary text-white mx-2">
+              Database {{ db['id'] }}</a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarTables"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Tables</a>
+            <div class="dropdown-menu" aria-labelledby="navbarTables">
+              {% for table in utils.sorted_schema(db['tables']) %}
+              <a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}"
+                 class="dropdown-item">
+                {{ table['id'] }}</a>
+              {% endfor %}
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarViews"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Views</a>
+            <div class="dropdown-menu" aria-labelledby="navbarViews">
+              {% for view in utils.sorted_schema(db['views']) %}
+              <a href="{{ url_for('view.rows', dbid=db['id'], viewid=view['id']) }}"
+                 class="dropdown-item">
+                {{ view['id'] }}</a>
+              {% endfor %}
+            </div>
+          </li>
+          {% endif %}
           {% if g.is_admin %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"

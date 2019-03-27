@@ -41,9 +41,4 @@ Schema for view <strong>{{ schema['id'] }}</strong> of database {{ db['id'] }}
      role="button" class="btn btn-outline-success btn-block">
     View<br>{{ nrows }} rows</a>
 </div>
-<div class="mt-2">
-  <a href="{{ url_for('db.home', dbid=db['id']) }}"
-     role="button" class="btn btn-outline-primary btn-block">
-    Database<br>{{ db['id'] }}</a>
-</div>
 {% endblock %}
