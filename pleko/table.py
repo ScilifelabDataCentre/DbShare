@@ -185,9 +185,9 @@ def row(dbid, tableid):
                                                 dbid=dbid,
                                                 tableid=tableid))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/upload', methods=['GET', 'POST'])
+@blueprint.route('/<id:dbid>/<id:tableid>/upload')
 def upload(dbid, tableid):
-    "Add CSV data to the table."
+    "Add data from a file to the table."
     try:
         db = pleko.db.get_check_write(dbid)
     except ValueError as error:
@@ -198,74 +198,82 @@ def upload(dbid, tableid):
     except KeyError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    return flask.render_template('table/upload.html', db=db, schema=schema)
 
-    if utils.is_method_GET():
-        return flask.render_template('table/upload.html', 
-                                     db=db,
-                                     schema=schema)
-
-    elif utils.is_method_POST():
+@blueprint.route('/<id:dbid>/<id:tableid>/upload/csv', methods=['POST'])
+def upload_csv(dbid, tableid):
+    "Add data from a CSV file to the table."
+    try:
+        db = pleko.db.get_check_write(dbid)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tableid]
+    except KeyError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+    try:
+        csvfile = flask.request.files['csvfile']
+        lines = csvfile.read().decode('utf-8').split('\n')
+        records = list(csv.reader(lines))
+        header = records.pop(0)
+        for n, column in enumerate(schema['columns']):
+            if header[n] != column['id']:
+                raise ValueError('header/column identifier mismatch')
+        # Eliminate empty records
+        records = [r for r in records if r]
         try:
-            csvfile = flask.request.files['csvfile']
-            lines = csvfile.read().decode('utf-8').split('\n')
-            records = list(csv.reader(lines))
-            header = records.pop(0)
-            for n, column in enumerate(schema['columns']):
-                if header[n] != column['id']:
-                    raise ValueError('header/column identifier mismatch')
-            # Eliminate empty records
-            records = [r for r in records if r]
-            try:
-                for i, column in enumerate(schema['columns']):
-                    type = column['type']
-                    notnull = column['notnull']
-                    if type == constants.INTEGER:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                record[i] = int(value)
-                            elif notnull:
-                                raise ValueError('NULL disallowed')
-                            else:
-                                record[i] = None
-                    elif type == constants.REAL:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                record[i] = float(value)
-                            elif notnull:
-                                raise ValueError('NULL disallowed')
-                            else:
-                                record[i] = None
-                    else:
-                        for n, record in enumerate(records):
-                            value = record[i]
-                            if value:
-                                record[i] = value
-                            elif notnull:
-                                raise ValueError('NULL disallowed')
-                            else:
-                                record[i] = None
-            except (ValueError, TypeError, IndexError) as error:
-                raise ValueError("line %s, column %s (%s): %s" %
-                                 (n+1, i+1, column['id'], str(error)))
-            cnx = pleko.db.get_cnx(dbid)
-            cursor = cnx.cursor()
-            with cnx:
-                sql = "INSERT INTO %s (%s) VALUES (%s)" % \
-                      (tableid,
-                       ','.join([c['id'] for c in schema['columns']]),
-                       ','.join('?' * len(schema['columns'])))
-                cursor.executemany(sql, records)
-            flask.flash("Added %s rows" % len(records), 'message')
-        except (ValueError, IndexError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.upload',
-                                                dbid=dbid,
-                                                tableid=tableid))
-        return flask.redirect(flask.url_for('.rows',
+            for i, column in enumerate(schema['columns']):
+                type = column['type']
+                notnull = column['notnull']
+                if type == constants.INTEGER:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value:
+                            record[i] = int(value)
+                        elif notnull:
+                            raise ValueError('NULL disallowed')
+                        else:
+                            record[i] = None
+                elif type == constants.REAL:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value:
+                            record[i] = float(value)
+                        elif notnull:
+                            raise ValueError('NULL disallowed')
+                        else:
+                            record[i] = None
+                else:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value:
+                            record[i] = value
+                        elif notnull:
+                            raise ValueError('NULL disallowed')
+                        else:
+                            record[i] = None
+        except (ValueError, TypeError, IndexError) as error:
+            raise ValueError("line %s, column %s (%s): %s" %
+                             (n+1, i+1, column['id'], str(error)))
+        cnx = pleko.db.get_cnx(dbid)
+        cursor = cnx.cursor()
+        with cnx:
+            sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                  (tableid,
+                   ','.join([c['id'] for c in schema['columns']]),
+                   ','.join('?' * len(schema['columns'])))
+            cursor.executemany(sql, records)
+        flask.flash("Added %s rows" % len(records), 'message')
+    except (ValueError, IndexError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.upload',
                                             dbid=dbid,
                                             tableid=tableid))
+    return flask.redirect(flask.url_for('.rows',
+                                        dbid=dbid,
+                                        tableid=tableid))
 
 @blueprint.route('/<id:dbid>/<id:tableid>/clone', methods=['GET', 'POST'])
 @pleko.user.login_required

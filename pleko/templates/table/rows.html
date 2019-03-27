@@ -39,7 +39,7 @@
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.download', dbid=db['id'], tableid=schema['id']) }}"
-     role="button" class="btn btn-secondary btn-block">Download CSV</a>
+     role="button" class="btn btn-primary btn-block">Download file</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
@@ -50,7 +50,7 @@
 <div class="pt-2">
   <a href="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary btn-block">
-    Upload CSV file</a>
+    Upload file</a>
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"

@@ -35,13 +35,15 @@
             <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
           {% if db is defined %}
-          <li class="nav-item ml-4">
-            <a href="{{ url_for('db.home', dbid=db['id']) }}"
-               role="button" class="nav-link btn btn-primary text-white mx-2">
-              Database {{ db['id'] }}</a>
+          <li class="nav-item ml-2">
+            <a href="{{ url_for('db.home', dbid=db['id']) }}" role="button" 
+               class="nav-link btn btn-outline-primary mx-2">
+              <span class="font-weight-bold mx-3">Database {{ db['id'] }}</span>
+            </a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarTables"
+            <a href="#" id="navbarTables"
+               class="nav-link dropdown-toggle" 
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Tables</a>
             <div class="dropdown-menu" aria-labelledby="navbarTables">
@@ -53,7 +55,8 @@
             </div>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarViews"
+            <a href="#" id="navbarViews"
+               class="nav-link dropdown-toggle"
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Views</a>
             <div class="dropdown-menu" aria-labelledby="navbarViews">

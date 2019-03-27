@@ -6,7 +6,9 @@
 
 {% block main %}
 <div class="card border-primary">
-  <div class="card-header">CSV file formatting</div>
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">CSV file</h5>
+  </div>
   <div class="card-body">
     <form action="{{ url_for('.download_csv', dbid=db['id'], tableid=schema['id']) }}"
           method="GET">
@@ -38,7 +40,7 @@
       </div>
       <div class="form-group row">
         <div class="col-md-3">
-          <button type="submit" class="btn btn-secondary btn-lg btn-block">
+          <button type="submit" class="btn btn-primary btn-lg btn-block">
             Download CSV file</button>
         </div>
       </div>
