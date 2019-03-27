@@ -52,9 +52,9 @@ Web-based relational database system powered by Sqlite3.
 
 ## Indexes
 
-- Create an index. *TODO*
-- View the schema of an index. *TODO*
-- Delete an index. *TODO*
+- Create an index.
+- View the schema of an index.
+- Delete an index.
 
 ## Plots
 
