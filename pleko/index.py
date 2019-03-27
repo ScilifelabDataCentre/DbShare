@@ -39,12 +39,15 @@ def create(dbname, tablename):
 
     elif utils.is_method_POST():
         try:
-            INDEX_PREFIX = "%s$index" % schema['name']
+            prefix = constants.INDEX_PREFIX_TEMPLATE % schema['name']
             ordinal = -1
             for ix in db['indexes']:
-                if ix.startswith(INDEX_PREFIX):
-                    ordinal = max(ordinal, int(ix['name'][len(INDEX_PREFIX):]))
-            index = {'name': INDEX_PREFIX + str(ordinal+1),
+                if ix.startswith(prefix):
+                    try:
+                        ordinal = max(ordinal, int(ix['name'][len(prefix):]))
+                    except (ValueError, TypeError, IndexError):
+                        pass
+            index = {'name': prefix + str(ordinal+1),
                      'table': schema['name'],
                      'unique': utils.to_bool(flask.request.form.get('unique'))}
             index['columns'] = []

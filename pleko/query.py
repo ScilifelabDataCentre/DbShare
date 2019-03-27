@@ -52,7 +52,7 @@ def rows(dbname):
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(utils.get_absolute_url('.home',
-                                                     values={'dbname':dbname},
+                                                     values={'dbname': dbname},
                                                      query=query))
     return flask.render_template('query/rows.html',
                                  db=db,

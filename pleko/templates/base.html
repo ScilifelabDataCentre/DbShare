@@ -41,6 +41,10 @@
               <span class="font-weight-bold mx-3">Database {{ db['name'] }}</span>
             </a>
           </li>
+          <li class="nav-item">
+            <a href="{{ url_for('query.home', dbname=db['name']) }}"
+               class="nav-link">Query</a>
+          </li>
           <li class="nav-item dropdown">
             <a href="#" id="navbarTables"
                class="nav-link dropdown-toggle" 

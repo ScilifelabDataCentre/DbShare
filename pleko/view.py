@@ -101,8 +101,10 @@ def rows(dbname, viewname):
         return flask.render_template('view/rows.html', 
                                      db=db,
                                      schema=schema,
-                                     rows=rows,
                                      columns=columns,
+                                     sql=pleko.query.get_sql_query(schema['query']),
+                                     rows=rows,
+                                     nrows=len(rows),
                                      has_write_access=has_write_access)
 
     elif utils.is_method_DELETE():
