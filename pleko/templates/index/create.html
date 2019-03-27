@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create an index of table {{ schema['id'] }}{% endblock %}
+{% block head_title %}Create an index of table {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Create an index of table <strong>{{ schema['id'] }}</strong>{% endblock %}
+{% block body_title %}Create an index of table <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="card border-info">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbid=db['id'], tableid=schema['id']) }}"
+    <form action="{{ url_for('.create', dbname=db['name'], tablename=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
@@ -29,7 +29,7 @@
                 <tr>
                   <th>Position</th>
                   {% for column in schema['columns'] %}
-                  <td>{{ column['id'] }}</td>
+                  <td>{{ column['name'] }}</td>
                   {% endfor %}
                 </tr>
               </thead>
@@ -40,7 +40,7 @@
                   {% for column in schema['columns'] %}
                   <td>
                     <input name="position{{ pos }}" type="radio"
-                           value="{{ column['id'] }}">
+                           value="{{ column['name'] }}">
                   </td>
                   {% endfor %}
                 </tr>
@@ -63,7 +63,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('table.schema', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('table.schema', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </div>
 {% endblock %}

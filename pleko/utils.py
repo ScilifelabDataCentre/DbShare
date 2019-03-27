@@ -24,25 +24,25 @@ class IuidConverter(werkzeug.routing.BaseConverter):
             raise werkzeug.routing.ValidationError
         return value
 
-class IdentifierConverter(werkzeug.routing.BaseConverter):
-    "URL route converter for an identifier."
+class NameConverter(werkzeug.routing.BaseConverter):
+    "URL route converter for a name."
     def to_python(self, value):
-        if not constants.IDENTIFIER_RX.match(value):
+        if not constants.NAME_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
 
 def sorted_schema(schemadict):
     """Return a sorted list of the schema dictionaries
-    according to the 'id' elements."""
-    return sorted(schemadict.values(), key=lambda d: d['id'])
+    according to the 'name' elements."""
+    return sorted(schemadict.values(), key=lambda d: d['name'])
 
-def dbpath(dbid, dirpath=None):
-    "Return the file path for the given database identifier."
+def dbpath(dbname, dirpath=None):
+    "Return the file path for the given database name."
     if dirpath is None:
         dirpath = flask.current_app.config['DATABASES_DIRPATH']
     dirpath = os.path.expanduser(dirpath)
     dirpath = os.path.expandvars(dirpath)
-    return os.path.join(dirpath, dbid) + '.sqlite3'
+    return os.path.join(dirpath, dbname) + '.sqlite3'
     
 def get_absolute_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."

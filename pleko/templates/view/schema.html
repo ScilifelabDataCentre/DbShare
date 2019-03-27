@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Schema for view {{ schema['id'] }}{% endblock %}
+{% block head_title %}Schema for view {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Schema for view <strong>{{ schema['id'] }}</strong>{% endblock %}
+{% block body_title %}Schema for view <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <table class="table">
@@ -35,12 +35,12 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
+  <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     View<br>{{ nrows }} rows</a>
 </div>
 <div class="pt-2">
-  <form action="{{ url_for('query.home', dbid=db['id']) }}"
+  <form action="{{ url_for('query.home', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" 
            value="{{ schema['query'].get('select') or ''}}">

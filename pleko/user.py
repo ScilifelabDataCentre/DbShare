@@ -175,7 +175,7 @@ def password():
             do_login(username, password)
         return flask.redirect(flask.url_for('home'))
 
-@blueprint.route('/profile/<id:username>')
+@blueprint.route('/profile/<name:username>')
 @login_required
 def profile(username):
     user = get_user(username=username)
@@ -190,7 +190,7 @@ def profile(username):
                                  user=user,
                                  enable_disable=enable_disable)
 
-@blueprint.route('/profile/<id:username>/logs')
+@blueprint.route('/profile/<name:username>/logs')
 @login_required
 def logs(username):
     user = get_user(username=username)
@@ -224,7 +224,7 @@ def is_admin_and_not_self(user):
         return flask.g.current_user['username'] != user['username']
     return False
 
-@blueprint.route('/edit/<id:username>', methods=['GET', 'POST'])
+@blueprint.route('/edit/<name:username>', methods=['GET', 'POST'])
 @login_required
 def edit(username):
     "Edit the user profile."
@@ -270,7 +270,7 @@ def users():
              for row in cursor]
     return flask.render_template('user/users.html', users=users)
 
-@blueprint.route('/enable/<id:username>', methods=['POST'])
+@blueprint.route('/enable/<name:username>', methods=['POST'])
 @login_required
 @admin_required
 def enable(username):
@@ -284,7 +284,7 @@ def enable(username):
     send_password_code(user, 'enabled')
     return flask.redirect(flask.url_for('.profile', username=username))
 
-@blueprint.route('/disable/<id:username>', methods=['POST'])
+@blueprint.route('/disable/<name:username>', methods=['POST'])
 @login_required
 @admin_required
 def disable(username):
@@ -390,8 +390,8 @@ class UserContext:
     def set_username(self, username):
         if 'username' in self.user:
             raise ValueError('username cannot be changed')
-        if not constants.IDENTIFIER_RX.match(username):
-            raise ValueError('invalid username; must be an identifier')
+        if not constants.NAME_RX.match(username):
+            raise ValueError('invalid username; must be an name')
         if get_user(username=username, cnx=self.cnx):
             raise ValueError('username already in use')
         self.user['username'] = username
@@ -441,13 +441,13 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     Return None if no such user.
     """
     if username:
-        identifier = username
+        name      = username
         criterion = " WHERE username=?"
     elif email:
-        identifier = email
+        name      = email
         criterion = " WHERE email=?"
     elif apikey:
-        identifier = apikey
+        name      = apikey
         criterion = " WHERE apikey=?"
     else:
         return None
@@ -457,7 +457,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
         cursor = cnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \
           " created, modified FROM users" + criterion
-    cursor.execute(sql, (identifier,))
+    cursor.execute(sql, (name,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]

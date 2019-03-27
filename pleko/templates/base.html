@@ -36,9 +36,9 @@
           </li>
           {% if db is defined %}
           <li class="nav-item ml-2">
-            <a href="{{ url_for('db.home', dbid=db['id']) }}" role="button" 
+            <a href="{{ url_for('db.home', dbname=db['name']) }}" role="button" 
                class="nav-link btn btn-outline-primary mx-2">
-              <span class="font-weight-bold mx-3">Database {{ db['id'] }}</span>
+              <span class="font-weight-bold mx-3">Database {{ db['name'] }}</span>
             </a>
           </li>
           <li class="nav-item dropdown">
@@ -48,9 +48,9 @@
                aria-haspopup="true" aria-expanded="false">Tables</a>
             <div class="dropdown-menu" aria-labelledby="navbarTables">
               {% for table in utils.sorted_schema(db['tables']) %}
-              <a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}"
+              <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
                  class="dropdown-item">
-                {{ table['id'] }}</a>
+                {{ table['name'] }}</a>
               {% endfor %}
             </div>
           </li>
@@ -61,9 +61,9 @@
                aria-haspopup="true" aria-expanded="false">Views</a>
             <div class="dropdown-menu" aria-labelledby="navbarViews">
               {% for view in utils.sorted_schema(db['views']) %}
-              <a href="{{ url_for('view.rows', dbid=db['id'], viewid=view['id']) }}"
+              <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
                  class="dropdown-item">
-                {{ view['id'] }}</a>
+                {{ view['name'] }}</a>
               {% endfor %}
             </div>
           </li>

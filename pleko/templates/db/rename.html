@@ -1,18 +1,18 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Rename database {{ db['id'] }}{% endblock %}
+{% block head_title %}Rename database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}Rename database <strong>{{ db['id'] }}</strong>{% endblock %}
+{% block body_title %}Rename database <strong>{{ db['name'] }}</strong>{% endblock %}
 
 {% block main %}
-<form action="{{ url_for('.rename', dbid=db['id']) }}"
+<form action="{{ url_for('.rename', dbname=db['name']) }}"
       method="POST">
   {{ csrf_token() }}
   <div class="form-group row">
-    <label for="id" class="col-md-2 col-form-label text-right">
+    <label for="name" class="col-md-2 col-form-label text-right">
       Identifier</label>
     <div class="col-md-6">
-      <input id="id" name="id" type="text" class="form-control" autofocus>
+      <input id="name" name="name" type="text" class="form-control" autofocus>
     </div>
   </div>
   <div class="form-group row">
@@ -35,7 +35,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.home', dbid=db['id']) }}"
+  <a href="{{ url_for('.home', dbname=db['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </div>
 {% endblock %}

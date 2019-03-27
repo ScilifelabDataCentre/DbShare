@@ -1,26 +1,27 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create a table in database {{ db['id'] }}{% endblock %}
+{% block head_title %}Create a table in database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}Create a table in database {{ db['id'] }}{% endblock %}
+{% block body_title %}Create a table in database {{ db['name'] }}{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbid=db['id']) }}"
+    <form action="{{ url_for('.create', dbname=db['name']) }}"
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
         <div class="col-md-3 text-right">
-          <label for="id" class="col-form-label">Table identifier</label>
+          <label for="name" class="col-form-label">Table name</label>
 	</div>
 	<div class="col-md-6">
-          <input id="id" name="id" type="text" class="form-control" autofocus>
+          <input id="name" name="name" type="text" 
+		 class="form-control" autofocus>
         </div>
       </div>
       <div class="form-row pt-4">
         <div class="form-group col-md-3">
-          <label for="column0id">Column identifier</label>
+          <label for="column0name">Column name</label>
         </div>
         <div class="form-group col-md-2">
           <label for="column0type">Type</label>
@@ -38,7 +39,7 @@
       {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
       <div class="form-row">
         <div class="form-group col-md-3">
-          <input id="column{{ n }}id" name="column{{ n }}id"
+          <input id="column{{ n }}name" name="column{{ n }}name"
                  type="text" class="form-control">
         </div>
         <div class="form-group col-md-2">
@@ -85,7 +86,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('db.home', dbid=db['id']) }}"
+  <a href="{{ url_for('db.home', dbname=db['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </div>
 {% endblock %}

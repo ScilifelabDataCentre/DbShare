@@ -1,53 +1,53 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Add row to table {{ schema['id'] }}{% endblock %}
+{% block head_title %}Add row to table {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Add row to table {{ schema['id'] }}{% endblock %}
+{% block body_title %}Add row to table {{ schema['name'] }}{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
   <div class="card-body">
-    <form action="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+    <form action="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
       {% for column in schema['columns'] %}
       <div class="form-group">
         <div class="row">
           <div class="col-md-2 text-right">
-            <label for="{{ column['id'] }}" class="col-form-label">
-              {{ column['id'] }}</label>
+            <label for="{{ column['name'] }}" class="col-form-label">
+              {{ column['name'] }}</label>
           </div>
           {% if column['type'] == constants.INTEGER %}
           <div class="col-md-4">
-            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-                   aria-describedby="{{ column['id'] }}Help"
+            <input id="{{ column['name'] }}" name="{{ column['name'] }}"
+                   aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="number" step="1" class="form-control">
           </div>
           {% elif column['type'] == constants.REAL %}
           <div class="col-md-4">
-            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-                   aria-describedby="{{ column['id'] }}Help"
+            <input id="{{ column['name'] }}" name="{{ column['name'] }}"
+                   aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="text" class="form-control">
           </div>
           {% elif column['type'] == constants.TEXT %}
           <div class="col-md-8">
-            <input id="{{ column['id'] }}" name="{{ column['id'] }}"
-                   aria-describedby="{{ column['id'] }}Help"
+            <input id="{{ column['name'] }}" name="{{ column['name'] }}"
+                   aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="text" class="form-control">
           </div>
           {% elif column['type'] == constants.BLOB %}
           <div class="col-md-8">
-            <textarea id="{{ column['id'] }}" name="{{ column['id'] }}"
-                      aria-describedby="{{ column['id'] }}Help"
+            <textarea id="{{ column['name'] }}" name="{{ column['name'] }}"
+                      aria-describedby="{{ column['name'] }}Help"
                       {{ column['notnull'] and 'required' or '' }}
                       class="form-control" rows="4">
           </div>
           {% endif %}
           <div class="col-md">
-            <small id="{{ column['id'] }}Help" class="form-text text-muted">
+            <small id="{{ column['name'] }}Help" class="form-text text-muted">
               {{ column['type'] }}
               {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
               {{ column['notnull'] and 'NOT NULL' or '' }}
@@ -69,13 +69,13 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">Table rows</a>
 </div>
 {% endblock %}
 
 {% block javascript %}
 <script>
-  $("#{{ schema['columns'][0]['id'] }}").focus();
+  $("#{{ schema['columns'][0]['name'] }}").focus();
 </script>
 {% endblock %}

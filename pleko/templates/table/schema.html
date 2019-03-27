@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Schema for table {{ schema['id'] }}{% endblock %}
+{% block head_title %}Schema for table {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Schema for table <strong>{{ schema['id'] }}</strong>{% endblock %}
+{% block body_title %}Schema for table <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
@@ -21,7 +21,7 @@
       <tbody>
 	{% for column in schema['columns'] %}
 	<tr>
-	  <td>{{ column['id'] }}</td>
+	  <td>{{ column['name'] }}</td>
 	  <td>{{ column['type'] }}</td>
 	  <td>
             {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
@@ -53,12 +53,12 @@
       <tbody>
 	{% for index in indexes %}
 	<tr>
-	  <td>{{ index['id'] }}</td>
+	  <td>{{ index['name'] }}</td>
 	  <td>{{ index['unique'] and 'yes' or ''}}</td>
 	  <td>{{ ', '.join(index['columns']) }}</td>
           {% if has_write_access %}
           <td>
-            <form action="{{ url_for('index.delete', dbid=db['id'], indexid=index['id']) }}"
+            <form action="{{ url_for('index.delete', dbname=db['name'], indexname=index['name']) }}"
 	          method="POST">
               {{ csrf_token() }}
               <input type="hidden" name="_http_method" value="DELETE">
@@ -79,23 +79,23 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
     Table<br>{{ nrows }} rows</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
-  <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Add row</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Clone table</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('index.create', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('index.create', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-info btn-block">
     Create index</a>
 </div>

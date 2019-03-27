@@ -12,26 +12,26 @@ from pleko import utils
 
 blueprint = flask.Blueprint('index', __name__)
 
-@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:tablename>', methods=['GET', 'POST'])
 @pleko.user.login_required
-def create(dbid, tableid):
+def create(dbname, tablename):
     "Create an index on the table in the database."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     positions = list(range(len(schema['columns'])))
 
     if utils.is_method_GET():
-        cnx = pleko.db.get_cnx(dbid)
+        cnx = pleko.db.get_cnx(dbname)
         for table in db['tables'].values():
-            table['nrows'] = pleko.db.get_nrows(table['id'], cnx)
+            table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
         return flask.render_template('index/create.html',
                                      db=db,
                                      schema=schema,
@@ -39,13 +39,13 @@ def create(dbid, tableid):
 
     elif utils.is_method_POST():
         try:
-            INDEX_PREFIX = "%s$index" % schema['id']
+            INDEX_PREFIX = "%s$index" % schema['name']
             ordinal = -1
             for ix in db['indexes']:
                 if ix.startswith(INDEX_PREFIX):
-                    ordinal = max(ordinal, int(ix['id'][len(INDEX_PREFIX):]))
-            index = {'id': INDEX_PREFIX + str(ordinal+1),
-                     'table': schema['id'],
+                    ordinal = max(ordinal, int(ix['name'][len(INDEX_PREFIX):]))
+            index = {'name': INDEX_PREFIX + str(ordinal+1),
+                     'table': schema['name'],
                      'unique': utils.to_bool(flask.request.form.get('unique'))}
             index['columns'] = []
             for pos in positions:
@@ -59,34 +59,36 @@ def create(dbid, tableid):
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(
-                flask.url_for('.create', dbid=dbid, tableid=tableid))
+                flask.url_for('.create', dbname=dbname, tablename=tablename))
         else:
-            return flask.redirect(
-                flask.url_for('table.schema', dbid=dbid, tableid=tableid))
+            return flask.redirect(flask.url_for('table.schema',
+                                                dbname=dbname,
+                                                tablename=tablename))
         
-# 'indexid' is not a proper identifier
-@blueprint.route('/<id:dbid>/<indexid>/delete', methods=['POST', 'DELETE'])
+# 'indexname' is not a proper name
+@blueprint.route('/<name:dbname>/<indexname>/delete',
+                 methods=['POST', 'DELETE'])
 @pleko.user.login_required
-def delete(dbid, indexid):
+def delete(dbname, indexname):
     "Delete the index."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
         for index in db['indexes'].values():
-            if index['id'] == indexid:
-                tableid = index['table']
+            if index['name'] == indexname:
+                tablename = index['table']
                 break
         else:
             raise ValueError('no such index in database')
         with pleko.db.DbContext(db) as ctx:
-            ctx.delete_index(indexid)
+            ctx.delete_index(indexname)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.redirect(
-        flask.url_for('table.schema', dbid=dbid, tableid=tableid))
+        flask.url_for('table.schema', dbname=dbname, tablename=tablename))
  

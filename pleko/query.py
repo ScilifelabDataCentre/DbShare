@@ -12,32 +12,32 @@ from pleko import utils
 
 blueprint = flask.Blueprint('query', __name__)
 
-@blueprint.route('/<id:dbid>')
-def home(dbid):
+@blueprint.route('/<name:dbname>')
+def home(dbname):
     "Query the database."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     query = get_query_from_request()
-    cnx = pleko.db.get_cnx(dbid)
+    cnx = pleko.db.get_cnx(dbname)
     for table in db['tables'].values():
-        table['nrows'] = pleko.db.get_nrows(table['id'], cnx)
+        table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
     return flask.render_template('query/home.html', db=db, query=query)
 
-@blueprint.route('/<id:dbid>/rows', methods=['POST'])
-def rows(dbid):
+@blueprint.route('/<name:dbname>/rows', methods=['POST'])
+def rows(dbname):
     "Display results of a query to the database."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
         query = get_query_from_request(check=True)
-        cnx = pleko.db.get_cnx(dbid)
+        cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         sql = get_sql_query(query)
         cursor.execute(sql)
@@ -52,7 +52,7 @@ def rows(dbid):
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(utils.get_absolute_url('.home',
-                                                     values={'dbid':dbid},
+                                                     values={'dbname':dbname},
                                                      query=query))
     return flask.render_template('query/rows.html',
                                  db=db,

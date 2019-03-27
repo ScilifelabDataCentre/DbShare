@@ -1,24 +1,23 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create a view of database {{ db['id'] }}{% endblock %}
+{% block head_title %}Create a view of database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}Create a view of database <strong>{{ db['id'] }}</strong>{% endblock %}
+{% block body_title %}Create a view of database <strong>{{ db['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="row">
   <div class="col-md-8">
     <div class="card border-success">
       <div class="card-body">
-        <form action="{{ url_for('.create', dbid=db['id']) }}"
+        <form action="{{ url_for('.create', dbname=db['name']) }}"
               method="POST">
           {{ csrf_token() }}
           <div class="form-group row">
-            <label for="id"
-                   class="col-md-2 col-form-label text-right">
-              View identifier</label>
+            <label for="name" class="col-md-2 col-form-label text-right">
+              View name</label>
             <div class="col-md-4">
-              <input id="id" name="id"
-		     type="text" class="form-control" autofocus>
+              <input id="name" name="name" type="text" 
+		     class="form-control" autofocus>
             </div>
           </div>
           <div class="form-group row">
@@ -87,19 +86,19 @@
       <div class="card-header">
         <button type="button" 
                 class="btn btn-outline-secondary" data-toggle="collapse"
-                data-target="#{{ table['id'] }}"
-                aria-expanded="false" aria-controls="{{ table['id'] }}">
-          Table <strong>{{ table['id'] }}</strong></button>
-        <a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}"
+                data-target="#{{ table['name'] }}"
+                aria-expanded="false" aria-controls="{{ table['name'] }}">
+          Table <strong>{{ table['name'] }}</strong></button>
+        <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
            class="btn btn-sm btn-outline-primary" role="button" target="_blank">
           {{ table['nrows'] }} rows</a>
       </div>
-      <div id="{{ table['id'] }}" class="collapse">
+      <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
           <table class="table table-sm table-borderless">
             {% for column in table['columns'] %}
             <tr>
-              <th class="text-right">{{ column['id'] }}</th>
+              <th class="text-right">{{ column['name'] }}</th>
               <td>
                 {{ column['type'] }}
                 {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
@@ -118,7 +117,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('db.home', dbid=db['id']) }}"
+  <a href="{{ url_for('db.home', dbname=db['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </div>
 {% endblock %}

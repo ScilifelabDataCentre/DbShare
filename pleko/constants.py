@@ -2,8 +2,8 @@
 
 import re
 
-IDENTIFIER_RX = re.compile(r'^[a-z][a-z0-9_]*$', re.I)
-EMAIL_RX      = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+NAME_RX  = re.compile(r'^[a-z][a-z0-9_]*$', re.I)
+EMAIL_RX = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 # User roles
 ADMIN = 'admin'

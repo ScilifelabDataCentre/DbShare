@@ -16,25 +16,25 @@ from pleko import utils
 
 blueprint = flask.Blueprint('view', __name__)
 
-@blueprint.route('/<id:dbid>', methods=['GET', 'POST'])
-def create(dbid):
+@blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
+def create(dbname):
     "Create a view of the data in the database."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     query = pleko.query.get_query_from_request()
-    cnx = pleko.db.get_cnx(dbid)
+    cnx = pleko.db.get_cnx(dbname)
 
     if utils.is_method_GET():
         for table in db['tables'].values():
-            table['nrows'] = pleko.db.get_nrows(table['id'], cnx)
+            table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
         return flask.render_template('view/create.html', db=db, query=query)
 
     elif utils.is_method_POST():
         try:
-            schema = {'id': flask.request.form.get('id'),
+            schema = {'name': flask.request.form.get('name'),
                       'query': pleko.query.get_query_from_request(check=True)}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
@@ -42,49 +42,50 @@ def create(dbid):
             flask.flash(str(error), 'error')
             return flask.redirect(
                 utils.get_absolute_url('.create',
-                                       values=dict(dbid=dbid),
+                                       values=dict(dbname=dbname),
                                        query=schema['query']))
         else:
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         
-@blueprint.route('/<id:dbid>/<id:viewid>/schema')
-def schema(dbid, viewid):
+@blueprint.route('/<name:dbname>/<name:viewname>/schema')
+def schema(dbname, viewname):
     "Display the schema for a view."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['views'][viewid]
+        schema = db['views'][viewname]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
-    nrows = pleko.db.get_nrows(viewid, pleko.db.get_cnx(dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    nrows = pleko.db.get_nrows(viewname, pleko.db.get_cnx(dbname))
     return flask.render_template('view/schema.html',
                                  db=db,
                                  schema=schema,
                                  nrows=nrows)
 
-@blueprint.route('/<id:dbid>/<id:viewid>', methods=['GET', 'POST', 'DELETE'])
-def rows(dbid, viewid):
+@blueprint.route('/<name:dbname>/<name:viewname>', 
+                 methods=['GET', 'POST', 'DELETE'])
+def rows(dbname, viewname):
     "Display rows in the view."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbid)
+            db = pleko.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
-            schema = db['views'][viewid]
+            schema = db['views'][viewname]
         except KeyError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
-            cnx = pleko.db.get_cnx(dbid)
+            cnx = pleko.db.get_cnx(dbname)
             cursor = cnx.cursor()
-            sql = "SELECT * FROM %s" % viewid
+            sql = "SELECT * FROM %s" % viewname
             cursor.execute(sql)
             rows = list(cursor)
             if schema['query']['columns'][0] == '*':
@@ -96,7 +97,7 @@ def rows(dbid, viewid):
                 columns = schema['query']['columns']
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.schema', viewid=viewid))
+            return flask.redirect(flask.url_for('.schema', viewname=viewname))
         return flask.render_template('view/rows.html', 
                                      db=db,
                                      schema=schema,
@@ -106,32 +107,33 @@ def rows(dbid, viewid):
 
     elif utils.is_method_DELETE():
         try:
-            db = pleko.db.get_check_write(dbid)
+            db = pleko.db.get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
-                ctx.delete_view(viewid)
+                ctx.delete_view(viewname)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-@blueprint.route('/<id:dbid>/<id:viewid>/clone', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:viewname>/clone', 
+                 methods=['GET', 'POST'])
 @pleko.user.login_required
-def clone(dbid, viewid):
+def clone(dbname, viewname):
     "Create a clone of the view."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     try:
-        schema = db['views'][viewid]
+        schema = db['views'][viewname]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('view/clone.html',
@@ -141,46 +143,46 @@ def clone(dbid, viewid):
     elif utils.is_method_POST():
         try:
             schema = copy.deepcopy(schema)
-            schema['id'] = flask.request.form['id']
+            schema['name'] = flask.request.form['name']
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone',
-                                                dbid=dbid,
-                                                viewid=viewid))
+                                                dbname=dbname,
+                                                viewname=viewname))
         return flask.redirect(flask.url_for('.rows',
-                                            dbid=dbid,
-                                            viewid=schema['id']))
+                                            dbname=dbname,
+                                            viewname=schema['name']))
 
-@blueprint.route('/<id:dbid>/<id:viewid>/download')
-def download(dbid, viewid):
+@blueprint.route('/<name:dbname>/<name:viewname>/download')
+def download(dbname, viewname):
     "Download the rows in the view to a file."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['views'][viewid]
+        schema = db['views'][viewname]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
-@blueprint.route('/<id:dbid>/<id:viewid>/csv')
-def download_csv(dbid, viewid):
+@blueprint.route('/<name:dbname>/<name:viewname>/csv')
+def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['views'][viewid]
+        schema = db['views'][viewname]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         header = utils.to_bool(flask.request.args.get('header'))
         delimiter = flask.request.args.get('delimiter') or ','
@@ -195,20 +197,20 @@ def download_csv(dbid, viewid):
         writer = csv.writer(outfile, delimiter=delimiter)
         if header:
             writer.writerow(columns)
-        cnx = pleko.db.get_cnx(dbid)
+        cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
-        sql = "SELECT %s FROM %s" % (','.join(columns), viewid)
+        sql = "SELECT %s FROM %s" % (','.join(columns), viewname)
         cursor.execute(sql)
         for row in cursor:
             writer.writerow(row)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
-                                            dbid=dbid,
-                                            viewid=viewid))
+                                            dbname=dbname,
+                                            viewname=viewname))
     outfile.seek(0)
     response = flask.make_response(outfile.read())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
-                         filename="%s.csv" % viewid)
+                         filename="%s.csv" % viewname)
     return response

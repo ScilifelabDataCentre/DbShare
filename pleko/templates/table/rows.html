@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Table {{ schema['id'] }}{% endblock %}
+{% block head_title %}Table {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Table <strong>{{ schema['id'] }}</strong>{% endblock %}
+{% block body_title %}Table <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>
       {% for column in schema['columns'] %}
-      <th>{{ column['id'] }}</th>
+      <th>{{ column['name'] }}</th>
       {% endfor %}
     </tr>
   </thead>
@@ -27,38 +27,38 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.schema', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">Schema</a>
 </div>
 <div class="pt-2">
-  <form action="{{ url_for('query.home', dbid=db['id']) }}"
+  <form action="{{ url_for('query.home', dbname=db['name']) }}"
         method="GET">
-    <input type="hidden" name="from" value="{{ schema['id'] }}">
+    <input type="hidden" name="from" value="{{ schema['name'] }}">
     <button type="submit" class="btn btn-success btn-block">Query</button>
   </form>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.download', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.download', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">Download file</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
-  <a href="{{ url_for('.row', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Add row</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.upload', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.upload', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Upload file</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
+  <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Clone table</a>
 </div>
 <div class="pt-4">
-  <form action="{{ url_for('.rows', dbid=db['id'], tableid=schema['id']) }}"
+  <form action="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

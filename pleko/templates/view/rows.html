@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Rows in view {{ schema['id'] }}{% endblock %}
+{% block head_title %}Rows in view {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Rows in view <strong>{{ schema['id'] }}</strong>{% endblock %}
+{% block body_title %}Rows in view <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <table id="rows" class="table table-sm table-hover">
@@ -27,21 +27,21 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('view.schema', dbid=db['id'], viewid=schema['id']) }}"
+  <a href="{{ url_for('view.schema', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-success btn-block">Schema</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.download', dbid=db['id'], viewid=schema['id']) }}"
+  <a href="{{ url_for('.download', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-success btn-block">Download file</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
-  <a href="{{ url_for('.clone', dbid=db['id'], viewid=schema['id']) }}"
+  <a href="{{ url_for('.clone', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-success btn-block">
     Clone view</a>
 </div>
 <div class="pt-4">
-  <form action="{{ url_for('.rows', dbid=db['id'], viewid=schema['id']) }}"
+  <form action="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

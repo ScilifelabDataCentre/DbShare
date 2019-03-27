@@ -16,29 +16,29 @@ from pleko import utils
 
 blueprint = flask.Blueprint('table', __name__)
 
-@blueprint.route('/<id:dbid>', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
 @pleko.user.login_required
-def create(dbid):
+def create(dbname):
     "Create a table with columns in the database."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('table/create.html', db=db)
 
     elif utils.is_method_POST():
         try:
-            schema = {'id': flask.request.form.get('id')}
+            schema = {'name': flask.request.form.get('name')}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
-                id = flask.request.form.get("column%sid" % n)
-                if not id: break
-                if not constants.IDENTIFIER_RX.match(id):
-                    raise ValueError("invalid identifier in column %s" % (n+1))
-                column = {'id': id}
+                name = flask.request.form.get("column%sname" % n)
+                if not name: break
+                if not constants.NAME_RX.match(name):
+                    raise ValueError("invalid name in column %s" % (n+1))
+                column = {'name': name}
                 type = flask.request.form.get("column%stype" % n)
                 if type not in constants.COLUMN_TYPES:
                     raise ValueError("invalid type in column %s" % (n+1))
@@ -54,26 +54,26 @@ def create(dbid):
                 ctx.add_table(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.create', dbid=dbid))
+            return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/schema')
-def schema(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/schema')
+def schema(dbname, tablename):
     "Display the schema for a table."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     has_write_access = pleko.db.has_write_access(db)
-    nrows = pleko.db.get_nrows(tableid, pleko.db.get_cnx(dbid))
-    indexes = [i for i in db['indexes'].values() if i['table'] == tableid]
+    nrows = pleko.db.get_nrows(tablename, pleko.db.get_cnx(dbname))
+    indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
     return flask.render_template('table/schema.html',
                                  db=db,
                                  schema=schema,
@@ -81,24 +81,25 @@ def schema(dbid, tableid):
                                  indexes=indexes,
                                  has_write_access=has_write_access)
 
-@blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])
-def rows(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>',
+                 methods=['GET', 'POST', 'DELETE'])
+def rows(dbname, tablename):
     "Display rows in the table."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbid)
+            db = pleko.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
-            schema = db['tables'][tableid]
+            schema = db['tables'][tablename]
         except KeyError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
-        cnx = pleko.db.get_cnx(dbid)
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
-        sql = "SELECT * FROM %s" % tableid
+        sql = "SELECT * FROM %s" % tablename
         cursor.execute(sql)
         return flask.render_template('table/rows.html', 
                                      db=db,
@@ -108,46 +109,47 @@ def rows(dbid, tableid):
 
     elif utils.is_method_DELETE():
         try:
-            db = pleko.db.get_check_write(dbid)
+            db = pleko.db.get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
-                ctx.delete_table(tableid)
+                ctx.delete_table(tablename)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/row', methods=['GET', 'POST'])
-def row(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/row',
+                 methods=['GET', 'POST'])
+def row(dbname, tablename):
     "Add a row to the table."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
         try:
-            schema = db['tables'][tableid]
+            schema = db['tables'][tablename]
         except KeyError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         return flask.render_template('table/row.html', 
                                      db=db,
                                      schema=schema)
     
     elif utils.is_method_POST():
         try:
-            schema = db['tables'][tableid]
+            schema = db['tables'][tablename]
         except KeyError as error:
-            return flask.redirect(flask.url_for('db.home', dbid=dbid))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         errors = {}
         values = []
         for column in schema['columns']:
             try:
-                value = flask.request.form.get(column['id'])
+                value = flask.request.form.get(column['name'])
                 if not value:
                     if column['notnull']:
                         raise ValueError('value required for')
@@ -159,70 +161,71 @@ def row(dbid, tableid):
                     value = float(value)
                 values.append(value)
             except (ValueError, TypeError) as error:
-                errors[column['id']] = str(error)
+                errors[column['name']] = str(error)
         if errors:
             for item in errors.items():
                 flask.flash("%s: %s" % item, 'error')
             return flask.render_template('table/row.html', 
                                          db=db,
                                          schema=schema)
-        dbcnx = pleko.db.get_cnx(dbid)
+        dbcnx = pleko.db.get_cnx(dbname)
         cursor = dbcnx.cursor()
         try:
             with dbcnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
-                      (tableid,
-                       ','.join([c['id'] for c in schema['columns']]),
+                      (tablename,
+                       ','.join([c['name'] for c in schema['columns']]),
                        ','.join('?' * len(schema['columns'])))
                 cursor.execute(sql, values)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.row',
-                                                dbid=dbid,
-                                                tableid=tableid))
+                                                dbname=dbname,
+                                                tablename=tablename))
         else:
-            flask.flash("%s rows in table" % pleko.db.get_nrows(tableid,dbcnx),
+            flask.flash("%s rows in table" %
+                        pleko.db.get_nrows(tablename,dbcnx),
                         'message')
             return flask.redirect(flask.url_for('.row',
-                                                dbid=dbid,
-                                                tableid=tableid))
+                                                dbname=dbname,
+                                                tablename=tablename))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/upload')
-def upload(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/upload')
+def upload(dbname, tablename):
     "Add data from a file to the table."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/upload.html', db=db, schema=schema)
 
-@blueprint.route('/<id:dbid>/<id:tableid>/upload/csv', methods=['POST'])
-def upload_csv(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/upload/csv', methods=['POST'])
+def upload_csv(dbname, tablename):
     "Add data from a CSV file to the table."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         csvfile = flask.request.files['csvfile']
         lines = csvfile.read().decode('utf-8').split('\n')
         records = list(csv.reader(lines))
         header = records.pop(0)
         for n, column in enumerate(schema['columns']):
-            if header[n] != column['id']:
-                raise ValueError('header/column identifier mismatch')
+            if header[n] != column['name']:
+                raise ValueError('header/column name mismatch')
         # Eliminate empty records
         records = [r for r in records if r]
         try:
@@ -258,40 +261,41 @@ def upload_csv(dbid, tableid):
                             record[i] = None
         except (ValueError, TypeError, IndexError) as error:
             raise ValueError("line %s, column %s (%s): %s" %
-                             (n+1, i+1, column['id'], str(error)))
-        cnx = pleko.db.get_cnx(dbid)
+                             (n+1, i+1, column['name'], str(error)))
+        cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         with cnx:
             sql = "INSERT INTO %s (%s) VALUES (%s)" % \
-                  (tableid,
-                   ','.join([c['id'] for c in schema['columns']]),
+                  (tablename,
+                   ','.join([c['name'] for c in schema['columns']]),
                    ','.join('?' * len(schema['columns'])))
             cursor.executemany(sql, records)
         flask.flash("Added %s rows" % len(records), 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.upload',
-                                            dbid=dbid,
-                                            tableid=tableid))
+                                            dbname=dbname,
+                                            tablename=tablename))
     return flask.redirect(flask.url_for('.rows',
-                                        dbid=dbid,
-                                        tableid=tableid))
+                                        dbname=dbname,
+                                        tablename=tablename))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/clone', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:tablename>/clone', 
+                 methods=['GET', 'POST'])
 @pleko.user.login_required
-def clone(dbid, tableid):
+def clone(dbname, tablename):
     "Create a clone of the table."
     try:
-        db = pleko.db.get_check_write(dbid)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('table/clone.html',
@@ -301,55 +305,55 @@ def clone(dbid, tableid):
     elif utils.is_method_POST():
         try:
             schema = copy.deepcopy(schema)
-            schema['id'] = flask.request.form['id']
+            schema['name'] = flask.request.form['name']
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
             dbcnx = ctx.dbcnx
             cursor = dbcnx.cursor()
             with dbcnx:
-                colids = ','.join([c['id'] for c in schema['columns']])
-                sql = "INSERT INTO %s (%s) SELECT %s FROM %s" % (schema['id'],
-                                                                 colids,
-                                                                 colids,
-                                                                 tableid)
+                colnames = ','.join([c['name'] for c in schema['columns']])
+                sql = "INSERT INTO %s (%s) SELECT %s FROM %s" % (schema['name'],
+                                                                 colnames,
+                                                                 colnames,
+                                                                 tablename)
                 dbcnx.execute(sql)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone',
-                                                dbid=dbid,
-                                                tableid=tableid))
+                                                dbname=dbname,
+                                                tablename=tablename))
         return flask.redirect(flask.url_for('.rows',
-                                            dbid=dbid,
-                                            tableid=schema['id']))
+                                            dbname=dbname,
+                                            tablename=schema['name']))
 
-@blueprint.route('/<id:dbid>/<id:tableid>/download')
-def download(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/download')
+def download(dbname, tablename):
     "Download the rows in the table to a file."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
-@blueprint.route('/<id:dbid>/<id:tableid>/csv')
-def download_csv(dbid, tableid):
+@blueprint.route('/<name:dbname>/<name:tablename>/csv')
+def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
-        db = pleko.db.get_check_read(dbid)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = db['tables'][tableid]
+        schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbid=dbid))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         header = utils.to_bool(flask.request.args.get('header'))
         delimiter = flask.request.args.get('delimiter') or ','
@@ -359,25 +363,25 @@ def download_csv(dbid, tableid):
             delimiter = ' '
         if not delimiter in constants.CSV_DELIMITERS:
             raise ValueError('invalid CSV delimiter character')
-        columns = [c['id'] for c in schema['columns']]
+        columns = [c['name'] for c in schema['columns']]
         outfile = io.StringIO()
         writer = csv.writer(outfile, delimiter=delimiter)
         if header:
             writer.writerow(columns)
-        cnx = pleko.db.get_cnx(dbid)
+        cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
-        sql = "SELECT %s FROM %s" % (','.join(columns), tableid)
+        sql = "SELECT %s FROM %s" % (','.join(columns), tablename)
         cursor.execute(sql)
         for row in cursor:
             writer.writerow(row)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
-                                            dbid=dbid,
-                                            tableid=tableid))
+                                            dbname=dbname,
+                                            tablename=tablename))
     outfile.seek(0)
     response = flask.make_response(outfile.read())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
-                         filename="%s.csv" % tableid)
+                         filename="%s.csv" % tablename)
     return response

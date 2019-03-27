@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Database {{ db['id'] }}{% endblock %}
+{% block head_title %}Database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}Database <strong>{{ db['id'] }}</strong>{% endblock %}
+{% block body_title %}Database <strong>{{ db['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="row">
@@ -19,7 +19,7 @@
 	  <div class="col-md-8"><h5 class="card-title">Tables</h5></div>
 	  {% if has_write_access %}
 	  <div class="col-md-4">
-	    <a href="{{ url_for('table.create', dbid=db['id']) }}"
+	    <a href="{{ url_for('table.create', dbname=db['name']) }}"
 	       role="button" class="btn btn-primary btn-sm btn-block">
 	      Create table</a>
 	  </div>
@@ -32,13 +32,13 @@
           <tbody>
             {% for table in utils.sorted_schema(db['tables']) %}
             <tr>
-	      <th>{{ table['id'] }}</th>
+	      <th>{{ table['name'] }}</th>
               <td>
-		<a href="{{ url_for('table.rows', dbid=db['id'], tableid=table['id']) }}">
+		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
 		  Table; {{ table['nrows'] }} rows</a>
               </td>
               <td>
-                <a href="{{ url_for('table.schema', dbid=db['id'], tableid=table['id']) }}">
+                <a href="{{ url_for('table.schema', dbname=db['name'], tablename=table['name']) }}">
                   Schema</a>
               </td>
             </tr>
@@ -58,7 +58,7 @@
 	  <div class="col-md-8"><h5 class="card-title">Views</h5></div>
           {% if has_write_access %}
 	  <div class="col-md-4">
-	    <a href="{{ url_for('view.create', dbid=db['id']) }}"
+	    <a href="{{ url_for('view.create', dbname=db['name']) }}"
 	       role="button" class="btn btn-success btn-sm btn-block">
 	      Create view</a>
 	  </div>
@@ -71,13 +71,13 @@
           <tbody>
             {% for view in utils.sorted_schema(db['views']) %}
             <tr>
-	      <th>{{ view['id'] }}</th>
+	      <th>{{ view['name'] }}</th>
               <td>
-		<a href="{{ url_for('view.rows', dbid=db['id'], viewid=view['id']) }}">
+		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
 		  View; {{ view['nrows'] }} rows</a>
               </td>
               <td>
-                <a href="{{ url_for('view.schema', dbid=db['id'], viewid=view['id'])}}">
+                <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">
                   Schema</a>
               </td>
             </tr>
@@ -95,29 +95,29 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('query.home', dbid=db['id']) }}"
+  <a href="{{ url_for('query.home', dbname=db['name']) }}"
      role="button" class="btn btn-success btn-block">Query</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.download', dbid=db['id']) }}"
+  <a href="{{ url_for('.download', dbname=db['name']) }}"
      role="button" class="btn btn-secondary btn-block">Download</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
-  <a href="{{ url_for('.upload', dbid=db['id']) }}"
+  <a href="{{ url_for('.upload', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Upload file</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.rename', dbid=db['id']) }}"
+  <a href="{{ url_for('.rename', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Rename database</a>
 </div>
 <div class="pt-2">
-  <a href="{{ url_for('.clone', dbid=db['id']) }}"
+  <a href="{{ url_for('.clone', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Clone database</a>
 </div>
 {% if db['public'] %}
 <div class="pt-2">
-  <form action="{{ url_for('.private', dbid=db['id']) }}"
+  <form action="{{ url_for('.private', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <button type="submit" class="btn btn-warning btn-block">
@@ -126,7 +126,7 @@
 </div>
 {% else %}
 <div class="pt-2">
-  <form action="{{ url_for('.public', dbid=db['id']) }}"
+  <form action="{{ url_for('.public', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <button type="submit" class="btn btn-warning btn-block">
@@ -135,7 +135,7 @@
 </div>
 {% endif %}
 <div class="pt-4">
-  <form action="{{ url_for('.home', dbid=db['id']) }}"
+  <form action="{{ url_for('.home', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
@@ -168,7 +168,7 @@
     Modified <span class="localtime">{{ db['modified'] }}</span>
   </div>
   <div class="pt-1">
-    <a href="{{ url_for('db.logs', dbid=db['id']) }}">Logs</a>
+    <a href="{{ url_for('db.logs', dbname=db['name']) }}">Logs</a>
   </div>
   <div class="pt-1">
     Created <span class="localtime">{{ db['created'] }}</span>
