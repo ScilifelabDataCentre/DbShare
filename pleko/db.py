@@ -38,7 +38,7 @@ def create():
 
 @blueprint.route('/<id:dbid>', methods=['GET', 'POST', 'DELETE'])
 def home(dbid):
-    "Display the database tables and metadata. Delete the database."
+    "Display the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
         try:
             db = get_check_read(dbid)
@@ -603,7 +603,13 @@ def create_table(cnx, schema, if_not_exists=False):
     cnx.execute(sql)
 
 def create_index(cnx, schema, if_not_exists=False):
-    "Create an index given by its schema in the connected database."
+    """Create an index given by its schema in the connected database.
+    Raise ValueError if any problem.
+    """
+    if not schema.get('columns'):
+        raise ValueError('no columns defined')
+    if len(schema['columns']) != len(set(schema['columns'])):
+        raise ValueError('same column given more than once')
     sql = ['CREATE']
     if schema.get('unique'):
         sql.append('UNIQUE')

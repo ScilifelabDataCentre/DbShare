@@ -6,15 +6,16 @@
 
 {% block main %}
 <div class="card border-primary">
-  <div class="card-header bg-primary text-white">Columns</div>
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Columns</h5>
+  </div>
   <div class="card-body">
     <table class="table">
       <thead>
 	<tr>
 	  <th>Identifier</th>
 	  <th>Type</th>
-	  <th></th>
-	  <th></th>
+	  <th>Constraints</th>
 	</tr>
       </thead>
       <tbody>
@@ -22,12 +23,56 @@
 	<tr>
 	  <td>{{ column['id'] }}</td>
 	  <td>{{ column['type'] }}</td>
-	  <td>{{ column['primarykey'] and 'PRIMARY KEY' or '' }}</td>
-	  <td>{{ column['notnull'] and 'NOT NULL' or '' }}</td>
+	  <td>
+            {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
+	    {{ column['notnull'] and 'NOT NULL' or '' }}
+          </td>
 	</tr>
 	{% endfor %}
       </tbody>
     </table>
+  </div>
+</div>
+<div class="card border-info mt-4">
+  <div class="card-header bg-info text-white">
+    <h5 class="card-title">Indexes</h5>
+  </div>
+  <div class="card-body">
+    {% if indexes %}
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Identifier</th>
+	  <th>Unique</th>
+	  <th>Columns</th>
+          {% if has_write_access %}
+	  <th></th>
+          {% endif %}
+	</tr>
+      </thead>
+      <tbody>
+	{% for index in indexes %}
+	<tr>
+	  <td>{{ index['id'] }}</td>
+	  <td>{{ index['unique'] and 'yes' or ''}}</td>
+	  <td>{{ ', '.join(index['columns']) }}</td>
+          {% if has_write_access %}
+          <td>
+            <form action="{{ url_for('index.delete', dbid=db['id'], indexid=index['id']) }}"
+	          method="POST">
+              {{ csrf_token() }}
+              <input type="hidden" name="_http_method" value="DELETE">
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+          </td>
+          {% endif %}
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <em>none</em>
+    {% endif %}
   </div>
 </div>
 {% endblock %}
@@ -48,6 +93,11 @@
   <a href="{{ url_for('.clone', dbid=db['id'], tableid=schema['id']) }}"
      role="button" class="btn btn-primary btn-block">
     Clone table</a>
+</div>
+<div class="pt-2">
+  <a href="{{ url_for('index.create', dbid=db['id'], tableid=schema['id']) }}"
+     role="button" class="btn btn-info btn-block">
+    Create index</a>
 </div>
 {% endif %}
 {% endblock %}

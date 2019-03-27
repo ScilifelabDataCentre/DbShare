@@ -16,7 +16,7 @@
     <div class="card border-primary">
       <div class="card-header border-primary">
 	<div class="row">
-	  <div class="col-md-8">Tables</div>
+	  <div class="col-md-8"><h5 class="card-title">Tables</h5></div>
 	  {% if has_write_access %}
 	  <div class="col-md-4">
 	    <a href="{{ url_for('table.create', dbid=db['id']) }}"
@@ -27,9 +27,9 @@
 	</div>
       </div>
       <div class="card-body">
+        {% if db['tables'] %}
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% if db['tables'] %}
             {% for table in utils.sorted_schema(db['tables']) %}
             <tr>
 	      <th>{{ table['id'] }}</th>
@@ -43,13 +43,11 @@
               </td>
             </tr>
             {% endfor %}
-            {% else %}
-            <tr>
-              <td><i>none</i></td>
-            </tr>
-            {% endif %}
           </tbody>
         </table>
+        {% else %}
+        <em>none</em>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -57,7 +55,7 @@
     <div class="card border-success">
       <div class="card-header border-success">
         <div class="row">
-	  <div class="col-md-8">Views</div>
+	  <div class="col-md-8"><h5 class="card-title">Views</h5></div>
           {% if has_write_access %}
 	  <div class="col-md-4">
 	    <a href="{{ url_for('view.create', dbid=db['id']) }}"
@@ -68,9 +66,9 @@
         </div>
       </div>
       <div class="card-body">
+        {% if db['views'] %}
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% if db['views'] %}
             {% for view in utils.sorted_schema(db['views']) %}
             <tr>
 	      <th>{{ view['id'] }}</th>
@@ -84,39 +82,11 @@
               </td>
             </tr>
             {% endfor %}
-            {% else %}
-            <tr>
-              <td><i>none</i></td>
-            </tr>
-            {% endif %}
           </tbody>
         </table>
-      </div>
-    </div>
-    <div class="card border-secondary mt-4">
-      <div class="card-header border-secondary">Indexes</div>
-      <div class="card-body">
-        <table class="table table-sm table-hover table-borderless">
-          <tbody>
-            {% if db['indexes'] %}
-            {% for index in utils.sorted_schema_list(db['indexes']) %}
-            <tr>
-	      <th>{{ index['id'] }}</th>
-              <td>
-                Rows
-              </td>
-              <td>
-                Schema
-              </td>
-            </tr>
-            {% endfor %}
-            {% else %}
-            <tr>
-              <td><i>none</i></td>
-            </tr>
-            {% endif %}
-          </tbody>
-        </table>
+        {% else %}
+        <em>none</em>
+        {% endif %}
       </div>
     </div>
   </div>

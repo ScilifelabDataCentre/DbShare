@@ -7,6 +7,7 @@ import jinja2.utils
 
 import pleko
 import pleko.db
+import pleko.index
 import pleko.master
 import pleko.query
 import pleko.table
@@ -35,6 +36,7 @@ app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
 app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
 app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
+app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 
 
 @app.template_filter('or_null_safe')

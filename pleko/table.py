@@ -73,10 +73,12 @@ def schema(dbid, tableid):
         return flask.redirect(flask.url_for('db.home', dbid=dbid))
     has_write_access = pleko.db.has_write_access(db)
     nrows = pleko.db.get_nrows(tableid, pleko.db.get_cnx(dbid))
+    indexes = [i for i in db['indexes'].values() if i['table'] == tableid]
     return flask.render_template('table/schema.html',
                                  db=db,
                                  schema=schema,
                                  nrows=nrows,
+                                 indexes=indexes,
                                  has_write_access=has_write_access)
 
 @blueprint.route('/<id:dbid>/<id:tableid>', methods=['GET', 'POST', 'DELETE'])

@@ -34,17 +34,8 @@ def create(dbid):
 
     elif utils.is_method_POST():
         try:
-            schema = {'id': flask.request.form.get('id')}
-            if not schema['id']:
-                raise ValueError('no view identifier given')
-            if not constants.IDENTIFIER_RX.match(schema['id']):
-                raise ValueError('invalid view identifier')
-            cursor = cnx.cursor()
-            sql = "SELECT COUNT(*) FROM sqlite_master WHERE name=? AND type=?"
-            cursor.execute(sql, (schema['id'], 'view'))
-            if cursor.fetchone()[0] != 0:
-                raise ValueError('view identifier already in use')
-            schema['query'] = pleko.query.get_query_from_request(check=True)
+            schema = {'id': flask.request.form.get('id'),
+                      'query': pleko.query.get_query_from_request(check=True)}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except ValueError as error:
