@@ -1,6 +1,6 @@
 "Pleko: Web-based relational database system powered by Sqlite3."
 
-__version__ = '0.6.7'
+__version__ = '0.6.8'
 
 default_config = dict(
     VERSION = __version__,

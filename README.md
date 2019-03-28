@@ -1,6 +1,7 @@
 # Pleko
 
-Web-based relational database system powered by Sqlite3.
+Web tool for exploring and publishing data sets using the Sqlite3
+relational database.
 
 πλέκω: to plait, twine, twist, weave, braid
 

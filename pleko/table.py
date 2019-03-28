@@ -1,8 +1,6 @@
 "Pleko table endpoints."
 
 import copy
-import csv
-import io
 import sqlite3
 
 import flask
@@ -81,10 +79,15 @@ def schema(dbname, tablename):
                                  indexes=indexes,
                                  has_write_access=has_write_access)
 
-@blueprint.route('/<name:dbname>/<name:tablename>',
+@blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, tablename):
     "Display rows in the table."
+    if tablename.ext not in constants.EXTS:
+        flask.flash('invalid format extension', 'error')
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, tablename=str(tablename)))
+
     if utils.is_method_GET():
         try:
             db = pleko.db.get_check_read(dbname)
@@ -93,7 +96,7 @@ def rows(dbname, tablename):
             return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
-            schema = db['tables'][tablename]
+            schema = db['tables'][str(tablename)]
         except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -101,11 +104,17 @@ def rows(dbname, tablename):
         cursor = cnx.cursor()
         sql = "SELECT * FROM %s" % tablename
         cursor.execute(sql)
-        return flask.render_template('table/rows.html', 
-                                     db=db,
-                                     schema=schema,
-                                     rows=list(cursor),
-                                     has_write_access=has_write_access)
+        rows = list(cursor)
+        if tablename.ext is None or tablename.ext == 'html':
+            return flask.render_template('table/rows.html', 
+                                         db=db,
+                                         schema=schema,
+                                         rows=rows,
+                                         has_write_access=has_write_access)
+        elif tablename.ext == 'csv':
+            raise NotImplementedError
+        elif tablename.ext == 'json':
+            raise NotImplementedError
 
     elif utils.is_method_DELETE():
         try:
@@ -115,7 +124,7 @@ def rows(dbname, tablename):
             return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
-                ctx.delete_table(tablename)
+                ctx.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -341,7 +350,7 @@ def download(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
-@blueprint.route('/<name:dbname>/<name:tablename>/csv')
+@blueprint.route('/<name:dbname>/<name:tablename>/download.csv')
 def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
@@ -355,32 +364,24 @@ def download_csv(dbname, tablename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        header = utils.to_bool(flask.request.args.get('header'))
-        delimiter = flask.request.args.get('delimiter') or ','
-        if delimiter == '<tab>':
-            delimiter = '\t'
-        elif delimiter == '<space>':
-            delimiter = ' '
-        if not delimiter in constants.CSV_DELIMITERS:
-            raise ValueError('invalid CSV delimiter character')
         columns = [c['name'] for c in schema['columns']]
-        outfile = io.StringIO()
-        writer = csv.writer(outfile, delimiter=delimiter)
-        if header:
-            writer.writerow(columns)
+        if utils.to_bool(flask.request.args.get('header')):
+            header = columns
+        else:
+            header = None
+        writer = utils.CsvWriter(header,
+                                 delimiter=flask.request.args.get('delimiter'))
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         sql = "SELECT %s FROM %s" % (','.join(columns), tablename)
         cursor.execute(sql)
-        for row in cursor:
-            writer.writerow(row)
+        writer.add_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
                                             tablename=tablename))
-    outfile.seek(0)
-    response = flask.make_response(outfile.read())
+    response = flask.make_response(writer.get())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % tablename)

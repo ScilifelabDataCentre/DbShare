@@ -1,8 +1,6 @@
 "Pleko view endpoint."
 
 import copy
-import csv
-import io
 import sqlite3
 
 import flask
@@ -186,32 +184,24 @@ def download_csv(dbname, viewname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        header = utils.to_bool(flask.request.args.get('header'))
-        delimiter = flask.request.args.get('delimiter') or ','
-        if delimiter == '<tab>':
-            delimiter = '\t'
-        elif delimiter == '<space>':
-            delimiter = ' '
-        if not delimiter in constants.CSV_DELIMITERS:
-            raise ValueError('invalid CSV delimiter character')
         columns = schema['query']['columns']
-        outfile = io.StringIO()
-        writer = csv.writer(outfile, delimiter=delimiter)
-        if header:
-            writer.writerow(columns)
+        if utils.to_bool(flask.request.args.get('header')):
+            header = columns
+        else:
+            header = None
+        writer = utils.CsvWriter(header,
+                                 delimiter=flask.request.args.get('delimiter'))
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         sql = "SELECT %s FROM %s" % (','.join(columns), viewname)
         cursor.execute(sql)
-        for row in cursor:
-            writer.writerow(row)
+        writer.add_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
                                             viewname=viewname))
-    outfile.seek(0)
-    response = flask.make_response(outfile.read())
+    response = flask.make_response(writer.get())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % viewname)

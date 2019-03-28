@@ -2,8 +2,11 @@
 
 import re
 
-NAME_RX  = re.compile(r'^[a-z][a-z0-9_]*$', re.I)
-EMAIL_RX = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+NAME_RX      = re.compile(r'^[a-z][a-z0-9_]*$', re.I)
+NAME_EXT_RX  = re.compile(r'^([a-z][a-z0-9_]*)(\.[a-z0-9_]+)?$', re.I)
+EMAIL_RX     = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
+
+EXTS = frozenset([None, 'html', 'csv', 'json'])
 
 INDEX_PREFIX_TEMPLATE = "%s$index"
 
@@ -25,6 +28,5 @@ TEXT    = 'TEXT'
 BLOB    = 'BLOB'
 COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
-# CSV file
-CSV_DELIMITERS = ',\t:; |'
+# MIME types
 CSV_MIMETYPE = 'text/csv'

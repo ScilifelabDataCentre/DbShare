@@ -1,6 +1,8 @@
 "Various utility functions and classes."
 
+import csv
 import datetime
+import io
 import json
 import os.path
 import sqlite3
@@ -30,6 +32,24 @@ class NameConverter(werkzeug.routing.BaseConverter):
         if not constants.NAME_RX.match(value):
             raise werkzeug.routing.ValidationError
         return value
+
+class NameExt:
+    def __init__(self, match):
+        self.name = match.group(1)
+        if match.group(2):
+            self.ext = match.group(2).lstrip('.')
+        else:
+            self.ext = None
+    def __str__(self):
+        return self.name
+
+class NameExtConverter(werkzeug.routing.BaseConverter):
+    "URL route converter for a name with an optional extension."
+    def to_python(self, value):
+        match = constants.NAME_EXT_RX.match(value)
+        if not match:
+            raise werkzeug.routing.ValidationError
+        return NameExt(match)
 
 def sorted_schema(schemadict):
     """Return a sorted list of the schema dictionaries
@@ -114,3 +134,39 @@ def check_csrf_token():
 def json_html(data):
     "Output data as JSON for HTML display."
     return jinja2.utils.Markup("<pre>%s</pre>" % json.dumps(data, indent=2))
+
+
+class CsvWriter:
+    "Create CSV file content from rows of data."
+
+    DELIMITERS = {',': ',',
+                  '<tab>': '\t',
+                  '\t': '\t',
+                  '<space>': ' ',
+                  ' ': ' ',
+                  ':': ':',
+                  ';': ';',
+                  '|': '|'}
+
+    def __init__(self, header=None, delimiter=None):
+        if delimiter:
+            try:
+                delimiter = self.DELIMITERS[delimiter]
+            except KeyError:
+                raise ValueError('invalid CSV delimiter character')
+        else:
+            delimiter = ','
+        self.outfile = io.StringIO()
+        self.writer = csv.writer(self.outfile, delimiter=delimiter)
+        if header:
+            self.writer.writerow(header)
+
+    def add_cursor(self, cursor):
+        for row in cursor:
+            self.writer.writerow(row)
+
+    def add_row(self, row):
+        self.writer.writerow(row)
+
+    def get(self):
+        return self.outfile.getvalue()
