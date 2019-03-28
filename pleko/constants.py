@@ -29,4 +29,5 @@ BLOB    = 'BLOB'
 COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
 # MIME types
-CSV_MIMETYPE = 'text/csv'
+CSV_MIMETYPE  = 'text/csv'
+JSON_MIMETYPE = 'application/json'

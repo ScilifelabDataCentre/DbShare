@@ -35,21 +35,27 @@ class NameConverter(werkzeug.routing.BaseConverter):
 
 class NameExt:
     def __init__(self, match):
+        if not match:
+            raise werkzeug.routing.ValidationError
         self.name = match.group(1)
         if match.group(2):
             self.ext = match.group(2).lstrip('.')
         else:
             self.ext = None
+        if self.ext not in constants.EXTS:
+            raise werkzeug.routing.ValidationError
     def __str__(self):
         return self.name
 
 class NameExtConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name with an optional extension."
     def to_python(self, value):
-        match = constants.NAME_EXT_RX.match(value)
-        if not match:
-            raise werkzeug.routing.ValidationError
-        return NameExt(match)
+        return NameExt(constants.NAME_EXT_RX.match(value))
+    def to_url(self, value):
+        if isinstance(value, NameExt):
+            if value.ext:
+                return "%s.%s" % (value, value.ext)
+        return str(value)
 
 def sorted_schema(schemadict):
     """Return a sorted list of the schema dictionaries

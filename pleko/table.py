@@ -81,13 +81,8 @@ def schema(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
-def rows(dbname, tablename):
+def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
     "Display rows in the table."
-    if tablename.ext not in constants.EXTS:
-        flask.flash('invalid format extension', 'error')
-        return flask.redirect(
-            flask.url_for('.rows', dbname=dbname, tablename=str(tablename)))
-
     if utils.is_method_GET():
         try:
             db = pleko.db.get_check_read(dbname)
@@ -100,21 +95,25 @@ def rows(dbname, tablename):
         except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        columns = [c['name'] for c in schema['columns']]
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         sql = "SELECT * FROM %s" % tablename
         cursor.execute(sql)
-        rows = list(cursor)
         if tablename.ext is None or tablename.ext == 'html':
             return flask.render_template('table/rows.html', 
                                          db=db,
                                          schema=schema,
-                                         rows=rows,
+                                         rows=list(cursor),
                                          has_write_access=has_write_access)
         elif tablename.ext == 'csv':
-            raise NotImplementedError
+            writer = utils.CsvWriter(header=columns)
+            writer.add_cursor(cursor)
+            return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
         elif tablename.ext == 'json':
-            raise NotImplementedError
+            return flask.jsonify({'$id': flask.request.url,
+                                  'data': [dict(zip(columns, row))
+                                           for row in cursor]})
 
     elif utils.is_method_DELETE():
         try:

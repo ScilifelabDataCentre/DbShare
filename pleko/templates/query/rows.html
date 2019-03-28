@@ -35,11 +35,6 @@ Rows from query of database <strong>{{ db['name'] }}</strong>
 {% endblock %}
 
 {% block actions %}
-<div>
-  <a href="{{ url_for('db.home', dbname=db['name']) }}"
-     role="button" class="btn btn-outline-primary btn-block">
-    Database<br>{{ db['name'] }}</a>
-</div>
 <div class="pt-2">
   <form action="{{ url_for('.home', dbname=db['name']) }}"
         method="GET">
@@ -49,6 +44,18 @@ Rows from query of database <strong>{{ db['name'] }}</strong>
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit query</button>
+  </form>
+</div>
+<div class="pt-2">
+  <form action="{{ url_for('.rows', dbname=db['name']) }}"
+        method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <button type="submit" class="btn btn-success btn-block">Re-run query</button>
   </form>
 </div>
 <div class="pt-2">

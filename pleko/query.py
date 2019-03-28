@@ -35,6 +35,7 @@ def rows(dbname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
+    query = {}
     try:
         query = get_query_from_request(check=True)
         cnx = pleko.db.get_cnx(dbname)
@@ -73,7 +74,16 @@ def get_query_from_request(check=False):
     result['select'] = flask.request.values.get('select') or ''
     if check and not result['select']:
         raise KeyError('no SELECT part')
-    result['columns'] = [c.strip() for c in result['select'].split(',')]
+    columns = []
+    for name in result['select'].split(','):
+        name = name.strip()
+        try:
+            pos = name.upper().index(' AS ')
+            name = name[pos+len(' AS '):]
+        except ValueError:
+            pass
+        columns.append(name)
+    result['columns'] = columns
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
         raise KeyError('no FROM part')

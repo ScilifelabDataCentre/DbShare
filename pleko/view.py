@@ -64,9 +64,9 @@ def schema(dbname, viewname):
                                  schema=schema,
                                  nrows=nrows)
 
-@blueprint.route('/<name:dbname>/<name:viewname>', 
+@blueprint.route('/<name:dbname>/<nameext:viewname>', 
                  methods=['GET', 'POST', 'DELETE'])
-def rows(dbname, viewname):
+def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view."
     if utils.is_method_GET():
         try:
@@ -76,16 +76,11 @@ def rows(dbname, viewname):
             return flask.redirect(flask.url_for('home'))
         has_write_access = pleko.db.has_write_access(db)
         try:
-            schema = db['views'][viewname]
+            schema = db['views'][str(viewname)]
         except KeyError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
-            cnx = pleko.db.get_cnx(dbname)
-            cursor = cnx.cursor()
-            sql = "SELECT * FROM %s" % viewname
-            cursor.execute(sql)
-            rows = list(cursor)
             if schema['query']['columns'][0] == '*':
                 try:
                     columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
@@ -93,17 +88,33 @@ def rows(dbname, viewname):
                     columns = ['columns']
             else:
                 columns = schema['query']['columns']
+            cnx = pleko.db.get_cnx(dbname)
+            cursor = cnx.cursor()
+            sql = "SELECT * FROM %s" % viewname
+            cursor.execute(sql)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.schema', viewname=viewname))
-        return flask.render_template('view/rows.html', 
-                                     db=db,
-                                     schema=schema,
-                                     columns=columns,
-                                     sql=pleko.query.get_sql_query(schema['query']),
-                                     rows=rows,
-                                     nrows=len(rows),
-                                     has_write_access=has_write_access)
+            return flask.redirect(flask.url_for('.schema',
+                                                viewname=str(viewname)))
+        if viewname.ext is None or viewname.ext == 'html':
+            sql = pleko.query.get_sql_query(schema['query'])
+            rows = list(cursor)
+            return flask.render_template('view/rows.html', 
+                                         db=db,
+                                         schema=schema,
+                                         columns=columns,
+                                         sql=sql,
+                                         rows=rows,
+                                         nrows=len(rows),
+                                         has_write_access=has_write_access)
+        elif viewname.ext == 'csv':
+            writer = utils.CsvWriter(header=columns)
+            writer.add_cursor(cursor)
+            return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
+        elif viewname.ext == 'json':
+            return flask.jsonify({'$id': flask.request.url,
+                                  'data': [dict(zip(columns, row))
+                                           for row in cursor]})
 
     elif utils.is_method_DELETE():
         try:
@@ -113,7 +124,7 @@ def rows(dbname, viewname):
             return flask.redirect(flask.url_for('home'))
         try:
             with pleko.db.DbContext(db) as ctx:
-                ctx.delete_view(viewname)
+                ctx.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
