@@ -60,7 +60,7 @@ def home(dbname):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        cnx = pleko.master.get_cnx()
+        cnx = pleko.master.get_cnx(write=True)
         with cnx:
             sql = 'DELETE FROM dbs_logs WHERE name=?'
             cnx.execute(sql, (dbname,))
@@ -222,9 +222,9 @@ def upload(dbname):
                         if not record[i]:
                             record[i] = None
             # Insert the data
-            cnx = get_cnx(db['name'])
-            cursor = cnx.cursor()
-            with cnx:
+            dbcnx = get_cnx(db['name'], write=True)
+            cursor = dbcnx.cursor()
+            with dbcnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                       (tablename,
                        ','.join([c['name'] for c in schema['columns']]),
@@ -332,13 +332,14 @@ class DbContext:
                        'views':   {}, # Key: viewname
                        'access':  {},
                        'created': utils.get_time()}
-            self.orig = {}
+            self.old = {}
         else:
             self.db = db
-            self.orig = copy.deepcopy(db)
-            self.dbcnx = get_cnx(db['name'])
-        # Don't close this at exit; will be done externally to context
-        self.cnx = pleko.master.get_cnx()
+            self.old = copy.deepcopy(db)
+            # Don't close this at exit; done externally to the context
+            self.dbcnx = get_cnx(db['name'], write=True)
+        # Don't close this at exit; done externally to the context
+        self.cnx = pleko.master.get_cnx(write=True)
 
     def __enter__(self):
         return self
@@ -349,15 +350,25 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        cursor = self.cnx.cursor()
-        cursor.execute("SELECT COUNT(*) FROM dbs WHERE name=?", (self.db['name'],))
-        row = cursor.fetchone()
-        # If new database, then do not overwrite existing
-        if not self.orig and row[0] != 0:
+        if not self.old and get_db(self.db['name']):
             raise ValueError('database name already in use')
         with self.cnx:
+            # Update existing database in master
+            if self.old:
+                sql = "UPDATE dbs SET owner=?, description=?, public=?, " \
+                      " tables=?, indexes=?, views=?, access=?, modified=?" \
+                      " WHERE name=?"
+                self.cnx.execute(sql, (self.db['owner'],
+                                       self.db.get('description'),
+                                       bool(self.db.get('public')),
+                                       json.dumps(self.db['tables']),
+                                       json.dumps(self.db['indexes']),
+                                       json.dumps(self.db['views']),
+                                       json.dumps(self.db['access']),
+                                       self.db['modified'],
+                                       self.db['name']))
             # Create database in master, and Sqlite file
-            if row[0] == 0:
+            else:
                 try:
                     db = sqlite3.connect(utils.dbpath(self.db['name']))
                 except sqlite3.Error as error:
@@ -378,24 +389,10 @@ class DbContext:
                                        json.dumps(self.db['access']),
                                        self.db['created'], 
                                        self.db['modified']))
-            # Update database in master
-            else:
-                sql = "UPDATE dbs SET owner=?, description=?, public=?, " \
-                      " tables=?, indexes=?, views=?, access=?, modified=?" \
-                      " WHERE name=?"
-                self.cnx.execute(sql, (self.db['owner'],
-                                       self.db.get('description'),
-                                       bool(self.db.get('public')),
-                                       json.dumps(self.db['tables']),
-                                       json.dumps(self.db['indexes']),
-                                       json.dumps(self.db['views']),
-                                       json.dumps(self.db['access']),
-                                       self.db['modified'],
-                                       self.db['name']))
             # Add log entry
             new = {}
             for key, value in self.db.items():
-                if value != self.orig.get(key):
+                if value != self.old.get(key):
                     new[key] = value
             new.pop('modified')
             try:
@@ -557,7 +554,7 @@ def get_db(name):
             'modified':    row[8],
             'size':        os.path.getsize(utils.dbpath(name))}
 
-def create_table(cnx, schema, if_not_exists=False):
+def create_table(dbcnx, schema, if_not_exists=False):
     """Create a table given by its schema, in the connected database.
     Raise ValueError if any problem.
     """
@@ -600,9 +597,9 @@ def create_table(cnx, schema, if_not_exists=False):
     sql = "CREATE TABLE %s %s (%s)" % (if_not_exists and 'IF NOT EXISTS' or '',
                                        schema['name'],
                                        ', '.join(clauses))
-    cnx.execute(sql)
+    dbcnx.execute(sql)
 
-def create_index(cnx, schema, if_not_exists=False):
+def create_index(dbcnx, schema, if_not_exists=False):
     """Create an index given by its schema in the connected database.
     Raise ValueError if any problem.
     """
@@ -618,17 +615,26 @@ def create_index(cnx, schema, if_not_exists=False):
         sql.append('IF NOT EXISTS')
     sql.append("%s ON %s" % (schema['name'], schema['table']))
     sql.append("(%s)" % ','.join(schema['columns']))
-    cnx.execute(' '.join(sql))
+    dbcnx.execute(' '.join(sql))
 
-def get_cnx(dbname):
-    "Get a connection for the given database name."
+def get_cnx(dbname, write=False):
+    """Get a connection for the given database name.
+    If write is true, then assume the old connection is for read-only,
+    so close it and reopen it.
+    """
+    if write:
+        try:
+            flask.g.dbcnx[dbname].close()
+        except KeyError:
+            pass
+        flask.g.dbcnx[dbname] = sqlite3.connect(utils.dbpath(dbname))
+        flask.g.dbcnx[dbname].execute('PRAGMA foreign_keys=ON')
     try:
         return flask.g.dbcnx[dbname]
     except KeyError:
-        # This will be closed by app.finalize
-        dbcnx = flask.g.dbcnx[dbname] = sqlite3.connect(utils.dbpath(dbname))
-        dbcnx.execute('PRAGMA foreign_keys=ON')
-        return dbcnx
+        path = "file:%s?mode=ro" % utils.dbpath(dbname)
+        flask.g.dbcnx[dbname] = sqlite3.connect(path, uri=True)
+        return flask.g.dbcnx[dbname]
 
 def has_read_access(db):
     "Does the current user (if any) have read access to the database?"

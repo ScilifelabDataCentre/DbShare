@@ -69,25 +69,33 @@ MASTER_INDEXES = [
     dict(name='dbs_logs_id', table='dbs_logs', columns=['name'])
 ]
 
-def get_cnx(app=None):
-    "Return the existing connection to the master database, else a new one."
+def get_cnx(write=False):
+    """Return the existing connection to the master database, else a new one.
+    If write is true, then assume the old connection is for read-only,
+    so close it and reopen it.
+    """
+    if write:
+        try:
+            flask.g.cnx.close()
+        except AttributeError:
+            pass
+        flask.g.cnx = sqlite3.connect(utils.dbpath(MASTER_DBNAME))
+        flask.g.cnx.execute('PRAGMA foreign_keys=ON')
     try:
         return flask.g.cnx
     except AttributeError:
-        if app is None:
-            app = flask.current_app
-        cnx = sqlite3.connect(utils.dbpath(MASTER_DBNAME))
-        cnx.execute('PRAGMA foreign_keys=ON')
-        return cnx
+        path = "file:%s?mode=ro" % utils.dbpath(MASTER_DBNAME)
+        flask.g.cnx = sqlite3.connect(path, uri=True)
+        return flask.g.cnx
 
-def get_cursor(app=None):
+def get_cursor(write=False):
     "Return a cursor for the master database."
-    return get_cnx(app=app).cursor()
+    return get_cnx(write=write).cursor()
 
 def init(app):
     "Initialize tables in the master database, if not done."
-    cnx = sqlite3.connect(utils.dbpath(MASTER_DBNAME,
-                                       dirpath=app.config['DATABASES_DIRPATH']))
+    path = utils.dbpath(MASTER_DBNAME, dirpath=app.config['DATABASES_DIRPATH'])
+    cnx = sqlite3.connect(path)
     for schema in MASTER_TABLES:
         pleko.db.create_table(cnx, schema, if_not_exists=True)
     for schema in MASTER_INDEXES:

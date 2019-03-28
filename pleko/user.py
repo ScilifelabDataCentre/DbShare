@@ -200,7 +200,7 @@ def logs(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    cursor = flask.g.cnx.cursor()
+    cursor = pleko.master.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
@@ -255,7 +255,7 @@ def edit(username):
 @login_required
 @admin_required
 def users():
-    cursor = flask.g.cnx.cursor()
+    cursor = pleko.master.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, created, modified FROM users"
     cursor.execute(sql)

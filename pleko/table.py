@@ -108,7 +108,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
                                          has_write_access=has_write_access)
         elif tablename.ext == 'csv':
             writer = utils.CsvWriter(header=columns)
-            writer.add_cursor(cursor)
+            writer.add_from_cursor(cursor)
             return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
         elif tablename.ext == 'json':
             return flask.jsonify({'$id': flask.request.url,
@@ -176,7 +176,7 @@ def row(dbname, tablename):
             return flask.render_template('table/row.html', 
                                          db=db,
                                          schema=schema)
-        dbcnx = pleko.db.get_cnx(dbname)
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
         cursor = dbcnx.cursor()
         try:
             with dbcnx:
@@ -192,7 +192,7 @@ def row(dbname, tablename):
                                                 tablename=tablename))
         else:
             flask.flash("%s rows in table" %
-                        pleko.db.get_nrows(tablename,dbcnx),
+                        pleko.db.get_nrows(tablename ,dbcnx),
                         'message')
             return flask.redirect(flask.url_for('.row',
                                                 dbname=dbname,
@@ -270,9 +270,9 @@ def upload_csv(dbname, tablename):
         except (ValueError, TypeError, IndexError) as error:
             raise ValueError("line %s, column %s (%s): %s" %
                              (n+1, i+1, column['name'], str(error)))
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
-        with cnx:
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        cursor = dbcnx.cursor()
+        with dbcnx:
             sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                   (tablename,
                    ','.join([c['name'] for c in schema['columns']]),
@@ -370,11 +370,11 @@ def download_csv(dbname, tablename):
             header = None
         writer = utils.CsvWriter(header,
                                  delimiter=flask.request.args.get('delimiter'))
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        cursor = dbcnx.cursor()
         sql = "SELECT %s FROM %s" % (','.join(columns), tablename)
         cursor.execute(sql)
-        writer.add_cursor(cursor)
+        writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',

@@ -117,8 +117,11 @@
             <label for="select" class="col-md-2 col-form-label text-right">
               SQL</label>
             <div class="col-md-10">
-              <textarea id="sql" name="sql" class="form-control" rows="4"
+              <textarea id="sql" name="sql" class="form-control"
+                        rows="4" aria-describedby="sqlHelp"
 			>{{ sql or '' }}</textarea>
+              <small id="sqlHelp" class="form-text text-muted">
+                The database is read-only while executing this command.</small>
             </div>
           </div>
           <div class="form-group row">

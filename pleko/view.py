@@ -23,11 +23,11 @@ def create(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     query = pleko.query.get_query_from_request()
-    cnx = pleko.db.get_cnx(dbname)
 
     if utils.is_method_GET():
+        dbcnx = pleko.db.get_cnx(dbname)
         for table in db['tables'].values():
-            table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
+            table['nrows'] = pleko.db.get_nrows(table['name'], dbcnx)
         return flask.render_template('view/create.html', db=db, query=query)
 
     elif utils.is_method_POST():
@@ -88,8 +88,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     columns = ['columns']
             else:
                 columns = schema['query']['columns']
-            cnx = pleko.db.get_cnx(dbname)
-            cursor = cnx.cursor()
+            dbcnx = pleko.db.get_cnx(dbname)
+            cursor = dbcnx.cursor()
             sql = "SELECT * FROM %s" % viewname
             cursor.execute(sql)
         except sqlite3.Error as error:
@@ -109,7 +109,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                          has_write_access=has_write_access)
         elif viewname.ext == 'csv':
             writer = utils.CsvWriter(header=columns)
-            writer.add_cursor(cursor)
+            writer.add_from_cursor(cursor)
             return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
         elif viewname.ext == 'json':
             return flask.jsonify({'$id': flask.request.url,
@@ -202,11 +202,11 @@ def download_csv(dbname, viewname):
             header = None
         writer = utils.CsvWriter(header,
                                  delimiter=flask.request.args.get('delimiter'))
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
+        dbcnx = pleko.db.get_cnx(dbname)
+        cursor = dbcnx.cursor()
         sql = "SELECT %s FROM %s" % (','.join(columns), viewname)
         cursor.execute(sql)
-        writer.add_cursor(cursor)
+        writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',

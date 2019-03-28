@@ -50,7 +50,7 @@ def or_null_safe(value):
 
 @app.before_request
 def prepare():
-    "Connect to the master database; get the current user."
+    "Connect to the master database (read-only); get the current user."
     flask.g.cnx = pleko.master.get_cnx()
     flask.g.dbcnx = {}
     flask.g.current_user = pleko.user.get_current_user()

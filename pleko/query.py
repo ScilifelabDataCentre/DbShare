@@ -88,9 +88,6 @@ def sql(dbname):
         if not sql:
             raise ValueError('no SQL statement provided')
         command = sql.split()[0].upper()
-        if command not in constants.SQL_SAFE:
-            raise ValueError("SQL command must be one of: %s" % 
-                             ', '.join(constants.SQL_SAFE))
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         cursor.execute(sql)
