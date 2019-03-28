@@ -115,25 +115,55 @@
   <a href="{{ url_for('.clone', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Clone database</a>
 </div>
+{% endif %} {# has_write_access #}
+
+{% if can_change_mode %}
 {% if db['public'] %}
-<div class="pt-2">
+<div class="pt-4">
   <form action="{{ url_for('.private', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
-    <button type="submit" class="btn btn-warning btn-block">
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('Only you will be able to read the data in this database.')">
       Set private access</button>
   </form>
 </div>
 {% else %}
-<div class="pt-2">
+<div class="pt-4">
   <form action="{{ url_for('.public', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
-    <button type="submit" class="btn btn-warning btn-block">
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('Everyone will be able to read the data in this database.')">
       Set public access</button>
   </form>
 </div>
-{% endif %}
+{% endif %} {# public #}
+
+{% if db['readonly'] %}
+<div class="pt-2">
+  <form action="{{ url_for('.readwrite', dbname=db['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('The database will be modifiable.')">
+      Set read-write mode</button>
+  </form>
+</div>
+{% else %}
+<div class="pt-2">
+  <form action="{{ url_for('.readonly', dbname=db['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('The database will be read-only.')">
+      Set read-only mode</button>
+  </form>
+</div>
+{% endif %} {# readonly #}
+{% endif %} {# can_change_mode #}
+
+{% if has_write_access %}
 <div class="pt-4">
   <form action="{{ url_for('.home', dbname=db['name']) }}"
 	method="POST">
@@ -144,13 +174,16 @@
       Delete database</button>
   </form>
 </div>
-{% endif %}
+{% endif %} {# has_write_access #}
 {% endblock %}
 
 {% block info %}
 <div class="small pt-4">
   <div>
     Access {{ db['public'] and 'public' or 'private' }}
+  </div>
+  <div class="pt-1">
+    Mode {{ db['readonly'] and 'read-only' or 'read-write' }}
   </div>
   <div class="pt-1">
     Owner

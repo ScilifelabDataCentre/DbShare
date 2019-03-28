@@ -39,11 +39,12 @@ MASTER_TABLES = [
          columns=[dict(name='name', type=constants.TEXT, primarykey=True),
                   dict(name='owner', type=constants.TEXT, notnull=True),
                   dict(name='description', type=constants.TEXT),
-                  dict(name='public', type=constants.INTEGER, notnull=True),
                   dict(name='tables', type=constants.TEXT, notnull=True),
                   dict(name='indexes', type=constants.TEXT, notnull=True),
                   dict(name='views', type=constants.TEXT, notnull=True),
+                  dict(name='public', type=constants.INTEGER, notnull=True),
                   dict(name='access', type=constants.TEXT, notnull=True),
+                  dict(name='readonly', type=constants.INTEGER, notnull=True),
                   dict(name='created', type=constants.TEXT, notnull=True),
                   dict(name='modified', type=constants.TEXT, notnull=True)
          ]),

@@ -71,7 +71,7 @@ def rows(dbname):
                                  columns=columns,
                                  sql=sql,
                                  rows=rows,
-                                 nrows=len(rows)),
+                                 nrows=len(rows))
 
 @blueprint.route('/<name:dbname>/sql', methods=['POST'])
 def sql(dbname):

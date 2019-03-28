@@ -50,9 +50,12 @@ def home(dbname):
             table['nrows'] = get_nrows(table['name'], dbcnx)
         for view in db['views'].values():
             view['nrows'] = get_nrows(view['name'], dbcnx)
+        hwa = has_write_access(db)
+        ccm = has_write_access(db, check_mode=False)
         return flask.render_template('db/home.html', 
                                      db=db,
-                                     has_write_access=has_write_access(db))
+                                     has_write_access=hwa,
+                                     can_change_mode=ccm)
 
     elif utils.is_method_DELETE():
         try:
@@ -270,12 +273,25 @@ def clone(dbname):
         shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
+@blueprint.route('/<name:dbname>/download')
+def download(dbname):
+    "Download the Sqlite3 database file."
+    try:
+        db = get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    return flask.send_file(utils.dbpath(dbname),
+                           mimetype='application/x-sqlite3',
+                           as_attachment=True)
+
+
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
 @pleko.user.login_required
 def public(dbname):
     "Set the database to public access."
     try:
-        db = get_check_write(dbname)
+        db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -293,7 +309,7 @@ def public(dbname):
 def private(dbname):
     "Set the database to private access."
     try:
-        db = get_check_write(dbname)
+        db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -306,18 +322,45 @@ def private(dbname):
         flask.flash('Database public access revoked.', 'message')
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
-
-@blueprint.route('/<name:dbname>/download')
-def download(dbname):
-    "Download the Sqlite3 database file."
+@blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
+@pleko.user.login_required
+def readwrite(dbname):
+    "Set the database to read-write mode."
     try:
-        db = get_check_read(dbname)
+        db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    return flask.send_file(utils.dbpath(dbname),
-                           mimetype='application/x-sqlite3',
-                           as_attachment=True)
+    try:
+        with DbContext(db) as ctx:
+            ctx.db['readonly'] = False
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    else:
+        flask.flash('Database set to read-write mode.', 'message')
+    print('set to read-write')
+    print(json.dumps(db, indent=2))
+    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+
+@blueprint.route('/<name:dbname>/readonly', methods=['POST'])
+@pleko.user.login_required
+def readonly(dbname):
+    "Set the database to read-only mode."
+    try:
+        db = get_check_write(dbname, check_mode=False)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        with DbContext(db) as ctx:
+            ctx.db['readonly'] = True
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    else:
+        flask.flash('Database set to read-only mode.', 'message')
+    print('set to read-only')
+    print(json.dumps(db, indent=2))
+    return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 
 class DbContext:
@@ -326,11 +369,12 @@ class DbContext:
     def __init__(self, db=None):
         if db is None:
             self.db = {'owner':   flask.g.current_user['username'],
-                       'public':  False,
                        'tables':  {}, # Key: tablename
                        'indexes': {}, # Key: indexname
                        'views':   {}, # Key: viewname
+                       'public':  False,
                        'access':  {},
+                       'readonly': False,
                        'created': utils.get_time()}
             self.old = {}
         else:
@@ -355,16 +399,18 @@ class DbContext:
         with self.cnx:
             # Update existing database in master
             if self.old:
-                sql = "UPDATE dbs SET owner=?, description=?, public=?, " \
-                      " tables=?, indexes=?, views=?, access=?, modified=?" \
+                sql = "UPDATE dbs SET owner=?, description=?," \
+                      " tables=?, indexes=?, views=?, public=?, access=?," \
+                      " readonly=?, modified=?" \
                       " WHERE name=?"
                 self.cnx.execute(sql, (self.db['owner'],
                                        self.db.get('description'),
-                                       bool(self.db.get('public')),
                                        json.dumps(self.db['tables']),
                                        json.dumps(self.db['indexes']),
                                        json.dumps(self.db['views']),
+                                       bool(self.db['public']),
                                        json.dumps(self.db['access']),
+                                       bool(self.db['readonly']),
                                        self.db['modified'],
                                        self.db['name']))
             # Create database in master, and Sqlite file
@@ -376,17 +422,18 @@ class DbContext:
                 else:
                     db.close()
                 sql = "INSERT INTO dbs" \
-                      " (name, owner, description, public, tables, indexes," \
-                      "  views, access, created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                      " (name, owner, description, tables, indexes, views," \
+                      "  public, access, readonly, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.db['name'],
                                        self.db['owner'],
                                        self.db.get('description'),
-                                       bool(self.db.get('public')),
                                        json.dumps(self.db['tables']),
                                        json.dumps(self.db['indexes']),
                                        json.dumps(self.db['views']),
+                                       bool(self.db['public']),
                                        json.dumps(self.db['access']),
+                                       bool(self.db['readonly']),
                                        self.db['created'], 
                                        self.db['modified']))
             # Add log entry
@@ -508,9 +555,9 @@ class DbContext:
 # Utility functions
 
 def get_dbs(public=True):
-    "Get a list of all databases."
-    sql = "SELECT name, owner, description, public, tables, indexes, views," \
-          " access, created, modified FROM dbs"
+    "Get a list of all databases. Does not get database size."
+    sql = "SELECT name, owner, description, tables, indexes, views," \
+          " public, access, readonly, created, modified FROM dbs"
     if public:
         sql += " WHERE public=1"
     cursor = pleko.master.get_cursor()
@@ -518,13 +565,14 @@ def get_dbs(public=True):
     result = [{'name':        row[0],
                'owner':       row[1],
                'description': row[2],
-               'public':      bool(row[3]),
-               'tables':      json.loads(row[4]),
-               'indexes':     json.loads(row[5]),
-               'views':       json.loads(row[6]),
+               'tables':      json.loads(row[3]),
+               'indexes':     json.loads(row[4]),
+               'views':       json.loads(row[5]),
+               'public':      bool(row[6]),
                'access':      json.loads(row[7]),
-               'created':     row[8],
-               'modified':    row[9]}
+               'readonly':    bool(row[8]),
+               'created':     row[9],
+               'modified':    row[10]}
               for row in cursor]
     for db in result:
         db['size'] = os.path.getsize(utils.dbpath(db['name']))
@@ -536,22 +584,24 @@ def get_db(name):
     Does *not* check access.
     """
     cursor = pleko.master.get_cursor()
-    sql = "SELECT owner, description, public, tables, indexes, views," \
-          " access, created, modified FROM dbs WHERE name=?"
+    sql = "SELECT owner, description, tables, indexes, views," \
+          " public, access, readonly, created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
+    print(row[7], type(row[7]))
     return {'name':        name,
             'owner':       row[0],
             'description': row[1],
-            'public':      bool(row[2]),
-            'tables':      json.loads(row[3]),
-            'indexes':     json.loads(row[4]),
-            'views':       json.loads(row[5]),
+            'tables':      json.loads(row[2]),
+            'indexes':     json.loads(row[3]),
+            'views':       json.loads(row[4]),
+            'public':      bool(row[5]),
             'access':      json.loads(row[6]),
-            'created':     row[7],
-            'modified':    row[8],
+            'readonly':    bool(row[7]),
+            'created':     row[8],
+            'modified':    row[9],
             'size':        os.path.getsize(utils.dbpath(name))}
 
 def create_table(dbcnx, schema, if_not_exists=False):
@@ -656,20 +706,21 @@ def get_check_read(dbname):
         raise ValueError('may not read the database')
     return db
 
-def has_write_access(db):
+def has_write_access(db, check_mode=True):
     "Does the current user (if any) have write access to the database?"
     if not flask.g.current_user: return False
+    if check_mode and db['readonly']: return False
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_write(dbname):
+def get_check_write(dbname, check_mode=True):
     """Get the database and check that the current user as write access.
     Raise ValueError if any problem.
     """
     db = get_db(dbname)
     if db is None:
         raise ValueError('no such database')
-    if not has_write_access(db):
+    if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
     return db
 

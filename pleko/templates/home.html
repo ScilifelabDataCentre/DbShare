@@ -11,6 +11,7 @@
       <th>Database</th>
       <th>Description</th>
       <th>Access</th>
+      <th>Mode</th>
       <th>Owner</th>
       <th>Size</th>
       <th>Modified</th>
@@ -26,6 +27,7 @@
       </td>
       <td>{{ db.get('description') or '-' }}</td>
       <td>{{ db['public'] and 'public' or 'private'}}</td>
+      <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td>{{ db['owner'] }}</td>
       <td class="text-right">
         <span class="text-monospace mr-2">{{ db['size'] }}</span>
