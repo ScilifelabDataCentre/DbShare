@@ -79,11 +79,13 @@ def get_cnx(write=False):
             flask.g.cnx.close()
         except AttributeError:
             pass
+        # Read-write mode
         flask.g.cnx = sqlite3.connect(utils.dbpath(MASTER_DBNAME))
         flask.g.cnx.execute('PRAGMA foreign_keys=ON')
     try:
         return flask.g.cnx
     except AttributeError:
+        # Read-only mode
         path = "file:%s?mode=ro" % utils.dbpath(MASTER_DBNAME)
         flask.g.cnx = sqlite3.connect(path, uri=True)
         return flask.g.cnx

@@ -58,12 +58,12 @@
 <div class="pt-4">
   <a href="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
-    Add row</a>
+    Insert row</a>
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.upload', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
-    Upload file</a>
+    Insert data from file</a>
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"

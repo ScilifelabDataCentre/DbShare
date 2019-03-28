@@ -1,6 +1,7 @@
 "Pleko table endpoints."
 
 import copy
+import csv
 import sqlite3
 
 import flask
@@ -131,7 +132,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
 def row(dbname, tablename):
-    "Add a row to the table."
+    "Insert a row into the table."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
@@ -200,7 +201,7 @@ def row(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/upload')
 def upload(dbname, tablename):
-    "Add data from a file to the table."
+    "Insert data from a file into the table."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
@@ -215,7 +216,7 @@ def upload(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/upload/csv', methods=['POST'])
 def upload_csv(dbname, tablename):
-    "Add data from a CSV file to the table."
+    "Insert data from a CSV file into the table."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
@@ -278,7 +279,7 @@ def upload_csv(dbname, tablename):
                    ','.join([c['name'] for c in schema['columns']]),
                    ','.join('?' * len(schema['columns'])))
             cursor.executemany(sql, records)
-        flask.flash("Added %s rows" % len(records), 'message')
+        flask.flash("Inserted %s rows" % len(records), 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.upload',

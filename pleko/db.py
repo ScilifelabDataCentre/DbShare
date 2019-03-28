@@ -230,7 +230,7 @@ def upload(dbname):
                        ','.join([c['name'] for c in schema['columns']]),
                        ','.join('?' * len(schema['columns'])))
                 cursor.executemany(sql, records)
-            flask.flash("Added %s rows" % len(records), 'message')
+            flask.flash("Inserted %s rows" % len(records), 'message')
 
         except (ValueError, IndexError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -627,11 +627,13 @@ def get_cnx(dbname, write=False):
             flask.g.dbcnx[dbname].close()
         except KeyError:
             pass
+        # Read-write mode
         flask.g.dbcnx[dbname] = sqlite3.connect(utils.dbpath(dbname))
         flask.g.dbcnx[dbname].execute('PRAGMA foreign_keys=ON')
     try:
         return flask.g.dbcnx[dbname]
     except KeyError:
+        # Read-only mode
         path = "file:%s?mode=ro" % utils.dbpath(dbname)
         flask.g.dbcnx[dbname] = sqlite3.connect(path, uri=True)
         return flask.g.dbcnx[dbname]
