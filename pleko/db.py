@@ -138,6 +138,11 @@ def upload(dbname):
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
+                tablename = list(tablename)
+                for pos, char in enumerate(tablename):
+                    if char not in constants.NAME_CHARS:
+                        tablename[pos] = '_'
+                tablename = ''.join(tablename)
             if tablename in db['tables']:
                 raise ValueError('table name already in use')
             schema = {'name': tablename}

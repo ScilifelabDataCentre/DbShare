@@ -2,7 +2,9 @@
 
 {% block head_title %}Schema for table {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Schema for table <strong>{{ schema['name'] }}</strong>{% endblock %}
+{% block body_title %}
+Schema for table <strong>{{ schema['name'] }}</strong>
+{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
@@ -13,7 +15,7 @@
     <table class="table">
       <thead>
 	<tr>
-	  <th>Identifier</th>
+	  <th>Name</th>
 	  <th>Type</th>
 	  <th>Constraints</th>
 	</tr>
@@ -42,7 +44,7 @@
     <table class="table">
       <thead>
 	<tr>
-	  <th>Identifier</th>
+	  <th>Name</th>
 	  <th>Unique</th>
 	  <th>Columns</th>
           {% if has_write_access %}

@@ -2,7 +2,9 @@
 
 {% block head_title %}Rename database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}Rename database <strong>{{ db['name'] }}</strong>{% endblock %}
+{% block body_title %}
+Rename database <strong>{{ db['name'] }}</strong>
+{% endblock %}
 
 {% block main %}
 <form action="{{ url_for('.rename', dbname=db['name']) }}"
@@ -10,7 +12,7 @@
   {{ csrf_token() }}
   <div class="form-group row">
     <label for="name" class="col-md-2 col-form-label text-right">
-      Identifier</label>
+      Name</label>
     <div class="col-md-6">
       <input id="name" name="name" type="text" class="form-control" autofocus>
     </div>

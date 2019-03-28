@@ -13,10 +13,10 @@ from pleko import utils
 
 blueprint = flask.Blueprint('plot', __name__)
 
-@blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:tvname>', methods=['GET', 'POST'])
 @pleko.user.login_required
 def create(dbname):
-    "Create a plot of data in the database."
+    "Create a plot of a table or view in the database."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:

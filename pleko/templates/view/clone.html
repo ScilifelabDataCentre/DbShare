@@ -2,7 +2,9 @@
 
 {% block head_title %}Clone view {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}Clone view <strong>{{ schema['name'] }}</strong>{% endblock %}
+{% block body_title %}
+Clone view <strong>{{ schema['name'] }}</strong>
+{% endblock %}
 
 {% block main %}
 <div class="card border-success">
@@ -12,7 +14,7 @@
       {{ csrf_token() }}
       <div class="form-group row">
         <label for="name" class="col-md-2 col-form-label text-right">
-          Identifier</label>
+	  Name</label>
         <div class="col-md-6">
           <input id="name" name="name" type="text"
 		 class="form-control" autofocus>
