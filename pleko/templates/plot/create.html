@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Create a plot{% endblock %}
+
+{% block body_title %}Create a plot{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-body">
+    <form action="{{ url_for('.create', dbname=db['name'], tvname=schema['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="name" class="col-md-2 col-form-label text-right">
+          Name</label>
+        <div class="col-md-6">
+          <input id="name" name="name" type="text" 
+		 class="form-control" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="json" class="col-md-2 col-form-label text-right">
+          JSON spec</label>
+        <div class="col-md">
+          <textarea id="json" name="json" rows="8" class="form-control"
+		    ></textarea>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-2 offset-md-2">
+          <button type="submit" 
+                  class="btn btn-primary btn-lg btn-block">Create</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('db.home', dbname=db['name']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</div>
+{% endblock %}

@@ -343,8 +343,6 @@ def readwrite(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-write mode.', 'message')
-    print('set to read-write')
-    print(json.dumps(db, indent=2))
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
@@ -363,13 +361,11 @@ def readonly(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-only mode.', 'message')
-    print('set to read-only')
-    print(json.dumps(db, indent=2))
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 
 class DbContext:
-    "Context for creating, modifying and saving metadata for a database."
+    "Context handler to create, modify and save metadata for a database."
 
     def __init__(self, db=None):
         if db is None:
@@ -595,7 +591,6 @@ def get_db(name):
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
-    print(row[7], type(row[7]))
     return {'name':        name,
             'owner':       row[0],
             'description': row[1],

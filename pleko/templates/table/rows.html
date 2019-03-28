@@ -56,6 +56,11 @@
 </div>
 {% if has_write_access %}
 <div class="pt-4">
+  <a href="{{ url_for('plot.create', dbname=db['name'], tvname=schema['name']) }}"
+     role="button" class="btn btn-info btn-block">
+    Create plot</a>
+</div>
+<div class="pt-4">
   <a href="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Insert row</a>

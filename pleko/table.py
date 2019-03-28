@@ -67,8 +67,8 @@ def schema(dbname, tablename):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     has_write_access = pleko.db.has_write_access(db)
     nrows = pleko.db.get_nrows(tablename, pleko.db.get_cnx(dbname))
@@ -93,8 +93,8 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
         has_write_access = pleko.db.has_write_access(db)
         try:
             schema = db['tables'][str(tablename)]
-        except KeyError as error:
-            flask.flash(str(error), 'error')
+        except KeyError:
+            flask.flash('no such table', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         columns = [c['name'] for c in schema['columns']]
         cnx = pleko.db.get_cnx(dbname)
@@ -138,22 +138,16 @@ def row(dbname, tablename):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
-        try:
-            schema = db['tables'][tablename]
-        except KeyError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
-        return flask.render_template('table/row.html', 
-                                     db=db,
-                                     schema=schema)
+        return flask.render_template('table/row.html', db=db, schema=schema)
     
     elif utils.is_method_POST():
-        try:
-            schema = db['tables'][tablename]
-        except KeyError as error:
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         errors = {}
         values = []
         for column in schema['columns']:
@@ -209,8 +203,8 @@ def upload(dbname, tablename):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/upload.html', db=db, schema=schema)
 
@@ -224,8 +218,8 @@ def upload_csv(dbname, tablename):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         csvfile = flask.request.files['csvfile']
@@ -299,11 +293,10 @@ def clone(dbname, tablename):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
@@ -345,8 +338,8 @@ def download(dbname, tablename):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
@@ -360,8 +353,8 @@ def download_csv(dbname, tablename):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         columns = [c['name'] for c in schema['columns']]

@@ -55,8 +55,8 @@ def schema(dbname, viewname):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     nrows = pleko.db.get_nrows(viewname, pleko.db.get_cnx(dbname))
     return flask.render_template('view/schema.html',
@@ -77,8 +77,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         has_write_access = pleko.db.has_write_access(db)
         try:
             schema = db['views'][str(viewname)]
-        except KeyError as error:
-            flask.flash(str(error), 'error')
+        except KeyError:
+            flask.flash('no such view', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
             if schema['query']['columns'][0] == '*':
@@ -139,11 +139,10 @@ def clone(dbname, viewname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-
     try:
         schema = db['views'][viewname]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
@@ -176,8 +175,8 @@ def download(dbname, viewname):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
@@ -191,8 +190,8 @@ def download_csv(dbname, viewname):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
-    except KeyError as error:
-        flask.flash(str(error), 'error')
+    except KeyError:
+        flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         columns = schema['query']['columns']

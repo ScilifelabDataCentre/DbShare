@@ -62,14 +62,14 @@ def sorted_schema(schemadict):
     according to the 'name' elements."""
     return sorted(schemadict.values(), key=lambda d: d['name'])
 
-def dbpath(dbname, dirpath=None):
+def dbpath(dbname, dirpath=None, ext='.sqlite3'):
     "Return the file path for the given database name."
     if dirpath is None:
         dirpath = flask.current_app.config['DATABASES_DIRPATH']
     dirpath = os.path.expanduser(dirpath)
     dirpath = os.path.expandvars(dirpath)
-    return os.path.join(dirpath, dbname) + '.sqlite3'
-    
+    return os.path.join(dirpath, dbname) + ext
+
 def get_absolute_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."
     url = flask.url_for(endpoint, _external=True, **values)
