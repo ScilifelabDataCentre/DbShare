@@ -9,6 +9,7 @@ import pleko
 import pleko.db
 import pleko.index
 import pleko.master
+import pleko.plot
 import pleko.query
 import pleko.table
 import pleko.user
@@ -38,6 +39,7 @@ app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
 app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
 app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
+app.register_blueprint(pleko.plot.blueprint, url_prefix='/plot')
 
 
 @app.template_filter('or_null_safe')
