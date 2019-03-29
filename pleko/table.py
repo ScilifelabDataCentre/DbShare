@@ -70,15 +70,13 @@ def schema(dbname, tablename):
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    has_write_access = pleko.db.has_write_access(db)
-    nrows = pleko.db.get_nrows(tablename, pleko.db.get_cnx(dbname))
     indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
-    return flask.render_template('table/schema.html',
-                                 db=db,
-                                 schema=schema,
-                                 nrows=nrows,
-                                 indexes=indexes,
-                                 has_write_access=has_write_access)
+    return flask.render_template(
+        'table/schema.html',
+        db=db,
+        schema=schema,
+        indexes=indexes,
+        has_write_access=pleko.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -86,7 +84,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
     "Display rows in the table."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname)
+            db = pleko.db.get_check_read(dbname, nrows=False)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -332,7 +330,7 @@ def clone(dbname, tablename):
 def download(dbname, tablename):
     "Download the rows in the table to a file."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -347,7 +345,7 @@ def download(dbname, tablename):
 def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False, plots=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

@@ -6,7 +6,7 @@
 
 {% block main %}
 <div class="mx-3">
-  SQL> <code>{{ sql }};</code> &rarr; {{ nrows }} rows
+  SQL> <code>{{ sql }};</code> &rarr; {{ len(rows) }} rows
 </div>
 <div class="mt-3">
   <table id="rows" class="table table-sm table-hover">

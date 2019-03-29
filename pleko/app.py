@@ -62,7 +62,9 @@ def setup_template_context():
     "Add useful stuff to the global context for templates."
     return dict(constants=constants,
                 csrf_token=utils.csrf_token,
-                utils=utils)
+                utils=utils,
+                len=len,
+                enumerate=enumerate)
 
 @app.route('/')
 def home():

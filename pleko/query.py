@@ -28,8 +28,6 @@ def home(dbname):
         sql = flask.request.args.get('sql')
         if sql: sql = sql.strip()
     cnx = pleko.db.get_cnx(dbname)
-    for table in db['tables'].values():
-        table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
     return flask.render_template('query/home.html',
                                  db=db,
                                  query=query,
@@ -41,7 +39,7 @@ def rows(dbname):
     "Display results of a query to the database."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -70,8 +68,7 @@ def rows(dbname):
                                  query=query,
                                  columns=columns,
                                  sql=sql,
-                                 rows=rows,
-                                 nrows=len(rows))
+                                 rows=rows)
 
 @blueprint.route('/<name:dbname>/sql', methods=['POST'])
 def sql(dbname):
@@ -109,8 +106,7 @@ def sql(dbname):
                                  query={},
                                  columns=columns,
                                  sql=sql,
-                                 rows=rows,
-                                 nrows=len(rows))
+                                 rows=rows)
         
 
 # Utility functions

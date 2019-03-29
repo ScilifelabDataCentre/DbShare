@@ -12,6 +12,7 @@ import flask
 
 import pleko.master
 import pleko.table
+import pleko.plot
 import pleko.query
 import pleko.user
 from pleko import constants
@@ -59,17 +60,11 @@ def home(dbname):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        dbcnx = get_cnx(db['name'])
-        for table in db['tables'].values():
-            table['nrows'] = get_nrows(table['name'], dbcnx)
-        for view in db['views'].values():
-            view['nrows'] = get_nrows(view['name'], dbcnx)
-        hwa = has_write_access(db)
-        ccm = has_write_access(db, check_mode=False)
-        return flask.render_template('db/home.html', 
-                                     db=db,
-                                     has_write_access=hwa,
-                                     can_change_mode=ccm)
+        return flask.render_template(
+            'db/home.html', 
+            db=db,
+            has_write_access=has_write_access(db),
+            can_change_mode=has_write_access(db, check_mode=False))
 
     elif utils.is_method_DELETE():
         try:
@@ -112,7 +107,7 @@ def rename(dbname):
 def logs(dbname):
     "Display the logs for a database."
     try:
-        db = get_check_read(dbname)
+        db = get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -126,9 +121,7 @@ def logs(dbname):
              'user_agent':  row[3],
              'timestamp':   row[4]}
             for row in cursor]
-    return flask.render_template('db/logs.html',
-                                 db=db,
-                                 logs=logs)
+    return flask.render_template('db/logs.html', db=db, ogs=logs)
 
 @blueprint.route('/<name:dbname>/upload', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -268,7 +261,7 @@ def upload(dbname):
 def clone(dbname):
     "Create a clone of the database."
     try:
-        db = get_check_read(dbname)
+        db = get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -296,7 +289,7 @@ def clone(dbname):
 def download(dbname):
     "Download the Sqlite3 database file."
     try:
-        db = get_check_read(dbname)
+        db = get_check_read(dbname, nrows=False, plots=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -722,8 +715,9 @@ def has_read_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_read(dbname):
+def get_check_read(dbname, nrows=True, plots=True):
     """Get the database and check that the current user as read access.
+    Optionally add nrows for each table and view, and plots for database.
     Raise ValueError if any problem.
     """
     db = get_db(dbname)
@@ -731,6 +725,10 @@ def get_check_read(dbname):
         raise ValueError('no such database')
     if not has_read_access(db):
         raise ValueError('may not read the database')
+    if nrows:
+        set_nrows(db)
+    if plots:
+        db['plots'] = pleko.plot.get_plots(dbname)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -740,7 +738,7 @@ def has_write_access(db, check_mode=True):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_write(dbname, check_mode=True):
+def get_check_write(dbname, check_mode=True, nrows=False, plots=False):
     """Get the database and check that the current user as write access.
     Raise ValueError if any problem.
     """
@@ -749,7 +747,19 @@ def get_check_write(dbname, check_mode=True):
         raise ValueError('no such database')
     if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
+    if nrows:
+        set_nrows(db)
+    if plots:
+        db['plots'] = pleko.plot.get_plots(dbname)
     return db
+
+def set_nrows(db):
+    "Set the item 'nrows' in each table and view of the database."
+    dbcnx = get_cnx(db['name'])
+    for table in db['tables'].values():
+        table['nrows'] = get_nrows(table['name'], dbcnx)
+    for view in db['views'].values():
+        view['nrows'] = get_nrows(view['name'], dbcnx)
 
 def get_nrows(name, dbcnx):
     "Get the number of rows in the table or view."

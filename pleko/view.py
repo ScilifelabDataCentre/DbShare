@@ -18,16 +18,13 @@ blueprint = flask.Blueprint('view', __name__)
 def create(dbname):
     "Create a view of the data in the database."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = pleko.db.get_check_write(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     query = pleko.query.get_query_from_request()
 
     if utils.is_method_GET():
-        dbcnx = pleko.db.get_cnx(dbname)
-        for table in db['tables'].values():
-            table['nrows'] = pleko.db.get_nrows(table['name'], dbcnx)
         return flask.render_template('view/create.html', db=db, query=query)
 
     elif utils.is_method_POST():
@@ -58,11 +55,7 @@ def schema(dbname, viewname):
     except KeyError:
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    nrows = pleko.db.get_nrows(viewname, pleko.db.get_cnx(dbname))
-    return flask.render_template('view/schema.html',
-                                 db=db,
-                                 schema=schema,
-                                 nrows=nrows)
+    return flask.render_template('view/schema.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<nameext:viewname>', 
                  methods=['GET', 'POST', 'DELETE'])
@@ -70,7 +63,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname)
+            db = pleko.db.get_check_read(dbname, nrows=False)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -105,7 +98,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                          columns=columns,
                                          sql=sql,
                                          rows=rows,
-                                         nrows=len(rows),
                                          has_write_access=has_write_access)
         elif viewname.ext == 'csv':
             writer = utils.CsvWriter(header=columns)
@@ -169,7 +161,7 @@ def clone(dbname, viewname):
 def download(dbname, viewname):
     "Download the rows in the view to a file."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -184,7 +176,7 @@ def download(dbname, viewname):
 def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False, plots=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

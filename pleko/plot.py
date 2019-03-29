@@ -32,13 +32,11 @@ blueprint = flask.Blueprint('plot', __name__)
 def home(dbname):
     "List the plots in the database."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('plot/home.html',
-                                 db=db,
-                                 plots=utils.sorted_schema(get_plots(dbname)))
+    return flask.render_template('plot/home.html', db=db)
 
 @blueprint.route('/<name:dbname>/display/<name:plotname>')
 def display(dbname, plotname):
@@ -56,7 +54,7 @@ def display(dbname, plotname):
 def create(dbname, tableviewname):
     "Create a plot for the given table or view."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = pleko.db.get_check_write(dbname, plots=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -87,8 +85,25 @@ def create(dbname, tableviewname):
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
 
+def get_plots(dbname):
+    """Get the plots for the database.
+    List of tuples (tableviewname, plotlist), sorted by table/view and name.
+    """
+    cursor = pleko.db.get_cnx(dbname).cursor()
+    sql = "SELECT name, tableviewname, spec FROM %s" % pleko.db.PLOT_TABLE_NAME
+    cursor.execute(sql)
+    plots = {}
+    for row in cursor:
+        plot = {'name': row[0],
+                'tableviewname': row[1],
+                'spec': json.loads(row[2])}
+        plots.setdefault(plot['tableviewname'], []).append(plot)
+    for plotlist in plots.values():
+        plotlist.sort(key=lambda p: p['name'])
+    return sorted(plots.items())
+    
 def get_plot(dbname, plotname):
-    "Get the plot from the database."
+    "Get a plot for the database."
     cursor = pleko.db.get_cnx(dbname).cursor()
     sql = "SELECT tableviewname, spec FROM %s WHERE name=?" \
           % pleko.db.PLOT_TABLE_NAME

@@ -71,6 +71,27 @@
               {% endfor %}
             </div>
           </li>
+          <li class="nav-item dropdown">
+            <a href="#" id="navbarPlots"
+               class="nav-link dropdown-toggle"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Plots</a>
+            <div class="dropdown-menu" aria-labelledby="navbarPlots">
+              <a href="{{ url_for('plot.home', dbname=db['name']) }}"
+                 class="dropdown-item">List</a>
+	      {% if 'plots' in db %}
+              {% for tableviewname, plotlist in db['plots'] %}
+	      <a class="dropdown-item disabled" href="#">
+		{{ tableviewname }}</a>
+	      {% for plot in plotlist %}
+              <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+                 class="dropdown-item">
+                &nbsp;&nbsp;&nbsp;{{ plot['name'] }}</a>
+              {% endfor %}
+              {% endfor %}
+	      {% endif %}
+            </div>
+          </li>
           {% endif %}
           {% if g.is_admin %}
           <li class="nav-item dropdown ml-4">
