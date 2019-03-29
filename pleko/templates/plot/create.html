@@ -1,45 +1,92 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create a plot{% endblock %}
+{% block head_title %}
+Create a plot of {{ schema['type'] }} {{ schema['name'] }}
+{% endblock %}
 
-{% block body_title %}Create a plot{% endblock %}
+{% block body_title %}
+Create a plot of {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
+{% endblock %}
 
 {% block main %}
-<div class="card border-primary">
-  <div class="card-body">
-    <form action="{{ url_for('.create', dbname=db['name'], tvname=schema['name']) }}"
-          method="POST">
-      {{ csrf_token() }}
-      <div class="form-group row">
-        <label for="name" class="col-md-2 col-form-label text-right">
-          Name</label>
-        <div class="col-md-6">
-          <input id="name" name="name" type="text" 
-		 class="form-control" autofocus>
+<div class="row">
+  <div class="col-md-8">
+    <div class="card border-info">
+      <div class="card-body">
+        <form action="{{ url_for('.create', dbname=db['name'], tableviewname=schema['name']) }}"
+              method="POST">
+          {{ csrf_token() }}
+          <div class="form-group row">
+            <label for="name" class="col-md-2 col-form-label text-right">
+              Name</label>
+            <div class="col-md-6">
+              <input id="name" name="name" type="text" 
+		     class="form-control" autofocus>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="spec" class="col-md-2 col-form-label text-right">
+              <a href="{{ config['VEGALITE_URL'] }}" target="_blank">
+                Vega-Lite</a> JSON spec</label>
+            <div class="col-md">
+              <textarea id="spec" name="spec" rows="24"
+                        class="form-control">{{ spec }}</textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <div class="col-md-4 offset-md-2">
+              <button type="submit" class="btn btn-info btn-lg btn-block">
+                Create plot</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md">
+    <div class="card border-secondary mb-1">
+      {% if schema['type'] == 'table' %}
+      <div class="card-header">
+        <button type="button" class="btn btn-outline-secondary">
+          Table <strong>{{ schema['name'] }}</strong>
+        </button>
+      </div>
+      <div id="{{ schema['name'] }}">
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            {% for column in schema['columns'] %}
+            <tr>
+              <th class="text-right">{{ column['name'] }}</th>
+              <td>
+                {{ column['type'] }}
+                {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
+                {{ column.get('notnull') and 'NOT NULL' or '' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
         </div>
       </div>
-      <div class="form-group row">
-        <label for="json" class="col-md-2 col-form-label text-right">
-          JSON spec</label>
-        <div class="col-md">
-          <textarea id="json" name="json" rows="8" class="form-control"
-		    ></textarea>
-        </div>
+      {% else %}
+      <div class="card-header">
+        <button type="button" class="btn btn-outline-secondary">
+          View <strong>{{ schema['name'] }}</strong>
+        </button>
       </div>
-      <div class="form-group row">
-        <div class="col-md-2 offset-md-2">
-          <button type="submit" 
-                  class="btn btn-primary btn-lg btn-block">Create</button>
-        </div>
-      </div>
-    </form>
+      {% endif %}
+    </div>
   </div>
 </div>
 {% endblock %}
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('db.home', dbname=db['name']) }}"
+  {% if schema['type'] == 'table' %}
+  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
+  {% else %}
+  <a href="{{ url_for('view.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+  {% endif %}
 </div>
 {% endblock %}

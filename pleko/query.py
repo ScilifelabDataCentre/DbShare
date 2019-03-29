@@ -124,7 +124,7 @@ def get_query_from_request(check=False):
     if not result['select']:
         if check:
             raise KeyError('no SELECT part')
-    columns = []
+    result['columns'] = []
     if result['select']:
         for name in result['select'].split(','):
             name = name.strip()
@@ -133,8 +133,7 @@ def get_query_from_request(check=False):
                 name = name[pos+len(' AS '):]
             except ValueError:
                 pass
-            columns.append(name)
-    result['columns'] = columns
+            result['columns'].append(name)
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
         raise KeyError('no FROM part')

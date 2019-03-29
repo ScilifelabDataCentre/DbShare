@@ -10,6 +10,7 @@ default_config = dict(
     FLASK_URL = 'http://flask.pocoo.org/',
     SQLITE_URL = 'https://www.sqlite.org/',
     BOOTSTRAP_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
+    VEGALITE_UTL = 'https://vega.github.io/vega-lite/',
     DATABASES_DIRPATH = 'data',
     SECRET_KEY = None,
     SALT_LENGTH = 12,

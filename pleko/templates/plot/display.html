@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Plot {{ plot['name'] }}{% endblock %}
+
+{% block body_title %}Plot {{ plot['name'] }}{% endblock %}
+
+{% block main %}
+<div id="plot"></div>
+{% endblock %}
+
+{% block javascript %}
+<script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-lite@3"></script>
+<script src="https://cdn.jsdelivr.net/npm/vega-embed@4"></script>
+<script type="text/javascript">
+  var plotSpec = {{ plot['spec']|tojson(indent=2)|safe }};
+  vegaEmbed('#plot', plotSpec);
+</script>
+{#
+var plotSpec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+    "description": "A scatterplot showing petal_length vs petal_width.",
+    "data": {
+      "url": "http://127.0.0.1:5000/table/Iris/corrected.csv"
+    },
+    "mark": "point",
+    "encoding": {
+      "x": {
+        "field": "petal_width",
+        "type": "quantitative"
+      },
+      "y": {
+        "field": "petal_length",
+        "type": "quantitative"
+      },
+      "color": {
+        "field": "class",
+        "type": "nominal"
+      },
+      "shape": {
+        "field": "class",
+        "type": "nominal"
+      }
+    }
+  };
+#}
+{% endblock %}

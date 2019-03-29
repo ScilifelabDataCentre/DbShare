@@ -73,9 +73,8 @@
     {% for table in utils.sorted_schema(db['tables']) %}
     <div class="card border-secondary mb-1">
       <div class="card-header">
-        <button type="button" 
-                class="btn btn-outline-secondary" data-toggle="collapse"
-                data-target="#{{ table['name'] }}"
+        <button type="button" class="btn btn-outline-secondary" 
+                data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
           Table <strong>{{ table['name'] }}</strong></button>
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"

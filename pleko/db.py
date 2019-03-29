@@ -17,6 +17,18 @@ import pleko.user
 from pleko import constants
 from pleko import utils
 
+PLOT_TABLE_NAME = 'plot$'
+
+PLOT_TABLE = dict(
+    name=PLOT_TABLE_NAME,
+    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
+             dict(name='tableviewname', type=constants.TEXT, notnull=True),
+             dict(name='spec', type=constants.TEXT, notnull=True)]
+)
+
+PLOT_INDEX = dict(name=PLOT_TABLE_NAME + '_index', 
+                  table=PLOT_TABLE_NAME,
+                  columns=['tableviewname'])
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -32,6 +44,8 @@ def create():
             with DbContext() as ctx:
                 ctx.set_name(flask.request.form['name'])
                 ctx.set_description(flask.request.form.get('description'))
+                create_table(ctx.dbcnx, PLOT_TABLE)
+                create_index(ctx.dbcnx, PLOT_INDEX)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
@@ -381,10 +395,24 @@ class DbContext:
         else:
             self.db = db
             self.old = copy.deepcopy(db)
-            # Don't close this at exit; done externally to the context
-            self.dbcnx = get_cnx(db['name'], write=True)
-        # Don't close this at exit; done externally to the context
-        self.cnx = pleko.master.get_cnx(write=True)
+
+    @property
+    def cnx(self):
+        try:
+            return self._cnx
+        except AttributeError:
+            # Don't close connection at exit; done externally to the context
+            self._cnx = pleko.master.get_cnx(write=True)
+            return self._cnx
+
+    @property
+    def dbcnx(self):
+        try:
+            return self._dbcnx
+        except AttributeError:
+            # Don't close connection at exit; done externally to the context
+            self._dbcnx = get_cnx(self.db['name'], write=True)
+            return self._dbcnx
 
     def __enter__(self):
         return self
@@ -465,6 +493,7 @@ class DbContext:
 
     def set_name(self, name):
         "Set or change the database name."
+        assert not hasattr(self, '_dbcnx')
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
         if get_db(name):
@@ -490,6 +519,8 @@ class DbContext:
 
     def add_table(self, schema):
         "Create the table in the database and add to the database definition."
+        if not constants.NAME_RX.match(schema['name']):
+            raise ValueError('invalid table name')
         if schema['name'] in self.db['tables']:
             raise ValueError('name already in use for table')
         if schema['name'] in self.db['views']:
@@ -610,8 +641,6 @@ def create_table(dbcnx, schema, if_not_exists=False):
     """
     if not schema.get('name'):
         raise ValueError('no table name defined')
-    if not constants.NAME_RX.match(schema['name']):
-        raise ValueError('invalid table name')
     if not schema.get('columns'):
         raise ValueError('no columns defined')
     names = set()
@@ -669,6 +698,8 @@ def create_index(dbcnx, schema, if_not_exists=False):
 
 def get_cnx(dbname, write=False):
     """Get a connection for the given database name.
+    IMPORTANT: Currently, only one connection to a given database can
+    be open at any time!
     If write is true, then assume the old connection is read-only,
     so close it and open a new one.
     """
