@@ -72,23 +72,19 @@ MASTER_INDEXES = [
 
 def get_cnx(write=False):
     """Return the existing connection to the master database, else a new one.
-    If write is true, then assume the old connection is for read-only,
-    so close it and reopen it.
+    If write is true, then assume the old connection is read-only,
+    so close it and open a new one.
     """
     if write:
         try:
             flask.g.cnx.close()
         except AttributeError:
             pass
-        # Read-write mode
-        flask.g.cnx = sqlite3.connect(utils.dbpath(MASTER_DBNAME))
-        flask.g.cnx.execute('PRAGMA foreign_keys=ON')
+        flask.g.cnx = utils.get_cnx(utils.dbpath(MASTER_DBNAME), write=True)
     try:
         return flask.g.cnx
     except AttributeError:
-        # Read-only mode
-        path = "file:%s?mode=ro" % utils.dbpath(MASTER_DBNAME)
-        flask.g.cnx = sqlite3.connect(path, uri=True)
+        flask.g.cnx = utils.get_cnx(utils.dbpath(MASTER_DBNAME))
         return flask.g.cnx
 
 def get_cursor(write=False):

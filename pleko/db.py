@@ -45,7 +45,7 @@ def home(dbname):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        dbcnx = pleko.db.get_cnx(db['name'])
+        dbcnx = get_cnx(db['name'])
         for table in db['tables'].values():
             table['nrows'] = get_nrows(table['name'], dbcnx)
         for view in db['views'].values():
@@ -669,24 +669,20 @@ def create_index(dbcnx, schema, if_not_exists=False):
 
 def get_cnx(dbname, write=False):
     """Get a connection for the given database name.
-    If write is true, then assume the old connection is for read-only,
-    so close it and reopen it.
+    If write is true, then assume the old connection is read-only,
+    so close it and open a new one.
     """
     if write:
         try:
-            flask.g.dbcnx[dbname].close()
-        except KeyError:
+            flask.g.dbcnx.close()
+        except AttributeError:
             pass
-        # Read-write mode
-        flask.g.dbcnx[dbname] = sqlite3.connect(utils.dbpath(dbname))
-        flask.g.dbcnx[dbname].execute('PRAGMA foreign_keys=ON')
+        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname), write=True)
     try:
-        return flask.g.dbcnx[dbname]
-    except KeyError:
-        # Read-only mode
-        path = "file:%s?mode=ro" % utils.dbpath(dbname)
-        flask.g.dbcnx[dbname] = sqlite3.connect(path, uri=True)
-        return flask.g.dbcnx[dbname]
+        return flask.g.dbcnx
+    except AttributeError:
+        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname))
+        return flask.g.dbcnx
 
 def has_read_access(db):
     "Does the current user (if any) have read access to the database?"

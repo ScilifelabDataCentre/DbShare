@@ -124,17 +124,16 @@ def get_query_from_request(check=False):
     if not result['select']:
         if check:
             raise KeyError('no SELECT part')
-        else:
-            return {}
     columns = []
-    for name in result['select'].split(','):
-        name = name.strip()
-        try:
-            pos = name.upper().index(' AS ')
-            name = name[pos+len(' AS '):]
-        except ValueError:
-            pass
-        columns.append(name)
+    if result['select']:
+        for name in result['select'].split(','):
+            name = name.strip()
+            try:
+                pos = name.upper().index(' AS ')
+                name = name[pos+len(' AS '):]
+            except ValueError:
+                pass
+            columns.append(name)
     result['columns'] = columns
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
@@ -144,10 +143,11 @@ def get_query_from_request(check=False):
     result['limit'] = flask.request.values.get('limit')
     try:
         result['limit'] = flask.request.values['limit']
-        if result['limit'].lower() == 'none':
-            result['limit'] = '' # Different from None
     except KeyError:
         result['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
+    else:
+        if result['limit'].lower() == 'none':
+            result['limit'] = None
     return result
 
 def get_sql_query(statement):

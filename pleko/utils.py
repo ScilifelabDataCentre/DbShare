@@ -57,18 +57,35 @@ class NameExtConverter(werkzeug.routing.BaseConverter):
                 return "%s.%s" % (value, value.ext)
         return str(value)
 
+def get_cnx(path, write=False):
+    "Return a new connection to the database at the given path."
+    if write:
+        cnx = sqlite3.connect(path)
+        cnx.execute('PRAGMA foreign_keys=ON')
+    else:
+        path = "file:%s?mode=ro" % path
+        cnx = sqlite3.connect(path, uri=True)
+    return cnx
+
 def sorted_schema(schemadict):
     """Return a sorted list of the schema dictionaries
     according to the 'name' elements."""
     return sorted(schemadict.values(), key=lambda d: d['name'])
 
-def dbpath(dbname, dirpath=None, ext='.sqlite3'):
+def dbpath(dbname, dirpath=None):
     "Return the file path for the given database name."
     if dirpath is None:
         dirpath = flask.current_app.config['DATABASES_DIRPATH']
     dirpath = os.path.expanduser(dirpath)
     dirpath = os.path.expandvars(dirpath)
-    return os.path.join(dirpath, dbname) + ext
+    return os.path.join(dirpath, dbname) + '.sqlite3'
+
+def plotpath(dbname):
+    "Return the file path for the plots of the given database."
+    dirpath = flask.current_app.config['DATABASES_DIRPATH']
+    dirpath = os.path.expanduser(dirpath)
+    dirpath = os.path.expandvars(dirpath)
+    return os.path.join(dirpath, '_plots_' + dbname) + '.json'
 
 def get_absolute_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."

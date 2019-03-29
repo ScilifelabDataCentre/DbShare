@@ -41,7 +41,6 @@ app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
 app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 app.register_blueprint(pleko.plot.blueprint, url_prefix='/plot')
 
-
 @app.template_filter('or_null_safe')
 def or_null_safe(value):
     "Output None as HTML '<NULL>' in safe mode."
@@ -54,11 +53,9 @@ def or_null_safe(value):
 def prepare():
     "Connect to the master database (read-only); get the current user."
     flask.g.cnx = pleko.master.get_cnx()
-    flask.g.dbcnx = {}
     flask.g.current_user = pleko.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
-
 
 @app.context_processor
 def setup_template_context():
@@ -75,9 +72,14 @@ def home():
 
 @app.after_request
 def finalize(response):
-    flask.g.cnx.close()
-    for dbcnx in flask.g.dbcnx.values():
-        dbcnx.close()
+    try:
+        flask.g.cnx.close()
+    except AttributeError:
+        pass
+    try:
+        flask.g.dbcnx.close()
+    except AttributeError:
+        pass
     return response
 
 
