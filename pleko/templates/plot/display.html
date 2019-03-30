@@ -9,8 +9,19 @@
 {% endblock %}
 
 {% block actions %}
-{% if has_write_access %}
 <div>
+  {% if schema['type'] == 'table' %}
+  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Table<br>{{ db['tables'][schema['name']]['nrows'] }} rows</a>
+  {% else %}
+  <a href="{{ url_for('view.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    View<br>{{ db['views'][schema['name']]['nrows'] }} rows</a>
+{% endif %}
+</div>
+{% if has_write_access %}
+<div class="pt-4">
   <a href="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
      role="button" class="btn btn-info btn-block">
     Edit plot</a>
@@ -36,32 +47,4 @@
   var plotSpec = {{ plot['spec']|tojson(indent=2) }};
   vegaEmbed('#plot', plotSpec);
 </script>
-{#
-var plotSpec = {
-    "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-    "description": "A scatterplot showing petal_length vs petal_width.",
-    "data": {
-      "url": "http://127.0.0.1:5000/table/Iris/corrected.csv"
-    },
-    "mark": "point",
-    "encoding": {
-      "x": {
-        "field": "petal_width",
-        "type": "quantitative"
-      },
-      "y": {
-        "field": "petal_length",
-        "type": "quantitative"
-      },
-      "color": {
-        "field": "class",
-        "type": "nominal"
-      },
-      "shape": {
-        "field": "class",
-        "type": "nominal"
-      }
-    }
-  };
-#}
 {% endblock %}
