@@ -39,16 +39,23 @@ def home(dbname):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('plot/home.html', db=db)
 
-@blueprint.route('/<name:dbname>/display/<name:plotname>')
+@blueprint.route('/<name:dbname>/display/<name:plotname>',
+                 methods=['GET', 'POST', 'DELETE'])
 def display(dbname, plotname):
     "Display the plot."
     try:
         db = pleko.db.get_check_read(dbname)
         plot = get_plot(dbname, plotname)
+        schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('plot/display.html', db=db, plot=plot)
+    return flask.render_template(
+        'plot/display.html',
+        db=db,
+        schema=schema,
+        plot=plot,
+        has_write_access = pleko.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/create/<name:tableviewname>',
                  methods=['GET', 'POST'])
@@ -57,13 +64,9 @@ def create(dbname, tableviewname):
     "Create a plot for the given table or view."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
+        schema = pleko.db.get_schema(db, tableviewname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    try:
-        schema = pleko.db.get_schema(tableviewname)
-    except ValueError:
-        flask.flash('no such table or view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
@@ -82,7 +85,8 @@ def create(dbname, tableviewname):
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
 
-@blueprint.route('/<name:dbname>/edit/<name:plotname>', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/edit/<name:plotname>', 
+                 methods=['GET', 'POST', 'DELETE'])
 @pleko.user.login_required
 def edit(dbname, plotname):
     "Edit the plot."
@@ -91,11 +95,12 @@ def edit(dbname, plotname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    # Don't use 'get_plot'; info available in db dict.
     for plot in itertools.chain.from_iterable([i[1] for i in db['plots']]):
         if plot['name'] == plotname: break
     else:
         flask.flash('no such plot', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
     try:
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError:
@@ -117,6 +122,17 @@ def edit(dbname, plotname):
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
+
+    elif utils.is_method_DELETE():
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        try:
+            with dbcnx:
+                sql = "DELETE FROM plot$ WHERE name=?"
+                cursor = dbcnx.cursor()
+                cursor.execute(sql, (plotname,))
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
 
 def get_plots(dbname):
     """Get the plots for the database.

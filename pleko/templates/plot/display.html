@@ -9,11 +9,23 @@
 {% endblock %}
 
 {% block actions %}
+{% if has_write_access %}
 <div>
   <a href="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
      role="button" class="btn btn-info btn-block">
-    Edit</a>
+    Edit plot</a>
 </div>
+<div class="pt-4">
+  <form action="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete plot</button>
+  </form>
+</div>
+{% endif %}
 {% endblock %}
 
 {% block javascript %}
