@@ -68,3 +68,40 @@ relational database.
 ## API (JSON)
 
 *TODO*
+
+## URLs
+
+- **/** Home page; list of databases.
+- **/db** Create a database.
+- **/db/{dbname}** Summary of database contents. Delete database.
+- **/db/{dbname}/rename** Rename the database.
+- **/db/{dbname}/logs** Display log of database changes.
+- **/db/{dbname}/upload** Create a table from a CSV file.
+- **/db/{dbname}/clone** Clone the database.
+- **/db/{dbname}/download** Download the database Sqlite3 file.
+- **/db/{dbname}/public** Set the database to public access.
+- **/db/{dbname}/private** Set the database to private access.
+- **/db/{dbname}/readwrite** Set the database to read-write mode.
+- **/db/{dbname}/readonly** Set the database to read-only mode.
+- **/table/{dbname}** Create a table in the database.
+- **/table/{dbname}/{tablename}** Display the rows of the table.
+- **/table/{dbname}/{tablename}/schema** Display the schema of the table.
+- **/table/{dbname}/{tablename}/row** Insert a row into the table.
+- **/table/{dbname}/{tablename}/upload** Insert data from a file into the table.
+- **/table/{dbname}/{tablename}/clone** Clone the table.
+- **/table/{dbname}/{tablename}/download** Download the rows in the table to a file.
+- **/view/{dbname}** Create a view of the data in the database.
+- **/view/{dbname}/{viewname}** Display the rows of the view.
+- **/view/{dbname}/{viewname}/schema** Display the definition of the view.
+- **/view/{dbname}/{viewname}/clone** Clone the view.
+- **/view/{dbname}/{viewname}/download** Download the rows in the view to a file.
+- **/plot/{dbname}** List the plots in the database.
+- **/plot/{dbname}/display/{plotname}** List the plots in the database.
+- **/plot/{dbname}/create/{tableviewname}** Create a plot for the given table or view.
+- **/plot/{dbname}/edit/{plotname}** Edit the plot.
+- **/plot/{dbname}/clone/{plotname}** Clone the plot.
+
+
+
+
+

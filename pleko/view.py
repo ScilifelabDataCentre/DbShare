@@ -42,21 +42,6 @@ def create(dbname):
         else:
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         
-@blueprint.route('/<name:dbname>/<name:viewname>/schema')
-def schema(dbname, viewname):
-    "Display the schema for a view."
-    try:
-        db = pleko.db.get_check_read(dbname)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
-    try:
-        schema = db['views'][viewname]
-    except KeyError:
-        flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('view/schema.html', db=db, schema=schema)
-
 @blueprint.route('/<name:dbname>/<nameext:viewname>', 
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
@@ -120,6 +105,21 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<name:viewname>/schema')
+def schema(dbname, viewname):
+    "Display the schema for a view."
+    try:
+        db = pleko.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['views'][viewname]
+    except KeyError:
+        flask.flash('no such view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    return flask.render_template('view/schema.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])

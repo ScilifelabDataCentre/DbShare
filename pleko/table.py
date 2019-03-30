@@ -57,27 +57,6 @@ def create(dbname):
         else:
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-@blueprint.route('/<name:dbname>/<name:tablename>/schema')
-def schema(dbname, tablename):
-    "Display the schema for a table."
-    try:
-        db = pleko.db.get_check_read(dbname, nrows=True)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
-    try:
-        schema = db['tables'][tablename]
-    except KeyError:
-        flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
-    return flask.render_template(
-        'table/schema.html',
-        db=db,
-        schema=schema,
-        indexes=indexes,
-        has_write_access=pleko.db.has_write_access(db))
-
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
@@ -126,6 +105,27 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/schema')
+def schema(dbname, tablename):
+    "Display the schema for a table."
+    try:
+        db = pleko.db.get_check_read(dbname, nrows=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
+    return flask.render_template(
+        'table/schema.html',
+        db=db,
+        schema=schema,
+        indexes=indexes,
+        has_write_access=pleko.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
