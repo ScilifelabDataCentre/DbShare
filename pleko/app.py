@@ -23,7 +23,6 @@ def create_app():
     app.config.from_mapping(pleko.default_config)
     app.config.from_json('config.json')
     app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
-    app.url_map.converters['iuid'] = utils.IuidConverter
     app.url_map.converters['name'] = utils.NameConverter
     app.url_map.converters['nameext'] = utils.NameExtConverter
     app.jinja_env.trim_blocks = True

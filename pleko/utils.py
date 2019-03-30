@@ -19,27 +19,20 @@ from pleko import constants
 
 mail = flask_mail.Mail()
 
-class IuidConverter(werkzeug.routing.BaseConverter):
-    "URL route converter for an IUID."
-    def to_python(self, value):
-        if not constants.IUID_RX.match(value):
-            raise werkzeug.routing.ValidationError
-        return value
-
 class NameConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name."
     def to_python(self, value):
         if not constants.NAME_RX.match(value):
             raise werkzeug.routing.ValidationError
-        return value
+        return value.lower()    # Case-insensitive
 
 class NameExt:
     def __init__(self, match):
         if not match:
             raise werkzeug.routing.ValidationError
-        self.name = match.group(1)
+        self.name = match.group(1).lower() # Case-insensitive
         if match.group(2):
-            self.ext = match.group(2).lstrip('.')
+            self.ext = match.group(2).lstrip('.').lower() # Case-insensitive
         else:
             self.ext = None
         if self.ext not in constants.EXTS:
