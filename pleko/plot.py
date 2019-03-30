@@ -92,19 +92,10 @@ def edit(dbname, plotname):
     "Edit the plot."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
+        plot = get_plot_from_db(db, plotname)
+        schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    # Don't use 'get_plot'; info available in db dict.
-    for plot in itertools.chain.from_iterable([i[1] for i in db['plots']]):
-        if plot['name'] == plotname: break
-    else:
-        flask.flash('no such plot', 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
-    try:
-        schema = pleko.db.get_schema(db, plot['tableviewname'])
-    except ValueError:
-        flask.flash('no such table or view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
@@ -134,6 +125,30 @@ def edit(dbname, plotname):
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
+@blueprint.route('/<name:dbname>/clone/<name:plotname>', methods=['GET','POST'])
+@pleko.user.login_required
+def clone(dbname, plotname):
+    "Clone the plot."
+    try:
+        db = pleko.db.get_check_write(dbname, plots=True)
+        plot = get_plot_from_db(db, plotname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        return flask.render_template('plot/clone.html', db=db, plot=plot)
+    elif utils.is_method_POST():
+        try:
+            with PlotContext(db, tableviewname=plot['tableviewname']) as ctx:
+                ctx.set_plotname(flask.request.form.get('name'))
+                ctx.set_spec(plot['spec'])
+        except (ValueError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.display',
+                                            dbname=dbname,
+                                            plotname=ctx.plot['name']))
 def get_plots(dbname):
     """Get the plots for the database.
     List of tuples (tableviewname, plotlist), sorted by table/view and name.
@@ -152,7 +167,9 @@ def get_plots(dbname):
     return sorted(plots.items())
     
 def get_plot(dbname, plotname):
-    "Get a plot for the database."
+    """Get a plot for the database.
+    Raise ValueError if no such plot.
+    """
     cursor = pleko.db.get_cnx(dbname).cursor()
     sql = "SELECT tableviewname, spec FROM %s WHERE name=?" \
           % pleko.db.PLOT_TABLE_NAME
@@ -164,6 +181,11 @@ def get_plot(dbname, plotname):
     return {'name': plotname,
             'tableviewname': row[0],
             'spec': json.loads(row[1])}
+
+def get_plot_from_db(db, plotname):
+    for plot in itertools.chain.from_iterable([i[1] for i in db['plots']]):
+        if plot['name'] == plotname: return plot
+    raise ValueError('no such plot')
 
 
 class PlotContext:
@@ -211,6 +233,12 @@ class PlotContext:
             raise ValueError('no plot name given')
         if not constants.NAME_RX.match(plotname):
             raise ValueError('invalid plot name')
+        try:
+            get_plot(self.db, plotname)
+        except ValueError:
+            pass
+        else:
+            raise ValueError('plot name already in use')
         if self.plot.get('name'):
             raise ValueError('cannot change the plot name')
         self.plot['name'] = plotname
@@ -225,8 +253,11 @@ class PlotContext:
         self.plot['tableviewname'] = tableviewname
 
     def set_spec(self, spec):
-        try:
-            self.plot['spec'] = json.loads(spec)
-            # XXX Check Vega-Lite JSON-Schema
-        except (ValueError, TypeError) as error:
-            raise ValueError(str(error))
+        if isinstance(spec, dict):
+            self.plot['spec'] = copy.deepcopy(spec)
+        else:
+            try:
+                self.plot['spec'] = json.loads(spec)
+            except (ValueError, TypeError) as error:
+                raise ValueError(str(error))
+        # XXX Check Vega-Lite JSON-Schema
