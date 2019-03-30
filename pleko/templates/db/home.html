@@ -30,7 +30,7 @@
         {% if db['tables'] %}
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% for table in utils.sorted_schema(db['tables']) %}
+            {% for table in utils.sorted_schema(db['tables'].values()) %}
             <tr>
 	      <th>{{ table['name'] }}</th>
               <td>
@@ -69,7 +69,7 @@
         {% if db['views'] %}
         <table class="table table-sm table-hover table-borderless">
           <tbody>
-            {% for view in utils.sorted_schema(db['views']) %}
+            {% for view in utils.sorted_schema(db['views'].values()) %}
             <tr>
 	      <th>{{ view['name'] }}</th>
               <td>

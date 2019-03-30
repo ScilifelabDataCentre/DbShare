@@ -71,6 +71,28 @@
 {% endif %}
 {% endblock %}
 
+{% block info %}
+<div class="card border-info mt-4">
+  <div class="card-header bg-info text-white">Plots</div>
+  <div class="card-body">
+    {% for plot in utils.sorted_schema(db['plots'].get(schema['name'], [])) %}
+    <div class="mb-1">
+      <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+	 class="card-link">
+	{{ plot['name'] }}</a>
+    </div>
+    {% endfor %}
+  </div>
+  {% if has_write_access %}
+  <div class="card-footer">
+    <a href="{{ url_for('plot.create', dbname=db['name'], tableviewname=schema['name']) }}"
+       role="button" class="btn btn-info btn-block">
+      Create plot</a>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
+
 {% block javascript %}
 <script>
   $(function() {

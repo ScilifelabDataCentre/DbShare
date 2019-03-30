@@ -51,7 +51,7 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Tables</a>
             <div class="dropdown-menu" aria-labelledby="navbarTables">
-              {% for table in utils.sorted_schema(db['tables']) %}
+              {% for table in utils.sorted_schema(db['tables'].values()) %}
               <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
                  class="dropdown-item">
                 {{ table['name'] }}</a>
@@ -64,33 +64,16 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Views</a>
             <div class="dropdown-menu" aria-labelledby="navbarViews">
-              {% for view in utils.sorted_schema(db['views']) %}
+              {% for view in utils.sorted_schema(db['views'].values()) %}
               <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
                  class="dropdown-item">
                 {{ view['name'] }}</a>
               {% endfor %}
             </div>
           </li>
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarPlots"
-               class="nav-link dropdown-toggle"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Plots</a>
-            <div class="dropdown-menu" aria-labelledby="navbarPlots">
-              <a href="{{ url_for('plot.home', dbname=db['name']) }}"
-                 class="dropdown-item">List</a>
-	      {% if 'plots' in db %}
-              {% for tableviewname, plotlist in db['plots'] %}
-	      <a class="dropdown-item disabled" href="#">
-		{{ tableviewname }}</a>
-	      {% for plot in plotlist %}
-              <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
-                 class="dropdown-item">
-                &nbsp;&nbsp;&nbsp;{{ plot['name'] }}</a>
-              {% endfor %}
-              {% endfor %}
-	      {% endif %}
-            </div>
+          <li class="nav-item">
+            <a href="{{ url_for('plot.home', dbname=db['name']) }}"
+               class="nav-link">Plots</a>
           </li>
           {% endif %}
           {% if g.is_admin %}

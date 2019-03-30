@@ -16,7 +16,7 @@ blueprint = flask.Blueprint('query', __name__)
 def home(dbname):
     "Create a query for the database."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -39,7 +39,7 @@ def rows(dbname):
     "Display results of a query to the database."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

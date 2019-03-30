@@ -33,7 +33,7 @@ blueprint = flask.Blueprint('plot', __name__)
 def home(dbname):
     "List the plots in the database."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False)
+        db = pleko.db.get_check_read(dbname, plots=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -44,7 +44,7 @@ def home(dbname):
 def display(dbname, plotname):
     "Display the plot."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=True)
         plot = get_plot(dbname, plotname)
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
@@ -151,7 +151,7 @@ def clone(dbname, plotname):
                                             plotname=ctx.plot['name']))
 def get_plots(dbname):
     """Get the plots for the database.
-    List of tuples (tableviewname, plotlist), sorted by table/view and name.
+    Dictionary tableviewname->plotlist.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
     sql = "SELECT name, tableviewname, spec FROM %s" % pleko.db.PLOT_TABLE_NAME
@@ -162,9 +162,7 @@ def get_plots(dbname):
                 'tableviewname': row[1],
                 'spec': json.loads(row[2])}
         plots.setdefault(plot['tableviewname'], []).append(plot)
-    for plotlist in plots.values():
-        plotlist.sort(key=lambda p: p['name'])
-    return sorted(plots.items())
+    return plots
     
 def get_plot(dbname, plotname):
     """Get a plot for the database.
@@ -183,7 +181,7 @@ def get_plot(dbname, plotname):
             'spec': json.loads(row[1])}
 
 def get_plot_from_db(db, plotname):
-    for plot in itertools.chain.from_iterable([i[1] for i in db['plots']]):
+    for plot in itertools.chain.from_iterable(db['plots'].values()):
         if plot['name'] == plotname: return plot
     raise ValueError('no such plot')
 

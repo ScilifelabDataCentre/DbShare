@@ -81,7 +81,7 @@
     </div>
   </div>
   <div class="col-md">
-    {% for table in utils.sorted_schema(db['tables']) %}
+    {% for table in utils.sorted_schema(db['tables'].values()) %}
     <div class="card border-secondary mb-1">
       <div class="card-header">
         <button type="button" class="btn btn-outline-secondary" 

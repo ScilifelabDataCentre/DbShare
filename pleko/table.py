@@ -61,7 +61,7 @@ def create(dbname):
 def schema(dbname, tablename):
     "Display the schema for a table."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = pleko.db.get_check_read(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -84,7 +84,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
     "Display rows in the table."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname, nrows=False)
+            db = pleko.db.get_check_read(dbname, plots=True)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -330,7 +330,7 @@ def clone(dbname, tablename):
 def download(dbname, tablename):
     "Download the rows in the table to a file."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -345,7 +345,7 @@ def download(dbname, tablename):
 def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False, plots=False)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

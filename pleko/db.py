@@ -56,7 +56,7 @@ def home(dbname):
     "Display the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
         try:
-            db = get_check_read(dbname)
+            db = get_check_read(dbname, nrows=True)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -107,7 +107,7 @@ def rename(dbname):
 def logs(dbname):
     "Display the logs for a database."
     try:
-        db = get_check_read(dbname, nrows=False)
+        db = get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -121,7 +121,7 @@ def logs(dbname):
              'user_agent':  row[3],
              'timestamp':   row[4]}
             for row in cursor]
-    return flask.render_template('db/logs.html', db=db, ogs=logs)
+    return flask.render_template('db/logs.html', db=db, logs=logs)
 
 @blueprint.route('/<name:dbname>/upload', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -261,7 +261,7 @@ def upload(dbname):
 def clone(dbname):
     "Create a clone of the database."
     try:
-        db = get_check_read(dbname, nrows=False)
+        db = get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -289,7 +289,7 @@ def clone(dbname):
 def download(dbname):
     "Download the Sqlite3 database file."
     try:
-        db = get_check_read(dbname, nrows=False, plots=False)
+        db = get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -731,7 +731,7 @@ def has_read_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_read(dbname, nrows=True, plots=True):
+def get_check_read(dbname, nrows=False, plots=False):
     """Get the database and check that the current user as read access.
     Optionally add nrows for each table and view, and plots for database.
     Raise ValueError if any problem.

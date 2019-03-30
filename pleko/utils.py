@@ -67,10 +67,10 @@ def get_cnx(path, write=False):
         cnx = sqlite3.connect(path, uri=True)
     return cnx
 
-def sorted_schema(schemadict):
-    """Return a sorted list of the schema dictionaries
+def sorted_schema(schemalist):
+    """Return a sorted list of the list schema dictionaries
     according to the 'name' elements."""
-    return sorted(schemadict.values(), key=lambda d: d['name'])
+    return sorted(schemalist, key=lambda d: d['name'])
 
 def dbpath(dbname, dirpath=None):
     "Return the file path for the given database name."

@@ -10,15 +10,22 @@ Plots in database <strong>{{ db['name'] }}</strong>
 <table id="plots" class="table table-sm">
   <thead>
     <tr>
-      <th>Table or view</th>
       <th>Plot</th>
+      <th>Type</th>
       <th>Description</th>
+      <th>Table or view</th>
     </tr>
   </thead>
   <tbody>
-    {% for tableviewname, plots in db['plots'] %}
+    {% for tableviewname, plots in db['plots'].items() %}
     {% for plot in plots %}
     <tr>
+      <td>
+	<a href="{{ url_for('.display', dbname=db['name'], plotname=plot['name']) }}">
+	  {{ plot['name'] }}</a>
+      <td>
+      </td>
+      <td>{{ plot['spec'].get('description') or '' }}</td>
       <td>
 	{% if plot['tableviewname'] in db['tables'] %}
 	<a href="{{url_for('table.rows', dbname=db['name'], tablename=plot['tableviewname']) }}">
@@ -27,13 +34,6 @@ Plots in database <strong>{{ db['name'] }}</strong>
 	<a href="{{url_for('view.rows', dbname=db['name'], viewname=plot['tableviewname']) }}">
 	  {{ tableviewname }}</a>
 	{% endif %}
-      </td>
-      <td>
-	<a href="{{ url_for('.display', dbname=db['name'], plotname=plot['name']) }}">
-	  {{ plot['name'] }}</a>
-      </td>
-      <td>
-	{{ plot['spec'].get('description') or '' }}
       </td>
     </tr>
     {% endfor %}
@@ -48,6 +48,7 @@ Plots in database <strong>{{ db['name'] }}</strong>
     $("#plots").DataTable( {
       "pagingType": "full_numbers",
       "pageLength": 25,
+      "order": [[3, "asc"]]
     });
   });
 </script>
