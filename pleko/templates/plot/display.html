@@ -8,12 +8,20 @@
 <div id="plot"></div>
 {% endblock %}
 
+{% block actions %}
+<div>
+  <a href="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
+     role="button" class="btn btn-info btn-block">
+    Edit</a>
+</div>
+{% endblock %}
+
 {% block javascript %}
 <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-lite@3"></script>
 <script src="https://cdn.jsdelivr.net/npm/vega-embed@4"></script>
 <script type="text/javascript">
-  var plotSpec = {{ plot['spec']|tojson(indent=2)|safe }};
+  var plotSpec = {{ plot['spec']|tojson(indent=2) }};
   vegaEmbed('#plot', plotSpec);
 </script>
 {#

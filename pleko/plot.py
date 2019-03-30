@@ -14,6 +14,7 @@
 """
 
 import copy
+import itertools
 import json
 import sqlite3
 
@@ -51,6 +52,7 @@ def display(dbname, plotname):
 
 @blueprint.route('/<name:dbname>/create/<name:tableviewname>',
                  methods=['GET', 'POST'])
+@pleko.user.login_required
 def create(dbname, tableviewname):
     "Create a plot for the given table or view."
     try:
@@ -59,15 +61,10 @@ def create(dbname, tableviewname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        schema = db['tables'][tableviewname]
-        schema['type'] = 'table'
-    except KeyError:
-        try:
-            schema = db['views'][tableviewname]
-            schema['type'] = 'view'
-        except KeyError:
-            flask.flash('no such table or view', 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        schema = pleko.db.get_schema(tableviewname)
+    except ValueError:
+        flask.flash('no such table or view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('plot/create.html',
@@ -75,8 +72,44 @@ def create(dbname, tableviewname):
                                      schema=schema)
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, tableviewname) as ctx:
+            with PlotContext(db, tableviewname=tableviewname) as ctx:
                 ctx.set_plotname(flask.request.form.get('name'))
+                ctx.set_spec(flask.request.form.get('spec'))
+        except (ValueError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.display',
+                                            dbname=dbname,
+                                            plotname=ctx.plot['name']))
+
+@blueprint.route('/<name:dbname>/edit/<name:plotname>', methods=['GET', 'POST'])
+@pleko.user.login_required
+def edit(dbname, plotname):
+    "Edit the plot."
+    try:
+        db = pleko.db.get_check_write(dbname, plots=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    for plot in itertools.chain.from_iterable([i[1] for i in db['plots']]):
+        if plot['name'] == plotname: break
+    else:
+        flask.flash('no such plot', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        schema = pleko.db.get_schema(db, plot['tableviewname'])
+    except ValueError:
+        flask.flash('no such table or view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        return flask.render_template('plot/edit.html', 
+                                     db=db,
+                                     plot=plot,
+                                     schema=schema)
+    elif utils.is_method_POST():
+        try:
+            with PlotContext(db, plot=plot) as ctx:
                 ctx.set_spec(flask.request.form.get('spec'))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -120,13 +153,14 @@ def get_plot(dbname, plotname):
 class PlotContext:
     "Context handler to create, modify and save a plot definition."
 
-    def __init__(self, db, tableviewname, plot=None):
+    def __init__(self, db, plot=None, tableviewname=None):
         self.db = db
-        self.tableviewname = tableviewname
         if plot:
             self.plot = copy.deepcopy(plot)
+            self.tableviewname = tableviewname or self.plot['tableviewname']
         else:
             self.plot = {}
+            self.tableviewname = tableviewname
 
     def __enter__(self):
         return self
@@ -134,10 +168,10 @@ class PlotContext:
     def __exit__(self, etyp, einst, etb):
         if etyp is not None: return False
         with self.dbcnx:
-            if self.plot.get('tableviewname'): # Already exists; update spec
+            if self.plot.get('tableviewname'): # Already exists; update
                 sql = "UPDATE %s SET spec=? WHERE name=?" % \
                       pleko.db.PLOT_TABLE_NAME
-                self.dbcnx.execute(sql, (json.dumps(self.plot),
+                self.dbcnx.execute(sql, (json.dumps(self.plot['spec']),
                                          self.plot['name']))
             else:               # Insert into table
                 sql = "INSERT INTO %s (name, tableviewname, spec)" \

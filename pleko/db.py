@@ -628,6 +628,22 @@ def get_db(name):
             'modified':    row[9],
             'size':        os.path.getsize(utils.dbpath(name))}
 
+def get_schema(db, tableviewname):
+    """Get the schema of the table or view. 
+    Add a member 'type' denoting which it is.
+    Raise ValueError if no such table or view.
+    """
+    try:
+        schema = db['tables'][tableviewname]
+        schema['type'] = 'table'
+    except KeyError:
+        try:
+            schema = db['views'][tableviewname]
+            schema['type'] = 'view'
+        except KeyError:
+            raise ValueError('no such table or view')
+    return schema
+
 def create_table(dbcnx, schema, if_not_exists=False):
     """Create a table given by its schema, in the connected database.
     Raise ValueError if any problem.
