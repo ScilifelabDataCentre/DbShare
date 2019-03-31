@@ -1,7 +1,8 @@
 # Pleko
 
-Web tool for exploring and publishing data sets using the Sqlite3
-relational database.
+Web tool to explore, publish and plot data sets using
+[Sqlite3](https://www.sqlite.org/) and 
+[Vega-Lite](https://vega.github.io/vega-lite/).
 
 πλέκω: to plait, twine, twist, weave, braid
 
@@ -59,11 +60,12 @@ relational database.
 
 ## Plots
 
-- Create a plot. *TODO*
+- Select plot type and table/view.
+- Create a plot.
 - Display a plot.
 - Clone a plot.
 - Edit a plot. *TODO*
-- Create and edit a plot in full Vega-Lite spec.
+- Create and edit a plot using explicit Vega-Lite spec.
 
 ## Access privileges
 

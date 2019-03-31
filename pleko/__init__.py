@@ -1,6 +1,8 @@
-"Pleko: Web-based relational database system powered by Sqlite3."
+"""Pleko
+Web tool to explore, publish and plot data sets using Sqlite3 and Vega-Lite.
+"""
 
-__version__ = '0.6.10'
+__version__ = '0.7.0'
 
 default_config = dict(
     VERSION = __version__,
