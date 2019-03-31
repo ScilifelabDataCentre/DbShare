@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Select plot type and table/view{% endblock %}
+
+{% block body_title %}Select plot type and table/view{% endblock %}
+
+{% block main %}
+<div class="card border-info">
+  <div class="card-body">
+    <form action="{{ url_for('.select', dbname=db['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="type" class="col-md-2 col-form-label text-right">
+	  Plot type</label>
+        <div class="col-md">
+	  <select id="type" name="type" class="form-control" autofocus>
+	    {% for plottype in utils.sorted_schema(plottypes.values()) %}
+	    <option value="{{ plottype['name'] }}" 
+		    {{ plottype == type and 'selected' or ''}}>
+	      {{ plottype['name'] }} ({{ plottype['description'] }})
+	    </option>
+	    {% endfor %}
+	  </select>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="tableviewname" class="col-md-2 col-form-label text-right">
+	  Table/view</label>
+        <div class="col-md">
+	  <select id="tableviewname" name="tableviewname" class="form-control">
+	    {% for table in utils.sorted_schema(db['tables'].values()) %}
+	    <option value="{{ table['name'] }}"
+		    {{ table['name'] == tableviewname and 'selected' or ''}}>
+	      {{ table['name'] }} ({{ table['nrows'] }} rows)
+	    </option>
+	    {% endfor %}
+	    {% for view in utils.sorted_schema(db['views'].values()) %}
+	    <option value="{{ view['name'] }}"
+		    {{ view['name'] == tableviewname and 'selected' or ''}}>
+	      {{ view['name'] }} ({{ view['nrows'] }} rows)
+	    </option>
+	    {% endfor %}
+	  </select>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-4 offset-md-2">
+          <button type="submit" class="btn btn-info btn-lg btn-block">
+            Create plot</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.home', dbname=db['name']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</div>
+{% endblock %}

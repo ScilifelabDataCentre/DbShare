@@ -80,7 +80,7 @@ def plotpath(dbname):
     dirpath = os.path.expandvars(dirpath)
     return os.path.join(dirpath, '_plots_' + dbname) + '.json'
 
-def get_absolute_url(endpoint, values={}, query={}):
+def get_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."
     url = flask.url_for(endpoint, _external=True, **values)
     if query:

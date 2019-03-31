@@ -110,8 +110,8 @@ def register():
                 "{} user account pending".format(config['SITE_NAME']),
                 recipients=db.get_admins_email())
             message.body = "To enable the user account, go to {}".format(
-                utils.get_absolute_url('.profile',
-                                       values={'username': user['username']}))
+                utils.get_url('.profile',
+                              values={'username': user['username']}))
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
                         ' it has been enabled by the admin.')
@@ -145,7 +145,7 @@ def send_password_code(user, action):
     query = {'username': user['username'],
              'code': user['password'][len('code:'):]}
     message.body = "To set your password, go to {}".format(
-        utils.get_absolute_url('.password', query=query))
+        utils.get_url('.password', query=query))
     utils.mail.send(message)
 
 @blueprint.route('/password', methods=['GET', 'POST'])

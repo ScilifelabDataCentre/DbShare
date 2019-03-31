@@ -36,9 +36,9 @@ def create(dbname):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(
-                utils.get_absolute_url('.create',
-                                       values=dict(dbname=dbname),
-                                       query=schema['query']))
+                utils.get_url('.create',
+                              values=dict(dbname=dbname),
+                              query=schema['query']))
         else:
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         

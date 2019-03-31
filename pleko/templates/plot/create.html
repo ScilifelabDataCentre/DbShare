@@ -1,38 +1,56 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Create a plot of {{ schema['type'] }} {{ schema['name'] }}
+Create a {{ plottype['name'] }} plot 
+for {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block body_title %}
-Create a plot of {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
+Create a <strong>{{ plottype['name'] }}</strong> plot
+for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 {% endblock %}
 
 {% block main %}
+<div class="ml-2 mt-2 mb-3">
+  {{ plottype['description'] }}
+</div>
+
 <div class="row">
   <div class="col-md-8">
     <div class="card border-info">
       <div class="card-body">
-        <form action="{{ url_for('.create', dbname=db['name'], tableviewname=schema['name']) }}"
+        <form action="{{ url_for('.create', dbname=db['name'], plottype=plottype['name'], tableviewname=schema['name']) }}"
               method="POST">
           {{ csrf_token() }}
           <div class="form-group row">
-            <label for="name" class="col-md-2 col-form-label text-right">
+            <label for="_name" class="col-md-2 col-form-label text-right">
               Name</label>
             <div class="col-md-6">
-              <input id="name" name="name" type="text" 
+              <input id="_name" name="_name" type="text" 
 		     class="form-control" autofocus>
             </div>
           </div>
+	  {% for field in plottype['fields'] %}
           <div class="form-group row">
-            <label for="spec" class="col-md-2 col-form-label text-right">
-              <a href="{{ config['VEGALITE_URL'] }}" target="_blank">
-                Vega-Lite</a> JSON spec</label>
+            <label for="{{ field['name'] }}"
+		   class="col-md-2 col-form-label text-right">
+	      {{ field.get('label') or field['name'] }}
+	      {% if field.get('info_url') %}
+	      <br>
+              (<a href="{{ config[field['info_url']] }}" target="_blank">info</a>)
+	      {% endif %}
+	    </label>
             <div class="col-md">
-              <textarea id="spec" name="spec" rows="24"
-                        class="form-control">{{ spec }}</textarea>
+	      {% if field['type'] == 'textarea' %}
+              <textarea id="{{ field['name'] }}" name="{{ field['name'] }}"
+			rows="{{ field.get('rows') or 4 }}"
+                        class="form-control"></textarea>
+	      {% else %}
+	      <em>[undefined field type]</em>
+	      {% endif %}
             </div>
           </div>
+	  {% endfor %}
           <div class="form-group row">
             <div class="col-md-4 offset-md-2">
               <button type="submit" class="btn btn-info btn-lg btn-block">
@@ -81,12 +99,12 @@ Create a plot of {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 
 {% block actions %}
 <div>
-  {% if schema['type'] == 'table' %}
-  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-secondary btn-block">Cancel</a>
-  {% else %}
-  <a href="{{ url_for('view.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-secondary btn-block">Cancel</a>
-  {% endif %}
+  <form action="{{ url_for('.select', dbname=db['name']) }}"
+        method="GET">
+    <input type="hidden" name="type" value="{{ plottype['name'] }}">
+    <input type="hidden" name="tableviewname"
+	   value="{{ schema['name'] }}">
+    <button type="submit" class="btn btn-secondary btn-block">Cancel</button>
+  </form>
 </div>
 {% endblock %}

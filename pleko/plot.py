@@ -7,7 +7,7 @@
   Display.
 
 /plot/<dbname>/create/<tableviewname>
-  Create plot for the given table or view.
+  Create plot for the given table/view.
 
 /plot/<dbname>/edit/<plotname>
   Edit.
@@ -26,6 +26,18 @@ import pleko.user
 from pleko import constants
 from pleko import utils
 
+PLOTTYPES = {
+    'spec': {'name': 'spec',
+             'description': 'Vega-Lite JSON specification.',
+             'fields': [{'name': 'spec',
+                         'label': 'Vega-Lite spec',
+                         'info_url': 'VEGALITE_URL',
+                         'type': 'textarea',
+                         'rows': 24,
+                         'key': None}]
+    }
+}
+
 
 blueprint = flask.Blueprint('plot', __name__)
 
@@ -37,7 +49,9 @@ def home(dbname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('plot/home.html', db=db)
+    return flask.render_template('plot/home.html',
+                                 db=db,
+                                 has_write_access=pleko.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/display/<name:plotname>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -57,30 +71,82 @@ def display(dbname, plotname):
         plot=plot,
         has_write_access = pleko.db.has_write_access(db))
 
-@blueprint.route('/<name:dbname>/create/<name:tableviewname>',
-                 methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/select', methods=['GET', 'POST'])
 @pleko.user.login_required
-def create(dbname, tableviewname):
-    "Create a plot for the given table or view."
+def select(dbname):
+    "Select plot type and table/view."
     try:
-        db = pleko.db.get_check_write(dbname, plots=True)
-        schema = pleko.db.get_schema(db, tableviewname)
+        db = pleko.db.get_check_write(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
-        return flask.render_template('plot/create.html',
+        return flask.render_template('plot/select.html',
                                      db=db,
-                                     schema=schema)
+                                     plottypes=PLOTTYPES,
+                                     type=flask.request.args.get('type'),
+                                     tableviewname=flask.request.args.get('tableviewname'))
+
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, tableviewname=tableviewname) as ctx:
-                ctx.set_plotname(flask.request.form.get('name'))
-                ctx.set_spec(flask.request.form.get('spec'))
-        except (ValueError, sqlite3.Error) as error:
+            plottype = PLOTTYPES.get(flask.request.form.get('type'))
+            if not plottype:
+                raise ValueError('no such plot type')
+            schema = pleko.db.get_schema(db,flask.request.form.get('tableviewname'))
+        except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.create',
+                                            dbname=db['name'],
+                                            plottype=plottype['name'],
+                                            tableviewname=schema['name']))
+
+@blueprint.route('/<name:dbname>/create/<name:plottype>/<name:tableviewname>',
+                 methods=['GET', 'POST'])
+@pleko.user.login_required
+def create(dbname, plottype, tableviewname):
+    "Create a plot of the given type for the given table/view."
+    try:
+        db = pleko.db.get_check_write(dbname, plots=True)
+        plottype = PLOTTYPES.get(plottype)
+        if not plottype:
+            raise ValueError('no such plot type')
+        schema = pleko.db.get_schema(db, tableviewname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        return flask.render_template('plot/create.html',
+                                     db=db,
+                                     plottype=plottype,
+                                     schema=schema)
+
+    elif utils.is_method_POST():
+        try:
+            params = {'_name': flask.request.form.get('_name')}
+            spec = {}
+            for field in plottype['fields']:
+                value = flask.request.form.get(field['name'])
+                params[field['name']] = value
+                key = field['key']
+                if key == None:
+                    spec = value
+                    break
+                else:
+                    spec[key] = value
+            with PlotContext(db, tableviewname=tableviewname) as ctx:
+                ctx.set_plotname(params['_name'])
+                ctx.set_spec(spec)
+        except (ValueError, TypeError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(
+                utils.get_url('.create',
+                              values=dict(dbname=dbname,
+                                          plottype=plottype['name'],
+                                          tableviewname=tableviewname),
+                              query=params))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
@@ -149,6 +215,7 @@ def clone(dbname, plotname):
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
+
 def get_plots(dbname):
     """Get the plots for the database.
     Dictionary tableviewname->plotlist.
@@ -232,7 +299,7 @@ class PlotContext:
         if not constants.NAME_RX.match(plotname):
             raise ValueError('invalid plot name')
         try:
-            get_plot(self.db, plotname)
+            get_plot_from_db(self.db, plotname)
         except ValueError:
             pass
         else:

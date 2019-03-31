@@ -641,7 +641,7 @@ def get_schema(db, tableviewname):
             schema = db['views'][tableviewname]
             schema['type'] = 'view'
         except KeyError:
-            raise ValueError('no such table or view')
+            raise ValueError('no such table/view')
     return schema
 
 def create_table(dbcnx, schema, if_not_exists=False):

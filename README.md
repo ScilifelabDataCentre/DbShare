@@ -59,7 +59,11 @@ relational database.
 
 ## Plots
 
-*TODO*
+- Create a plot. *TODO*
+- Display a plot.
+- Clone a plot.
+- Edit a plot. *TODO*
+- Create and edit a plot in full Vega-Lite spec.
 
 ## Access privileges
 
@@ -97,7 +101,8 @@ relational database.
 - **/view/{dbname}/{viewname}/download** Download the rows in the view to a file.
 - **/plot/{dbname}** List the plots in the database.
 - **/plot/{dbname}/display/{plotname}** List the plots in the database.
-- **/plot/{dbname}/create/{tableviewname}** Create a plot for the given table or view.
+- **/plot/{dbname}/select** Select plot type and table/view.
+- **/plot/{dbname}/create/{plottype}/{tableviewname}** Create the given plot.
 - **/plot/{dbname}/edit/{plotname}** Edit the plot.
 - **/plot/{dbname}/clone/{plotname}** Clone the plot.
 

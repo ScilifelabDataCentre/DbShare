@@ -60,9 +60,9 @@ def rows(dbname):
             columns = query['columns']
     except (KeyError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(utils.get_absolute_url('.home',
-                                                     values={'dbname': dbname},
-                                                     query=query))
+        return flask.redirect(utils.get_url('.home',
+                                            values={'dbname': dbname},
+                                            query=query))
     return flask.render_template('query/rows.html',
                                  db=db,
                                  query=query,
@@ -93,14 +93,14 @@ def sql(dbname):
         columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
     except IndexError:
         flask.flash('no result returned', 'message')
-        return flask.redirect(utils.get_absolute_url('.home',
-                                                     values={'dbname': dbname},
-                                                     query={}))
+        return flask.redirect(utils.get_url('.home',
+                                            values={'dbname': dbname},
+                                            query={}))
     except (ValueError, sqlite3.Error, sqlite3.Warning) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(utils.get_absolute_url('.home',
-                                                     values={'dbname': dbname},
-                                                     query={'sql': sql or ''}))
+        return flask.redirect(utils.get_url('.home',
+                                            values={'dbname': dbname},
+                                            query={'sql': sql or ''}))
     return flask.render_template('query/rows.html',
                                  db=db,
                                  query={},
