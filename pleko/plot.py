@@ -103,11 +103,32 @@ class Spec(Template):
                 raise ValueError(str(error))
 
 
-class Scatterplot(Template):
+class PreparedTemplate(Template):
+    "Template for prepared plots."
+
+    fields = copy.deepcopy(Template.fields)
+    fields.extend([{'name': 'width', 
+                    'label': 'Plot width (px)',
+                    'type': 'integer',
+                    'grid': 2,
+                    'default': 400},
+                   {'name': 'height', 
+                    'label': 'Plot height (px)',
+                    'type': 'integer',
+                    'grid': 2,
+                    'default': 400}])
+                   
+    def set_width(self, value):
+        self.spec['width'] = int(value)
+    def set_height(self, value):
+        self.spec['height'] = int(value)
+
+
+class Scatterplot(PreparedTemplate):
     """Scatterplot of two quantitative variables,
     optionally with color and shape nominal variables."""
 
-    template = copy.deepcopy(Template.template)
+    template = copy.deepcopy(PreparedTemplate.template)
     template.update({
         "mark": "point",
         "encoding": {
@@ -118,7 +139,7 @@ class Scatterplot(Template):
         }
     })
 
-    fields = copy.deepcopy(Template.fields)
+    fields = copy.deepcopy(PreparedTemplate.fields)
     fields.extend([{'name': 'x', 
                     'label': 'X-axis',
                     'type': 'column',

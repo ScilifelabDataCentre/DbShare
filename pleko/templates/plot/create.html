@@ -45,6 +45,10 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
           {% elif field['type'] == 'text' %}
           <input id="{{ field['name'] }}" name="{{ field['name'] }}"
                  type="text" class="form-control">
+          {% elif field['type'] == 'integer' %}
+          <input id="{{ field['name'] }}" name="{{ field['name'] }}"
+                 type="number" class="form-control" 
+		 value="{{ field.get('default') or ''}}">
           {% elif field['type'] == 'column' %}
           <select id="{{ field['name'] }}" name="{{ field['name'] }}"
                   class="form-control">
