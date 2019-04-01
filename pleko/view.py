@@ -29,19 +29,21 @@ def create(dbname):
 
     elif utils.is_method_POST():
         try:
-            schema = {'name': flask.request.form.get('name'),
+            viewname = flask.request.form.get('name')
+            schema = {'name': viename,
                       'query': pleko.query.get_query_from_request(check=True)}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(
-                utils.get_url('.create',
-                              values=dict(dbname=dbname),
-                              query=schema['query']))
+            return flask.redirect(flask.url_for('.create',
+                                                dbname=dbname,
+                                                query=schema['query']))
         else:
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
-        
+            return flask.redirect(flask.url_for('.rows', 
+                                                dbname=dbname,
+                                                viewname=viewname))
+
 @blueprint.route('/<name:dbname>/<nameext:viewname>', 
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!

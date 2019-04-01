@@ -35,8 +35,6 @@ class NameExt:
             self.ext = match.group(2).lstrip('.').lower() # Case-insensitive
         else:
             self.ext = None
-        if self.ext not in constants.EXTS:
-            raise werkzeug.routing.ValidationError
     def __str__(self):
         return self.name
 

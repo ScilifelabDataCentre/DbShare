@@ -26,7 +26,7 @@ import pleko.user
 from pleko import constants
 from pleko import utils
 
-PLOTTYPES = {
+PLOT_TYPES = {
     'spec': {'name': 'spec',
              'description': 'Vega-Lite JSON specification.',
              'fields': [{'name': 'spec',
@@ -53,23 +53,28 @@ def home(dbname):
                                  db=db,
                                  has_write_access=pleko.db.has_write_access(db))
 
-@blueprint.route('/<name:dbname>/display/<name:plotname>',
+@blueprint.route('/<name:dbname>/display/<nameext:plotname>',
                  methods=['GET', 'POST', 'DELETE'])
 def display(dbname, plotname):
     "Display the plot."
     try:
         db = pleko.db.get_check_read(dbname, nrows=True)
-        plot = get_plot(dbname, plotname)
+        plot = get_plot(dbname, str(plotname))
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template(
-        'plot/display.html',
-        db=db,
-        schema=schema,
-        plot=plot,
-        has_write_access = pleko.db.has_write_access(db))
+    if plotname.ext is None or plotname.ext == 'html':
+        return flask.render_template(
+            'plot/display.html',
+            db=db,
+            schema=schema,
+            plot=plot,
+            has_write_access = pleko.db.has_write_access(db))
+    elif plotname.ext == 'json':
+        return flask.jsonify(plot['spec'])
+    else:
+        flask.abort(406)
 
 @blueprint.route('/<name:dbname>/select', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -84,13 +89,13 @@ def select(dbname):
     if utils.is_method_GET():
         return flask.render_template('plot/select.html',
                                      db=db,
-                                     plottypes=PLOTTYPES,
+                                     plottypes=PLOT_TYPES,
                                      type=flask.request.args.get('type'),
                                      tableviewname=flask.request.args.get('tableviewname'))
 
     elif utils.is_method_POST():
         try:
-            plottype = PLOTTYPES.get(flask.request.form.get('type'))
+            plottype = PLOT_TYPES.get(flask.request.form.get('type'))
             if not plottype:
                 raise ValueError('no such plot type')
             schema = pleko.db.get_schema(db,flask.request.form.get('tableviewname'))
@@ -109,7 +114,7 @@ def create(dbname, plottype, tableviewname):
     "Create a plot of the given type for the given table/view."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
-        plottype = PLOTTYPES.get(plottype)
+        plottype = PLOT_TYPES.get(plottype)
         if not plottype:
             raise ValueError('no such plot type')
         schema = pleko.db.get_schema(db, tableviewname)
@@ -138,8 +143,10 @@ def create(dbname, plottype, tableviewname):
                     spec[key] = value
             with PlotContext(db, tableviewname=tableviewname) as ctx:
                 ctx.set_plotname(params['_name'])
+                ctx.set_plottype(plottype['name'])
                 ctx.set_spec(spec)
         except (ValueError, TypeError, sqlite3.Error) as error:
+            raise
             flask.flash(str(error), 'error')
             return flask.redirect(
                 utils.get_url('.create',
@@ -221,13 +228,15 @@ def get_plots(dbname):
     Dictionary tableviewname->plotlist.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT name, tableviewname, spec FROM %s" % pleko.db.PLOT_TABLE_NAME
+    sql = "SELECT name, tableviewname, type, spec FROM %s" % \
+          constants.PLOT_TABLE_NAME
     cursor.execute(sql)
     plots = {}
     for row in cursor:
         plot = {'name': row[0],
                 'tableviewname': row[1],
-                'spec': json.loads(row[2])}
+                'type': row[2],
+                'spec': json.loads(row[3])}
         plots.setdefault(plot['tableviewname'], []).append(plot)
     return plots
     
@@ -236,8 +245,8 @@ def get_plot(dbname, plotname):
     Raise ValueError if no such plot.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT tableviewname, spec FROM %s WHERE name=?" \
-          % pleko.db.PLOT_TABLE_NAME
+    sql = "SELECT tableviewname, type, spec FROM %s WHERE name=?" \
+          % constants.PLOT_TABLE_NAME
     cursor.execute(sql, (plotname,))
     rows = list(cursor)
     if len(rows) != 1:
@@ -245,7 +254,8 @@ def get_plot(dbname, plotname):
     row = rows[0]
     return {'name': plotname,
             'tableviewname': row[0],
-            'spec': json.loads(row[1])}
+            'type': row[1],
+            'spec': json.loads(row[2])}
 
 def get_plot_from_db(db, plotname):
     for plot in itertools.chain.from_iterable(db['plots'].values()):
@@ -273,14 +283,15 @@ class PlotContext:
         with self.dbcnx:
             if self.plot.get('tableviewname'): # Already exists; update
                 sql = "UPDATE %s SET spec=? WHERE name=?" % \
-                      pleko.db.PLOT_TABLE_NAME
+                      constants.PLOT_TABLE_NAME
                 self.dbcnx.execute(sql, (json.dumps(self.plot['spec']),
                                          self.plot['name']))
             else:               # Insert into table
-                sql = "INSERT INTO %s (name, tableviewname, spec)" \
-                      " VALUES(?, ?, ?)" % pleko.db.PLOT_TABLE_NAME
+                sql = "INSERT INTO %s (name, tableviewname, type, spec)" \
+                      " VALUES(?, ?, ?, ?)" % constants.PLOT_TABLE_NAME
                 self.dbcnx.execute(sql, (self.plot['name'],
                                          self.tableviewname,
+                                         self.plot['type'],
                                          json.dumps(self.plot['spec'])))
 
     @property
@@ -307,6 +318,16 @@ class PlotContext:
         if self.plot.get('name'):
             raise ValueError('cannot change the plot name')
         self.plot['name'] = plotname
+
+    def set_plottype(self, plottype):
+        "Set the plot type."
+        if not plottype:
+            raise ValueError('no plot type given')
+        if plottype not in PLOT_TYPES:
+            raise ValueError('no such plot type')
+        if self.plot.get('type'):
+            raise ValueError('cannot change the plot type')
+        self.plot['type'] = plottype
 
     def set_tableviewname(self, tableviewname):
         if not tableviewname:

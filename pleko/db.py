@@ -18,17 +18,16 @@ import pleko.user
 from pleko import constants
 from pleko import utils
 
-PLOT_TABLE_NAME = 'plot$'
-
 PLOT_TABLE = dict(
-    name=PLOT_TABLE_NAME,
+    name=constants.PLOT_TABLE_NAME,
     columns=[dict(name='name', type=constants.TEXT, primarykey=True),
              dict(name='tableviewname', type=constants.TEXT, notnull=True),
+             dict(name='type', type=constants.TEXT, notnull=True),
              dict(name='spec', type=constants.TEXT, notnull=True)]
 )
 
-PLOT_INDEX = dict(name=PLOT_TABLE_NAME + '_index', 
-                  table=PLOT_TABLE_NAME,
+PLOT_INDEX = dict(name=constants.PLOT_TABLE_NAME + '_index', 
+                  table=constants.PLOT_TABLE_NAME,
                   columns=['tableviewname'])
 
 blueprint = flask.Blueprint('db', __name__)

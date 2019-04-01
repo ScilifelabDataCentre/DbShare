@@ -23,8 +23,7 @@ Plots in database <strong>{{ db['name'] }}</strong>
       <td>
 	<a href="{{ url_for('.display', dbname=db['name'], plotname=plot['name']) }}">
 	  {{ plot['name'] }}</a>
-      <td>
-      </td>
+      <td>{{ plot['type'] }}</td>
       <td>{{ plot['spec'].get('description') or '' }}</td>
       <td>
 	{% if plot['tableviewname'] in db['tables'] %}
