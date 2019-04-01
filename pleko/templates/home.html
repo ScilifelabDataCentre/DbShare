@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
 
 {% block main %}
-<div class="m-4">
-  Web tool for exploring and publishing data sets using the Sqlite3
-  relational database.
+<div class="m-3">
+  Web tool to explore, publish and plot data sets using
+  <a href="{{ config['SQLITE_URL'] }}" target="_blank">Sqlite3</a> and
+  <a href="{{ config['VEGALITE_URL'] }}" target="_blank">Vega-Lite</a>.
 </div>
 <table id="dbs" class="table table-sm">
   <thead>
