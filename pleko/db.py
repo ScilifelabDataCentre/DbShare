@@ -530,7 +530,10 @@ class DbContext:
             if index['table'] == tablename:
                 self.db['indexes'].pop(index['name'])
                 self.dbcnx.execute("DROP INDEX %s" % index['name'])
-        self.dbcnx.execute("DROP TABLE %s" % tablename)
+        with self.dbcnx:
+            self.dbcnx.execute("DELETE FROM plot$ WHERE tableviewname=?",
+                               (tablename,))
+            self.dbcnx.execute("DROP TABLE %s" % tablename)
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."
@@ -573,7 +576,10 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
-        self.dbcnx.execute("DROP VIEW %s" % viewname)
+        with self.dbcnx:
+            self.dbcnx.execute("DELETE FROM plot$ WHERE tableviewname=?",
+                               (viewname,))
+            self.dbcnx.execute("DROP VIEW %s" % viewname)
 
 
 # Utility functions
