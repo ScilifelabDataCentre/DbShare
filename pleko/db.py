@@ -55,7 +55,7 @@ def home(dbname):
     "Display the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
         try:
-            db = get_check_read(dbname, nrows=True)
+            db = get_check_read(dbname, nrows=True, plots=True)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))

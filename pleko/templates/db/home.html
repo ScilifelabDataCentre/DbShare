@@ -24,19 +24,38 @@
       </div>
       <div class="card-body">
         {% if db['tables'] %}
-        <table class="table table-sm table-hover table-borderless">
+        <table class="table table-sm table-borderless">
           <tbody>
             {% for table in utils.sorted_schema(db['tables'].values()) %}
             <tr>
 	      <th>{{ table['name'] }}</th>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
-		  Table; {{ table['nrows'] }} rows</a>
+		  {{ table['nrows'] }} rows</a>
               </td>
               <td>
                 <a href="{{ url_for('table.schema', dbname=db['name'], tablename=table['name']) }}">
-                  Schema</a>
+                  schema</a>
               </td>
+	      <td>
+		{% if db['plots'].get(table['name']) %}
+		<button type="button" class="btn btn-sm btn-outline-info" 
+			data-toggle="collapse"
+			data-target="#{{ table['name'] }}"
+			aria-expanded="false"
+			aria-controls="{{ table['name'] }}">
+		  plots &darr;</button>
+		<div id="{{ table['name'] }}" class="collapse mt-1">
+		  {% for plot in db['plots'][table['name']] %}
+		  <div>
+		    <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+		       class="card-link text-info">
+		      {{ plot['name'] }}</a>
+		  </div>
+		  {% endfor %}
+		</div>
+		{% endif %}
+	      </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -70,12 +89,31 @@
 	      <th>{{ view['name'] }}</th>
               <td>
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
-		  View; {{ view['nrows'] }} rows</a>
+		  {{ view['nrows'] }} rows</a>
               </td>
               <td>
                 <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">
-                  Schema</a>
+                  schema</a>
               </td>
+	      <td>
+		{% if db['plots'].get(view['name']) %}
+		<button type="button" class="btn btn-sm btn-outline-info" 
+			data-toggle="collapse"
+			data-target="#{{ view['name'] }}"
+			aria-expanded="false"
+			aria-controls="{{ view['name'] }}">
+		  plots &darr;</button>
+		<div id="{{ view['name'] }}" class="collapse mt-1">
+		  {% for plot in db['plots'][view['name']] %}
+		  <div>
+		    <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+		       class="card-link text-info">
+		      {{ plot['name'] }}</a>
+		  </div>
+		  {% endfor %}
+		</div>
+		{% endif %}
+	      </td>
             </tr>
             {% endfor %}
           </tbody>
@@ -110,6 +148,10 @@
 <div class="pt-2">
   <a href="{{ url_for('.clone', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Clone database</a>
+</div>
+<div class="pt-4">
+  <a href="{{ url_for('plot.select', dbname=db['name']) }}"
+     role="button" class="btn btn-info btn-block">Create plot</a>
 </div>
 {% endif %} {# has_write_access #}
 

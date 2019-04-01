@@ -76,10 +76,10 @@
         <button type="button" class="btn btn-outline-secondary" 
                 data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
-          Table <strong>{{ table['name'] }}</strong></button>
+          Table <strong>{{ table['name'] }}</strong> &darr;</button>
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
            class="btn btn-sm btn-outline-primary" role="button" target="_blank">
-          {{ table['nrows'] }} rows</a>
+          {{ table['nrows'] }} rows &rarr;</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
