@@ -41,6 +41,9 @@ class Template:
         else:
             self.spec = copy.deepcopy(self.template)
 
+    def __str__(self):
+        return json.dumps(self.spec, indent=2)
+
     @property
     def type(self): return self.__class__.__name__.lower()
 
@@ -82,12 +85,10 @@ class Template:
 class Spec(Template):
     "Vega-Lite JSON specification."
 
-    template = {}
-
     fields = copy.deepcopy(Template.fields)
     fields.extend([{'name': 'spec',
                     'label': 'Vega-Lite spec',
-                    'external_url': 'VEGALITE_URL',
+                    'info_url': 'VEGALITE_URL',
                     'type': 'textarea',
                     'rows': 24}])
 
@@ -110,41 +111,29 @@ class Scatterplot(Template):
     template.update({
         "mark": "point",
         "encoding": {
-            "x": {
-                "field": None,
-                "type": "quantitative"
-            },
-            "y": {
-                "field": None,
-                "type": "quantitative"
-            },
-            "color": {
-                "field": None,
-                "type": "nominal"
-            },
-            "shape": {
-                "field": None,
-                "type": "nominal"
-            }
+            "x": {"field": None, "type": "quantitative"},
+            "y": {"field": None, "type": "quantitative"},
+            "color": {"field": None, "type": "nominal"},
+            "shape": {"field": None, "type": "nominal"}
         }
     })
 
     fields = copy.deepcopy(Template.fields)
     fields.extend([{'name': 'x', 
-                    'label': 'X-axis variable',
+                    'label': 'X-axis',
                     'type': 'column',
                     'grid': 6},
                    {'name': 'y',
-                    'label': 'Y-axis variable',
+                    'label': 'Y-axis',
                     'type': 'column',
                     'grid': 6},
                    {'name': 'color',
-                    'label': 'Color variable',
+                    'label': 'Color',
                     'type': 'column',
                     'grid': 6,
                     'optional': True},
                    {'name': 'shape',
-                    'label': 'Shape variable',
+                    'label': 'Shape',
                     'type': 'column',
                     'grid': 6,
                     'optional': True}])
@@ -245,7 +234,7 @@ def create(dbname, plottype, tableviewname):
     "Create a plot of the given type for the given table/view."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
-        template = PLOT_TEMPLATES.get(plottype)
+        template = copy.deepcopy(PLOT_TEMPLATES.get(plottype))
         if not template:
             raise ValueError('no such plot type')
         schema = pleko.db.get_schema(db, tableviewname)
@@ -254,10 +243,12 @@ def create(dbname, plottype, tableviewname):
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
     if utils.is_method_GET():
+        template.update_data_url(db, tableviewname)
         return flask.render_template('plot/create.html',
                                      db=db,
                                      template=template,
-                                     schema=schema)
+                                     schema=schema,
+                                     initial=dict(spec=str(template)))
 
     elif utils.is_method_POST():
         try:

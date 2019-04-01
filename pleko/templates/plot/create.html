@@ -13,97 +13,61 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 {% block main %}
 <div class="m-2">{{ template.description }}</div>
 
-<div class="row">
-  <div class="col-md-8">
-    <div class="card border-info">
-      <div class="card-body">
-        <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type, tableviewname=schema['name']) }}"
-              method="POST">
-          {{ csrf_token() }}
-          <div class="form-group row">
-            <label for="_name" class="col-md-2 col-form-label text-right">
-              Name</label>
-            <div class="col-md-6">
-              <input id="_name" name="_name" type="text" 
-		     class="form-control" autofocus>
-            </div>
-          </div>
-	  {% for field in template.fields %}
-          <div class="form-group row">
-            <label for="{{ field['name'] }}"
-		   class="col-md-2 col-form-label text-right">
-	      {{ field.get('label') or field['name'] }}
-	      {% if field.get('info_url') %}
-	      <br>
-              (<a href="{{ config[field['info_url']] }}" target="_blank">info</a>)
-	      {% endif %}
-	    </label>
-            <div class="col-md-{{ field.get('grid') or 10 }}">
-	      {% if field['type'] == 'textarea' %}
-              <textarea id="{{ field['name'] }}" name="{{ field['name'] }}"
-			rows="{{ field.get('rows') or 4 }}"
-                        class="form-control"></textarea>
-              {% elif field['type'] == 'text' %}
-              <input id="{{ field['name'] }}" name="{{ field['name'] }}"
-                     type="text" class="form-control">
-              {% elif field['type'] == 'column' %}
-              <select id="{{ field['name'] }}" name="{{ field['name'] }}"
-                      class="form-control">
-                {% if field.get('optional') %}
-                <option value="">[none]</option>
-                {% endif %}
-                {% for column in schema['columns'] %}
-                <option>{{ column['name'] }}</option>
-                {% endfor %}
-              </select>
-	      {% else %}
-	      <em>[undefined field type]</em>
-	      {% endif %}
-            </div>
-          </div>
-	  {% endfor %}
-          <div class="form-group row">
-            <div class="col-md-4 offset-md-2">
-              <button type="submit" class="btn btn-info btn-lg btn-block">
-                Create plot</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="col-md">
-    <div class="card border-secondary mb-1">
-      {% if schema['type'] == 'table' %}
-      <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary">
-          Table <strong>{{ schema['name'] }}</strong>
-        </button>
-      </div>
-      <div id="{{ schema['name'] }}">
-        <div class="card-body">
-          <table class="table table-sm table-borderless">
-            {% for column in schema['columns'] %}
-            <tr>
-              <th class="text-right">{{ column['name'] }}</th>
-              <td>
-                {{ column['type'] }}
-                {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
-                {{ column.get('notnull') and 'NOT NULL' or '' }}
-              </td>
-            </tr>
-            {% endfor %}
-          </table>
+<div class="card border-info">
+  <div class="card-body">
+    <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type, tableviewname=schema['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="_name" class="col-md-2 col-form-label text-right">
+          Name</label>
+        <div class="col-md-6">
+          <input id="_name" name="_name" type="text" 
+		 class="form-control" autofocus>
         </div>
       </div>
-      {% else %}
-      <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary">
-          View <strong>{{ schema['name'] }}</strong>
-        </button>
+      {% for field in template.fields %}
+      <div class="form-group row">
+        <label for="{{ field['name'] }}"
+	       class="col-md-2 col-form-label text-right">
+	  {{ field.get('label') or field['name'] }}
+	  {% if field.get('info_url') %}
+	  <br>
+          <a href="{{ config[field['info_url']] }}" target="_blank">info &#8599;</a>
+	  {% endif %}
+	</label>
+        <div class="col-md-{{ field.get('grid') or 10 }}">
+	  {% if field['type'] == 'textarea' %}
+          <textarea id="{{ field['name'] }}" name="{{ field['name'] }}"
+		    rows="{{ field.get('rows') or 4 }}"
+                    class="form-control text-monospace"
+		    >{{ initial.get(field['name']) or ''}}</textarea>
+          {% elif field['type'] == 'text' %}
+          <input id="{{ field['name'] }}" name="{{ field['name'] }}"
+                 type="text" class="form-control">
+          {% elif field['type'] == 'column' %}
+          <select id="{{ field['name'] }}" name="{{ field['name'] }}"
+                  class="form-control">
+            {% if field.get('optional') %}
+            <option value="">[none]</option>
+            {% endif %}
+            {% for column in schema['columns'] %}
+            <option>{{ column['name'] }}</option>
+            {% endfor %}
+          </select>
+	  {% else %}
+	  <em>[undefined field type]</em>
+	  {% endif %}
+        </div>
       </div>
-      {% endif %}
-    </div>
+      {% endfor %}
+      <div class="form-group row">
+        <div class="col-md-3 offset-md-2">
+          <button type="submit" class="btn btn-info btn-lg btn-block">
+            Create plot</button>
+        </div>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}
@@ -117,5 +81,10 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 	   value="{{ schema['name'] }}">
     <button type="submit" class="btn btn-secondary btn-block">Cancel</button>
   </form>
+</div>
+<div class="pt-4">
+  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block" target="_blank">
+    {{ db['tables'][schema['name']]['nrows'] }} rows &#8599;</a>
 </div>
 {% endblock %}

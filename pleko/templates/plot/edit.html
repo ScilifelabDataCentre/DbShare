@@ -7,65 +7,30 @@ Edit the plot <strong>{{ plot['name'] }}</strong>
 {% endblock %}
 
 {% block main %}
-<div class="row">
-  <div class="col-md-8">
-    <div class="card border-info">
-      <div class="card-body">
-        <form action="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
-              method="POST">
-          {{ csrf_token() }}
-          <div class="form-group row">
-            <label for="spec" class="col-md-2 col-form-label text-right">
-              <a href="{{ config['VEGALITE_URL'] }}" target="_blank">
-                Vega-Lite</a> JSON spec</label>
-            <div class="col-md">
-              <textarea id="spec" name="spec" rows="24"
-			class="form-control" autofocus
-			>{{ plot['spec']|tojson(indent=2) }}</textarea>
-            </div>
-          </div>
-          <div class="form-group row">
-            <div class="col-md-4 offset-md-2">
-              <button type="submit" class="btn btn-info btn-lg btn-block">
-                Save plot</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
-  <div class="col-md">
-    <div class="card border-secondary mb-1">
-      {% if schema['type'] == 'table' %}
-      <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary">
-          Table <strong>{{ schema['name'] }}</strong>
-        </button>
-      </div>
-      <div id="{{ schema['name'] }}">
-        <div class="card-body">
-          <table class="table table-sm table-borderless">
-            {% for column in schema['columns'] %}
-            <tr>
-              <th class="text-right">{{ column['name'] }}</th>
-              <td>
-                {{ column['type'] }}
-                {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
-                {{ column.get('notnull') and 'NOT NULL' or '' }}
-              </td>
-            </tr>
-            {% endfor %}
-          </table>
+<div class="card border-info">
+  <div class="card-body">
+    <form action="{{ url_for('.edit', dbname=db['name'], plotname=plot['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="spec" class="col-md-2 col-form-label text-right">
+	  Vega-Lite spec
+	  <br>
+          <a href="{{ config['VEGALITE_URL'] }}" target="_blank">info &#8599;</a>
+	</label>
+        <div class="col-md">
+          <textarea id="spec" name="spec" rows="24"
+		    class="form-control text-monospace" autofocus
+		    >{{ plot['spec']|tojson(indent=2) }}</textarea>
         </div>
       </div>
-      {% else %}
-      <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary">
-          View <strong>{{ schema['name'] }}</strong>
-        </button>
+      <div class="form-group row">
+        <div class="col-md-3 offset-md-2">
+          <button type="submit" class="btn btn-info btn-lg btn-block">
+            Save plot</button>
+        </div>
       </div>
-      {% endif %}
-    </div>
+    </form>
   </div>
 </div>
 {% endblock %}

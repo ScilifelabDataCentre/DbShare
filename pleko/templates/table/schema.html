@@ -83,7 +83,7 @@ Schema for table <strong>{{ schema['name'] }}</strong>
 <div>
   <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    Table<br>{{ db['tables'][schema['name']]['nrows'] }} rows</a>
+    {{ db['tables'][schema['name']]['nrows'] }} rows</a>
 </div>
 {% if has_write_access %}
 <div class="pt-4">
