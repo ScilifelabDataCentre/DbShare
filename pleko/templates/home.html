@@ -20,11 +20,10 @@
   <tbody>
     {% for db in dbs %}
     <tr>
-      <td>
-        <a href="{{ url_for('db.home', dbname=db['name']) }}"
-           role="button" class="btn btn-sm btn-outline-primary ml-2">
-          <span class="mx-3">{{ db['name'] }}</span></a>
-      </td>
+      <th>
+        <a href="{{ url_for('db.home', dbname=db['name']) }}">
+          {{ db['name'] }}</a>
+      </th>
       <td>{{ db.get('description') or '-' }}</td>
       <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
