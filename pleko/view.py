@@ -30,7 +30,7 @@ def create(dbname):
     elif utils.is_method_POST():
         try:
             viewname = flask.request.form.get('name')
-            schema = {'name': viename,
+            schema = {'name': viewname,
                       'query': pleko.query.get_query_from_request(check=True)}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)

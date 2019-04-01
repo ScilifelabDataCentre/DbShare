@@ -2,7 +2,7 @@
 Web tool to explore, publish and plot data sets using Sqlite3 and Vega-Lite.
 """
 
-__version__ = '0.7.1'
+__version__ = '0.7.2'
 
 default_config = dict(
     VERSION = __version__,

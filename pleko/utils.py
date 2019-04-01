@@ -27,6 +27,7 @@ class NameConverter(werkzeug.routing.BaseConverter):
         return value.lower()    # Case-insensitive
 
 class NameExt:
+    "Helper class for NameExtConverter."
     def __init__(self, match):
         if not match:
             raise werkzeug.routing.ValidationError
@@ -40,8 +41,10 @@ class NameExt:
 
 class NameExtConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name with an optional extension."
+
     def to_python(self, value):
         return NameExt(constants.NAME_EXT_RX.match(value))
+
     def to_url(self, value):
         if isinstance(value, NameExt):
             if value.ext:
