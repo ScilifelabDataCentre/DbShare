@@ -6,6 +6,9 @@
 
 {% block main %}
 <div id="plot"></div>
+<div class="m-2">
+  {{ plot['spec'].get('description') or '' }}
+</div>
 {% endblock %}
 
 {% block meta %}

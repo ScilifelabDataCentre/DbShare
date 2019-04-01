@@ -15,11 +15,9 @@
 	  Plot type</label>
         <div class="col-md">
 	  <select id="type" name="type" class="form-control" autofocus>
-	    {% for plottype in utils.sorted_schema(plottypes.values()) %}
-	    <option value="{{ plottype['name'] }}" 
-		    {{ plottype == type and 'selected' or ''}}>
-	      {{ plottype['name'] }} ({{ plottype['description'] }})
-	    </option>
+	    {% for ty, descr in plottypes %}
+	    <option value="{{ ty }}"  {{ ty == type and 'selected' or ''}}>
+	      {{ ty }} ({{ descr }})</option>
 	    {% endfor %}
 	  </select>
         </div>
