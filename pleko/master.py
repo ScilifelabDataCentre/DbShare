@@ -18,6 +18,7 @@ MASTER_TABLES = [
                   dict(name='apikey', type=constants.TEXT),
                   dict(name='role', type=constants.TEXT, notnull=True),
                   dict(name='status', type=constants.TEXT, notnull=True),
+                  dict(name='quota', type=constants.INTEGER),
                   dict(name='created', type=constants.TEXT, notnull=True),
                   dict(name='modified', type=constants.TEXT, notnull=True)
          ]

@@ -248,6 +248,13 @@ def edit(username):
                 ctx.set_role(flask.request.form.get('role'))
             if flask.request.form.get('apikey'):
                 ctx.set_apikey()
+            quota = flask.request.form.get('quota') or None
+            if quota:
+                try:
+                    quota = int(quota)
+                except (ValueError, TypeError):
+                    quota = -1
+            ctx.set_quota(quota)
         return flask.redirect(
             flask.url_for('.profile', username=user['username']))
 
@@ -257,7 +264,7 @@ def edit(username):
 def users():
     cursor = pleko.master.get_cursor()
     sql = "SELECT username, email, password, apikey," \
-          " role, status, created, modified FROM users"
+          " role, status, quota, created, modified FROM users"
     cursor.execute(sql)
     users = [{'username': row[0],
               'email':    row[1],
@@ -265,8 +272,9 @@ def users():
               'apikey':   row[3],
               'role':     row[4],
               'status':   row[5],
-              'created':  row[6],
-              'modified': row[7],
+              'quota':    row[6],
+              'created':  row[7],
+              'modified': row[8],
               'size':     0}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
@@ -311,12 +319,13 @@ class UserContext:
             else:
                 status = constants.PENDING
             self.user = {'status': status, 
+                         'quota': flask.current_app.config['USER_DEFAULT_QUOTA'],
                          'created': utils.get_time()}
             self.orig = {}
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = pleko.master.get_cnx()
+        self.cnx = pleko.master.get_cnx(write=True)
 
     def __enter__(self):
         return self
@@ -335,27 +344,29 @@ class UserContext:
             # Update user
             if rows[0][0]:
                 sql = "UPDATE users SET email=?, password=?," \
-                      " apikey=?, role=?, status=?, modified=?" \
+                      " apikey=?, role=?, status=?, quota=?, modified=?" \
                       " WHERE username=?"
                 self.cnx.execute(sql, (self.user['email'],
                                        self.user['password'],
                                        self.user.get('apikey'),
                                        self.user['role'],
                                        self.user['status'],
+                                       self.user['quota'],
                                        self.user['modified'],
                                        self.user['username']))
             # Add user
             else:
                 sql = "INSERT INTO users" \
                       " (username, email, password, apikey, role," \
-                      "  status, created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+                      "  status, quota, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.user['username'],
                                        self.user['email'],
                                        self.user['password'],
                                        self.user.get('apikey'),
                                        self.user['role'],
                                        self.user['status'],
+                                       self.user['quota'],
                                        self.user['created'], 
                                        self.user['modified']))
             # Add log entry
@@ -417,6 +428,11 @@ class UserContext:
             raise ValueError('invalid status')
         self.user['status'] = status
 
+    def set_quota(self, quota):
+        if quota is not None and quota <= 0:
+            quota = flask.current_app.config['USER_DEFAULT_QUOTA']
+        self.user['quota'] = quota
+
     def set_role(self, role):
         if role not in constants.USER_ROLES:
             raise ValueError('invalid role')
@@ -460,7 +476,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     else:
         cursor = cnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \
-          " created, modified FROM users" + criterion
+          " quota, created, modified FROM users" + criterion
     cursor.execute(sql, (name,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
@@ -471,8 +487,9 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
             'apikey':   row[3],
             'role':     row[4],
             'status':   row[5],
-            'created':  row[6],
-            'modified': row[7]}
+            'quota':    row[6],
+            'created':  row[7],
+            'modified': row[8]}
     
 def get_current_user():
     """Return the user for the current session.

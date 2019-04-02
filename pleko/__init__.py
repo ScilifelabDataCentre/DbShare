@@ -22,6 +22,7 @@ default_config = dict(
     PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
     USER_ENABLE_IMMEDIATELY = False,
     USER_ENABLE_EMAIL_WHITELIST = [], # Regexp's
+    USER_DEFAULT_QUOTA = 2**22,       # 4 megabyte
     TABLE_INITIAL_COLUMNS = 8,
     QUERY_DEFAULT_LIMIT = 100
 )

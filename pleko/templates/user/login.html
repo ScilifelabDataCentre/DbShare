@@ -9,16 +9,16 @@
       method="POST">
   {{ csrf_token() }}
   <div class="form-group row">
-    <label for="username" class="col-sm-2 col-form-label text-right">
+    <label for="username" class="col-md-2 col-form-label text-right">
       User name</label>
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <input type="text" class="form-control" id="username" name="username">
     </div>
   </div>
   <div class="form-group row">
-    <label for="email" class="col-sm-2 col-form-label text-right">
+    <label for="email" class="col-md-2 col-form-label text-right">
       Password</label>
-    <div class="col-sm-6">
+    <div class="col-md-6">
       <input type="password" class="form-control" id="password" name="password">
     </div>
   </div>
@@ -26,18 +26,18 @@
   <input type="hidden" name="next" value="{{ next }}">
   {% endif %}
   <div class="form-group row">
-    <div class="col-sm-2 offset-sm-2">
-      <button type="submit" class="btn btn-primary">Login</button>
+    <div class="col-md-2 offset-md-2">
+      <button type="submit" class="btn btn-block btn-primary">Login</button>
     </div>
   </div>
 </form>
-<div class="row pt-sm-4">
-  <div class="col-sm-4 offset-sm-2">
+<div class="row pt-md-4">
+  <div class="col-md-4 offset-md-2">
     <a href="{{ url_for('.register') }}">Register a new user account.</a>
   </div>
 </div>
-<div class="row pt-sm-2">
-  <div class="col-sm-4 offset-sm-2">
+<div class="row pt-md-2">
+  <div class="col-md-4 offset-md-2">
     <a href="{{ url_for('.reset') }}">
       Reset password for an existing use account.</a>
   </div>
