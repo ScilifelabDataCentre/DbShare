@@ -317,6 +317,7 @@ def edit(dbname, plotname):
                 if not spec: raise ValueError('no spec given')
                 spec = json.loads(spec)
                 ctx.set_spec(spec)
+                ctx.set_name(flask.request.form.get('name'))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             plot['spec'] = spec # This is the spec with error(s)
@@ -413,9 +414,11 @@ class PlotContext:
         self.db = db
         if plot:
             self.plot = copy.deepcopy(plot)
+            self.oldname = plot['name']
             self.tableviewname = self.plot['tableviewname']
         else:
             self.plot = {}
+            self.oldname = None
             self.tableviewname = tableviewname
 
     def __enter__(self):
@@ -426,11 +429,12 @@ class PlotContext:
         if not self.plot.get('name'):
             raise ValueError('plot has no name')
         with self.dbcnx:
-            if self.plot.get('tableviewname'): # Already exists; update
-                sql = "UPDATE %s SET spec=? WHERE name=?" % \
+            if self.oldname:    # Update already existing plot
+                sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
                       constants.PLOT_TABLE_NAME
-                self.dbcnx.execute(sql, (json.dumps(self.plot['spec']),
-                                         self.plot['name']))
+                self.dbcnx.execute(sql, (self.plot['name'],
+                                         json.dumps(self.plot['spec']),
+                                         self.oldname))
             else:               # Insert into table
                 sql = "INSERT INTO %s (name, tableviewname, type, spec)" \
                       " VALUES(?, ?, ?, ?)" % constants.PLOT_TABLE_NAME
@@ -450,14 +454,13 @@ class PlotContext:
 
     def set_name(self, name):
         "Set the plot name."
-        if self.plot.get('name'):
-            raise ValueError('cannot change the plot name')
         if not name:
             raise ValueError('no plot name given')
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid plot name')
         try:
-            get_plot_from_db(self.db, name)
+            if name != self.oldname:
+                get_plot_from_db(self.db, name)
         except ValueError:
             pass
         else:

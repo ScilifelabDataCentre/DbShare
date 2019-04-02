@@ -1,9 +1,9 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Edit the plot {{ plot['name'] }}{% endblock %}
+{% block head_title %}Edit plot {{ plot['name'] }}{% endblock %}
 
 {% block body_title %}
-Edit the plot <strong>{{ plot['name'] }}</strong>
+Edit plot <strong>{{ plot['name'] }}</strong>
 {% endblock %}
 
 {% block main %}
@@ -13,6 +13,14 @@ Edit the plot <strong>{{ plot['name'] }}</strong>
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
+        <label for="name" class="col-md-2 col-form-label text-right">
+          Name</label>
+        <div class="col-md-6">
+          <input id="name" name="name" type="text" 
+		 class="form-control" value="{{ plot['name'] }}" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
         <label for="spec" class="col-md-2 col-form-label text-right">
 	  Vega-Lite spec
 	  <br>
@@ -20,7 +28,7 @@ Edit the plot <strong>{{ plot['name'] }}</strong>
 	</label>
         <div class="col-md">
           <textarea id="spec" name="spec" rows="24"
-		    class="form-control text-monospace" autofocus
+		    class="form-control text-monospace"
 		    >{{ plot['spec']|tojson(indent=2) }}</textarea>
         </div>
       </div>
