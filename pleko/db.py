@@ -86,8 +86,7 @@ def create():
                 create_index(ctx.dbcnx, PLOT_INDEX)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(
-            flask.url_for('owner', username=flask.g.current_user['username']))
+        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/rename', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -550,7 +549,8 @@ class DbContext:
         with self.dbcnx:
             self.dbcnx.execute("DELETE FROM plot$ WHERE tableviewname=?",
                                (tablename,))
-            self.dbcnx.execute("DROP TABLE %s" % tablename)
+        self.dbcnx.execute("DROP TABLE %s" % tablename)
+        self.dbcnx.execute('VACUUM')
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."
