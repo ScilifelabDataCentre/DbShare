@@ -6,6 +6,7 @@ import json
 import sqlite3
 
 import flask
+import jsonschema
 
 import pleko.db
 import pleko.master
@@ -314,10 +315,15 @@ def edit(dbname, plotname):
             with PlotContext(db, plot=plot) as ctx:
                 spec = flask.request.form.get('spec')
                 if not spec: raise ValueError('no spec given')
-                ctx.set_spec(json.loads(spec))
+                spec = json.loads(spec)
+                ctx.set_spec(spec)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            plot['spec'] = spec # This is the spec with error(s)
+            return flask.render_template('plot/edit.html', 
+                                         db=db,
+                                         plot=plot,
+                                         schema=schema)
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
@@ -481,5 +487,10 @@ class PlotContext:
         """Set the Vega-Lite specification of the plot.
         Raise ValueError if it is invalid.
         """
+        try:
+            jsonschema.validate(
+                instance=spec,
+                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+        except jsonschema.ValidationError as error:
+            raise ValueError(str(error))
         self.plot['spec'] = spec
-        # XXX JSON-Schema

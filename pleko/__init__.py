@@ -2,7 +2,11 @@
 Web tool to explore, publish and plot data sets using Sqlite3 and Vega-Lite.
 """
 
-__version__ = '0.7.2'
+import os.path
+
+__version__ = '0.7.3'
+
+ROOT_DIR = os.path.dirname(__file__)
 
 default_config = dict(
     VERSION = __version__,
@@ -13,6 +17,7 @@ default_config = dict(
     SQLITE_URL = 'https://www.sqlite.org/',
     BOOTSTRAP_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
     VEGALITE_URL = 'https://vega.github.io/vega-lite/',
+    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
     DATABASES_DIRPATH = 'data',
     SECRET_KEY = None,
     SALT_LENGTH = 12,

@@ -8,8 +8,6 @@ from pleko import constants
 from pleko import utils
 import pleko.db
 
-MASTER_DBNAME = '_master'
-
 MASTER_TABLES = [
     dict(name='users',
          columns=[dict(name='username', type=constants.TEXT, primarykey= True),
@@ -76,16 +74,17 @@ def get_cnx(write=False):
     If write is true, then assume the old connection is read-only,
     so close it and open a new one.
     """
+    path = utils.dbpath(constants.MASTER_DB_NAME)
     if write:
         try:
             flask.g.cnx.close()
         except AttributeError:
             pass
-        flask.g.cnx = utils.get_cnx(utils.dbpath(MASTER_DBNAME), write=True)
+        flask.g.cnx = utils.get_cnx(path, write=True)
     try:
         return flask.g.cnx
     except AttributeError:
-        flask.g.cnx = utils.get_cnx(utils.dbpath(MASTER_DBNAME))
+        flask.g.cnx = utils.get_cnx(path)
         return flask.g.cnx
 
 def get_cursor(write=False):
@@ -94,7 +93,8 @@ def get_cursor(write=False):
 
 def init(app):
     "Initialize tables in the master database, if not done."
-    path = utils.dbpath(MASTER_DBNAME, dirpath=app.config['DATABASES_DIRPATH'])
+    path = utils.dbpath(constants.MASTER_DB_NAME,
+                        dirpath=app.config['DATABASES_DIRPATH'])
     cnx = sqlite3.connect(path)
     for schema in MASTER_TABLES:
         pleko.db.create_table(cnx, schema, if_not_exists=True)

@@ -1,5 +1,6 @@
 "Pleko web app."
 
+import json
 import sqlite3
 
 import flask
@@ -23,6 +24,8 @@ def create_app():
     app.config.from_mapping(pleko.default_config)
     app.config.from_json('config.json')
     app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
+    with open(app.config['VEGA_LITE_SCHEMA']) as infile:
+        app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
     app.url_map.converters['name'] = utils.NameConverter
     app.url_map.converters['nameext'] = utils.NameExtConverter
     app.jinja_env.trim_blocks = True
