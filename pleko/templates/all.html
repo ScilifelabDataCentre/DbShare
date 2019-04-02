@@ -1,16 +1,10 @@
 {% extends 'base.html' %}
 
-{% block body_title %}
-Pleko
-<small class="text-muted ml-2">
-  Display, query and plot tabular data sets using
-  <a href="{{ config['SQLITE_URL'] }}" target="_blank">Sqlite</a> and
-  <a href="{{ config['VEGALITE_URL'] }}" target="_blank">Vega-Lite</a>.
-</small>
-{% endblock %}
+{% block head_title %}All databases{% endblock %}
+
+{% block body_title %}All databases{% endblock %}
 
 {% block main %}
-<h4 class="mt-2 mb-3 ml-3">Public databases</h2>
 <table id="dbs" class="table table-sm">
   <thead>
     <tr>
@@ -19,6 +13,7 @@ Pleko
       <th>Access</th>
       <th>Mode</th>
       <th>Owner</th>
+      <th>Size</th>
       <th>Modified</th>
     </tr>
   </thead>
@@ -33,6 +28,9 @@ Pleko
       <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td>{{ db['owner'] }}</td>
+      <td class="text-right">
+        <span class="text-monospace mr-3">{{ db['size'] }}</span>
+      </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>
     {% endfor %}

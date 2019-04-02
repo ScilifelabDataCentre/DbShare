@@ -32,24 +32,6 @@ PLOT_INDEX = dict(name=constants.PLOT_TABLE_NAME + '_index',
 
 blueprint = flask.Blueprint('db', __name__)
 
-@blueprint.route('/', methods=['GET', 'POST'])
-@pleko.user.login_required
-def create():
-    "Create a database."
-    if utils.is_method_GET():
-        return flask.render_template('db/create.html')
-
-    elif utils.is_method_POST():
-        try:
-            with DbContext() as ctx:
-                ctx.set_name(flask.request.form['name'])
-                ctx.set_description(flask.request.form.get('description'))
-                create_table(ctx.dbcnx, PLOT_TABLE)
-                create_index(ctx.dbcnx, PLOT_INDEX)
-        except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
-
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
 def home(dbname):
     "Display the database tables, views and metadata. Delete the database."
@@ -79,6 +61,24 @@ def home(dbname):
             cnx.execute(sql, (dbname,))
             os.remove(utils.dbpath(dbname))
         return flask.redirect(flask.url_for('home'))
+
+@blueprint.route('/', methods=['GET', 'POST'])
+@pleko.user.login_required
+def create():
+    "Create a database."
+    if utils.is_method_GET():
+        return flask.render_template('db/create.html')
+
+    elif utils.is_method_POST():
+        try:
+            with DbContext() as ctx:
+                ctx.set_name(flask.request.form['name'])
+                ctx.set_description(flask.request.form.get('description'))
+                create_table(ctx.dbcnx, PLOT_TABLE)
+                create_index(ctx.dbcnx, PLOT_INDEX)
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/rename', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -584,14 +584,19 @@ class DbContext:
 
 # Utility functions
 
-def get_dbs(public=True):
-    "Get a list of all databases. Does not get database size."
+def get_dbs(public=None, owner=None):
+    "Get a list of databases according to criteria. Does not get database size."
     sql = "SELECT name, owner, description, tables, indexes, views," \
           " public, access, readonly, created, modified FROM dbs"
-    if public:
-        sql += " WHERE public=1"
+    criteria = {}
+    if public is not None:
+        criteria['public=?'] = public
+    if owner:
+        criteria['owner=?'] = owner
+    if criteria:
+        sql += ' WHERE ' + ' AND '.join(criteria.keys())
     cursor = pleko.master.get_cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, tuple(criteria.values()))
     result = [{'name':        row[0],
                'owner':       row[1],
                'description': row[2],
