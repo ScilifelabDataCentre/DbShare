@@ -68,8 +68,7 @@ def setup_template_context():
 @app.route('/')
 def home():
     "Home page. List accessible databases."
-    dbs = pleko.db.get_dbs(public=True)
-    return flask.render_template('home.html', dbs=dbs)
+    return flask.render_template('home.html', dbs=pleko.db.get_dbs(public=True))
 
 @app.route('/owner/<name:username>')
 @pleko.user.login_required
@@ -78,15 +77,17 @@ def owner(username):
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
         flask.flash('you may not access this page')
         return flask.redirect(flask.url_for('home'))
-    dbs = pleko.db.get_dbs(owner=username)
-    return flask.render_template('owner.html', dbs=dbs, username=username)
+    return flask.render_template('owner.html',
+                                 dbs=pleko.db.get_dbs(owner=username),
+                                 username=username)
 
 @app.route('/all')
 @pleko.user.admin_required
 def all():
     "List of all databases."
     dbs = pleko.db.get_dbs()
-    return flask.render_template('all.html', dbs=dbs)
+    usage = sum([db['size'] for db in dbs])
+    return flask.render_template('all.html', dbs=dbs, usage=usage)
 
 @app.after_request
 def finalize(response):

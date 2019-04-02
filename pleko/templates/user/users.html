@@ -12,6 +12,7 @@
       <th>Email</th>
       <th>Role</th>
       <th>Status</th>
+      <th>Total size (bytes)</th>
     </tr>
   </thead>
   <tbody>
@@ -24,6 +25,9 @@
       <td>{{ user['email'] }}</td>
       <td>{{ user['role'] }}</td>
       <td>{{ user['status'] }}</td>
+      <td class="text-right">
+        <span class="text-monospace mr-3">{{ '{:,}'.format(user['size']) }}</span>
+      </td>
     </tr>
     {% endfor %}
   </tbody>

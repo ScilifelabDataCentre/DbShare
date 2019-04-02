@@ -12,7 +12,7 @@
       <th>Description</th>
       <th>Access</th>
       <th>Mode</th>
-      <th>Size</th>
+      <th>Size (bytes)</th>
       <th>Modified</th>
     </tr>
   </thead>
@@ -27,7 +27,7 @@
       <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td class="text-right">
-        <span class="text-monospace mr-3">{{ db['size'] }}</span>
+        <span class="text-monospace mr-3">{{ '{:,}'.format(db['size']) }}</span>
       </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

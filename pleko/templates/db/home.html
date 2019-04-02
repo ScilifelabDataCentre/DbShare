@@ -218,7 +218,12 @@
 {% block info %}
 <div class="small pt-4">
   <div>
-    Access {{ db['public'] and 'public' or 'private' }}
+    Access
+    {% if db['public'] %}
+    <span class="badge badge-success">public</span>
+    {% else %}
+    private
+    {% endif %}
   </div>
   <div class="pt-1">
     Mode
@@ -238,7 +243,8 @@
     {% endif %}
   </div>
   <div class="pt-1">
-    Size <span class="text-monospace">{{ db['size'] }}</span> bytes
+    Size <span class="text-monospace">{{ '{:,}'.format(db['size']) }}</span>
+    bytes
   </div>
   <div class="pt-1">
     Modified <span class="localtime">{{ db['modified'] }}</span>

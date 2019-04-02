@@ -41,6 +41,24 @@
         <th class="text-right">API key</th>
         <td>{{ user.get('apikey') or '-' }}</td>
       </tr>
+      <tr>
+        <th class="text-right">Total size</th>
+        <td>
+          <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
+          bytes
+        </td>
+      </tr>
+      <tr>
+        <th class="text-right">Size quota</th>
+        <td>
+          {% if user.get('quota') %}
+          <span class="text-monospace">{{ '{:,}'.format(user['quota']) }}</span>
+          bytes
+          {% else %}
+          <em>no quota</em>
+          {% endif %}
+        </td>
+      </tr>
     </table>
   </div>
 </div>

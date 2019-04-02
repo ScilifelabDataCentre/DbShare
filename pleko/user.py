@@ -185,10 +185,10 @@ def profile(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    enable_disable = is_admin_and_not_self(user)
     return flask.render_template('user/profile.html',
                                  user=user,
-                                 enable_disable=enable_disable)
+                                 enable_disable=is_admin_and_not_self(user),
+                                 usage=pleko.db.get_usage(username))
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
@@ -266,8 +266,12 @@ def users():
               'role':     row[4],
               'status':   row[5],
               'created':  row[6],
-              'modified': row[7]}
+              'modified': row[7],
+              'size':     0}
              for row in cursor]
+    lookup = dict([(u['username'], u) for u in users])
+    for db in pleko.db.get_dbs():
+        lookup[db['owner']]['size'] += db['size']
     return flask.render_template('user/users.html', users=users)
 
 @blueprint.route('/enable/<name:username>', methods=['POST'])

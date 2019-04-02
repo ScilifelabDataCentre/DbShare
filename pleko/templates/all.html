@@ -2,7 +2,13 @@
 
 {% block head_title %}All databases{% endblock %}
 
-{% block body_title %}All databases{% endblock %}
+{% block body_title %}All databases
+<small class="text-muted">
+  Total size
+  <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
+  bytes
+</small>
+{% endblock %}
 
 {% block main %}
 <table id="dbs" class="table table-sm">
@@ -13,7 +19,7 @@
       <th>Access</th>
       <th>Mode</th>
       <th>Owner</th>
-      <th>Size</th>
+      <th>Size (bytes)</th>
       <th>Modified</th>
     </tr>
   </thead>
@@ -29,7 +35,7 @@
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td>{{ db['owner'] }}</td>
       <td class="text-right">
-        <span class="text-monospace mr-3">{{ db['size'] }}</span>
+        <span class="text-monospace mr-3">{{ '{:,}'.format(db['size']) }}</span>
       </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

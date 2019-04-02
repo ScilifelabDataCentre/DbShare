@@ -638,6 +638,17 @@ def get_db(name):
             'modified':    row[9],
             'size':        os.path.getsize(utils.dbpath(name))}
 
+def get_usage(username=None):
+    "Sum up the database sizes for the given user, or for all databases."
+    cursor = pleko.master.get_cursor()
+    if username:
+        sql = "SELECT name FROM dbs WHERE owner=?"
+        cursor.execute(sql, (username,))
+    else:
+        sql = "SELECT name FROM dbs"
+        cursor.execute(sql)
+    return sum([os.path.getsize(utils.dbpath(row[0])) for row in cursor])
+
 def get_schema(db, tableviewname):
     """Get the schema of the table or view. 
     Add a member 'type' denoting which it is.
