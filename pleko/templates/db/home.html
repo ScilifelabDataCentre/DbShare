@@ -221,7 +221,12 @@
     Access {{ db['public'] and 'public' or 'private' }}
   </div>
   <div class="pt-1">
-    Mode {{ db['readonly'] and 'read-only' or 'read-write' }}
+    Mode
+    {% if db['readonly'] %}
+    <span class="badge badge-warning">read-only</span>
+    {% else %}
+    read-write
+    {% endif %}
   </div>
   <div class="pt-1">
     Owner
