@@ -20,6 +20,7 @@ blueprint = flask.Blueprint('table', __name__)
 def create(dbname):
     "Create a table with columns in the database."
     try:
+        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
@@ -134,10 +135,11 @@ def schema(dbname, tablename):
 def row(dbname, tablename):
     "Insert a row into the table."
     try:
+        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -197,10 +199,11 @@ def row(dbname, tablename):
 def upload(dbname, tablename):
     "Insert data from a file into the table."
     try:
+        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -212,10 +215,11 @@ def upload(dbname, tablename):
 def upload_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     try:
+        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -289,6 +293,7 @@ def upload_csv(dbname, tablename):
 def clone(dbname, tablename):
     "Create a clone of the table."
     try:
+        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')

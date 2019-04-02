@@ -102,8 +102,8 @@
           <li class="mr-2">
             {% if g.current_user %}
             <a href="{{ url_for('user.profile', username=g.current_user['username']) }}"
-               class="btn btn-secondary">
-              {{ g.current_user['username'] }}</a>
+               class="btn btn-outline-secondary">
+              User {{ g.current_user['username'] }}</a>
             {% else %}
             <a href="{{ url_for('user.login') }}" class="btn btn-secondary">
               Login</a>

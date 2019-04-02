@@ -60,12 +60,20 @@ def home(dbname):
             sql = 'DELETE FROM dbs WHERE name=?'
             cnx.execute(sql, (dbname,))
             os.remove(utils.dbpath(dbname))
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(
+            flask.url_for('owner', username=flask.g.current_user['username']))
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @pleko.user.login_required
 def create():
     "Create a database."
+    try:
+        check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(
+            flask.url_for('owner', username=flask.g.current_user['username']))
+
     if utils.is_method_GET():
         return flask.render_template('db/create.html')
 
@@ -127,10 +135,11 @@ def logs(dbname):
 def upload(dbname):
     "Create a table from the data in a CSV file."
     try:
+        check_quota()
         db = get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('db/upload.html', db=db)
@@ -260,6 +269,7 @@ def upload(dbname):
 def clone(dbname):
     "Create a clone of the database."
     try:
+        check_quota()
         db = get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
@@ -648,6 +658,15 @@ def get_usage(username=None):
         sql = "SELECT name FROM dbs"
         cursor.execute(sql)
     return sum([os.path.getsize(utils.dbpath(row[0])) for row in cursor])
+
+def check_quota(user=None):
+    "Raise ValueError if the current user has exceeded her size quota."
+    if user is None:
+        user = flask.g.current_user
+    quota = user['quota']
+    if quota is not None and get_usage(user['username']) > quota:
+        raise ValueError('you have exceeded your size quota;'
+                         ' no more data can be added')
 
 def get_schema(db, tableviewname):
     """Get the schema of the table or view. 

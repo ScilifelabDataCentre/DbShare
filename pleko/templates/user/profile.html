@@ -44,8 +44,15 @@
       <tr>
         <th class="text-right">Total size</th>
         <td>
+          {% if user.get('quota') and usage > user['quota'] %}
+          <div class="text-danger">
+            <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
+            bytes; no more data may be added
+          </div>
+          {% else %}
           <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
           bytes
+          {% endif %}
         </td>
       </tr>
       <tr>
