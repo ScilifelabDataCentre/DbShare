@@ -116,7 +116,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-9 offset-md-1">
-          <h2 class="pt-2">{% block body_title %}Pleko{% endblock %}</h2>
+          <h2 class="mt-2 mb-3">{% block body_title %}Pleko{% endblock %}</h2>
           {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
             <strong>Error:</strong> {{ msg }}

@@ -89,6 +89,7 @@ def register():
     "Register a new user account."
     if utils.is_method_GET():
         return flask.render_template('user/register.html')
+
     elif utils.is_method_POST():
         try:
             with UserContext() as ctx:
@@ -122,6 +123,7 @@ def reset():
     "Reset the password for a user account and send email."
     if utils.is_method_GET():
         return flask.render_template('user/reset.html')
+
     elif utils.is_method_POST():
         try:
             user = get_user(email=flask.request.form['email'])
@@ -156,6 +158,7 @@ def password():
             'user/password.html',
             username=flask.request.args.get('username'),
             code=flask.request.args.get('code'))
+
     elif utils.is_method_POST():
         try:
             user = get_user(username=flask.request.form['username'])
@@ -185,10 +188,12 @@ def profile(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
+    ndb, usage = pleko.db.get_usage(username)
     return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
-                                 usage=pleko.db.get_usage(username))
+                                 ndb=ndb,
+                                 usage=usage)
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
@@ -235,10 +240,12 @@ def edit(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
+
     if utils.is_method_GET():
         return flask.render_template('user/edit.html',
                                      user=user,
                                      change_role=is_admin_and_not_self(user))
+
     elif utils.is_method_POST():
         with UserContext(user) as ctx:
             email = flask.request.form.get('email')
@@ -275,10 +282,12 @@ def users():
               'quota':    row[6],
               'created':  row[7],
               'modified': row[8],
+              'ndb':      0,
               'size':     0}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
     for db in pleko.db.get_dbs():
+        lookup[db['owner']]['ndb']  += 1
         lookup[db['owner']]['size'] += db['size']
     return flask.render_template('user/users.html', users=users)
 

@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Databases owned by {{ username }}{% endblock %}
+{% block head_title %}Databases owned by user {{ username }}{% endblock %}
 
-{% block body_title %}Databases owned by {{ username }}{% endblock %}
+{% block body_title %}
+Databases owned by user <strong>{{ username }}</strong>
+{% endblock %}
 
 {% block main %}
 <table id="dbs" class="table table-sm">

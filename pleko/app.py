@@ -85,6 +85,7 @@ def owner(username):
                                  username=username)
 
 @app.route('/all')
+@pleko.user.login_required
 @pleko.user.admin_required
 def all():
     "List of all databases."

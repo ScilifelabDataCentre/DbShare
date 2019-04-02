@@ -86,7 +86,8 @@ def create():
                 create_index(ctx.dbcnx, PLOT_INDEX)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        return flask.redirect(
+            flask.url_for('owner', username=flask.g.current_user['username']))
 
 @blueprint.route('/<name:dbname>/rename', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -108,7 +109,7 @@ def rename(dbname):
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/logs')
 def logs(dbname):
@@ -655,7 +656,7 @@ def get_db(name):
             'size':        os.path.getsize(utils.dbpath(name))}
 
 def get_usage(username=None):
-    "Sum up the database sizes for the given user, or for all databases."
+    "Return the number and total size of the databases for the user, or all."
     cursor = pleko.master.get_cursor()
     if username:
         sql = "SELECT name FROM dbs WHERE owner=?"
@@ -663,14 +664,16 @@ def get_usage(username=None):
     else:
         sql = "SELECT name FROM dbs"
         cursor.execute(sql)
-    return sum([os.path.getsize(utils.dbpath(row[0])) for row in cursor])
+    rows = list(cursor)
+    return (len(rows),
+            sum([os.path.getsize(utils.dbpath(row[0])) for row in rows]))
 
 def check_quota(user=None):
     "Raise ValueError if the current user has exceeded her size quota."
     if user is None:
         user = flask.g.current_user
     quota = user['quota']
-    if quota is not None and get_usage(user['username']) > quota:
+    if quota is not None and get_usage(user['username'])[1] > quota:
         raise ValueError('you have exceeded your size quota;'
                          ' no more data can be added')
 

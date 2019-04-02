@@ -12,6 +12,7 @@
       <th>Email</th>
       <th>Role</th>
       <th>Status</th>
+      <th>Databases</th>
       <th>Total size (bytes)</th>
     </tr>
   </thead>
@@ -25,6 +26,14 @@
       <td>{{ user['email'] }}</td>
       <td>{{ user['role'] }}</td>
       <td>{{ user['status'] }}</td>
+      <td>
+	{% if user['ndb'] %}
+	<a href="{{ url_for('owner', username=user['username']) }}">
+	  {{ user['ndb'] }} databases</a>
+	{% else %}
+	0 databases
+	{% endif %}
+      </td>
       <td class="text-right">
         <span class="text-monospace mr-3">{{ '{:,}'.format(user['size']) }}</span>
       </td>

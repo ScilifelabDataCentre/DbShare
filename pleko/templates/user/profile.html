@@ -42,6 +42,17 @@
         <td>{{ user.get('apikey') or '-' }}</td>
       </tr>
       <tr>
+        <th class="text-right"># databases</th>
+        <td>
+	  {% if ndb %}
+	  <a href="{{ url_for('owner', username=user['username']) }}">
+	    <span class="badge badge-primary">{{ ndb }}</span></a>
+	  {% else %}
+	  0
+	  {% endif %}
+	</td>
+      </tr>
+      <tr>
         <th class="text-right">Total size</th>
         <td>
           {% if user.get('quota') and usage > user['quota'] %}
