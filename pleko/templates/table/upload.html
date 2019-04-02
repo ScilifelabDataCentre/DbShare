@@ -16,12 +16,16 @@ Insert data from file into table <strong>{{ schema['name'] }}</strong>
   <div class="card-body">
     <ul class="m-2">
       <li>
-        The CSV file must contain exactly one header line containing
+        The CSV file may contain at most one header line containing
         matching table column names.
       </li>
       <li>
         The values of every CSV record must match the types of the
         table columns.
+      </li>
+      <li>
+	Every record in the CSV file must contain the same number of
+	items.
       </li>
       <li>
         The CSV records are added as rows to the table.
@@ -43,6 +47,19 @@ Insert data from file into table <strong>{{ schema['name'] }}</strong>
         <div class="col-md-6">
           <input id="csvfile" name="csvfile"
                  type="file" class="form-control-file" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
+        <legend class="col-md-2 col-form-label pt-0 text-right">
+	  Header record</legend>
+        <div class="col-md-6">
+	  <div class="form-check">
+	    <input id="header" name="header" type="checkbox"
+		   class="form-check-input" value="true" checked>
+	    <label class="form-check-label" for="header">
+	      First line of CSV file contains column names.
+	    </label>
+	  </div>
         </div>
       </div>
       <div class="form-group row">

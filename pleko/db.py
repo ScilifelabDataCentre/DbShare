@@ -146,6 +146,7 @@ def upload(dbname):
 
     elif utils.is_method_POST():
         try:
+            header = utils.to_bool(flask.request.form.get('header'))
             csvfile = flask.request.files['csvfile']
             try:
                 tablename = flask.request.form['tablename']
@@ -165,16 +166,21 @@ def upload(dbname):
             # Preprocess CSV data
             lines = csvfile.read().decode('utf-8').split('\n')
             records = list(csv.reader(lines))
-            header = records.pop(0)
-            if len(header) == 0:
-                raise ValueError('empty header record in the CSV file')
-            for name in header:
-                if not constants.NAME_RX.match(name):
-                    raise ValueError('invalid header column name')
-            if len(header) != len(set(header)):
-                raise ValueError('non-unique header column name')
             # Eliminate empty records
             records = [r for r in records if r]
+            if not records:
+                raise ValueError('empty CSV file')
+            if header:
+                header = records.pop(0)
+                if len(header) == 0:
+                    raise ValueError('empty header record in the CSV file')
+                for name in header:
+                    if not constants.NAME_RX.match(name):
+                        raise ValueError('invalid header column name')
+                if len(header) != len(set(header)):
+                    raise ValueError('non-unique header column name')
+            else:
+                header = ["column%i" % (i+1) for i in range(len(records[0]))]
 
             # Infer column types and constraints
             schema['columns'] = [{'name': name} for name in header]

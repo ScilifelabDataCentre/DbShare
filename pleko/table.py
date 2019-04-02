@@ -226,15 +226,19 @@ def upload_csv(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
+        header = utils.to_bool(flask.request.form.get('header'))
         csvfile = flask.request.files['csvfile']
         lines = csvfile.read().decode('utf-8').split('\n')
         records = list(csv.reader(lines))
-        header = records.pop(0)
-        for n, column in enumerate(schema['columns']):
-            if header[n] != column['name']:
-                raise ValueError('header/column name mismatch')
         # Eliminate empty records
         records = [r for r in records if r]
+        if not records:
+            raise ValueError('empty CSV file')
+        if header:
+            header = records.pop(0)
+            for n, column in enumerate(schema['columns']):
+                if header[n] != column['name']:
+                    raise ValueError('header/column name mismatch')
         try:
             for i, column in enumerate(schema['columns']):
                 type = column['type']
