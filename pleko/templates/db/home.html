@@ -139,19 +139,15 @@
 {% if has_write_access %}
 <div class="pt-4">
   <a href="{{ url_for('.upload', dbname=db['name']) }}"
-     role="button" class="btn btn-primary btn-block">Create table from file</a>
+     role="button" class="btn btn-primary btn-block">Upload file</a>
 </div>
-<div class="pt-2">
-  <a href="{{ url_for('.rename', dbname=db['name']) }}"
-     role="button" class="btn btn-primary btn-block">Rename database</a>
+<div class="pt-4">
+  <a href="{{ url_for('.edit', dbname=db['name']) }}"
+     role="button" class="btn btn-primary btn-block">Edit metadata</a>
 </div>
 <div class="pt-2">
   <a href="{{ url_for('.clone', dbname=db['name']) }}"
      role="button" class="btn btn-primary btn-block">Clone database</a>
-</div>
-<div class="pt-4">
-  <a href="{{ url_for('plot.select', dbname=db['name']) }}"
-     role="button" class="btn btn-info btn-block">Create plot</a>
 </div>
 {% endif %} {# has_write_access #}
 

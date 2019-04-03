@@ -88,10 +88,10 @@ def create():
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
-@blueprint.route('/<name:dbname>/rename', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
 @pleko.user.login_required
-def rename(dbname):
-    "Rename the database."
+def edit(dbname):
+    "Edit the database; name, description, access, mode."
     try:
         db = get_check_write(dbname)
     except ValueError as error:
@@ -99,16 +99,22 @@ def rename(dbname):
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
     if utils.is_method_GET():
-        return flask.render_template('db/rename.html', db=db)
+        return flask.render_template('db/edit.html', db=db)
 
     elif utils.is_method_POST():
         try:
             with DbContext(db) as ctx:
-                ctx.set_name(flask.request.form['name'])
-                ctx.set_description(flask.request.form.get('description'))
+                try:
+                    ctx.set_description(flask.request.form['description'])
+                except KeyError:
+                    pass
+                try:
+                    ctx.set_name(flask.request.form['name'])
+                except KeyError:
+                    pass
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/logs')
 def logs(dbname):
@@ -178,7 +184,7 @@ def upload(dbname):
                     if not constants.NAME_RX.match(name):
                         raise ValueError('invalid header column name')
                 if len(header) != len(set(header)):
-                    raise ValueError('non-unique header column name')
+                    raise ValueError('non-unique header column names')
             else:
                 header = ["column%i" % (i+1) for i in range(len(records[0]))]
 
@@ -502,6 +508,7 @@ class DbContext:
     def set_name(self, name):
         "Set or change the database name."
         assert not hasattr(self, '_dbcnx')
+        if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
         if get_db(name):
