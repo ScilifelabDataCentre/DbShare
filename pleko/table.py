@@ -195,6 +195,31 @@ def row(dbname, tablename):
                                                 dbname=dbname,
                                                 tablename=tablename))
 
+@blueprint.route('/<name:dbname>/<name:tablename>/row/<int:rowid>',
+                 methods=['GET', 'POST', 'DELETE'])
+def row_edit(dbname, tablename, rowid):
+    "Edit a row into the table."
+    try:
+        pleko.db.check_quota()
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        raise NotImplementedError
+
+    elif utils.is_method_POST():
+        raise NotImplementedError
+
+    elif utils.is_method_DELETE():
+        raise NotImplementedError
+
 @blueprint.route('/<name:dbname>/<name:tablename>/upload')
 def upload(dbname, tablename):
     "Insert data from a file into the table."

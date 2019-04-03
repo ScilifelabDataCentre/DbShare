@@ -11,14 +11,23 @@
       {% for column in schema['columns'] %}
       <th>{{ column['name'] }}</th>
       {% endfor %}
+      {% if has_write_access %}
+      <th class="px-0"></th>
+      {% endif %}
     </tr>
   </thead>
   <tbody>
-    {% for row in rows %}
+    {% for rowid, row in enumerate(rows) %}
     <tr>
       {% for value in row %}
       <td>{{ value | or_null_safe }}</td>
       {% endfor %}
+      {% if has_write_access %}
+      <td class="text-right px-0">
+	<a href="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=rowid+1) }}"
+	   class="btn btn-sm btn-primary py-0 my-0" role="button">Edit</a>
+      </td>
+      {% endif %}
     </tr>
     {% endfor %}
   </tbody>
@@ -98,7 +107,7 @@
   {% if has_write_access %}
   <div class="card-footer">
     <a href="{{ url_for('plot.select', dbname=db['name'], tableviewname=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
+       role="button" class="btn btn-sm btn-info btn-block">
       Create plot</a>
   </div>
   {% endif %}
@@ -111,6 +120,11 @@
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
       "pageLength": 25,
+      {% if has_write_access %}
+      "columnDefs": [
+        {"orderable": false, "targets": {{ len(schema['columns']) }} }
+      ]
+      {% endif %}
     });
   });
 </script>
