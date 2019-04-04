@@ -73,9 +73,9 @@ Query database <strong>{{ db['name'] }}</strong>
   </div>
   <div class="col-md">
     {% for table in utils.sorted_schema(db['tables'].values()) %}
-    <div class="card border-secondary mb-1">
+    <div class="card border-primary mb-1">
       <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary" 
+        <button type="button" class="btn btn-outline-primary" 
                 data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
           Table <strong>{{ table['name'] }}</strong> &darr;</button>
@@ -101,8 +101,34 @@ Query database <strong>{{ db['name'] }}</strong>
       </div>
     </div>
     {% endfor %}
+    {% for view in utils.sorted_schema(db['views'].values()) %}
+    <div class="card border-success mb-1">
+      <div class="card-header">
+        <button type="button" class="btn btn-outline-success" 
+                data-toggle="collapse" data-target="#{{ view['name'] }}"
+                aria-expanded="false" aria-controls="{{ view['name'] }}">
+          View <strong>{{ view['name'] }}</strong> &darr;</button>
+        <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
+           class="btn btn-sm btn-outline-success" role="button" target="_blank">
+          {{ view['nrows'] }} rows &#8599;</a>
+      </div>
+      <div id="{{ view['name'] }}" class="collapse">
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            {% for column in view['columns'] %}
+            <tr>
+              <th class="text-right">{{ column['name'] }}</th>
+              <td>{{ column['type'] }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
   </div>
 </div>
+
 {% if has_write_access %}
 <div class="row mt-5">
   <div class="col-md-8">

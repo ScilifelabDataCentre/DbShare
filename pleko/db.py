@@ -590,8 +590,12 @@ class DbContext:
         if not schema.get('query'):
             raise ValueError('no query statement defined')
         query = pleko.query.get_sql_query(schema['query'])
+        cursor = self.dbcnx.cursor()
         sql = "CREATE VIEW %s AS %s" % (schema['name'], query)
-        self.dbcnx.execute(sql)
+        cursor.execute(sql)
+        sql = "PRAGMA table_info(%s)" % schema['name']
+        cursor.execute(sql)
+        schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
         self.db['views'][schema['name']] = schema
 
     def delete_view(self, viewname):
