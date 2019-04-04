@@ -5,6 +5,8 @@
 {% block body_title %}Table <strong>{{ schema['name'] }}</strong>{% endblock %}
 
 {% block main %}
+<div class="m-2">{{ schema.get('description') or 'No description.' }}</div>
+
 <table id="rows" class="table table-sm table-hover">
   <thead>
     <tr>

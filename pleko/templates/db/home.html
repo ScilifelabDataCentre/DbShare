@@ -5,7 +5,7 @@
 {% block body_title %}Database <strong>{{ db['name'] }}</strong>{% endblock %}
 
 {% block main %}
-<div class="m-2">{{ db.get('description') or '-' }}</div>
+<div class="m-2">{{ db.get('description') or 'No description.' }}</div>
 
 <div class="row">
   <div class="col-md-6">
@@ -24,11 +24,20 @@
       </div>
       <div class="card-body">
         {% if db['tables'] %}
-        <table class="table table-sm table-borderless">
+        <table class="table table-sm table-hover table-borderless">
           <tbody>
             {% for table in utils.sorted_schema(db['tables'].values()) %}
             <tr>
-	      <th>{{ table['name'] }}</th>
+	      <td>
+                <button type="button"
+                        class="btn btn-sm btn-outline-primary py-0"
+                        data-container="body" data-toggle="popover"
+                        data-placement="top"
+                        data-content="{{ table.get('description') or 'No description.' }}">
+                  <strong>{{ table['name'] }}</strong>
+                </button>
+              </td>
+	      <td>{{ table.get('description') or '' }}</td>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
 		  {{ table['nrows'] }} rows</a>
@@ -38,23 +47,13 @@
                   schema</a>
               </td>
 	      <td>
-		{% if db['plots'].get(table['name']) %}
-		<button type="button" class="btn btn-sm btn-outline-info" 
-			data-toggle="collapse"
-			data-target="#{{ table['name'] }}"
-			aria-expanded="false"
-			aria-controls="{{ table['name'] }}">
-		  plots &darr;</button>
-		<div id="{{ table['name'] }}" class="collapse mt-1">
-		  {% for plot in db['plots'][table['name']] %}
-		  <div>
-		    <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
-		       class="card-link text-info">
-		      {{ plot['name'] }}</a>
-		  </div>
-		  {% endfor %}
+		{% for plot in db['plots'][table['name']] %}
+		<div>
+		  <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+		     class="card-link text-info">
+		    {{ plot['name'] }}</a>
 		</div>
-		{% endif %}
+		{% endfor %}
 	      </td>
             </tr>
             {% endfor %} {# for table in #}
@@ -86,7 +85,15 @@
           <tbody>
             {% for view in utils.sorted_schema(db['views'].values()) %}
             <tr>
-	      <th>{{ view['name'] }}</th>
+	      <td>
+                <button type="button" 
+                        class="btn btn-sm btn-outline-primary py-0"
+                        data-container="body" data-toggle="popover"
+                        data-placement="top"
+                        data-content="{{ view.get('description') or 'No description.' }}">
+                  <strong>{{ view['name'] }}</strong>
+                </button>
+              </td>
               <td>
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
 		  {{ view['nrows'] }} rows</a>
@@ -96,23 +103,13 @@
                   schema</a>
               </td>
 	      <td>
-		{% if db['plots'].get(view['name']) %}
-		<button type="button" class="btn btn-sm btn-outline-info" 
-			data-toggle="collapse"
-			data-target="#{{ view['name'] }}"
-			aria-expanded="false"
-			aria-controls="{{ view['name'] }}">
-		  plots &darr;</button>
-		<div id="{{ view['name'] }}" class="collapse mt-1">
-		  {% for plot in db['plots'][view['name']] %}
-		  <div>
-		    <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
-		       class="card-link text-info">
-		      {{ plot['name'] }}</a>
-		  </div>
-		  {% endfor %}
+		{% for plot in db['plots'][view['name']] %}
+		<div>
+		  <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+		     class="card-link text-info">
+		    {{ plot['name'] }}</a>
 		</div>
-		{% endif %}
+		{% endfor %}
 	      </td>
             </tr>
             {% endfor %}
