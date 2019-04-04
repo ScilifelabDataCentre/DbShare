@@ -57,7 +57,7 @@
 		{% endif %}
 	      </td>
             </tr>
-            {% endfor %}
+            {% endfor %} {# for table in #}
           </tbody>
         </table>
         {% else %}
@@ -252,4 +252,12 @@
     Created <span class="localtime">{{ db['created'] }}</span>
   </div>
 </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="popover"]').popover()
+  })
+</script>
 {% endblock %}
