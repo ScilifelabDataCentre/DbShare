@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Create a {{ template.type }} plot 
+Create a {{ template.type() }} plot 
 for {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block body_title %}
-Create a <strong>{{ template.type }}</strong> plot
+Create a <strong>{{ template.type() }}</strong> plot
 for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 {% endblock %}
 
@@ -15,7 +15,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 
 <div class="card border-info">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type, tableviewname=schema['name']) }}"
+    <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type(), tableviewname=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
@@ -37,14 +37,16 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 	  {% endif %}
 	</label>
         <div class="col-md-{{ field.get('grid') or 10 }}">
-	  {% if field['type'] == 'textarea' %}
+	  {% if field['type'] == 'text' %}
+	  {% if field.get('rows') %}
           <textarea id="{{ field['name'] }}" name="{{ field['name'] }}"
 		    rows="{{ field.get('rows') or 4 }}"
                     class="form-control text-monospace"
 		    >{{ initial.get(field['name']) or ''}}</textarea>
-          {% elif field['type'] == 'text' %}
+          {% else %}
           <input id="{{ field['name'] }}" name="{{ field['name'] }}"
                  type="text" class="form-control">
+	  {% endif %}
           {% elif field['type'] == 'integer' %}
           <input id="{{ field['name'] }}" name="{{ field['name'] }}"
                  type="number" class="form-control" 
@@ -80,7 +82,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 <div>
   <form action="{{ url_for('.select', dbname=db['name']) }}"
         method="GET">
-    <input type="hidden" name="type" value="{{ template.type }}">
+    <input type="hidden" name="type" value="{{ template.type() }}">
     <input type="hidden" name="tableviewname"
 	   value="{{ schema['name'] }}">
     <button type="submit" class="btn btn-secondary btn-block">Cancel</button>

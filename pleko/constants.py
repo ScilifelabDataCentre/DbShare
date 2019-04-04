@@ -24,6 +24,8 @@ DISABLED = 'disabled'
 USER_STATUSES = (PENDING, ENABLED, DISABLED)
 
 # Database constants
+TABLE   = 'table'
+VIEW    = 'view'
 INTEGER = 'INTEGER'
 REAL    = 'REAL'
 TEXT    = 'TEXT'

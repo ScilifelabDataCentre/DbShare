@@ -42,11 +42,15 @@
           {% endif %}
           {% if db is defined %}
           <li class="nav-item">
-            <a href="{{ url_for('db.home', dbname=db['name']) }}"
-               class="nav-link active ml-3 font-weight-bold">
+	    {% if g.current_user and db['owner'] == g.current_user['username'] %}
+	    {% set href = url_for('db.contents', dbname=db['name']) %}
+	    {% else %}
+	    {% set href = url_for('db.home', dbname=db['name']) %}
+	    {% endif %}
+            <a href="{{ href }}"class="nav-link active ml-3 font-weight-bold">
               Database {{ db['name'] }}
             </a>
-          </li>
+         </li>
           <li class="nav-item">
             <a href="{{ url_for('query.home', dbname=db['name']) }}"
                class="nav-link">Query</a>

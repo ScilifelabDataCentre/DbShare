@@ -6,6 +6,7 @@ import json
 import sqlite3
 
 import flask
+import jinja2
 import jsonschema
 
 import pleko.db
@@ -15,132 +16,135 @@ from pleko import constants
 from pleko import utils
 
 
-class Template:
-    "Base plot specification template."
-
-    template = {
-        "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-        "title": "Plot title",
-        "width": 400,
-        "height": 400,
-        "description": "Plot description.",
-        "data": {
-            "url": None
-        }
-    }
-
-    fields = [{'name': 'title',
-               'label': 'Title',
-               'type': 'text'},
-              {'name': 'description',
-               'label': 'Description',
-               'type': 'textarea'}]
-
-    def __init__(self, spec=None):
-        if spec:
-            self.spec = copy.deepcopy(spec)
-        else:
-            self.spec = copy.deepcopy(self.template)
-
-    def __str__(self):
-        return json.dumps(self.spec, indent=2)
-
-    @property
-    def type(self): return self.__class__.__name__.lower()
-
-    @property
-    def description(self): return self.__class__.__doc__
-
-    def from_form(self):
-        for field in self.fields:
-            setter = getattr(self, "set_%s" % field['name'])
-            setter(flask.request.form.get(field['name']))
-
-    def set_title(self, value):
-        self.spec['title'] = value
-
-    def set_description(self, value):
-        self.spec['description'] = value
-
-    def check_validity(self):
-        """Check that all required values have been set.
-        Raise ValueError otherwise.
-        """
-        pass
-
-    def update_data_url(self, db, tableviewname):
-        schema = pleko.db.get_schema(db, tableviewname)
-        if schema['type'] == 'table':
-            url = utils.get_url('table.rows',
-                                values=dict(dbname=db['name'],
-                                            tablename=tableviewname))
-        elif schema['type'] == 'view':
-            url = utils.get_url('view.rows',
-                                values=dict(dbname=db['name'],
-                                            tablename=tableviewname))
-        else:
-            raise NotImplementedError
-        self.spec['data']['url'] = url + '.csv'
-
-
-class Spec(Template):
-    "Vega-Lite JSON specification."
-
-    fields = copy.deepcopy(Template.fields)
-    fields.extend([{'name': 'spec',
-                    'label': 'Vega-Lite spec',
-                    'info_url': 'VEGALITE_URL',
-                    'type': 'textarea',
-                    'rows': 24}])
-
-    def set_spec(self, value):
-        "Replace the spec completely by the incoming value"
-        if isinstance(spec, dict):
-            self.spec = copy.deepcopy(spec)
-        else:
-            try:
-                self.spec = json.loads(spec)
-            except (ValueError, TypeError) as error:
-                raise ValueError(str(error))
-
-
-class PreparedTemplate(Template):
-    "Template for prepared plots."
-
-    fields = copy.deepcopy(Template.fields)
-    fields.extend([{'name': 'width', 
+STANDARD_FIELDS = [{'name': 'title',
+                    'label': 'Title',
+                    'type': 'text',
+                    'optional': True},
+                   {'name': 'description',
+                    'label': 'Description',
+                    'type': 'text',
+                    'optional': True},
+                   {'name': 'width', 
                     'label': 'Plot width (px)',
                     'type': 'integer',
+                    'constraint': 'positive',
                     'grid': 2,
                     'default': 400},
                    {'name': 'height', 
                     'label': 'Plot height (px)',
                     'type': 'integer',
+                    'constraint': 'positive',
                     'grid': 2,
-                    'default': 400}])
-                   
-    def set_width(self, value):
-        self.spec['width'] = int(value)
-    def set_height(self, value):
-        self.spec['height'] = int(value)
+                    'default': 400}]
+
+class PlotTemplate:
+    "Base plot specification template."
+
+    template = ""
+    fields = []
+
+    def __init__(self, data_url):
+        self.template = jinja2.Template(self.template)
+        self.context = {'data_url': data_url}
+
+    def __str__(self):
+        return self.template.render(self.context)
+
+    @classmethod
+    def type(cls):
+        return cls.__name__.lower()
+
+    def set(self, lookup):
+        "Set the field values from the lookup, e.g. flask.request.form"
+        for field in self.fields:
+            try:
+                converter = getattr(self, "convert_%s" % field['name'])
+            except AttributeError:
+                converter = getattr(self, "convert_%s" % field['type'])
+            value = lookup.get(field['name'])
+            if value:
+                self.context[field['name']] = converter(field, value)
+            elif field.get('default'):
+                self.context[field['name']] = field.get('default')
+            elif field.get('optional'):
+                self.context[field['name']] = None
+            else:
+                raise ValueError("missing value for %s" % field['name'])
+
+    def convert_text(self, field, value):
+        return value
+
+    def convert_integer(self, field, value):
+        value = int(value)
+        if field.get('constraint') == 'positive' and value <= 0:
+            raise ValueError
+        return value
+
+    def convert_column(self, field, value):
+        return value
 
 
-class Scatterplot(PreparedTemplate):
+class Spec(PlotTemplate):
+    "Vega-Lite JSON specification."
+
+    fields = [{'name': 'spec',
+               'label': 'Vega-Lite spec',
+               'info_url': 'VEGALITE_URL',
+               'type': 'text',
+               'rows': 24}]
+
+    def __init__(self):
+        super().__init__()
+        self.spec = ''
+
+    def __str__(self):
+        "Just the spec value as is."
+        return self.context['spec']
+
+    def convert_spec(self, field, value):
+        return value
+
+
+class Scatterplot(PlotTemplate):
     """Scatterplot of two quantitative variables,
-    optionally with color and shape nominal variables."""
+    optionally with color and shape nominal variables.
+    """
 
-    template = copy.deepcopy(PreparedTemplate.template)
-    template.update({
-        "mark": "point",
-        "encoding": {
-            "x": {"field": None, "type": "quantitative"},
-            "y": {"field": None, "type": "quantitative"},
-            "color": {"field": None, "type": "nominal"},
-            "shape": {"field": None, "type": "nominal"}
-        }
-    })
+    template = """{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "{{ title or ''}}",
+  "description": "{{ description or '' }}",
+  "width": {{ width }},
+  "height": {{ height }},
+  "data": {
+    "url": "{{ data_url }}"
+  },
+  "mark": "point",
+  "encoding": {
+    "x": {
+      "field": "{{ x }}",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "{{ y }}",
+      "type": "quantitative"
+    }
+    {% if color %}
+    ,"color": {
+      "field": "{{ color }}",
+      "type": "nominal"
+    }
+    {% endif %}
+    {% if shape %}
+    ,"shape": {
+      "field": "{{ shape }}",
+      "type": "nominal"
+    }
+    {% endif %}
+  }
+}"""
 
-    fields = copy.deepcopy(PreparedTemplate.fields)
+    fields = copy.deepcopy(STANDARD_FIELDS)
     fields.extend([{'name': 'x', 
                     'label': 'X-axis',
                     'type': 'column',
@@ -160,21 +164,8 @@ class Scatterplot(PreparedTemplate):
                     'grid': 6,
                     'optional': True}])
 
-    def set_x(self, value):
-        if not value:
-            raise ValueError("invalid value for 'x'")
-        self.spec['encoding']['x']['field'] = value
-    def set_y(self, value):
-        if not value:
-            raise ValueError("invalid value for 'y'")
-        self.spec['encoding']['y']['field'] = value
-    def set_color(self, value):
-        self.spec['encoding']['color']['field'] = value or None
-    def set_shape(self, value):
-        self.spec['encoding']['shape']['field'] = value or None
 
-
-PLOT_TEMPLATES = dict([(t.type, t) for t in [Scatterplot(), Spec()]])
+PLOT_TEMPLATES = dict([(tc.type(), tc) for tc in [Scatterplot, Spec]])
 
 
 blueprint = flask.Blueprint('plot', __name__)
@@ -230,8 +221,8 @@ def select(dbname):
         return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
-        plottypes = sorted([(t.type, t.description) 
-                            for t in PLOT_TEMPLATES.values()])
+        plottypes = sorted([(tc.type(), tc.__doc__) 
+                            for tc in PLOT_TEMPLATES.values()])
         return flask.render_template('plot/select.html',
                                      db=db,
                                      plottypes=plottypes,
@@ -250,7 +241,7 @@ def select(dbname):
             return flask.redirect(flask.url_for('.select', dbname=dbname))
         return flask.redirect(flask.url_for('.create',
                                             dbname=db['name'],
-                                            plottype=template.type,
+                                            plottype=template.type(),
                                             tableviewname=schema['name']))
 
 @blueprint.route('/<name:dbname>/create/<name:plottype>/<name:tableviewname>',
@@ -260,10 +251,24 @@ def create(dbname, plottype, tableviewname):
     "Create a plot of the given type for the given table/view."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
-        template = copy.deepcopy(PLOT_TEMPLATES.get(plottype))
-        if not template:
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        templateclass = PLOT_TEMPLATES.get(plottype)
+        if not templateclass:
             raise ValueError('no such plot type')
         schema = pleko.db.get_schema(db, tableviewname)
+        if schema['type'] == constants.TABLE:
+            data_url = utils.get_url('table.rows',
+                                     values=dict(dbname=dbname, 
+                                                 tablename=tableviewname))
+        elif schema['type'] == constants.VIEW:
+            data_url = utils.get_url('view.rows',
+                                     values=dict(dbname=dbname, 
+                                                 tablename=tableviewname))
+        data_url += '.csv'
+        template = templateclass(data_url)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname))
@@ -271,28 +276,24 @@ def create(dbname, plottype, tableviewname):
     if utils.is_method_GET():
         schema['nrows'] = pleko.db.get_nrows(schema['name'],
                                              pleko.db.get_cnx(dbname))
-        template.update_data_url(db, tableviewname)
         return flask.render_template('plot/create.html',
                                      db=db,
                                      template=template,
-                                     schema=schema,
-                                     initial=dict(spec=str(template)))
+                                     schema=schema)
 
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, tableviewname=tableviewname) as ctx:
+            with PlotContext(db, schema=schema) as ctx:
                 ctx.set_name(flask.request.form.get('_name'))
-                ctx.set_type(template.type)
-                template.from_form()
-                template.update_data_url(db, tableviewname)
-                template.check_validity()
-                ctx.set_spec(template.spec)
+                template.set(flask.request.form)
+                ctx.set_type(template.type())
+                ctx.set_spec(str(template))
         except (ValueError, TypeError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(
                 utils.get_url('.create',
                               values=dict(dbname=dbname,
-                                          plottype=template.type,
+                                          plottype=template.type(),
                                           tableviewname=tableviewname)))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
@@ -319,21 +320,21 @@ def edit(dbname, plotname):
         return flask.render_template('plot/edit.html', 
                                      db=db,
                                      plot=plot,
+                                     spec=json.dumps(plot['spec'], indent=2),
                                      schema=schema)
     elif utils.is_method_POST():
+        spec = flask.request.form.get('spec')
         try:
             with PlotContext(db, plot=plot) as ctx:
-                spec = flask.request.form.get('spec')
-                if not spec: raise ValueError('no spec given')
-                spec = json.loads(spec)
-                ctx.set_spec(spec)
                 ctx.set_name(flask.request.form.get('name'))
+                if not spec: raise ValueError('no spec given')
+                ctx.set_spec(spec)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            plot['spec'] = spec # This is the spec with error(s)
             return flask.render_template('plot/edit.html', 
                                          db=db,
                                          plot=plot,
+                                         spec=spec, # Spec with errors
                                          schema=schema)
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
@@ -361,6 +362,7 @@ def clone(dbname, plotname):
         return flask.redirect(flask.url_for('home'))
     try:
         plot = get_plot_from_db(db, plotname)
+        schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.contents', dbname=dbname))
@@ -370,7 +372,7 @@ def clone(dbname, plotname):
 
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, tableviewname=plot['tableviewname']) as ctx:
+            with PlotContext(db, schema=schema) as ctx:
                 ctx.set_name(flask.request.form.get('name'))
                 ctx.set_type(plot['type'])
                 ctx.set_spec(plot['spec'])
@@ -425,16 +427,16 @@ def get_plot_from_db(db, plotname):
 class PlotContext:
     "Context handler to create, modify and save a plot definition."
 
-    def __init__(self, db, plot=None, tableviewname=None):
+    def __init__(self, db, plot=None, schema=None):
         self.db = db
         if plot:
             self.plot = copy.deepcopy(plot)
             self.oldname = plot['name']
-            self.tableviewname = self.plot['tableviewname']
         else:
             self.plot = {}
             self.oldname = None
-            self.tableviewname = tableviewname
+        self.schema = schema
+        print('oldname', self.oldname)
 
     def __enter__(self):
         return self
@@ -443,18 +445,19 @@ class PlotContext:
         if etyp is not None: return False
         if not self.plot.get('name'):
             raise ValueError('plot has no name')
-        with self.dbcnx:
-            if self.oldname:    # Update already existing plot
+        if self.oldname:    # Update already existing plot
+            with self.dbcnx:
                 sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
                       constants.PLOT_TABLE_NAME
                 self.dbcnx.execute(sql, (self.plot['name'],
                                          json.dumps(self.plot['spec']),
                                          self.oldname))
-            else:               # Insert into table
+        else:               # Insert into table
+            with self.dbcnx:
                 sql = "INSERT INTO %s (name, tableviewname, type, spec)" \
                       " VALUES(?, ?, ?, ?)" % constants.PLOT_TABLE_NAME
                 self.dbcnx.execute(sql, (self.plot['name'],
-                                         self.tableviewname,
+                                         self.schema['name'],
                                          self.plot['type'],
                                          json.dumps(self.plot['spec'])))
 
@@ -473,38 +476,28 @@ class PlotContext:
             raise ValueError('no plot name given')
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid plot name')
-        try:
-            if name != self.oldname:
+        name = name.lower()
+        if name != self.oldname:
+            try:
                 get_plot_from_db(self.db, name)
-        except ValueError:
-            pass
-        else:
-            raise ValueError('plot name already in use')
+            except ValueError:
+                pass
+            else:
+                raise ValueError('plot name already in use')
         self.plot['name'] = name
 
     def set_type(self, type):
         "Set the plot type."
         if self.plot.get('type'):
             raise ValueError('cannot change the plot type')
-        if not type:
-            raise ValueError('no plot type given')
         if type not in PLOT_TEMPLATES:
-            raise ValueError('no such plot type')
+            raise ValueError('unknown plot type')
         self.plot['type'] = type
 
-    def set_tableviewname(self, tableviewname):
-        if not tableviewname:
-            raise ValueError('no table name given')
-        if not constants.NAME_RX.match(tableviewname):
-            raise ValueError('invalid table name')
-        if self.plot.get('tableviewname'):
-            raise ValueError('cannot change the tableviewname of the plot')
-        self.plot['tableviewname'] = tableviewname
-
     def set_spec(self, spec):
-        """Set the Vega-Lite specification of the plot.
-        Raise ValueError if it is invalid.
-        """
+        "Set the plot spec."
+        if isinstance(spec, str):
+            spec = json.loads(spec)
         try:
             jsonschema.validate(
                 instance=spec,

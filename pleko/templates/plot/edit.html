@@ -29,7 +29,7 @@ Edit plot <strong>{{ plot['name'] }}</strong>
         <div class="col-md">
           <textarea id="spec" name="spec" rows="24"
 		    class="form-control text-monospace"
-		    >{{ plot['spec']|tojson(indent=2) }}</textarea>
+		    >{{ spec|safe }}</textarea>
         </div>
       </div>
       <div class="form-group row">
