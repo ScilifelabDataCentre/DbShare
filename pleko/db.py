@@ -35,10 +35,10 @@ blueprint = flask.Blueprint('db', __name__)
 @blueprint.route('/<name:dbname>')
 def home(dbname):
     "Home page for the database. If none configured, redirect to contents."
-    # Check for existence of configured home page.
+    # TODO Check for existence of configured home page.
     return flask.redirect(flask.url_for('.contents', dbname=dbname))
 
-@blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>/contents', methods=['GET', 'POST', 'DELETE'])
 def contents(dbname):
     "List the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
