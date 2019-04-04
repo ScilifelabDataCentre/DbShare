@@ -20,8 +20,12 @@ blueprint = flask.Blueprint('table', __name__)
 def create(dbname):
     "Create a table with columns in the database."
     try:
-        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -56,7 +60,7 @@ def create(dbname):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -73,7 +77,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
             schema = db['tables'][str(tablename)]
         except KeyError:
             flask.flash('no such table', 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.contents', dbname=dbname))
         columns = [c['name'] for c in schema['columns']]
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
@@ -107,7 +111,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
                 ctx.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/schema')
 def schema(dbname, tablename):
@@ -121,7 +125,7 @@ def schema(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
     return flask.render_template(
         'table/schema.html',
@@ -135,18 +139,22 @@ def schema(dbname, tablename):
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
-        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         schema = db['tables'][tablename]
         schema['nrows'] = pleko.db.get_nrows(schema['name'],
                                              pleko.db.get_cnx(dbname))
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('table/row_insert.html',
@@ -188,18 +196,18 @@ def row_insert(dbname, tablename):
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
-        # Do not check for quota; a loop-hole, but let it slide...
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
+    # Do not check for quota; a loop-hole, but let it slide...
     dbcnx = pleko.db.get_cnx(dbname)
     try:
         schema = db['tables'][tablename]
         schema['nrows'] = pleko.db.get_nrows(schema['name'], dbcnx)
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
     if utils.is_method_GET():
         cursor = dbcnx.cursor()
@@ -259,32 +267,40 @@ def row_edit(dbname, tablename, rowid):
 def upload(dbname, tablename):
     "Insert data from a file into the table."
     try:
-        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     return flask.render_template('table/upload.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/upload/csv', methods=['POST'])
 def upload_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     try:
-        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         header = utils.to_bool(flask.request.form.get('header'))
         csvfile = flask.request.files['csvfile']
@@ -357,16 +373,20 @@ def upload_csv(dbname, tablename):
 def clone(dbname, tablename):
     "Create a clone of the table."
     try:
-        pleko.db.check_quota()
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('table/clone.html',
@@ -409,7 +429,7 @@ def download(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/download.csv')
@@ -424,7 +444,7 @@ def download_csv(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
     try:
         columns = [c['name'] for c in schema['columns']]
         if utils.to_bool(flask.request.args.get('header')):

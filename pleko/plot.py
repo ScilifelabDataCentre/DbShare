@@ -186,7 +186,7 @@ def home(dbname):
         db = pleko.db.get_check_read(dbname, plots=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
     return flask.render_template('plot/home.html',
                                  db=db,
                                  has_write_access=pleko.db.has_write_access(db))
@@ -197,6 +197,10 @@ def display(dbname, plotname):
     "Display the plot."
     try:
         db = pleko.db.get_check_read(dbname, nrows=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
         plot = get_plot(dbname, str(plotname))
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
@@ -223,7 +227,7 @@ def select(dbname):
         db = pleko.db.get_check_write(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('home'))
 
     if utils.is_method_GET():
         plottypes = sorted([(t.type, t.description) 
@@ -243,7 +247,7 @@ def select(dbname):
                 db, flask.request.form.get('tableviewname'))
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('.select', dbname=dbname))
         return flask.redirect(flask.url_for('.create',
                                             dbname=db['name'],
                                             plottype=template.type,
@@ -301,11 +305,15 @@ def edit(dbname, plotname):
     "Edit the plot."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
         plot = get_plot_from_db(db, plotname)
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('plot/edit.html', 
@@ -348,13 +356,18 @@ def clone(dbname, plotname):
     "Clone the plot."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
         plot = get_plot_from_db(db, plotname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('plot/clone.html', db=db, plot=plot)
+
     elif utils.is_method_POST():
         try:
             with PlotContext(db, tableviewname=plot['tableviewname']) as ctx:
@@ -363,7 +376,7 @@ def clone(dbname, plotname):
                 ctx.set_spec(plot['spec'])
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.contents', dbname=dbname))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))

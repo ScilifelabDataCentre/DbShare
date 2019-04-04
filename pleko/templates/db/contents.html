@@ -1,8 +1,10 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Database {{ db['name'] }}{% endblock %}
+{% block head_title %}Database {{ db['name'] }} contents{% endblock %}
 
-{% block body_title %}Database <strong>{{ db['name'] }}</strong>{% endblock %}
+{% block body_title %}
+Database <strong>{{ db['name'] }}</strong> contents
+{% endblock %}
 
 {% block main %}
 <div class="m-2">{{ db.get('description') or 'No description.' }}</div>
@@ -30,12 +32,12 @@
             <tr>
 	      <td>
                 <button type="button"
-                        class="btn btn-sm btn-outline-primary py-0"
+                        class="btn btn-sm btn-outline-secondary px-1 py-0 mx-1"
                         data-container="body" data-toggle="popover"
-                        data-placement="top"
+                        data-placement="bottom"
                         data-content="{{ table.get('description') or 'No description.' }}">
-                  <strong>{{ table['name'] }}</strong>
-                </button>
+                  &#9432;</button>
+                <strong>{{ table['name'] }}</strong>
               </td>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
@@ -86,12 +88,12 @@
             <tr>
 	      <td>
                 <button type="button" 
-                        class="btn btn-sm btn-outline-primary py-0"
+                        class="btn btn-sm btn-outline-secondary px-1 py-0 mx-1"
                         data-container="body" data-toggle="popover"
-                        data-placement="top"
+                        data-placement="bottom"
                         data-content="{{ view.get('description') or 'No description.' }}">
-                  <strong>{{ view['name'] }}</strong>
-                </button>
+                  &#9432;</button>
+                <strong>{{ view['name'] }}</strong>
               </td>
               <td>
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
@@ -195,7 +197,7 @@
 
 {% if has_write_access %}
 <div class="pt-4">
-  <form action="{{ url_for('.home', dbname=db['name']) }}"
+  <form action="{{ url_for('.contents', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

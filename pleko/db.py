@@ -32,9 +32,15 @@ PLOT_INDEX = dict(name=constants.PLOT_TABLE_NAME + '_index',
 
 blueprint = flask.Blueprint('db', __name__)
 
-@blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>')
 def home(dbname):
-    "Display the database tables, views and metadata. Delete the database."
+    "Home page for the database. If none configured, redirect to contents."
+    # Check for existence of configured home page.
+    return flask.redirect(flask.url_for('.contents', dbname=dbname))
+
+@blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
+def contents(dbname):
+    "List the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
         try:
             db = get_check_read(dbname, nrows=True, plots=True)
@@ -42,7 +48,7 @@ def home(dbname):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         return flask.render_template(
-            'db/home.html', 
+            'db/contents.html', 
             db=db,
             has_write_access=has_write_access(db),
             can_change_mode=has_write_access(db, check_mode=False))
@@ -86,7 +92,7 @@ def create():
                 create_index(ctx.dbcnx, PLOT_INDEX)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        return flask.redirect(flask.url_for('.contents', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -96,7 +102,7 @@ def edit(dbname):
         db = get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('db/edit.html', db=db)
@@ -114,7 +120,7 @@ def edit(dbname):
                     pass
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=db['name']))
+        return flask.redirect(flask.url_for('.contents', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/logs')
 def logs(dbname):
@@ -145,7 +151,7 @@ def upload(dbname):
         db = get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.contents', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('db/upload.html', db=db)
@@ -304,7 +310,7 @@ def clone(dbname):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
         shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        return flask.redirect(flask.url_for('.contents', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/download')
 def download(dbname):
@@ -335,7 +341,7 @@ def public(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to public access.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.contents', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/private', methods=['POST'])
 @pleko.user.login_required
@@ -353,7 +359,7 @@ def private(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database public access revoked.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.contents', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
 @pleko.user.login_required
@@ -371,7 +377,7 @@ def readwrite(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-write mode.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.contents', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 @pleko.user.login_required
@@ -389,7 +395,7 @@ def readonly(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-only mode.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.contents', dbname=db['name']))
 
 
 class DbContext:
