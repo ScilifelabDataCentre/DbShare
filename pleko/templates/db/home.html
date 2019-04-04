@@ -37,7 +37,6 @@
                   <strong>{{ table['name'] }}</strong>
                 </button>
               </td>
-	      <td>{{ table.get('description') or '' }}</td>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
 		  {{ table['nrows'] }} rows</a>

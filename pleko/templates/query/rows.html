@@ -9,9 +9,11 @@ Rows from query of database <strong>{{ db['name'] }}</strong>
 {% endblock %}
 
 {% block main %}
-<div class="mx-3">
-  SQL> <code>{{ sql }};</code> &rarr; {{ len(rows) }} rows
+<div class="mx-3 ml-4">
+  <span class="monospace mr-4">{{ sql }};</span>
+  &rarr; {{ len(rows) }} rows
 </div>
+
 <div class="mt-3">
   <table id="rows" class="table table-sm table-hover">
     <thead>
@@ -64,7 +66,7 @@ Rows from query of database <strong>{{ db['name'] }}</strong>
   <a href="{{ url_for('.home', dbname=db['name']) }}"
      role="button" class="btn btn-success btn-block">New query</a>
 </div>
-<div class="pt-2">
+<div class="pt-4">
   <form action="{{ url_for('view.create', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -73,6 +75,18 @@ Rows from query of database <strong>{{ db['name'] }}</strong>
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <button type="submit" class="btn btn-primary btn-block">Create view</button>
+  </form>
+</div>
+<div class="pt-2">
+  <form action="{{ url_for('.table', dbname=db['name']) }}"
+        method="GET">
+    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
+    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
+    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
+    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
+    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <input type="hidden" name="sql" value="{{ sql or ''}}">
+    <button type="submit" class="btn btn-primary btn-block">Create table</button>
   </form>
 </div>
 {% endblock %}

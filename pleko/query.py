@@ -104,6 +104,54 @@ def sql(dbname):
                                  sql=sql,
                                  rows=rows)
         
+@blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
+@pleko.user.login_required
+def table(dbname):
+    "Create a table containing the results of the query."
+    try:
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+
+    if utils.is_method_GET():
+        query = get_query_from_request(check=False)
+        return flask.render_template('query/table.html',
+                                     db=db,
+                                     query=query)
+
+    elif utils.is_method_POST():
+        try:
+            query = get_query_from_request(check=True)
+            query['tablename'] = tablename = flask.request.form.get('name')
+            if not tablename:
+                raise ValueError('no table name given')
+            if not constants.NAME_RX.match(tablename):
+                raise ValueError('invalid table name')
+            if tablename in db['tables']:
+                raise ValueError('name already in use for table')
+            if tablename in db['views']:
+                raise ValueError('name already in use for view')
+            dbcnx = pleko.db.get_cnx(dbname, write=True)
+            cursor = dbcnx.cursor()
+            with dbcnx:
+                sql = "CREATE TABLE %s AS %s" % (tablename,
+                                                 get_sql_query(query))
+                cursor.execute(sql)
+                description = sql
+            sql = "PRAGMA table_info(%s)" % tablename
+            cursor.execute(sql)
+            columns = [{'name': row[1], 'type': row[2]} for row in cursor]
+            with pleko.db.DbContext(db) as ctx:
+                ctx.db['tables'][tablename] = {'name': tablename,
+                                               'description': description,
+                                               'columns': columns}
+        except (KeyError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.home', dbname=dbname,**query))
+        return flask.redirect(
+            flask.url_for('table.rows', dbname=dbname, tablename=tablename))
+
 
 # Utility functions
 

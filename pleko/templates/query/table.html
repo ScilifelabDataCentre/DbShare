@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Create a table for query results{% endblock %}
+
+{% block body_title %}Create a table for query results{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-body">
+    <form action="{{ url_for('.table', dbname=db['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="name" class="col-md-2 col-form-label text-right">
+          Table name</label>
+        <div class="col-md-6">
+          <input id="name" name="name" type="text"
+		 class="form-control" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="select" class="col-md-2 col-form-label text-right">
+          SELECT</label>
+        <div class="col-md-10">
+          <textarea id="select" name="select"
+                    class="form-control" rows="2" autofocus
+		    >{{ query.get('select') or '' }}</textarea>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="from"
+               class="col-md-2 col-form-label text-right">
+          FROM</label>
+        <div class="col-md-10">
+          <textarea id="from" name="from" class="form-control" rows="2"
+		    >{{ query.get('from') or '' }}</textarea>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="where" class="col-md-2 col-form-label text-right">
+          WHERE</label>
+        <div class="col-md-10">
+          <textarea id="where" name="where" class="form-control" rows="2"
+		    >{{ query.get('where') or '' }}</textarea>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="orderby" class="col-md-2 col-form-label text-right">
+          ORDER BY</label>
+        <div class="col-md-10">
+          <input id="orderby" name="orderby" 
+                 type="text" class="form-control"
+                 value="{{ query.get('orderby') or '' }}">
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="limit" class="col-md-2 col-form-label text-right">
+          LIMIT</label>
+        <div class="col-md-4">
+          <input id="limit" name="limit" 
+                 type="number" class="form-control"
+                 value="{{ query.get('limit') or '' }}">
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-3 offset-md-2">
+          <button type="submit"
+                  class="btn btn-primary btn-lg btn-block">Create table</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.home', dbname=db['name']) }}"
+     role="button" class="btn btn-secondary btn-block">Cancel</a>
+</div>
+{% endblock %}

@@ -265,6 +265,8 @@ def create(dbname, plottype, tableviewname):
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
     if utils.is_method_GET():
+        schema['nrows'] = pleko.db.get_nrows(schema['name'],
+                                             pleko.db.get_cnx(dbname))
         template.update_data_url(db, tableviewname)
         return flask.render_template('plot/create.html',
                                      db=db,

@@ -31,6 +31,7 @@ def create(dbname):
         try:
             viewname = flask.request.form.get('name')
             schema = {'name': viewname,
+                      'description': flask.request.form.get('description'),
                       'query': pleko.query.get_query_from_request(check=True)}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
