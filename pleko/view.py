@@ -78,14 +78,14 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
         if viewname.ext is None or viewname.ext == 'html':
-            sql = pleko.query.get_sql_query(schema['query'])
-            rows = list(cursor)
+            query = schema['query']
             return flask.render_template('view/rows.html', 
                                          db=db,
                                          schema=schema,
                                          columns=columns,
-                                         sql=sql,
-                                         rows=rows,
+                                         query=query,
+                                         sql=pleko.query.get_sql_query(query),
+                                         rows=list(cursor),
                                          has_write_access=has_write_access)
         elif viewname.ext == 'csv':
             writer = utils.CsvWriter(header=columns)
