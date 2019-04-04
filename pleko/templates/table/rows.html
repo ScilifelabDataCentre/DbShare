@@ -17,14 +17,14 @@
     </tr>
   </thead>
   <tbody>
-    {% for rowid, row in enumerate(rows) %}
+    {% for row in rows %}
     <tr>
-      {% for value in row %}
+      {% for value in row[1:] %}
       <td>{{ value | or_null_safe }}</td>
       {% endfor %}
       {% if has_write_access %}
       <td class="text-right px-0">
-	<a href="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=rowid+1) }}"
+	<a href="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=row[0]) }}"
 	   class="btn btn-sm btn-primary py-0 my-0" role="button">Edit</a>
       </td>
       {% endif %}

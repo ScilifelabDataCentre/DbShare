@@ -181,9 +181,13 @@ class CsvWriter:
         if header:
             self.writer.writerow(header)
 
-    def add_from_cursor(self, cursor):
-        for row in cursor:
-            self.writer.writerow(row)
+    def add_from_cursor(self, cursor, skip_rowid=False):
+        if skip_rowid:
+            for row in cursor:
+                self.writer.writerow(row[1:])
+        else:
+            for row in cursor:
+                self.writer.writerow(row)
 
     def add_row(self, row):
         self.writer.writerow(row)

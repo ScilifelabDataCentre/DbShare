@@ -710,8 +710,11 @@ def create_table(dbcnx, schema, if_not_exists=False):
         raise ValueError('no columns defined')
     names = set()
     for column in schema['columns']:
+        column['name'] = column['name'].lower()
         if column['name'] in names:
             raise ValueError("column name %s repeated" % column['name'])
+        if column['name'] == 'rowid':
+            raise ValueError("column name 'rowid' is reserved by the system")
         names.add(column['name'])
     # Collect columns forming primary key
     primarykey = []

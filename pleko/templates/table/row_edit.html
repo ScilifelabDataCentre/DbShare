@@ -80,6 +80,14 @@ Edit row {{ rowid }} in table <strong>{{ schema['name'] }}</strong>
   <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-secondary btn-block">Cancel</a>
 </div>
+<div class="pt-4">
+  <form action="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=rowid) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block">Delete row</button>
+  </form>
+</div>
 {% endblock %}
 
 {% block javascript %}

@@ -77,7 +77,7 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
         columns = [c['name'] for c in schema['columns']]
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
-        sql = "SELECT * FROM %s" % tablename
+        sql = "SELECT rowid, %s FROM %s" % (','.join(columns), tablename)
         cursor.execute(sql)
         if tablename.ext is None or tablename.ext == 'html':
             return flask.render_template('table/rows.html', 
@@ -87,11 +87,11 @@ def rows(dbname, tablename):    # NOTE: tablename is a NameExt instance!
                                          has_write_access=has_write_access)
         elif tablename.ext == 'csv':
             writer = utils.CsvWriter(header=columns)
-            writer.add_from_cursor(cursor)
+            writer.add_from_cursor(cursor, skip_rowid=True)
             return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
         elif tablename.ext == 'json':
             return flask.jsonify({'$id': flask.request.url,
-                                  'data': [dict(zip(columns, row))
+                                  'data': [dict(zip(columns, row[1:]))
                                            for row in cursor]})
         else:
             flask.abort(406)
@@ -246,7 +246,14 @@ def row_edit(dbname, tablename, rowid):
                                             tablename=tablename))
 
     elif utils.is_method_DELETE():
-        raise NotImplementedError
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        with dbcnx:
+            sql = "DELETE FROM %s WHERE rowid=?" % schema['name']
+            dbcnx.execute(sql, (rowid,))
+        return flask.redirect(flask.url_for('.rows',
+                                            dbname=dbname,
+                                            tablename=tablename))
+
 
 @blueprint.route('/<name:dbname>/<name:tablename>/upload')
 def upload(dbname, tablename):
