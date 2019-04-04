@@ -9,10 +9,10 @@ Insert row into table <strong>{{ schema['name'] }}</strong>
 {% block main %}
 <div class="card border-primary">
   <div class="card-body">
-    <form action="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
+    <form action="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
-      {% for column in schema['columns'] %}
+      {% for pos, column in enumerate(schema['columns']) %}
       <div class="form-group">
         <div class="row">
           <div class="col-md-2 text-right">
@@ -24,28 +24,32 @@ Insert row into table <strong>{{ schema['name'] }}</strong>
             <input id="{{ column['name'] }}" name="{{ column['name'] }}"
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
-                   type="number" step="1" class="form-control">
+                   type="number" step="1" class="form-control"
+                   value="{{ utils.html_none(values[pos]) }}">
           </div>
           {% elif column['type'] == constants.REAL %}
           <div class="col-md-4">
             <input id="{{ column['name'] }}" name="{{ column['name'] }}"
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
-                   type="text" class="form-control">
+                   type="text" class="form-control"
+                   value="{{ utils.html_none(values[pos]) }}">
           </div>
           {% elif column['type'] == constants.TEXT %}
           <div class="col-md-8">
             <input id="{{ column['name'] }}" name="{{ column['name'] }}"
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
-                   type="text" class="form-control">
+                   type="text" class="form-control"
+                   value="{{ utils.html_none(values[pos]) }}">
           </div>
           {% elif column['type'] == constants.BLOB %}
           <div class="col-md-8">
             <textarea id="{{ column['name'] }}" name="{{ column['name'] }}"
                       aria-describedby="{{ column['name'] }}Help"
                       {{ column['notnull'] and 'required' or '' }}
-                      class="form-control" rows="4">
+                      class="form-control" rows="4"
+                      >{{ utils.html_none(values[pos]) }}</textarea>
           </div>
           {% endif %}
           <div class="col-md">
@@ -59,7 +63,7 @@ Insert row into table <strong>{{ schema['name'] }}</strong>
       </div>
       {% endfor %}
       <div class="form-group row">
-        <div class="col-md-2 offset-md-2">
+        <div class="col-md-3 offset-md-2">
           <button type="submit"
                   class="btn btn-primary btn-lg btn-block">Insert</button>
         </div>
@@ -72,7 +76,8 @@ Insert row into table <strong>{{ schema['name'] }}</strong>
 {% block actions %}
 <div>
   <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-secondary btn-block">Back</a>
+     role="button" class="btn btn-outline-primary btn-block">
+    {{ db['tables'][schema['name']]['nrows'] }} rows</a>
 </div>
 {% endblock %}
 

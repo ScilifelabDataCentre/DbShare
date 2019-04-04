@@ -22,7 +22,7 @@
       <td>{{ log['editor'] or '-' }}</td>
       <td>{{ log['remote_addr'] or '-' }}</td>
       <td>{{ log['user_agent'] or '-' }}</td>
-      <td>{{ utils.json_html(log['new']) }}</td>
+      <td><pre>{{ log['new']|tojson(indent=2) }}</pre></td>
     </tr>
     {% endfor %}
   </tbody>

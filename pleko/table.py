@@ -132,7 +132,7 @@ def schema(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
-def row(dbname, tablename):
+def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
         pleko.db.check_quota()
@@ -142,40 +142,30 @@ def row(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         schema = db['tables'][tablename]
+        schema['nrows'] = pleko.db.get_nrows(schema['name'],
+                                             pleko.db.get_cnx(dbname))
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
-        return flask.render_template('table/row.html', db=db, schema=schema)
+        return flask.render_template('table/row_insert.html',
+                                     db=db,
+                                     schema=schema,
+                                     values={})
     
     elif utils.is_method_POST():
-        errors = {}
-        values = []
-        for column in schema['columns']:
-            try:
-                value = flask.request.form.get(column['name'])
-                if not value:
-                    if column['notnull']:
-                        raise ValueError('value required for')
-                    else:
-                        value = None
-                elif column['type'] == constants.INTEGER:
-                    value = int(value)
-                elif column['type'] == constants.REAL:
-                    value = float(value)
-                values.append(value)
-            except (ValueError, TypeError) as error:
-                errors[column['name']] = str(error)
+        values, errors = get_row_values_errors(schema['columns'])
         if errors:
             for item in errors.items():
                 flask.flash("%s: %s" % item, 'error')
-            return flask.render_template('table/row.html', 
+            return flask.render_template('table/row_insert.html', 
                                          db=db,
-                                         schema=schema)
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
-        cursor = dbcnx.cursor()
+                                         schema=schema,
+                                         values=values)
         try:
+            dbcnx = pleko.db.get_cnx(dbname, write=True)
+            cursor = dbcnx.cursor()
             with dbcnx:
                 sql = "INSERT INTO %s (%s) VALUES (%s)" % \
                       (tablename,
@@ -184,38 +174,76 @@ def row(dbname, tablename):
                 cursor.execute(sql, values)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.row',
-                                                dbname=dbname,
-                                                tablename=tablename))
-        else:
-            flask.flash("%s rows in table" %
-                        pleko.db.get_nrows(tablename ,dbcnx),
-                        'message')
-            return flask.redirect(flask.url_for('.row',
-                                                dbname=dbname,
-                                                tablename=tablename))
+            return flask.render_template('table/row_insert.html', 
+                                         db=db,
+                                         schema=schema,
+                                         values=values)
+        flask.flash('Row inserted.')
+        return flask.redirect(flask.url_for('.row_insert',
+                                            dbname=dbname,
+                                            tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row/<int:rowid>',
                  methods=['GET', 'POST', 'DELETE'])
 def row_edit(dbname, tablename, rowid):
-    "Edit a row into the table."
+    "Edit or delete a row into the table."
     try:
-        pleko.db.check_quota()
+        # Do not check for quota; a loop-hole, but let it slide...
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    dbcnx = pleko.db.get_cnx(dbname)
     try:
         schema = db['tables'][tablename]
+        schema['nrows'] = pleko.db.get_nrows(schema['name'], dbcnx)
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
-        raise NotImplementedError
+        cursor = dbcnx.cursor()
+        sql = "SELECT %s FROM %s WHERE rowid=?" % \
+              (','.join([c['name'] for c in schema['columns']]), schema['name'])
+        cursor.execute(sql, (rowid,))
+        rows = list(cursor)
+        if len(rows) != 1:
+            flask.flash('no such row in table', 'error')
+            return flask.redirect(flask.url_for('.rows',
+                                                dbname=dbname,
+                                                tablename=tablename))
+        return flask.render_template('table/row_edit.html',
+                                     db=db,
+                                     schema=schema,
+                                     row=rows[0],
+                                     rowid=rowid)
 
     elif utils.is_method_POST():
-        raise NotImplementedError
+        values, errors = get_row_values_errors(schema['columns'])
+        if errors:
+            for item in errors.items():
+                flask.flash("%s: %s" % item, 'error')
+            return flask.render_template('table/row_edit.html', 
+                                         db=db,
+                                         schema=schema,
+                                         row=values,
+                                         rowid=rowid)
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        cursor = dbcnx.cursor()
+        try:
+            values = values + (rowid,)
+            with dbcnx:
+                sql = "UPDATE %s SET %s WHERE rowid=?" % \
+                      (tablename,
+                       ','.join(["%s=?"%c['name'] for c in schema['columns']]))
+                cursor.execute(sql, values)
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+        else:
+            flask.flash('Row updated.')
+        return flask.redirect(flask.url_for('.rows',
+                                            dbname=dbname,
+                                            tablename=tablename))
 
     elif utils.is_method_DELETE():
         raise NotImplementedError
@@ -413,3 +441,23 @@ def download_csv(dbname, tablename):
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % tablename)
     return response
+
+def get_row_values_errors(columns):
+    "Return the values and errors from the form for a row given the columns."
+    errors = {}
+    values = []
+    for column in columns:
+        try:
+            value = flask.request.form.get(column['name'])
+            if not value:
+                value = None
+                if column['notnull']:
+                    raise ValueError('value required')
+            elif column['type'] == constants.INTEGER:
+                value = int(value)
+            elif column['type'] == constants.REAL:
+                value = float(value)
+        except (ValueError, TypeError) as error:
+            errors[column['name']] = str(error)
+        values.append(value)
+    return tuple(values), errors

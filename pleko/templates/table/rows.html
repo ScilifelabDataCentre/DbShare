@@ -65,7 +65,7 @@
 </div>
 {% if has_write_access %}
 <div class="pt-4">
-  <a href="{{ url_for('.row', dbname=db['name'], tablename=schema['name']) }}"
+  <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
     Insert row</a>
 </div>

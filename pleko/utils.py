@@ -148,9 +148,12 @@ def check_csrf_token():
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
 
-def json_html(data):
-    "Output data as JSON for HTML display."
-    return jinja2.utils.Markup("<pre>%s</pre>" % json.dumps(data, indent=2))
+def html_none(value):
+    "Output the value if not None, else an empty string."
+    if value is None:
+        return ''
+    else:
+        return value
 
 
 class CsvWriter:
