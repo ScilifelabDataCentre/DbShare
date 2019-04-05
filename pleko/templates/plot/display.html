@@ -22,14 +22,14 @@
 
 {% block actions %}
 <div>
-  {% if schema['type'] == 'table' %}
+  {% if schema['type'] == constants.TABLE %}
   <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    Table<br>{{ db['tables'][schema['name']]['nrows'] }} rows</a>
+    Table<br>{{ schema['nrows'] }} rows</a>
   {% else %}
-  <a href="{{ url_for('view.rows', dbname=db['name'], tablename=schema['name']) }}"
+  <a href="{{ url_for('view.rows', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    View<br>{{ db['views'][schema['name']]['nrows'] }} rows</a>
+    View<br>{{ schema['nrows'] }} rows</a>
 {% endif %}
 </div>
 {% if has_write_access %}

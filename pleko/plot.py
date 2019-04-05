@@ -184,10 +184,10 @@ def home(dbname):
 
 @blueprint.route('/<name:dbname>/display/<nameext:plotname>',
                  methods=['GET', 'POST', 'DELETE'])
-def display(dbname, plotname):
+def display(dbname, plotname):  # NOTE: plotname is a NameExt instance!
     "Display the plot."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=True)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -198,6 +198,8 @@ def display(dbname, plotname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
+    schema['nrows'] = pleko.db.get_nrows(schema['name'],
+                                         pleko.db.get_cnx(dbname))
     if plotname.ext is None or plotname.ext == 'html':
         return flask.render_template(
             'plot/display.html',
@@ -266,7 +268,7 @@ def create(dbname, plottype, tableviewname):
         elif schema['type'] == constants.VIEW:
             data_url = utils.get_url('view.rows',
                                      values=dict(dbname=dbname, 
-                                                 tablename=tableviewname))
+                                                 viewname=tableviewname))
         data_url += '.csv'
         template = templateclass(data_url)
     except ValueError as error:

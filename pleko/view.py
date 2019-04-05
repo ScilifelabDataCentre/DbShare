@@ -95,6 +95,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             return flask.jsonify({'$id': flask.request.url,
                                   'data': [dict(zip(columns, row))
                                            for row in cursor]})
+        else:
+            flask.abort(406)
 
     elif utils.is_method_DELETE():
         try:

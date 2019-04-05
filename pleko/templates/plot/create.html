@@ -89,8 +89,14 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
   </form>
 </div>
 <div class="pt-4">
+  {% if schema['type'] == constants.TABLE %}
   <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-outline-primary btn-block" target="_blank">
-    {{ db['tables'][schema['name']]['nrows'] }} rows &#8599;</a>
+     role="button" target="_blank" class="btn btn-outline-primary btn-block">
+    Table<br>{{ schema['nrows'] }} rows &#8599;</a>
+  {% else %}
+  <a href="{{ url_for('view.rows', dbname=db['name'], viewname=schema['name']) }}"
+     role="button" target="_blank" class="btn btn-outline-primary btn-block">
+    View<br>{{ schema['nrows'] }} rows &#8599;</a>
+  {% endif %}
 </div>
 {% endblock %}

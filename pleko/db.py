@@ -701,11 +701,11 @@ def get_schema(db, tableviewname):
     """
     try:
         schema = db['tables'][tableviewname]
-        schema['type'] = 'table'
+        schema['type'] = constants.TABLE
     except KeyError:
         try:
             schema = db['views'][tableviewname]
-            schema['type'] = 'view'
+            schema['type'] = constants.VIEW
         except KeyError:
             raise ValueError('no such table/view')
     return schema
