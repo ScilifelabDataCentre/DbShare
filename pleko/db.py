@@ -298,6 +298,7 @@ def clone(dbname):
     elif utils.is_method_POST():
         try:
             with DbContext() as ctx:
+                 # This does not update the spec data URLs.
                 ctx.set_name(flask.request.form['name'])
                 ctx.set_description(flask.request.form.get('description'))
                 ctx.db['tables']  = db['tables']
@@ -309,6 +310,7 @@ def clone(dbname):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
         shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
+        pleko.plot.update_spec_data_urls(ctx.db['name'], dbname)
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/download')
@@ -531,6 +533,7 @@ class DbContext:
                 self.cnx.execute(sql, (name, oldname))
                 self.cnx.execute('PRAGMA foreign_keys=ON')
             os.rename(utils.dbpath(oldname), utils.dbpath(name))
+            pleko.plot.update_spec_data_urls(name, oldname)
         self.db['name'] = name
 
     def set_description(self, description):
@@ -812,7 +815,7 @@ def get_check_read(dbname, nrows=False, plots=False):
     if nrows:
         set_nrows(db)
     if plots:
-        db['plots'] = pleko.plot.get_plots(dbname)
+        db['plots'] = pleko.plot.get_tableview_plots(dbname)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -834,7 +837,7 @@ def get_check_write(dbname, check_mode=True, nrows=False, plots=False):
     if nrows:
         set_nrows(db)
     if plots:
-        db['plots'] = pleko.plot.get_plots(dbname)
+        db['plots'] = pleko.plot.get_tableview_plots(dbname)
     return db
 
 def set_nrows(db):

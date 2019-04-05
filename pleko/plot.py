@@ -5,6 +5,7 @@ import itertools
 import json
 import sqlite3
 
+import dpath
 import flask
 import jinja2
 import jsonschema
@@ -14,158 +15,6 @@ import pleko.master
 import pleko.user
 from pleko import constants
 from pleko import utils
-
-
-STANDARD_FIELDS = [{'name': 'title',
-                    'label': 'Title',
-                    'type': 'text',
-                    'optional': True},
-                   {'name': 'description',
-                    'label': 'Description',
-                    'type': 'text',
-                    'optional': True},
-                   {'name': 'width', 
-                    'label': 'Plot width (px)',
-                    'type': 'integer',
-                    'constraint': 'positive',
-                    'grid': 2,
-                    'default': 400},
-                   {'name': 'height', 
-                    'label': 'Plot height (px)',
-                    'type': 'integer',
-                    'constraint': 'positive',
-                    'grid': 2,
-                    'default': 400}]
-
-class PlotTemplate:
-    "Base plot specification template."
-
-    template = ""
-    fields = []
-
-    def __init__(self, data_url):
-        self.template = jinja2.Template(self.template)
-        self.context = {'data_url': data_url}
-
-    def __str__(self):
-        return self.template.render(self.context)
-
-    @classmethod
-    def type(cls):
-        return cls.__name__.lower()
-
-    def set(self, lookup):
-        "Set the field values from the lookup, e.g. flask.request.form"
-        for field in self.fields:
-            try:
-                converter = getattr(self, "convert_%s" % field['name'])
-            except AttributeError:
-                converter = getattr(self, "convert_%s" % field['type'])
-            value = lookup.get(field['name'])
-            if value:
-                self.context[field['name']] = converter(field, value)
-            elif field.get('default'):
-                self.context[field['name']] = field.get('default')
-            elif field.get('optional'):
-                self.context[field['name']] = None
-            else:
-                raise ValueError("missing value for %s" % field['name'])
-
-    def convert_text(self, field, value):
-        return value
-
-    def convert_integer(self, field, value):
-        value = int(value)
-        if field.get('constraint') == 'positive' and value <= 0:
-            raise ValueError
-        return value
-
-    def convert_column(self, field, value):
-        return value
-
-
-class Spec(PlotTemplate):
-    "Vega-Lite JSON specification."
-
-    fields = [{'name': 'spec',
-               'label': 'Vega-Lite spec',
-               'info_url': 'VEGALITE_URL',
-               'type': 'text',
-               'rows': 24}]
-
-    def __init__(self):
-        super().__init__()
-        self.spec = ''
-
-    def __str__(self):
-        "Just the spec value as is."
-        return self.context['spec']
-
-    def convert_spec(self, field, value):
-        return value
-
-
-class Scatterplot(PlotTemplate):
-    """Scatterplot of two quantitative variables,
-    optionally with color and shape nominal variables.
-    """
-
-    template = """{
-  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "title": "{{ title or ''}}",
-  "description": "{{ description or '' }}",
-  "width": {{ width }},
-  "height": {{ height }},
-  "data": {
-    "url": "{{ data_url }}"
-  },
-  "mark": "point",
-  "encoding": {
-    "x": {
-      "field": "{{ x }}",
-      "type": "quantitative"
-    },
-    "y": {
-      "field": "{{ y }}",
-      "type": "quantitative"
-    }
-    {% if color %}
-    ,"color": {
-      "field": "{{ color }}",
-      "type": "nominal"
-    }
-    {% endif %}
-    {% if shape %}
-    ,"shape": {
-      "field": "{{ shape }}",
-      "type": "nominal"
-    }
-    {% endif %}
-  }
-}"""
-
-    fields = copy.deepcopy(STANDARD_FIELDS)
-    fields.extend([{'name': 'x', 
-                    'label': 'X-axis',
-                    'type': 'column',
-                    'grid': 6},
-                   {'name': 'y',
-                    'label': 'Y-axis',
-                    'type': 'column',
-                    'grid': 6},
-                   {'name': 'color',
-                    'label': 'Color',
-                    'type': 'column',
-                    'grid': 6,
-                    'optional': True},
-                   {'name': 'shape',
-                    'label': 'Shape',
-                    'type': 'column',
-                    'grid': 6,
-                    'optional': True}])
-
-
-PLOT_TEMPLATES = dict([(tc.type(), tc) for tc in [Scatterplot, Spec]])
 
 
 blueprint = flask.Blueprint('plot', __name__)
@@ -385,8 +234,8 @@ def clone(dbname, plotname):
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
 
-def get_plots(dbname):
-    """Get the plots for the database.
+def get_tableview_plots(dbname):
+    """Get the plots for the tables/views in the database.
     Dictionary tableviewname->plotlist.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
@@ -425,6 +274,33 @@ def get_plot_from_db(db, plotname):
         if plot['name'] == plotname: return plot
     raise ValueError('no such plot')
 
+def update_spec_data_urls(dbname, old_dbname):
+    """Update the data URLs of the plot specs in the given database.
+    To be done after database rename or clone.
+    """
+    db = pleko.db.get_db(dbname)
+    old_table_url = utils.get_url('table.rows',
+                                  values=dict(dbname=old_dbname, tablename='x'))
+    old_table_url = old_table_url[:-1]
+    new_table_url = utils.get_url('table.rows',
+                                  values=dict(dbname=dbname, tablename='x'))
+    new_table_url = new_table_url[:-1]
+    old_view_url = utils.get_url('view.rows',
+                                 values=dict(dbname=old_dbname, viewname='x'))
+    old_view_url = old_view_url[:-1]
+    new_view_url = utils.get_url('view.rows',
+                                 values=dict(dbname=dbname, viewname='x'))
+    new_view_url = new_view_url[:-1]
+    plotlists = get_tableview_plots(dbname).values()
+    for plot in [p for plotlist in plotlists for p in plotlist]:
+        with PlotContext(db, plot=plot) as ctx:
+            spec = plot['spec']
+            for path, href in dpath.util.search(spec, 'data/url', yielded=True):
+                href = href.replace(old_table_url, new_table_url)
+                href = href.replace(old_view_url, new_view_url)
+                dpath.util.set(spec, path, href)
+            ctx.set_spec(spec)
+
 
 class PlotContext:
     "Context handler to create, modify and save a plot definition."
@@ -438,7 +314,6 @@ class PlotContext:
             self.plot = {}
             self.oldname = None
         self.schema = schema
-        print('oldname', self.oldname)
 
     def __enter__(self):
         return self
@@ -507,3 +382,155 @@ class PlotContext:
         except jsonschema.ValidationError as error:
             raise ValueError(str(error))
         self.plot['spec'] = spec
+
+
+STANDARD_FIELDS = [{'name': 'title',
+                    'label': 'Title',
+                    'type': 'text',
+                    'optional': True},
+                   {'name': 'description',
+                    'label': 'Description',
+                    'type': 'text',
+                    'optional': True},
+                   {'name': 'width', 
+                    'label': 'Plot width (px)',
+                    'type': 'integer',
+                    'constraint': 'positive',
+                    'grid': 2,
+                    'default': 400},
+                   {'name': 'height', 
+                    'label': 'Plot height (px)',
+                    'type': 'integer',
+                    'constraint': 'positive',
+                    'grid': 2,
+                    'default': 400}]
+
+class PlotTemplate:
+    "Base plot specification template."
+
+    template = ""
+    fields = []
+
+    def __init__(self, data_url):
+        self.template = jinja2.Template(self.template)
+        self.context = {'data_url': data_url}
+
+    def __str__(self):
+        return self.template.render(self.context)
+
+    @classmethod
+    def type(cls):
+        return cls.__name__.lower()
+
+    def set(self, lookup):
+        "Set the field values from the lookup, e.g. flask.request.form"
+        for field in self.fields:
+            try:
+                converter = getattr(self, "convert_%s" % field['name'])
+            except AttributeError:
+                converter = getattr(self, "convert_%s" % field['type'])
+            value = lookup.get(field['name'])
+            if value:
+                self.context[field['name']] = converter(field, value)
+            elif field.get('default'):
+                self.context[field['name']] = field.get('default')
+            elif field.get('optional'):
+                self.context[field['name']] = None
+            else:
+                raise ValueError("missing value for %s" % field['name'])
+
+    def convert_text(self, field, value):
+        return value
+
+    def convert_integer(self, field, value):
+        value = int(value)
+        if field.get('constraint') == 'positive' and value <= 0:
+            raise ValueError
+        return value
+
+    def convert_column(self, field, value):
+        return value
+
+
+class Spec(PlotTemplate):
+    "Vega-Lite JSON specification."
+
+    fields = [{'name': 'spec',
+               'label': 'Vega-Lite spec',
+               'info_url': 'VEGALITE_URL',
+               'type': 'text',
+               'rows': 24}]
+
+    def __init__(self):
+        super().__init__()
+        self.spec = ''
+
+    def __str__(self):
+        "Just the spec value as is."
+        return self.context['spec']
+
+    def convert_spec(self, field, value):
+        return value
+
+
+class Scatterplot(PlotTemplate):
+    """Scatterplot of two quantitative variables,
+    optionally with color and shape nominal variables.
+    """
+
+    template = """{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "{{ title or ''}}",
+  "description": "{{ description or '' }}",
+  "width": {{ width }},
+  "height": {{ height }},
+  "data": {
+    "url": "{{ data_url }}"
+  },
+  "mark": "point",
+  "encoding": {
+    "x": {
+      "field": "{{ x }}",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "{{ y }}",
+      "type": "quantitative"
+    }
+    {% if color %}
+    ,"color": {
+      "field": "{{ color }}",
+      "type": "nominal"
+    }
+    {% endif %}
+    {% if shape %}
+    ,"shape": {
+      "field": "{{ shape }}",
+      "type": "nominal"
+    }
+    {% endif %}
+  }
+}"""
+
+    fields = copy.deepcopy(STANDARD_FIELDS)
+    fields.extend([{'name': 'x', 
+                    'label': 'X-axis',
+                    'type': 'column',
+                    'grid': 6},
+                   {'name': 'y',
+                    'label': 'Y-axis',
+                    'type': 'column',
+                    'grid': 6},
+                   {'name': 'color',
+                    'label': 'Color',
+                    'type': 'column',
+                    'grid': 6,
+                    'optional': True},
+                   {'name': 'shape',
+                    'label': 'Shape',
+                    'type': 'column',
+                    'grid': 6,
+                    'optional': True}])
+
+
+PLOT_TEMPLATES = dict([(tc.type(), tc) for tc in [Scatterplot, Spec]])

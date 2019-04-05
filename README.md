@@ -22,8 +22,8 @@ Web tool to explore, publish and plot data sets using
 
 - Create a table, defining the columns.
 - Add single rows.
-- Edit a row. *TODO*
-- Delete a row. *TODO*
+- Edit a row.
+- Delete a row.
 - Display the rows in a table.
 - Display the schema of a table.
 - Upload CSV data to a table, adding rows.
@@ -34,7 +34,6 @@ Web tool to explore, publish and plot data sets using
 - Download a table as CSV file.
 - Add a column to a table. *TODO*
 - Define a foreign key. *TODO*
-- Allow smart join of tables. *TODO*
 
 ## Queries
 
@@ -64,7 +63,7 @@ Web tool to explore, publish and plot data sets using
 - Create a plot.
 - Display a plot.
 - Clone a plot.
-- Edit a plot. *TODO*
+- Edit a plot.
 - Create and edit a plot using explicit Vega-Lite spec.
 
 ## Access privileges
@@ -102,13 +101,16 @@ Web tool to explore, publish and plot data sets using
 - **/view/{dbname}/{viewname}/clone** Clone the view.
 - **/view/{dbname}/{viewname}/download** Download the rows in the view to a file.
 - **/plot/{dbname}** List the plots in the database.
-- **/plot/{dbname}/display/{plotname}** List the plots in the database.
+- **/plot/{dbname}/display/{plotname}** Display the given plot in the database.
 - **/plot/{dbname}/select** Select plot type and table/view.
 - **/plot/{dbname}/create/{plottype}/{tableviewname}** Create the given plot.
 - **/plot/{dbname}/edit/{plotname}** Edit the plot.
 - **/plot/{dbname}/clone/{plotname}** Clone the plot.
 
+## Third-party packages used
 
-
-
-
+- [Flask](http://flask.pocoo.org/)
+- [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
+- [Jinja2](http://jinja.pocoo.org/)
+- [jsonschema](https://github.com/Julian/jsonschema)
+- [dpath-python](https://github.com/akesterson/dpath-python)
