@@ -60,7 +60,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             schema = db['views'][str(viewname)]
         except KeyError:
             flask.flash('no such view', 'error')
-            return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
             if schema['query']['columns'][0] == '*':
                 try:
@@ -109,7 +109,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 ctx.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/schema')
 def schema(dbname, viewname):
@@ -123,7 +123,7 @@ def schema(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('view/schema.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
@@ -140,7 +140,7 @@ def clone(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('view/clone.html', db=db, schema=schema)
@@ -172,7 +172,7 @@ def download(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/csv')
@@ -187,7 +187,7 @@ def download_csv(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         columns = schema['query']['columns']
         if utils.to_bool(flask.request.args.get('header')):

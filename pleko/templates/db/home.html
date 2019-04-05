@@ -1,10 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Database {{ db['name'] }} contents{% endblock %}
+{% block head_title %}Database {{ db['name'] }}{% endblock %}
 
-{% block body_title %}
-Database <strong>{{ db['name'] }}</strong> contents
-{% endblock %}
+{% block body_title %}Database <strong>{{ db['name'] }}</strong>{% endblock %}
 
 {% block main %}
 <div class="m-2">{{ db.get('description') or 'No description.' }}</div>
@@ -125,6 +123,15 @@ Database <strong>{{ db['name'] }}</strong> contents
 </div>
 {% endblock %}
 
+{% block meta %}
+<div class="py-1">
+  <div>
+    <a href="{{ url_for('.home', dbname=db['name']) + '.json' }}"
+       class="badge badge-pill badge-secondary">JSON format</a>
+  </div>
+</div>
+{% endblock %}
+
 {% block actions %}
 <div>
   <a href="{{ url_for('.home', dbname=db['name']) }}"
@@ -201,7 +208,7 @@ Database <strong>{{ db['name'] }}</strong> contents
 
 {% if has_write_access %}
 <div class="pt-4">
-  <form action="{{ url_for('.contents', dbname=db['name']) }}"
+  <form action="{{ url_for('.home', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

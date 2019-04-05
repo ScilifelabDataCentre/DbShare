@@ -25,7 +25,7 @@ def create(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     positions = list(range(len(schema['columns'])))
 
     if utils.is_method_GET():
@@ -91,7 +91,7 @@ def delete(dbname, indexname):
             ctx.delete_index(indexname)
     except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.redirect(
         flask.url_for('table.schema', dbname=dbname, tablename=tablename))
  

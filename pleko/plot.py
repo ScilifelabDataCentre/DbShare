@@ -184,7 +184,7 @@ def home(dbname):
 
 @blueprint.route('/<name:dbname>/display/<nameext:plotname>',
                  methods=['GET', 'POST', 'DELETE'])
-def display(dbname, plotname):  # NOTE: plotname is a NameExt instance!
+def display(dbname, plotname): # NOTE: plotname is a NameExt instance!
     "Display the plot."
     try:
         db = pleko.db.get_check_read(dbname)
@@ -316,7 +316,7 @@ def edit(dbname, plotname):
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('plot/edit.html', 
@@ -367,7 +367,7 @@ def clone(dbname, plotname):
         schema = pleko.db.get_schema(db, plot['tableviewname'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
         return flask.render_template('plot/clone.html', db=db, plot=plot)
@@ -380,7 +380,7 @@ def clone(dbname, plotname):
                 ctx.set_spec(plot['spec'])
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.contents', dbname=dbname))
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
