@@ -84,14 +84,17 @@
 
 {% block actions %}
 {% if g.current_user %}
-<a href="{{ url_for('.edit', username=user['username']) }}"
-   role="button" class="btn btn-primary btn-block">Edit</a>
-<form action="{{ url_for('.logout') }}"
-      method="POST"
-      class="mt-2">
-  {{ csrf_token() }}
-  <button type="submit" class="btn btn-warning btn-block">Logout</button>
-</form>
+<div class="mt-3">
+  <a href="{{ url_for('.edit', username=user['username']) }}"
+     role="button" class="btn btn-primary btn-block">Edit</a>
+</div>
+<div class="mt-3">
+  <form action="{{ url_for('.logout') }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block">Logout</button>
+  </form>
+</div>
 {% endif %}
 {% endblock %}
 

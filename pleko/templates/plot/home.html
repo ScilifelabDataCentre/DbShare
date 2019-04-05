@@ -43,7 +43,7 @@ Plots in database <strong>{{ db['name'] }}</strong>
 
 {% block actions %}
 {% if has_write_access %}
-<div>
+<div class="mt-3">
   <a href="{{ url_for('.select', dbname=db['name']) }}"
      role="button" class="btn btn-info btn-block">Create plot</a>
 </div>

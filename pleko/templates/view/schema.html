@@ -34,17 +34,19 @@
 {% endblock %}
 
 {% block actions %}
-<div>
+<div class="mt-3">
   <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
-     role="button" class="btn btn-outline-primary btn-block">
+     role="button" class="btn btn-outline-success btn-block">
     View<br>{{ db['views'][schema['name']]['nrows'] }} rows</a>
 </div>
-<div class="pt-4">
+<div class="mt-3">
   <a href="{{ url_for('.edit', dbname=db['name'], viewname=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Edit the metadata of this view."
      role="button" class="btn btn-success btn-block">
-    Edit metadata</a>
+    Edit</a>
 </div>
-<div class="pt-4">
+<div class="mt-3">
   <form action="{{ url_for('query.home', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" 
@@ -60,4 +62,12 @@
     <button type="submit" class="btn btn-success btn-block">Query</button>
   </form>
 </div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
 {% endblock %}

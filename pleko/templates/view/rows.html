@@ -56,13 +56,17 @@ Rows in view <strong>{{ schema['name'] }}</strong>
 </div>
 <div class="mt-3">
   <a href="{{ url_for('.download', dbname=db['name'], viewname=schema['name']) }}"
-     role="button" class="btn btn-success btn-block">Download file</a>
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Download CSV or JSON file of the view contents."
+     role="button" class="btn btn-outline-secondary btn-block">Download</a>
 </div>
 {% if has_write_access %}
 <div class="mt-3">
   <a href="{{ url_for('.clone', dbname=db['name'], viewname=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Make a complete copy of this view."
      role="button" class="btn btn-success btn-block">
-    Clone view</a>
+    Clone</a>
 </div>
 <div class="mt-3">
   <form action="{{ url_for('query.home', dbname=db['name']) }}"
@@ -92,8 +96,10 @@ Rows in view <strong>{{ schema['name'] }}</strong>
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this view and all its dependent views and plots."
             onclick="return confirm('Really delete? Cannot be undone.')">
-      Delete view</button>
+      Delete</button>
   </form>
 </div>
 {% endif %}
@@ -130,5 +136,10 @@ Rows in view <strong>{{ schema['name'] }}</strong>
       "ordering": false,
     });
   });
+</script>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
 </script>
 {% endblock %}

@@ -61,8 +61,10 @@
 {% endblock %}
 
 {% block actions %}
-<form action="{{ url_for('.profile', username=user['username']) }}"
-      method="GET">
-  <button type="submit" class="btn btn-block btn-secondary">Cancel</button>
-</form>
+<div class="mt-3">
+  <form action="{{ url_for('.profile', username=user['username']) }}"
+	method="GET">
+    <button type="submit" class="btn btn-block btn-dark">Cancel</button>
+  </form>
+</div>
 {% endblock %}
