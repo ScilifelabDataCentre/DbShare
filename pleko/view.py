@@ -15,6 +15,7 @@ from pleko import utils
 blueprint = flask.Blueprint('view', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
+@pleko.user.login_required
 def create(dbname):
     "Create a view of the data in the database."
     try:
@@ -40,6 +41,39 @@ def create(dbname):
             return flask.redirect(flask.url_for('.create',
                                                 dbname=dbname,
                                                 query=schema['query']))
+        else:
+            return flask.redirect(flask.url_for('.rows', 
+                                                dbname=dbname,
+                                                viewname=viewname))
+
+@blueprint.route('/<name:dbname>(<name:viewname>/edit', methods=['GET', 'POST'])
+@pleko.user.login_required
+def edit(dbname, viewname):
+    "Edit the view."
+    try:
+        db = pleko.db.get_check_write(dbname, nrows=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        schema = db['views'][viewname]
+    except KeyError:
+        flask.flash('no such view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        return flask.render_template('view/edit.html', db=db, schema=schema)
+
+    elif utils.is_method_POST():
+        try:
+            with pleko.db.DbContext(db) as ctx:
+                schema['description'] = flask.request.form.get('description') or None
+                ctx.db['views'][viewname] = schema
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.edit',
+                                                dbname=dbname,
+                                                viewname=viewname))
         else:
             return flask.redirect(flask.url_for('.rows', 
                                                 dbname=dbname,
