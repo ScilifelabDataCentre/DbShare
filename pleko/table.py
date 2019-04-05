@@ -35,7 +35,8 @@ def create(dbname):
 
     elif utils.is_method_POST():
         try:
-            schema = {'name': flask.request.form.get('name')}
+            schema = {'name': flask.request.form.get('name'),
+                      'description': flask.request.form.get('description')}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 name = flask.request.form.get("column%sname" % n)
@@ -61,6 +62,36 @@ def create(dbname):
             return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/edit',
+                 methods=['GET', 'POST'])
+@pleko.user.login_required
+def edit(dbname, tablename):
+    "Edit the table metadata."
+    try:
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.is_method_GET():
+        return flask.render_template('table/edit.html', db=db, schema=schema)
+
+    elif utils.is_method_POST():
+        try:
+            with pleko.db.DbContext(db) as ctx:
+                schema['description'] = flask.request.form.get('description') or None
+                ctx.db['tables'][schema['name']] = schema
+        except (ValueError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.schema',
+                                            dbname=dbname,
+                                            tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])

@@ -21,12 +21,12 @@ Web tool to explore, publish and plot data sets using
 ## Tables
 
 - Create a table, defining the columns.
-- Add single rows.
+- Insert a row.
 - Edit a row.
 - Delete a row.
 - Display the rows in a table.
 - Display the schema of a table.
-- Upload CSV data to a table, adding rows.
+- Upload CSV data to a table, inserting rows.
 - Upload CSV data to a table, updating rows. *TODO*
 - Create a table from a CSV file.
 - Clone a table.

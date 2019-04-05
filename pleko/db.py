@@ -96,7 +96,7 @@ def create():
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
 @pleko.user.login_required
 def edit(dbname):
-    "Edit the database; name, description, access, mode."
+    "Edit the database metadata."
     try:
         db = get_check_write(dbname)
     except ValueError as error:

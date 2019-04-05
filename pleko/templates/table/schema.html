@@ -88,10 +88,10 @@ Schema for table <strong>{{ schema['name'] }}</strong>
     {{ db['tables'][schema['name']]['nrows'] }} rows</a>
 </div>
 {% if has_write_access %}
-<div class="pt-4">
-  <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
+<div class="pt-2">
+  <a href="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
-    Clone table</a>
+    Edit metadata</a>
 </div>
 <div class="pt-2">
   <a href="{{ url_for('index.create', dbname=db['name'], tablename=schema['name']) }}"

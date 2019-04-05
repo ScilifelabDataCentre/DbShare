@@ -22,8 +22,8 @@ Edit database <strong>{{ db['name'] }}</strong> metadata
     <label for="description" class="col-md-2 col-form-label text-right">
       Description</label>
     <div class="col-md-10">
-      <input type="text" class="form-control"
-	     id="description" name="description"
+      <input id="description" name="description"
+	     type="text" class="form-control"
 	     value="{{ db.get('description') or '' }}">
     </div>
   </div>
