@@ -9,7 +9,7 @@ NAME_EXT_RX  = re.compile(r'^([a-z][a-z0-9_]*)(\.[a-z0-9_]+)?$', re.I)
 EMAIL_RX     = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
 MASTER_DB_NAME        = 'ma$ter'
-INDEX_PREFIX_TEMPLATE = "%s$index"
+INDEX_PREFIX_TEMPLATE = "index$%s$"
 PLOT_TABLE_NAME       = 'plot$'
 
 # User roles

@@ -78,7 +78,7 @@ Edit row {{ rowid }} in table <strong>{{ schema['name'] }}</strong>
 {% block actions %}
 <div>
   <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-secondary btn-block">Cancel</a>
+     role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 <div class="pt-4">
   <form action="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=rowid) }}"

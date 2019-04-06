@@ -22,7 +22,8 @@ Databases owned by user <strong>{{ username }}</strong>
     {% for db in dbs %}
     <tr>
       <th>
-        <a href="{{ url_for('db.home', dbname=db['name']) }}">
+        <a href="{{ url_for('db.home', dbname=db['name']) }}" role="button" 
+	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
           {{ db['name'] }}</a>
       </th>
       <td>{{ db.get('description') or '-' }}</td>
@@ -40,7 +41,9 @@ Databases owned by user <strong>{{ username }}</strong>
 
 {% block actions %}
 <a href="{{ url_for('db.create') }}"
-   role="button" class="btn btn-primary btn-block">Create database</a>
+   role="button" data-toggle="tooltip" data-placement="left"
+   title="Create a new database."
+   class="btn btn-primary btn-block">Create</a>
 {% endblock %}
 
 {% block javascript %}
@@ -51,5 +54,10 @@ Databases owned by user <strong>{{ username }}</strong>
       "pageLength": 25,
     });
   });
+</script>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
 </script>
 {% endblock %}

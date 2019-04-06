@@ -42,7 +42,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
           <textarea id="{{ field['name'] }}" name="{{ field['name'] }}"
 		    rows="{{ field.get('rows') or 4 }}"
                     class="form-control text-monospace"
-		    >{{ initial.get(field['name']) or ''}}</textarea>
+		    >{{ field.get('default') or ''}}</textarea>
           {% else %}
           <input id="{{ field['name'] }}" name="{{ field['name'] }}"
                  type="text" class="form-control">
@@ -85,7 +85,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
     <input type="hidden" name="type" value="{{ template.type() }}">
     <input type="hidden" name="tableviewname"
 	   value="{{ schema['name'] }}">
-    <button type="submit" class="btn btn-secondary btn-block">Cancel</button>
+    <button type="submit" class="btn btn-dark btn-block">Cancel</button>
   </form>
 </div>
 <div class="pt-4">

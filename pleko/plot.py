@@ -413,6 +413,7 @@ class PlotTemplate:
 
     def __init__(self, data_url):
         self.template = jinja2.Template(self.template)
+        self.fields = copy.deepcopy(self.fields)
         self.context = {'data_url': data_url}
 
     def __str__(self):
@@ -453,17 +454,29 @@ class PlotTemplate:
 
 
 class Spec(PlotTemplate):
-    "Vega-Lite JSON specification."
+    "Special case: Vega-Lite JSON specification from scratch."
 
+    template = """{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "Title",
+  "description": "Description",
+  "width": 400,
+  "height": 400,
+  "data": {
+    "url": "{{ data_url }}"
+  }
+}
+"""
     fields = [{'name': 'spec',
                'label': 'Vega-Lite spec',
                'info_url': 'VEGALITE_URL',
                'type': 'text',
                'rows': 24}]
 
-    def __init__(self):
-        super().__init__()
-        self.spec = ''
+    def __init__(self, data_url):
+        super().__init__(data_url)
+        # This relies on there being only one field.
+        self.fields[0]['default'] = self.template.render(self.context)
 
     def __str__(self):
         "Just the spec value as is."
