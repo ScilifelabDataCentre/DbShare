@@ -21,14 +21,14 @@ from pleko import utils
 PLOT_TABLE = dict(
     name=constants.PLOT_TABLE_NAME,
     columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='tableviewname', type=constants.TEXT, notnull=True),
+             dict(name='sourcename', type=constants.TEXT, notnull=True),
              dict(name='type', type=constants.TEXT, notnull=True),
              dict(name='spec', type=constants.TEXT, notnull=True)]
 )
 
 PLOT_INDEX = dict(name=constants.PLOT_TABLE_NAME + '_index', 
                   table=constants.PLOT_TABLE_NAME,
-                  columns=['tableviewname'])
+                  columns=['sourcename'])
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -562,7 +562,7 @@ class DbContext:
                 self.db['indexes'].pop(index['name'])
                 self.dbcnx.execute("DROP INDEX %s" % index['name'])
         with self.dbcnx:
-            self.dbcnx.execute("DELETE FROM plot$ WHERE tableviewname=?",
+            self.dbcnx.execute("DELETE FROM plot$ WHERE sourcename=?",
                                (tablename,))
         self.dbcnx.execute("DROP TABLE %s" % tablename)
         self.dbcnx.execute('VACUUM')
@@ -613,7 +613,7 @@ class DbContext:
         except KeyError:
             raise ValueError('no such view in database')
         with self.dbcnx:
-            self.dbcnx.execute("DELETE FROM plot$ WHERE tableviewname=?",
+            self.dbcnx.execute("DELETE FROM plot$ WHERE sourcename=?",
                                (viewname,))
             self.dbcnx.execute("DROP VIEW %s" % viewname)
 
@@ -696,17 +696,17 @@ def check_quota(user=None):
         raise ValueError('you have exceeded your size quota;'
                          ' no more data can be added')
 
-def get_schema(db, tableviewname):
+def get_schema(db, sourcename):
     """Get the schema of the table or view. 
     Add a member 'type' denoting which it is.
     Raise ValueError if no such table or view.
     """
     try:
-        schema = db['tables'][tableviewname]
+        schema = db['tables'][sourcename]
         schema['type'] = constants.TABLE
     except KeyError:
         try:
-            schema = db['views'][tableviewname]
+            schema = db['views'][sourcename]
             schema['type'] = constants.VIEW
         except KeyError:
             raise ValueError('no such table/view')
@@ -815,7 +815,7 @@ def get_check_read(dbname, nrows=False, plots=False):
     if nrows:
         set_nrows(db)
     if plots:
-        db['plots'] = pleko.plot.get_tableview_plots(dbname)
+        db['plots'] = pleko.plot.get_source_plots(dbname)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -837,7 +837,7 @@ def get_check_write(dbname, check_mode=True, nrows=False, plots=False):
     if nrows:
         set_nrows(db)
     if plots:
-        db['plots'] = pleko.plot.get_tableview_plots(dbname)
+        db['plots'] = pleko.plot.get_source_plots(dbname)
     return db
 
 def set_nrows(db):

@@ -17,7 +17,7 @@ Plots in database <strong>{{ db['name'] }}</strong>
     </tr>
   </thead>
   <tbody>
-    {% for tableviewname, plots in db['plots'].items() %}
+    {% for sourcename, plots in db['plots'].items() %}
     {% for plot in plots %}
     <tr>
       <td>
@@ -26,12 +26,12 @@ Plots in database <strong>{{ db['name'] }}</strong>
       <td>{{ plot['type'] }}</td>
       <td>{{ plot['spec'].get('description') or '' }}</td>
       <td>
-	{% if plot['tableviewname'] in db['tables'] %}
-	<a href="{{url_for('table.rows', dbname=db['name'], tablename=plot['tableviewname']) }}">
-	  {{ tableviewname }}</a>
+	{% if plot['sourcename'] in db['tables'] %}
+	<a href="{{url_for('table.rows', dbname=db['name'], tablename=plot['sourcename']) }}">
+	  {{ sourcename }}</a>
 	{% else %}
-	<a href="{{url_for('view.rows', dbname=db['name'], viewname=plot['tableviewname']) }}">
-	  {{ tableviewname }}</a>
+	<a href="{{url_for('view.rows', dbname=db['name'], viewname=plot['sourcename']) }}">
+	  {{ sourcename }}</a>
 	{% endif %}
       </td>
     </tr>

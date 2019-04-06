@@ -15,7 +15,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
 
 <div class="card border-info">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type(), tableviewname=schema['name']) }}"
+    <form action="{{ url_for('.create', dbname=db['name'], plottype=template.type(), sourcename=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
@@ -83,8 +83,7 @@ for {{ schema['type'] }} <strong>{{ schema['name'] }}</strong>
   <form action="{{ url_for('.select', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="type" value="{{ template.type() }}">
-    <input type="hidden" name="tableviewname"
-	   value="{{ schema['name'] }}">
+    <input type="hidden" name="sourcename" value="{{ schema['name'] }}">
     <button type="submit" class="btn btn-dark btn-block">Cancel</button>
   </form>
 </div>

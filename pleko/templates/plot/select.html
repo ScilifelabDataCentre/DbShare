@@ -23,19 +23,19 @@
         </div>
       </div>
       <div class="form-group row">
-        <label for="tableviewname" class="col-md-2 col-form-label text-right">
+        <label for="sourcename" class="col-md-2 col-form-label text-right">
 	  Table or view</label>
         <div class="col-md">
-	  <select id="tableviewname" name="tableviewname" class="form-control">
+	  <select id="sourcename" name="sourcename" class="form-control">
 	    {% for table in utils.sorted_schema(db['tables'].values()) %}
 	    <option value="{{ table['name'] }}"
-		    {{ table['name'] == tableviewname and 'selected' or ''}}>
+		    {{ table['name'] == sourcename and 'selected' or ''}}>
 	      {{ table['name'] }} ({{ table['nrows'] }} rows)
 	    </option>
 	    {% endfor %}
 	    {% for view in utils.sorted_schema(db['views'].values()) %}
 	    <option value="{{ view['name'] }}"
-		    {{ view['name'] == tableviewname and 'selected' or ''}}>
+		    {{ view['name'] == sourcename and 'selected' or ''}}>
 	      {{ view['name'] }} ({{ view['nrows'] }} rows)
 	    </option>
 	    {% endfor %}

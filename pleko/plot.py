@@ -42,7 +42,7 @@ def display(dbname, plotname): # NOTE: plotname is a NameExt instance!
         return flask.redirect(flask.url_for('home'))
     try:
         plot = get_plot(dbname, str(plotname))
-        schema = pleko.db.get_schema(db, plot['tableviewname'])
+        schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -78,7 +78,7 @@ def select(dbname):
                                      db=db,
                                      plottypes=plottypes,
                                      type=flask.request.args.get('type'),
-                                     tableviewname=flask.request.args.get('tableviewname'))
+                                     sourcename=flask.request.args.get('sourcename'))
 
     elif utils.is_method_POST():
         try:
@@ -86,19 +86,19 @@ def select(dbname):
             if not template:
                 raise ValueError('no such plot type')
             schema = pleko.db.get_schema(
-                db, flask.request.form.get('tableviewname'))
+                db, flask.request.form.get('sourcename'))
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.select', dbname=dbname))
         return flask.redirect(flask.url_for('.create',
                                             dbname=db['name'],
                                             plottype=template.type(),
-                                            tableviewname=schema['name']))
+                                            sourcename=schema['name']))
 
-@blueprint.route('/<name:dbname>/create/<name:plottype>/<name:tableviewname>',
+@blueprint.route('/<name:dbname>/create/<name:plottype>/<name:sourcename>',
                  methods=['GET', 'POST'])
 @pleko.user.login_required
-def create(dbname, plottype, tableviewname):
+def create(dbname, plottype, sourcename):
     "Create a plot of the given type for the given table/view."
     try:
         db = pleko.db.get_check_write(dbname, plots=True)
@@ -109,15 +109,15 @@ def create(dbname, plottype, tableviewname):
         templateclass = PLOT_TEMPLATES.get(plottype)
         if not templateclass:
             raise ValueError('no such plot type')
-        schema = pleko.db.get_schema(db, tableviewname)
+        schema = pleko.db.get_schema(db, sourcename)
         if schema['type'] == constants.TABLE:
             data_url = utils.get_url('table.rows',
                                      values=dict(dbname=dbname, 
-                                                 tablename=tableviewname))
+                                                 tablename=sourcename))
         elif schema['type'] == constants.VIEW:
             data_url = utils.get_url('view.rows',
                                      values=dict(dbname=dbname, 
-                                                 viewname=tableviewname))
+                                                 viewname=sourcename))
         data_url += '.csv'
         template = templateclass(data_url)
     except ValueError as error:
@@ -145,7 +145,7 @@ def create(dbname, plottype, tableviewname):
                 utils.get_url('.create',
                               values=dict(dbname=dbname,
                                           plottype=template.type(),
-                                          tableviewname=tableviewname)))
+                                          sourcename=sourcename)))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
@@ -162,7 +162,7 @@ def edit(dbname, plotname):
         return flask.redirect(flask.url_for('home'))
     try:
         plot = get_plot_from_db(db, plotname)
-        schema = pleko.db.get_schema(db, plot['tableviewname'])
+        schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -213,7 +213,7 @@ def clone(dbname, plotname):
         return flask.redirect(flask.url_for('home'))
     try:
         plot = get_plot_from_db(db, plotname)
-        schema = pleko.db.get_schema(db, plot['tableviewname'])
+        schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -234,21 +234,21 @@ def clone(dbname, plotname):
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
 
-def get_tableview_plots(dbname):
+def get_source_plots(dbname):
     """Get the plots for the tables/views in the database.
-    Dictionary tableviewname->plotlist.
+    Dictionary sourcename->plotlist.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT name, tableviewname, type, spec FROM %s" % \
+    sql = "SELECT name, sourcename, type, spec FROM %s" % \
           constants.PLOT_TABLE_NAME
     cursor.execute(sql)
     plots = {}
     for row in cursor:
         plot = {'name': row[0],
-                'tableviewname': row[1],
+                'sourcename': row[1],
                 'type': row[2],
                 'spec': json.loads(row[3])}
-        plots.setdefault(plot['tableviewname'], []).append(plot)
+        plots.setdefault(plot['sourcename'], []).append(plot)
     return plots
     
 def get_plot(dbname, plotname):
@@ -256,7 +256,7 @@ def get_plot(dbname, plotname):
     Raise ValueError if no such plot.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT tableviewname, type, spec FROM %s WHERE name=?" \
+    sql = "SELECT sourcename, type, spec FROM %s WHERE name=?" \
           % constants.PLOT_TABLE_NAME
     cursor.execute(sql, (plotname,))
     rows = list(cursor)
@@ -264,7 +264,7 @@ def get_plot(dbname, plotname):
         raise ValueError('no such plot')
     row = rows[0]
     return {'name': plotname,
-            'tableviewname': row[0],
+            'sourcename': row[0],
             'type': row[1],
             'spec': json.loads(row[2])}
 
@@ -291,7 +291,7 @@ def update_spec_data_urls(dbname, old_dbname):
     new_view_url = utils.get_url('view.rows',
                                  values=dict(dbname=dbname, viewname='x'))
     new_view_url = new_view_url[:-1]
-    plotlists = get_tableview_plots(dbname).values()
+    plotlists = get_source_plots(dbname).values()
     for plot in [p for plotlist in plotlists for p in plotlist]:
         with PlotContext(db, plot=plot) as ctx:
             spec = plot['spec']
@@ -331,7 +331,7 @@ class PlotContext:
                                          self.oldname))
         else:               # Insert into table
             with self.dbcnx:
-                sql = "INSERT INTO %s (name, tableviewname, type, spec)" \
+                sql = "INSERT INTO %s (name, sourcename, type, spec)" \
                       " VALUES(?, ?, ?, ?)" % constants.PLOT_TABLE_NAME
                 self.dbcnx.execute(sql, (self.plot['name'],
                                          self.schema['name'],

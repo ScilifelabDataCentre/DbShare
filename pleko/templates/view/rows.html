@@ -119,7 +119,7 @@ Rows in view <strong>{{ schema['name'] }}</strong>
   </div>
   {% if has_write_access %}
   <div class="card-footer">
-    <a href="{{ url_for('plot.select', dbname=db['name'], tableviewname=schema['name']) }}"
+    <a href="{{ url_for('plot.select', dbname=db['name'], sourcename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
       Create plot</a>
   </div>
