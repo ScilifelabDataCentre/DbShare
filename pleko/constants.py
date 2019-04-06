@@ -8,9 +8,13 @@ NAME_CHARS   = frozenset(string.ascii_letters + string.digits + '_')
 NAME_EXT_RX  = re.compile(r'^([a-z][a-z0-9_]*)(\.[a-z0-9_]+)?$', re.I)
 EMAIL_RX     = re.compile(r'^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 
-MASTER_DB_NAME        = 'ma$ter'
-INDEX_PREFIX_TEMPLATE = "index$%s$"
-PLOT_TABLE_NAME       = 'plot$'
+# Meta-table names
+MASTER_DB_NAME        = '_master'
+TABLES     = '_tables'
+INDEXES    = '_indexes'
+INDEX_PREFIX_TEMPLATE = "_index_%s_"
+VIEWS      = '_views'
+PLOTS      = '_plots'
 
 # User roles
 ADMIN = 'admin'

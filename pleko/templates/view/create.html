@@ -18,8 +18,8 @@ Create a view of database <strong>{{ db['name'] }}</strong>
             <label for="name" class="col-md-2 col-form-label text-right">
               View name</label>
             <div class="col-md-4">
-              <input id="name" name="name" type="text" 
-		     class="form-control" autofocus>
+              <input id="name" name="name" type="text" autofocus
+		     class="form-control" value="{{ name or '' }}">
             </div>
           </div>
           <div class="form-group row">
@@ -27,7 +27,8 @@ Create a view of database <strong>{{ db['name'] }}</strong>
               Description</label>
             <div class="col-md-10">
               <textarea id="description" name="description"
-                        class="form-control" rows="2"></textarea>
+                        class="form-control" rows="2"
+			>{{ description or '' }}</textarea>
             </div>
           </div>
           <div class="form-group row">

@@ -23,7 +23,7 @@ blueprint = flask.Blueprint('plot', __name__)
 def home(dbname):
     "List the plots in the database."
     try:
-        db = pleko.db.get_check_read(dbname, plots=True)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -31,8 +31,7 @@ def home(dbname):
                                  db=db,
                                  has_write_access=pleko.db.has_write_access(db))
 
-@blueprint.route('/<name:dbname>/display/<nameext:plotname>',
-                 methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>/display/<nameext:plotname>')
 def display(dbname, plotname): # NOTE: plotname is a NameExt instance!
     "Display the plot."
     try:
@@ -73,7 +72,7 @@ def select(dbname):
 
     if utils.is_method_GET():
         plottypes = sorted([(tc.type(), tc.__doc__) 
-                            for tc in PLOT_TEMPLATES.values()])
+                            for tc in PLOTS_TEMPLATES.values()])
         return flask.render_template('plot/select.html',
                                      db=db,
                                      plottypes=plottypes,
@@ -82,7 +81,7 @@ def select(dbname):
 
     elif utils.is_method_POST():
         try:
-            template = PLOT_TEMPLATES.get(flask.request.form.get('type'))
+            template = PLOTS_TEMPLATES.get(flask.request.form.get('type'))
             if not template:
                 raise ValueError('no such plot type')
             schema = pleko.db.get_schema(
@@ -101,12 +100,12 @@ def select(dbname):
 def create(dbname, plottype, sourcename):
     "Create a plot of the given type for the given table/view."
     try:
-        db = pleko.db.get_check_write(dbname, plots=True)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        templateclass = PLOT_TEMPLATES.get(plottype)
+        templateclass = PLOTS_TEMPLATES.get(plottype)
         if not templateclass:
             raise ValueError('no such plot type')
         schema = pleko.db.get_schema(db, sourcename)
@@ -156,7 +155,7 @@ def create(dbname, plottype, sourcename):
 def edit(dbname, plotname):
     "Edit the plot."
     try:
-        db = pleko.db.get_check_write(dbname, plots=True)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -195,7 +194,7 @@ def edit(dbname, plotname):
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         try:
             with dbcnx:
-                sql = "DELETE FROM plot$ WHERE name=?"
+                sql = "DELETE FROM % WHERE name=?" % constants.PLOTS
                 cursor = dbcnx.cursor()
                 cursor.execute(sql, (plotname,))
         except sqlite3.Error as error:
@@ -207,7 +206,7 @@ def edit(dbname, plotname):
 def clone(dbname, plotname):
     "Clone the plot."
     try:
-        db = pleko.db.get_check_write(dbname, plots=True)
+        db = pleko.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -239,8 +238,7 @@ def get_source_plots(dbname):
     Dictionary sourcename->plotlist.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT name, sourcename, type, spec FROM %s" % \
-          constants.PLOT_TABLE_NAME
+    sql = "SELECT name, sourcename, type, spec FROM %s" % constants.PLOTS
     cursor.execute(sql)
     plots = {}
     for row in cursor:
@@ -256,8 +254,7 @@ def get_plot(dbname, plotname):
     Raise ValueError if no such plot.
     """
     cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT sourcename, type, spec FROM %s WHERE name=?" \
-          % constants.PLOT_TABLE_NAME
+    sql = "SELECT sourcename, type, spec FROM %s WHERE name=?" % constants.PLOTS
     cursor.execute(sql, (plotname,))
     rows = list(cursor)
     if len(rows) != 1:
@@ -278,7 +275,7 @@ def update_spec_data_urls(dbname, old_dbname):
     """Update the data URLs of the plot specs in the given database.
     To be done after database rename or clone.
     """
-    db = pleko.db.get_db(dbname)
+    db = pleko.db.get_db(dbname, complete=True)
     old_table_url = utils.get_url('table.rows',
                                   values=dict(dbname=old_dbname, tablename='x'))
     old_table_url = old_table_url[:-1]
@@ -291,8 +288,7 @@ def update_spec_data_urls(dbname, old_dbname):
     new_view_url = utils.get_url('view.rows',
                                  values=dict(dbname=dbname, viewname='x'))
     new_view_url = new_view_url[:-1]
-    plotlists = get_source_plots(dbname).values()
-    for plot in [p for plotlist in plotlists for p in plotlist]:
+    for plot in [p for plotlist in db['plots'].values() for p in plotlist]:
         with PlotContext(db, plot=plot) as ctx:
             spec = plot['spec']
             for path, href in dpath.util.search(spec, 'data/url', yielded=True):
@@ -325,14 +321,14 @@ class PlotContext:
         if self.oldname:    # Update already existing plot
             with self.dbcnx:
                 sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
-                      constants.PLOT_TABLE_NAME
+                      constants.PLOTS
                 self.dbcnx.execute(sql, (self.plot['name'],
                                          json.dumps(self.plot['spec']),
                                          self.oldname))
-        else:               # Insert into table
+        else:               # Insert new plot into table
             with self.dbcnx:
                 sql = "INSERT INTO %s (name, sourcename, type, spec)" \
-                      " VALUES(?, ?, ?, ?)" % constants.PLOT_TABLE_NAME
+                      " VALUES (?, ?, ?, ?)" % constants.PLOTS
                 self.dbcnx.execute(sql, (self.plot['name'],
                                          self.schema['name'],
                                          self.plot['type'],
@@ -367,7 +363,7 @@ class PlotContext:
         "Set the plot type."
         if self.plot.get('type'):
             raise ValueError('cannot change the plot type')
-        if type not in PLOT_TEMPLATES:
+        if type not in PLOTS_TEMPLATES:
             raise ValueError('unknown plot type')
         self.plot['type'] = type
 
@@ -546,4 +542,4 @@ class Scatterplot(PlotTemplate):
                     'optional': True}])
 
 
-PLOT_TEMPLATES = dict([(tc.type(), tc) for tc in [Scatterplot, Spec]])
+PLOTS_TEMPLATES = dict([(tc.type(), tc) for tc in [Scatterplot, Spec]])

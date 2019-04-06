@@ -16,7 +16,6 @@ Pleko
     <tr>
       <th>Database</th>
       <th>Description</th>
-      <th>Access</th>
       <th>Mode</th>
       <th>Owner</th>
       <th>Modified</th>
@@ -31,7 +30,6 @@ Pleko
           {{ db['name'] }}</a>
       </th>
       <td>{{ db.get('description') or '-' }}</td>
-      <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td>{{ db['owner'] }}</td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>

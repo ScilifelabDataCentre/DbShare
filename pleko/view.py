@@ -23,24 +23,34 @@ def create(dbname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
+    viewname = flask.request.values.get('name')
+    description = flask.request.values.get('description')
+    # Do not check here.
     query = pleko.query.get_query_from_request()
 
     if utils.is_method_GET():
-        return flask.render_template('view/create.html', db=db, query=query)
+        return flask.render_template('view/create.html',
+                                     db=db,
+                                     name=viewname,
+                                     description=description,
+                                     query=query)
 
     elif utils.is_method_POST():
         try:
-            viewname = flask.request.form.get('name')
+            # Get again, with checking this time.
+            query = pleko.query.get_query_from_request(check=True)
             schema = {'name': viewname,
-                      'description': flask.request.form.get('description'),
-                      'query': pleko.query.get_query_from_request(check=True)}
+                      'description': description,
+                      'query': query}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
-        except ValueError as error:
+        except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create',
                                                 dbname=dbname,
-                                                query=schema['query']))
+                                                name=viewname,
+                                                description=description,
+                                                **schema['query']))
         else:
             return flask.redirect(flask.url_for('.rows', 
                                                 dbname=dbname,
@@ -85,7 +95,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname, plots=True)
+            db = pleko.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -213,7 +223,7 @@ def download(dbname, viewname):
 def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False, plots=False)
+        db = pleko.db.get_check_read(dbname, nrows=False)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

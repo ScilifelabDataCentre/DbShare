@@ -18,17 +18,37 @@ import pleko.user
 from pleko import constants
 from pleko import utils
 
-PLOT_TABLE = dict(
-    name=constants.PLOT_TABLE_NAME,
+TABLES_TABLE = dict(
+    name=constants.TABLES,
+    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
+             dict(name='schema', type=constants.TEXT, notnull=True)]
+)
+
+INDEXES_TABLE = dict(
+    name=constants.INDEXES,
+    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
+             dict(name='schema', type=constants.TEXT, notnull=True)]
+)
+
+VIEWS_TABLE = dict(
+    name=constants.VIEWS,
+    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
+             dict(name='schema', type=constants.TEXT, notnull=True)]
+)
+
+PLOTS_TABLE = dict(
+    name=constants.PLOTS,
     columns=[dict(name='name', type=constants.TEXT, primarykey=True),
              dict(name='sourcename', type=constants.TEXT, notnull=True),
              dict(name='type', type=constants.TEXT, notnull=True),
              dict(name='spec', type=constants.TEXT, notnull=True)]
 )
 
-PLOT_INDEX = dict(name=constants.PLOT_TABLE_NAME + '_index', 
-                  table=constants.PLOT_TABLE_NAME,
-                  columns=['sourcename'])
+PLOTS_INDEX = dict(
+    name=constants.PLOTS + '_index', 
+    table=constants.PLOTS,
+    columns=['sourcename'])
+
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -37,7 +57,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
     "List the database tables, views and metadata. Delete the database."
     if utils.is_method_GET():
         try:
-            db = get_check_read(str(dbname), nrows=True, plots=True)
+            db = get_check_read(str(dbname), nrows=True)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -87,8 +107,16 @@ def create():
             with DbContext() as ctx:
                 ctx.set_name(flask.request.form['name'])
                 ctx.set_description(flask.request.form.get('description'))
-                create_table(ctx.dbcnx, PLOT_TABLE)
-                create_index(ctx.dbcnx, PLOT_INDEX)
+                sql = get_sql_create_table(TABLES_TABLE)
+                ctx.dbcnx.execute(sql)
+                sql = get_sql_create_table(INDEXES_TABLE)
+                ctx.dbcnx.execute(sql)
+                sql = get_sql_create_table(VIEWS_TABLE)
+                ctx.dbcnx.execute(sql)
+                sql = get_sql_create_table(PLOTS_TABLE)
+                ctx.dbcnx.execute(sql)
+                sql = get_sql_create_index(PLOTS_INDEX)
+                ctx.dbcnx.execute(sql)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
@@ -238,6 +266,7 @@ def upload(dbname):
                     column['type'] = type
 
             with DbContext(db) as ctx:
+                print(schema)
                 ctx.add_table(schema)
 
             # Actually convert values in records
@@ -301,10 +330,6 @@ def clone(dbname):
                  # This does not update the spec data URLs.
                 ctx.set_name(flask.request.form['name'])
                 ctx.set_description(flask.request.form.get('description'))
-                ctx.db['tables']  = db['tables']
-                ctx.db['indexes'] = db['indexes']
-                ctx.db['views']   = db['views']
-                ctx.db['access']  = db['access']
                 ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
@@ -405,11 +430,7 @@ class DbContext:
     def __init__(self, db=None):
         if db is None:
             self.db = {'owner':   flask.g.current_user['username'],
-                       'tables':  {}, # Key: tablename
-                       'indexes': {}, # Key: indexname
-                       'views':   {}, # Key: viewname
                        'public':  False,
-                       'access':  {},
                        'readonly': False,
                        'created': utils.get_time()}
             self.old = {}
@@ -447,23 +468,17 @@ class DbContext:
         if not self.old and get_db(self.db['name']):
             raise ValueError('database name already in use')
         with self.cnx:
-            # Update existing database in master
+            # Update existing database entry in master
             if self.old:
-                sql = "UPDATE dbs SET owner=?, description=?," \
-                      " tables=?, indexes=?, views=?, public=?, access=?," \
-                      " readonly=?, modified=?" \
-                      " WHERE name=?"
+                sql = "UPDATE dbs SET owner=?, description=?, public=?," \
+                      " readonly=?, modified=? WHERE name=?"
                 self.cnx.execute(sql, (self.db['owner'],
                                        self.db.get('description'),
-                                       json.dumps(self.db['tables']),
-                                       json.dumps(self.db['indexes']),
-                                       json.dumps(self.db['views']),
                                        bool(self.db['public']),
-                                       json.dumps(self.db['access']),
                                        bool(self.db['readonly']),
                                        self.db['modified'],
                                        self.db['name']))
-            # Create database in master, and Sqlite file
+            # Create database entry in master, and its Sqlite file
             else:
                 try:
                     db = sqlite3.connect(utils.dbpath(self.db['name']))
@@ -472,17 +487,12 @@ class DbContext:
                 else:
                     db.close()
                 sql = "INSERT INTO dbs" \
-                      " (name, owner, description, tables, indexes, views," \
-                      "  public, access, readonly, created, modified)" \
-                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                      " (name, owner, description, public, readonly," \
+                      "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.db['name'],
                                        self.db['owner'],
                                        self.db.get('description'),
-                                       json.dumps(self.db['tables']),
-                                       json.dumps(self.db['indexes']),
-                                       json.dumps(self.db['views']),
                                        bool(self.db['public']),
-                                       json.dumps(self.db['access']),
                                        bool(self.db['readonly']),
                                        self.db['created'], 
                                        self.db['modified']))
@@ -548,7 +558,11 @@ class DbContext:
             raise ValueError('name already in use for table')
         if schema['name'] in self.db['views']:
             raise ValueError('name already in use for view')
-        create_table(self.dbcnx, schema)
+        sql = get_sql_create_table(schema)
+        self.dbcnx.execute(sql)
+        sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.TABLES
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
     def delete_table(self, tablename):
@@ -557,13 +571,12 @@ class DbContext:
             self.db['tables'].pop(tablename)
         except KeyError:
             raise ValueError('no such table in database')
-        for index in list(self.db['indexes'].values()):
-            if index['table'] == tablename:
-                self.db['indexes'].pop(index['name'])
-                self.dbcnx.execute("DROP INDEX %s" % index['name'])
+        for indexname in list(self.db['indexes']):
+            self.delete_index(indexname)
+        # XXX delete all dependent views and plots
         with self.dbcnx:
-            self.dbcnx.execute("DELETE FROM plot$ WHERE sourcename=?",
-                               (tablename,))
+            sql = "DELETE FROM %s WHERE name=?" % constants.TABLES
+            self.dbcnx.execute(sql, (tablename,))
         self.dbcnx.execute("DROP TABLE %s" % tablename)
         self.dbcnx.execute('VACUUM')
 
@@ -574,7 +587,11 @@ class DbContext:
                                                                 schema['name']))
         if schema['name'] in self.db['indexes']:
             raise ValueError("index %s already defined" % schema['name'])
-        create_index(self.dbcnx, schema)
+        sql = get_sql_create_index(schema)
+        self.dbcnx.execute(sql)
+        sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.INDEXES
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['indexes'][schema['name']] = schema
 
     def delete_index(self, indexname):
@@ -583,6 +600,9 @@ class DbContext:
             self.db['indexes'].pop(indexname)
         except KeyError:
             raise ValueError('no such index in database')
+        with self.dbcnx:
+            sql = "DELETE FROM %s WHERE name=?" % constants.INDEXES
+            self.dbcnx.execute(sql, (indexname,))
         self.dbcnx.execute("DROP INDEX %s" % indexname)
 
     def add_view(self, schema):
@@ -598,12 +618,20 @@ class DbContext:
         if not schema.get('query'):
             raise ValueError('no query statement defined')
         query = pleko.query.get_sql_query(schema['query'])
-        cursor = self.dbcnx.cursor()
         sql = "CREATE VIEW %s AS %s" % (schema['name'], query)
-        cursor.execute(sql)
-        sql = "PRAGMA table_info(%s)" % schema['name']
-        cursor.execute(sql)
+        self.dbcnx.execute(sql)
+        cursor = self.dbcnx.cursor()
+        try:
+            sql = "PRAGMA table_info(%s)" % schema['name']
+            cursor.execute(sql)
+        except sqlite3.Error:   # Invalid view
+            sql = "DROP VIEW %s" % schema['name']
+            cursor.execute(sql)
+            raise ValueError('invalid view; maybe non-existent column?')
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
+        sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.VIEWS
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['views'][schema['name']] = schema
 
     def delete_view(self, viewname):
@@ -612,18 +640,16 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
+        # XXX delete all dependent views and plots
         with self.dbcnx:
-            self.dbcnx.execute("DELETE FROM plot$ WHERE sourcename=?",
-                               (viewname,))
-            self.dbcnx.execute("DROP VIEW %s" % viewname)
+            sql = "DELETE FROM %s WHERE name=?" % constants.VIEWS
+            self.dbcnx.execute(sql, (viewname,))
+        self.dbcnx.execute("DROP VIEW %s" % viewname)
 
 
-# Utility functions
-
-def get_dbs(public=None, owner=None):
-    "Get a list of databases according to criteria. Does not get database size."
-    sql = "SELECT name, owner, description, tables, indexes, views," \
-          " public, access, readonly, created, modified FROM dbs"
+def get_dbs(public=None, owner=None, complete=False):
+    "Get a list of databases according to criteria."
+    sql = "SELECT name FROM dbs"
     criteria = {}
     if public is not None:
         criteria['public=?'] = public
@@ -633,46 +659,50 @@ def get_dbs(public=None, owner=None):
         sql += ' WHERE ' + ' AND '.join(criteria.keys())
     cursor = pleko.master.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
-    result = [{'name':        row[0],
-               'owner':       row[1],
-               'description': row[2],
-               'tables':      json.loads(row[3]),
-               'indexes':     json.loads(row[4]),
-               'views':       json.loads(row[5]),
-               'public':      bool(row[6]),
-               'access':      json.loads(row[7]),
-               'readonly':    bool(row[8]),
-               'created':     row[9],
-               'modified':    row[10]}
-              for row in cursor]
-    for db in result:
-        db['size'] = os.path.getsize(utils.dbpath(db['name']))
-    return result
+    return [get_db(row[0], complete=complete) for row in cursor]
 
-def get_db(name):
+def get_db(name, complete=False):
     """Return the database metadata for the given name.
     Return None if no such database.
-    Does *not* check access.
     """
     cursor = pleko.master.get_cursor()
-    sql = "SELECT owner, description, tables, indexes, views," \
-          " public, access, readonly, created, modified FROM dbs WHERE name=?"
+    sql = "SELECT owner, description, public, readonly," \
+          " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
-    return {'name':        name,
-            'owner':       row[0],
-            'description': row[1],
-            'tables':      json.loads(row[2]),
-            'indexes':     json.loads(row[3]),
-            'views':       json.loads(row[4]),
-            'public':      bool(row[5]),
-            'access':      json.loads(row[6]),
-            'readonly':    bool(row[7]),
-            'created':     row[8],
-            'modified':    row[9],
-            'size':        os.path.getsize(utils.dbpath(name))}
+    db = {'name':        name,
+          'owner':       row[0],
+          'description': row[1],
+          'public':      bool(row[2]),
+          'readonly':    bool(row[3]),
+          'created':     row[4],
+          'modified':    row[5],
+          'size':        os.path.getsize(utils.dbpath(name))}
+    if complete:
+        cursor = get_cnx(name).cursor()
+        sql = "SELECT name, schema FROM %s" % constants.TABLES
+        cursor.execute(sql)
+        db['tables'] = dict([(row[0], json.loads(row[1])) for row in cursor])
+        sql = "SELECT name, schema FROM %s" % constants.INDEXES
+        cursor.execute(sql)
+        db['indexes'] = dict([(row[0], json.loads(row[1])) for row in cursor])
+        sql = "SELECT name, schema FROM %s" % constants.VIEWS
+        cursor.execute(sql)
+        db['views'] = dict([(row[0], json.loads(row[1])) for row in cursor])
+        sql = "SELECT name, sourcename, type, spec FROM %s" % constants.PLOTS
+        cursor.execute(sql)
+        plots = [{'name': row[0],
+                  'sourcename': row[1], 
+                  'type': row[2],
+                  'spec': json.loads(row[3])} for row in cursor]
+        db['plots'] = {}
+        for plot in plots:
+            db['plots'].setdefault(plot['sourcename'], []).append(plot)
+        for sourcename, plotlist in list(db['plots'].items()):
+            db['plots'][sourcename] = utils.sorted_schema(plotlist)
+    return db
 
 def get_usage(username=None):
     "Return the number and total size of the databases for the user, or all."
@@ -712,8 +742,8 @@ def get_schema(db, sourcename):
             raise ValueError('no such table/view')
     return schema
 
-def create_table(dbcnx, schema, if_not_exists=False):
-    """Create a table given by its schema, in the connected database.
+def get_sql_create_table(schema, if_not_exists=False):
+    """Return SQL to create a table given by its schema.
     Raise ValueError if any problem.
     """
     if not schema.get('name'):
@@ -753,13 +783,15 @@ def create_table(dbcnx, schema, if_not_exists=False):
                        (','.join(foreignkey['columns']),
                         foreignkey['ref'],
                         ','.join(foreignkey['refcolumns'])))
-    sql = "CREATE TABLE %s %s (%s)" % (if_not_exists and 'IF NOT EXISTS' or '',
-                                       schema['name'],
-                                       ', '.join(clauses))
-    dbcnx.execute(sql)
+    sql = ['CREATE TABLE']
+    if if_not_exists:
+        sql.append('IF NOT EXISTS')
+    sql.append(schema['name'])
+    sql.append("(%s)" % ', '.join(clauses))
+    return ' '.join(sql)
 
-def create_index(dbcnx, schema, if_not_exists=False):
-    """Create an index given by its schema in the connected database.
+def get_sql_create_index(schema, if_not_exists=False):
+    """Return SQL to create an index given by its schema.
     Raise ValueError if any problem.
     """
     if not schema.get('columns'):
@@ -774,7 +806,7 @@ def create_index(dbcnx, schema, if_not_exists=False):
         sql.append('IF NOT EXISTS')
     sql.append("%s ON %s" % (schema['name'], schema['table']))
     sql.append("(%s)" % ','.join(schema['columns']))
-    dbcnx.execute(' '.join(sql))
+    return ' '.join(sql)
 
 def get_cnx(dbname, write=False):
     """Get a connection for the given database name.
@@ -802,20 +834,18 @@ def has_read_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_read(dbname, nrows=False, plots=False):
+def get_check_read(dbname, nrows=False):
     """Get the database and check that the current user as read access.
-    Optionally add nrows for each table and view, and plots for database.
+    Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
-    db = get_db(dbname)
+    db = get_db(dbname, complete=True)
     if db is None:
         raise ValueError('no such database')
     if not has_read_access(db):
         raise ValueError('may not read the database')
     if nrows:
         set_nrows(db)
-    if plots:
-        db['plots'] = pleko.plot.get_source_plots(dbname)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -825,19 +855,18 @@ def has_write_access(db, check_mode=True):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_write(dbname, check_mode=True, nrows=False, plots=False):
+def get_check_write(dbname, check_mode=True, nrows=False):
     """Get the database and check that the current user as write access.
+    Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
-    db = get_db(dbname)
+    db = get_db(dbname, complete=True)
     if db is None:
         raise ValueError('no such database')
     if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
     if nrows:
         set_nrows(db)
-    if plots:
-        db['plots'] = pleko.plot.get_source_plots(dbname)
     return db
 
 def set_nrows(db):

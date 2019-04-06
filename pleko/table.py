@@ -69,7 +69,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display rows in the table."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname, plots=True)
+            db = pleko.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
