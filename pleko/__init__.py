@@ -4,7 +4,7 @@ Web tool to explore, publish and plot data sets using Sqlite3 and Vega-Lite.
 
 import os.path
 
-__version__ = '0.7.9'
+__version__ = '0.8.0'
 
 ROOT_DIR = os.path.dirname(__file__)
 
