@@ -16,7 +16,17 @@
   </tr>
   <tr>
     <th>FROM</th>
-    <td>{{ schema['query']['from'] }}</td>
+    <td>
+      {% for source in sources %}
+      {% if source['type'] == constants.TABLE %}
+      <a href="{{ url_for('table.rows', dbname=db['name'], tablename=source['name']) }}">
+	{{ source['name'] }}</a>
+      {% else %}
+      <a href="{{ url_for('view.rows', dbname=db['name'], viewname=source['name']) }}">
+	{{ source['name'] }}</a>
+      {% endif %}
+      {% endfor %}
+    </td>
   </tr>
   <tr>
     <th>WHERE</th>

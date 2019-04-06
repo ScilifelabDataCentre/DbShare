@@ -106,13 +106,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.flash('no such view', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
-            if schema['query']['columns'][0] == '*':
-                try:
-                    columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
-                except IndexError:
-                    columns = ['columns']
-            else:
-                columns = schema['query']['columns']
             dbcnx = pleko.db.get_cnx(dbname)
             cursor = dbcnx.cursor()
             sql = "SELECT * FROM %s" % viewname
@@ -121,12 +114,12 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
+        columns = [c['name'] for c in schema['columns']]
         if viewname.ext is None or viewname.ext == 'html':
             query = schema['query']
             return flask.render_template('view/rows.html', 
                                          db=db,
                                          schema=schema,
-                                         columns=columns,
                                          query=query,
                                          sql=pleko.query.get_sql_query(query),
                                          rows=list(cursor),
@@ -168,7 +161,8 @@ def schema(dbname, viewname):
     except KeyError:
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('view/schema.html', db=db, schema=schema)
+    sources = [pleko.db.get_schema(db, name) for name in schema['sources']]
+    return flask.render_template('view/schema.html', db=db, schema=schema, sources=sources)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])

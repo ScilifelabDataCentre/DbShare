@@ -565,20 +565,34 @@ class DbContext:
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
-    def delete_table(self, tablename):
+    def delete_table(self, tablename, vacuum=True):
         "Delete the table from the database and from the database definition."
         try:
             self.db['tables'].pop(tablename)
         except KeyError:
             raise ValueError('no such table in database')
+        # Delete all indexes for this table.
         for indexname in list(self.db['indexes']):
             self.delete_index(indexname)
-        # XXX delete all dependent views and plots
+        # Delete all plots having this table as source.
+        for plot in self.db['plots'].get(tablename, []):
+            self.delete_plot(plot['name'])
+        # Delete all views having this table as source.
+        # Will recursively delete other dependent views and plots.
+        for view in list(self.db['views'].values()):
+            if tablename in view['sources']:
+                # Need to catch KeyError, since recursion might
+                # have deleted the view before we get here.
+                try:
+                    self.delete_view(view['name'])
+                except KeyError:
+                    pass
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.TABLES
             self.dbcnx.execute(sql, (tablename,))
         self.dbcnx.execute("DROP TABLE %s" % tablename)
-        self.dbcnx.execute('VACUUM')
+        if vacuum:
+            self.dbcnx.execute('VACUUM')
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."
@@ -617,8 +631,8 @@ class DbContext:
             raise ValueError('name already in use for view')
         if not schema.get('query'):
             raise ValueError('no query statement defined')
-        query = pleko.query.get_sql_query(schema['query'])
-        sql = "CREATE VIEW %s AS %s" % (schema['name'], query)
+        sql = "CREATE VIEW %s AS %s" %(schema['name'],
+                                       pleko.query.get_sql_query(schema['query']))
         self.dbcnx.execute(sql)
         cursor = self.dbcnx.cursor()
         try:
@@ -628,6 +642,7 @@ class DbContext:
             sql = "DROP VIEW %s" % schema['name']
             cursor.execute(sql)
             raise ValueError('invalid view; maybe non-existent column?')
+        schema['sources'] = [s.strip() for s in schema['query']['from'].split(',')]
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
         sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.VIEWS
         with self.dbcnx:
@@ -640,11 +655,28 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
-        # XXX delete all dependent views and plots
+        # Delete all plots having this view as source.
+        for plot in self.db['plots'].get(viewname, []):
+            self.delete_plot(plot['name'])
+        # Delete all views having this view as a source.
+        # Will recursively delete other dependent views and plots.
+        for view in list(self.db['views'].values()):
+            if viewname in view['sources']:
+                # Need to catch KeyError, since recursion might
+                # have deleted the view before we get here.
+                try:
+                    self.delete_view(view['name'])
+                except KeyError:
+                    pass
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.VIEWS
             self.dbcnx.execute(sql, (viewname,))
         self.dbcnx.execute("DROP VIEW %s" % viewname)
+
+    def delete_plot(self, plotname):
+        with self.dbcnx:
+            sql = "DELETE FROM %s WHERE name=?" % constants.PLOTS
+            self.dbcnx.execute(sql, (plotname,))
 
 
 def get_dbs(public=None, owner=None, complete=False):
@@ -834,12 +866,12 @@ def has_read_access(db):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_read(dbname, nrows=False):
+def get_check_read(dbname, nrows=False, complete=True):
     """Get the database and check that the current user as read access.
     Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
-    db = get_db(dbname, complete=True)
+    db = get_db(dbname, complete=complete)
     if db is None:
         raise ValueError('no such database')
     if not has_read_access(db):
@@ -855,12 +887,12 @@ def has_write_access(db, check_mode=True):
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == db['owner']
 
-def get_check_write(dbname, check_mode=True, nrows=False):
+def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
     """Get the database and check that the current user as write access.
     Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
-    db = get_db(dbname, complete=True)
+    db = get_db(dbname, complete=complete)
     if db is None:
         raise ValueError('no such database')
     if not has_write_access(db, check_mode=check_mode):

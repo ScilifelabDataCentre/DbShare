@@ -40,7 +40,7 @@ def display(dbname, plotname): # NOTE: plotname is a NameExt instance!
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        plot = get_plot(dbname, str(plotname))
+        plot = get_plot(db, str(plotname))
         schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
@@ -160,7 +160,7 @@ def edit(dbname, plotname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        plot = get_plot_from_db(db, plotname)
+        plot = get_plot(db, plotname)
         schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
@@ -191,12 +191,9 @@ def edit(dbname, plotname):
                                             plotname=ctx.plot['name']))
 
     elif utils.is_method_DELETE():
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
         try:
-            with dbcnx:
-                sql = "DELETE FROM % WHERE name=?" % constants.PLOTS
-                cursor = dbcnx.cursor()
-                cursor.execute(sql, (plotname,))
+            with pleko.db.DbContext(db) as ctx:
+                ctx.delete_plot(plotname)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname))
@@ -211,7 +208,7 @@ def clone(dbname, plotname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        plot = get_plot_from_db(db, plotname)
+        plot = get_plot(db, plotname)
         schema = pleko.db.get_schema(db, plot['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
@@ -233,40 +230,8 @@ def clone(dbname, plotname):
                                             dbname=dbname,
                                             plotname=ctx.plot['name']))
 
-def get_source_plots(dbname):
-    """Get the plots for the tables/views in the database.
-    Dictionary sourcename->plotlist.
-    """
-    cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT name, sourcename, type, spec FROM %s" % constants.PLOTS
-    cursor.execute(sql)
-    plots = {}
-    for row in cursor:
-        plot = {'name': row[0],
-                'sourcename': row[1],
-                'type': row[2],
-                'spec': json.loads(row[3])}
-        plots.setdefault(plot['sourcename'], []).append(plot)
-    return plots
-    
-def get_plot(dbname, plotname):
-    """Get a plot for the database.
-    Raise ValueError if no such plot.
-    """
-    cursor = pleko.db.get_cnx(dbname).cursor()
-    sql = "SELECT sourcename, type, spec FROM %s WHERE name=?" % constants.PLOTS
-    cursor.execute(sql, (plotname,))
-    rows = list(cursor)
-    if len(rows) != 1:
-        raise ValueError('no such plot')
-    row = rows[0]
-    return {'name': plotname,
-            'sourcename': row[0],
-            'type': row[1],
-            'spec': json.loads(row[2])}
-
-def get_plot_from_db(db, plotname):
-    # db['plots'] has lists as values.
+def get_plot(db, plotname):
+    # db['plots'] has source name as key and plot lists as values.
     for plot in itertools.chain.from_iterable(db['plots'].values()):
         if plot['name'] == plotname: return plot
     raise ValueError('no such plot')
@@ -299,7 +264,9 @@ def update_spec_data_urls(dbname, old_dbname):
 
 
 class PlotContext:
-    "Context handler to create, modify and save a plot definition."
+    """Context handler to create, modify and save a plot definition.
+    Delete is done by DbContext.
+    """
 
     def __init__(self, db, plot=None, schema=None):
         self.db = db
@@ -352,7 +319,7 @@ class PlotContext:
         name = name.lower()
         if name != self.oldname:
             try:
-                get_plot_from_db(self.db, name)
+                get_plot(self.db, name)
             except ValueError:
                 pass
             else:

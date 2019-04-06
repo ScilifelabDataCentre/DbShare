@@ -18,8 +18,8 @@ Rows in view <strong>{{ schema['name'] }}</strong>
   <table id="rows" class="table table-sm table-hover">
     <thead>
       <tr>
-	{% for column in columns %}
-	<th>{{ column }}</th>
+	{% for column in schema['columns'] %}
+	<th>{{ column['name'] }}</th>
 	{% endfor %}
       </tr>
     </thead>
