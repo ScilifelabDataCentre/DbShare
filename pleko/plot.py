@@ -218,10 +218,7 @@ def edit(dbname, plotname):
                 schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
             with pleko.db.DbContext(db) as ctx:
                 ctx.update_plot(plotname, spec, newname)
-                # with ctx.dbcnx:
-                #     sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
-                #                                constants.PLOTS
-                #     ctx.dbcnx.execute(sql, (newname, json.dumps(spec),plotname))
+))
         except (ValueError, TypeError,
                 sqlite3.Error, jsonschema.ValidationError) as error:
             flask.flash(str(error), 'error')
