@@ -7,7 +7,6 @@ import re
 import sqlite3
 import urllib.parse
 
-import dpath
 import flask
 import jinja2
 import jsonschema
@@ -135,12 +134,33 @@ def create(dbname, plottype, sourcename):
 
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, schema=schema) as ctx:
-                ctx.set_name(flask.request.form.get('_name'))
-                template.set(flask.request.form)
-                ctx.set_type(template.type())
-                ctx.set_spec(str(template))
-        except (ValueError, TypeError, sqlite3.Error) as error:
+            plotname = flask.request.form.get('_name')
+            if not plotname:
+                raise ValueError('no plot name given')
+            if not constants.NAME_RX.match(plotname):
+                raise ValueError('invalid plot name')
+            plotname = plotname.lower()
+            try:
+                get_plot(db, plotname)
+            except ValueError:
+                pass
+            else:
+                raise ValueError('plot name already in use')
+            template.set(flask.request.form)
+            spec = json.loads(str(template))
+            jsonschema.validate(
+                instance=spec,
+                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+            with pleko.db.DbContext(db) as ctx:
+                with ctx.dbcnx:
+                    sql = "INSERT INTO %s (name, sourcename, type, spec)" \
+                          " VALUES (?, ?, ?, ?)" % constants.PLOTS
+                    ctx.dbcnx.execute(sql, (plotname,
+                                            schema['name'],
+                                            template.type(),
+                                            json.dumps(spec)))
+        except (ValueError, TypeError,
+                sqlite3.Error, jsonschema.ValidationError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(
                 utils.get_url('.create',
@@ -149,7 +169,7 @@ def create(dbname, plottype, sourcename):
                                           sourcename=sourcename)))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
-                                            plotname=ctx.plot['name']))
+                                            plotname=plotname))
 
 @blueprint.route('/<name:dbname>/edit/<name:plotname>', 
                  methods=['GET', 'POST', 'DELETE'])
@@ -175,22 +195,44 @@ def edit(dbname, plotname):
                                      spec=json.dumps(plot['spec'], indent=2),
                                      schema=schema)
     elif utils.is_method_POST():
-        spec = flask.request.form.get('spec')
         try:
-            with PlotContext(db, plot=plot) as ctx:
-                ctx.set_name(flask.request.form.get('name'))
-                if not spec: raise ValueError('no spec given')
-                ctx.set_spec(spec)
-        except (ValueError, sqlite3.Error) as error:
+            newname = flask.request.form.get('name') or plotname
+            strspec = flask.request.form.get('spec')
+            if not newname:
+                raise ValueError('no plot name given')
+            if not constants.NAME_RX.match(newname):
+                raise ValueError('invalid plot name')
+            newname = newname.lower()
+            if newname != plotname:
+                try:
+                    get_plot(db, newname)
+                except ValueError:
+                    pass
+                else:
+                    raise ValueError('plot name already in use')
+            if not strspec:
+                raise ValueError('no spec given')
+            spec = json.loads(strspec)
+            jsonschema.validate(
+                instance=spec,
+                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+            with pleko.db.DbContext(db) as ctx:
+                ctx.update_plot(plotname, spec, newname)
+                # with ctx.dbcnx:
+                #     sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
+                #                                constants.PLOTS
+                #     ctx.dbcnx.execute(sql, (newname, json.dumps(spec),plotname))
+        except (ValueError, TypeError,
+                sqlite3.Error, jsonschema.ValidationError) as error:
             flask.flash(str(error), 'error')
             return flask.render_template('plot/edit.html', 
                                          db=db,
                                          plot=plot,
-                                         spec=spec, # Spec with errors
+                                         spec=strspec, # Spec maybe with errors
                                          schema=schema)
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
-                                            plotname=ctx.plot['name']))
+                                            plotname=newname))
 
     elif utils.is_method_DELETE():
         try:
@@ -221,134 +263,38 @@ def clone(dbname, plotname):
 
     elif utils.is_method_POST():
         try:
-            with PlotContext(db, schema=schema) as ctx:
-                ctx.set_name(flask.request.form.get('name'))
-                ctx.set_type(plot['type'])
-                ctx.set_spec(plot['spec'])
+            plotname = flask.request.form.get('name')
+            if not plotname:
+                raise ValueError('no plot name given')
+            if not constants.NAME_RX.match(plotname):
+                raise ValueError('invalid plot name')
+            plotname = plotname.lower()
+            try:
+                get_plot(db, plotname)
+            except ValueError:
+                pass
+            else:
+                raise ValueError('plot name already in use')
+            with pleko.db.DbContext(db) as ctx:
+                with ctx.dbcnx:
+                    sql = "INSERT INTO %s (name, sourcename, type, spec)" \
+                          " VALUES (?, ?, ?, ?)" % constants.PLOTS
+                    ctx.dbcnx.execute(sql, (plotname,
+                                            schema['name'],
+                                            plot['type'],
+                                            json.dumps(plot['spec'])))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
-                                            plotname=ctx.plot['name']))
+                                            plotname=plotname))
 
 def get_plot(db, plotname):
     # db['plots'] has source name as key and plot lists as values.
     for plot in itertools.chain.from_iterable(db['plots'].values()):
         if plot['name'] == plotname: return plot
     raise ValueError('no such plot')
-
-def update_spec_data_urls(dbname, old_dbname):
-    """Update the data URLs of the plot specs in the given database.
-    To be done after database rename or clone.
-    """
-    db = pleko.db.get_db(dbname, complete=True)
-    old_table_url = utils.get_url('table.rows',
-                                  values=dict(dbname=old_dbname, tablename='x'))
-    old_table_url = old_table_url[:-1]
-    new_table_url = utils.get_url('table.rows',
-                                  values=dict(dbname=dbname, tablename='x'))
-    new_table_url = new_table_url[:-1]
-    old_view_url = utils.get_url('view.rows',
-                                 values=dict(dbname=old_dbname, viewname='x'))
-    old_view_url = old_view_url[:-1]
-    new_view_url = utils.get_url('view.rows',
-                                 values=dict(dbname=dbname, viewname='x'))
-    new_view_url = new_view_url[:-1]
-    for plot in [p for plotlist in db['plots'].values() for p in plotlist]:
-        with PlotContext(db, plot=plot) as ctx:
-            spec = plot['spec']
-            for path, href in dpath.util.search(spec, 'data/url', yielded=True):
-                href = href.replace(old_table_url, new_table_url)
-                href = href.replace(old_view_url, new_view_url)
-                dpath.util.set(spec, path, href)
-            ctx.set_spec(spec)
-
-
-class PlotContext:
-    """Context handler to create, modify and save a plot definition.
-    Delete is done by DbContext.
-    """
-
-    def __init__(self, db, plot=None, schema=None, dbcnx=None):
-        self.db = db
-        if plot:
-            self.plot = copy.deepcopy(plot)
-            self.oldname = plot['name']
-        else:
-            self.plot = {}
-            self.oldname = None
-        self.schema = schema
-        if dbcnx is not None:
-            self._dbcnx = dbcnx
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, etyp, einst, etb):
-        if etyp is not None: return False
-        if not self.plot.get('name'):
-            raise ValueError('plot has no name')
-        if self.oldname:    # Update already existing plot
-            with self.dbcnx:
-                sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % \
-                      constants.PLOTS
-                self.dbcnx.execute(sql, (self.plot['name'],
-                                         json.dumps(self.plot['spec']),
-                                         self.oldname))
-        else:               # Insert new plot into table
-            with self.dbcnx:
-                sql = "INSERT INTO %s (name, sourcename, type, spec)" \
-                      " VALUES (?, ?, ?, ?)" % constants.PLOTS
-                self.dbcnx.execute(sql, (self.plot['name'],
-                                         self.schema['name'],
-                                         self.plot['type'],
-                                         json.dumps(self.plot['spec'])))
-
-    @property
-    def dbcnx(self):
-        try:
-            return self._dbcnx
-        except AttributeError:
-            # Don't close connection at exit; done externally to the context
-            self._dbcnx = pleko.db.get_cnx(self.db['name'], write=True)
-            return self._dbcnx
-
-    def set_name(self, name):
-        "Set the plot name."
-        if not name:
-            raise ValueError('no plot name given')
-        if not constants.NAME_RX.match(name):
-            raise ValueError('invalid plot name')
-        name = name.lower()
-        if name != self.oldname:
-            try:
-                get_plot(self.db, name)
-            except ValueError:
-                pass
-            else:
-                raise ValueError('plot name already in use')
-        self.plot['name'] = name
-
-    def set_type(self, type):
-        "Set the plot type."
-        if self.plot.get('type'):
-            raise ValueError('cannot change the plot type')
-        if type not in PLOTS_TEMPLATES:
-            raise ValueError('unknown plot type')
-        self.plot['type'] = type
-
-    def set_spec(self, spec):
-        "Set the plot spec."
-        if isinstance(spec, str):
-            spec = json.loads(spec)
-        try:
-            jsonschema.validate(
-                instance=spec,
-                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
-        except jsonschema.ValidationError as error:
-            raise ValueError(str(error))
-        self.plot['spec'] = spec
 
 
 STANDARD_FIELDS = [{'name': 'title',

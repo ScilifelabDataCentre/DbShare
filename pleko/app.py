@@ -96,7 +96,7 @@ def all():
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required
 def upload():
-    "Upload a Pleko Sqlite database file."
+    "Upload a Pleko Sqlite3 bdatabase file."
     if utils.is_method_GET():
         return flask.render_template('upload.html')
 
@@ -106,7 +106,8 @@ def upload():
                                        flask.request.form.get('description'),
                                        flask.request.files.get('dbfile'))
         except ValueError as error:
-            flask.flash(str(error))
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('upload'))
         return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
 @app.after_request

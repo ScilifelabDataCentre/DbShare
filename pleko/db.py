@@ -145,9 +145,12 @@ def edit(dbname):
                 except KeyError:
                     pass
                 try:
+                    old_dbname = db['name']
                     ctx.set_name(flask.request.form['name'])
                 except KeyError:
                     pass
+                else:
+                    ctx.update_spec_data_urls(old_dbname)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=db['name']))
@@ -330,17 +333,18 @@ def clone(dbname):
     elif utils.is_method_POST():
         try:
             with DbContext() as ctx:
-                # This does not update the spec data URLs, since
-                # there is no old name in the database dict. 
-                ctx.set_name(flask.request.form['name'])
+                newname = flask.request.form['name']
+                ctx.set_name(newname)
                 ctx.set_description(flask.request.form.get('description'))
                 ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
         shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
-        pleko.plot.update_spec_data_urls(ctx.db['name'], dbname)
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        db = get_db(newname, complete=True)
+        with DbContext(db) as ctx:
+            ctx.update_spec_data_urls(dbname)
+        return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/download')
 def download(dbname):
@@ -482,7 +486,7 @@ class DbContext:
                                        bool(self.db['readonly']),
                                        self.db['modified'],
                                        self.db['name']))
-            # Create database entry in master, and its Sqlite file
+            # Create database entry in master, and its Sqlite3 file
             else:
                 try:
                     db = sqlite3.connect(utils.dbpath(self.db['name']))
@@ -527,7 +531,8 @@ class DbContext:
                                    utils.get_time()))
 
     def set_name(self, name):
-        "Set or change the database name."
+        """Set or change the database name.
+        """
         assert not hasattr(self, '_dbcnx')
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
@@ -547,8 +552,36 @@ class DbContext:
                 self.cnx.execute(sql, (name, oldname))
                 self.cnx.execute('PRAGMA foreign_keys=ON')
             os.rename(utils.dbpath(oldname), utils.dbpath(name))
-            pleko.plot.update_spec_data_urls(name, oldname)
         self.db['name'] = name
+
+    def update_spec_data_urls(self, old_dbname):
+        """When renaming or cloning the database,
+        the data URLs of plot specs must be updated.
+        """
+        old_table_url = utils.get_url('table.rows',
+                                      values=dict(dbname=old_dbname, 
+                                                  tablename='x'))
+        old_table_url = old_table_url[:-1]
+        new_table_url = utils.get_url('table.rows',
+                                      values=dict(dbname=self.db['name'],
+                                                  tablename='x'))
+        new_table_url = new_table_url[:-1]
+        old_view_url = utils.get_url('view.rows',
+                                     values=dict(dbname=old_dbname,
+                                                 viewname='x'))
+        old_view_url = old_view_url[:-1]
+        new_view_url = utils.get_url('view.rows',
+                                     values=dict(dbname=self.db['name'],
+                                                 viewname='x'))
+        new_view_url = new_view_url[:-1]
+        for plot in [p for plotlist in self.db['plots'].values()
+                     for p in plotlist]:
+            spec = plot['spec']
+            for path, href in dpath.util.search(spec, 'data/url', yielded=True):
+                href = href.replace(old_table_url, new_table_url)
+                href = href.replace(old_view_url, new_view_url)
+                dpath.util.set(spec, path, href)
+            self.update_plot(plot['name'], spec)
 
     def set_description(self, description):
         "Set the database description."
@@ -690,6 +723,13 @@ class DbContext:
             sql = "DELETE FROM %s WHERE name=?" % constants.VIEWS
             self.dbcnx.execute(sql, (viewname,))
         self.dbcnx.execute("DROP VIEW %s" % viewname)
+
+    def update_plot(self, plotname, spec, new_plotname=None):
+        if new_plotname is None:
+            new_plotname = plotname
+        with self.dbcnx:
+            sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % constants.PLOTS
+            self.dbcnx.execute(sql, (new_plotname, json.dumps(spec), plotname))
 
     def delete_plot(self, plotname):
         with self.dbcnx:
@@ -935,7 +975,7 @@ def get_nrows(name, dbcnx):
 
 def add_database(dbname, description, infile):
     """Add the database present in the given HTTP request file object.
-    Check its validity as a Pleko Sqlite database file.
+    Check its validity as a Pleko Sqlite3 database file.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
