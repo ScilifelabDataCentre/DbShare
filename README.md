@@ -76,7 +76,7 @@ Web tool to explore, publish and plot data sets using
 
 ## URLs
 
-- **/** Home page; list of databases.
+- **/** Home page; list of public databases.
 - **/upload** Upload a Pleko Sqlite3 database file.
 - **/all** List all databases (admin only).
 - **/owner/{username}** List all databases belonging the user.
