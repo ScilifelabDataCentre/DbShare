@@ -78,7 +78,7 @@ def edit(dbname, viewname):
         try:
             with pleko.db.DbContext(db) as ctx:
                 schema['description'] = flask.request.form.get('description') or None
-                ctx.db['views'][viewname] = schema
+                ctx.update_view(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.edit',

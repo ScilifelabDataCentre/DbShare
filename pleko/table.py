@@ -137,7 +137,7 @@ def edit(dbname, tablename):
         try:
             with pleko.db.DbContext(db) as ctx:
                 schema['description'] = flask.request.form.get('description') or None
-                ctx.db['tables'][schema['name']] = schema
+                ctx.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.schema',

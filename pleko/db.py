@@ -565,6 +565,13 @@ class DbContext:
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
+    def update_table(self, schema):
+        "Update the table with the new schema."
+        sql = "UPDATE %s SET schema=? WHERE name=?" % constants.TABLES
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
+        self.db['tables'][schema['name']] = schema
+
     def delete_table(self, tablename, vacuum=True):
         "Delete the table from the database and from the database definition."
         try:
@@ -647,6 +654,13 @@ class DbContext:
         sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.VIEWS
         with self.dbcnx:
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
+        self.db['views'][schema['name']] = schema
+
+    def update_view(self, schema):
+        "Update the view with the new schema."
+        sql = "UPDATE %s SET schema=? WHERE name=?" % constants.VIEWS
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['views'][schema['name']] = schema
 
     def delete_view(self, viewname):
