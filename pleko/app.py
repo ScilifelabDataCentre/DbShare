@@ -96,7 +96,7 @@ def all():
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required
 def upload():
-    "Upload a Pleko Sqlite3 bdatabase file."
+    "Upload a Pleko Sqlite3 database file."
     if utils.is_method_GET():
         return flask.render_template('upload.html')
 
