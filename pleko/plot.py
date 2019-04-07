@@ -3,9 +3,7 @@
 import copy
 import itertools
 import json
-import re
 import sqlite3
-import urllib.parse
 
 import flask
 import jinja2
