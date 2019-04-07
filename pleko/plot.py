@@ -3,7 +3,9 @@
 import copy
 import itertools
 import json
+import re
 import sqlite3
+import urllib.parse
 
 import dpath
 import flask
@@ -268,7 +270,7 @@ class PlotContext:
     Delete is done by DbContext.
     """
 
-    def __init__(self, db, plot=None, schema=None):
+    def __init__(self, db, plot=None, schema=None, dbcnx=None):
         self.db = db
         if plot:
             self.plot = copy.deepcopy(plot)
@@ -277,6 +279,8 @@ class PlotContext:
             self.plot = {}
             self.oldname = None
         self.schema = schema
+        if dbcnx is not None:
+            self._dbcnx = dbcnx
 
     def __enter__(self):
         return self

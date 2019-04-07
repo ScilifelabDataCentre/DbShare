@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Upload a database file{% endblock %}
+
+{% block body_title %}Upload a database file{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Pleko Sqlite file</h5>
+  </div>
+  <div class="card-body">
+    <ul class="m-2">
+      <li>
+	The file must be a Sqlite3 file containing the Pleko meta-data
+	tables. A plain Sqlite3 file will not work.
+      </li>
+    </ul>
+    <form action="{{ url_for('upload') }}"
+          enctype="multipart/form-data"
+          method="POST"
+          class="mt-4">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <div class="col-md-2 text-right">
+          <label for="dbfile" class="col-form-label">Database file</label>
+        </div>
+        <div class="col-md-6">
+          <input id="dbfile" name="dbfile"
+                 type="file" class="form-control-file" autofocus>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-2 text-right">
+          <label for="dbname" class="col-form-label">
+            Table name</label>
+        </div>
+        <div class="col-md-4">
+          <input id="dbname" name="dbname" type="text" class="form-control">
+          <small class="text-muted">
+            If none specified, the filename will be used.
+          </small>
+        </div>
+      </div>
+      <div class="form-group row">
+	<label for="description" class="col-md-2 col-form-label text-right">
+	  Description</label>
+	<div class="col-md-10">
+	  <input id="description" name="description"
+		 type="text" class="form-control">
+	</div>
+      </div>
+     <div class="form-group row">
+        <div class="col-md-3 offset-md-1">
+          <button type="submit" class="btn btn-primary btn-lg btn-block">
+            Upload database file</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('owner', username=g.current_user['username']) }}"
+     role="button" class="btn btn-dark btn-block">Cancel</a>
+</div>
+{% endblock %}

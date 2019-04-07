@@ -70,7 +70,7 @@ def setup_template_context():
 
 @app.route('/')
 def home():
-    "Home page. List accessible databases."
+    "Home page. List public databases."
     return flask.render_template('home.html', dbs=pleko.db.get_dbs(public=True))
 
 @app.route('/owner/<name:username>')
@@ -78,7 +78,7 @@ def home():
 def owner(username):
     "List of databases owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
-        flask.flash('you may not access this page')
+        flask.flash("you may not access the list of user's databases")
         return flask.redirect(flask.url_for('home'))
     return flask.render_template('owner.html',
                                  dbs=pleko.db.get_dbs(owner=username),
@@ -92,6 +92,22 @@ def all():
     dbs = pleko.db.get_dbs()
     usage = sum([db['size'] for db in dbs])
     return flask.render_template('all.html', dbs=dbs, usage=usage)
+
+@app.route('/upload', methods=['GET', 'POST'])
+@pleko.user.login_required
+def upload():
+    "Upload a Pleko Sqlite database file."
+    if utils.is_method_GET():
+        return flask.render_template('upload.html')
+
+    elif utils.is_method_POST():
+        try:
+            db = pleko.db.add_database(flask.request.form.get('dbname'),
+                                       flask.request.form.get('description'),
+                                       flask.request.files.get('dbfile'))
+        except ValueError as error:
+            flask.flash(str(error))
+        return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
 @app.after_request
 def finalize(response):

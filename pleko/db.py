@@ -5,9 +5,12 @@ import csv
 import json
 import os
 import os.path
+import re
 import shutil
 import sqlite3
+import urllib.parse
 
+import dpath
 import flask
 
 import pleko.master
@@ -327,7 +330,8 @@ def clone(dbname):
     elif utils.is_method_POST():
         try:
             with DbContext() as ctx:
-                 # This does not update the spec data URLs.
+                # This does not update the spec data URLs, since
+                # there is no old name in the database dict. 
                 ctx.set_name(flask.request.form['name'])
                 ctx.set_description(flask.request.form.get('description'))
                 ctx.db['origin']  = dbname # Will show up in logs
@@ -928,3 +932,65 @@ def get_nrows(name, dbcnx):
     cursor = dbcnx.cursor()
     cursor.execute("SELECT COUNT(*) FROM %s" % name)
     return cursor.fetchone()[0]
+
+def add_database(dbname, description, infile):
+    """Add the database present in the given HTTP request file object.
+    Check its validity as a Pleko Sqlite database file.
+    Return the database dictionary.
+    Raise ValueError if any problem.
+    """
+    if not infile: raise ValueError('no database file provided')
+    try:
+        check_quota()
+        if not dbname:
+            dbname = os.path.splitext(os.path.basename(infile.filename))[0]
+        with DbContext() as ctx:
+            ctx.set_name(dbname) # Checks that name is not already used.
+            ctx.set_description(description)
+            with open(utils.dbpath(dbname), 'wb') as outfile:
+                infile.save(outfile)
+            # Can the file be opened by sqlite3?
+            # And does it have the required meta-data tables?
+            ctx.dbcnx.execute("SELECT * FROM %s" % constants.TABLES)
+            ctx.dbcnx.execute("SELECT * FROM %s" % constants.INDEXES)
+            ctx.dbcnx.execute("SELECT * FROM %s" % constants.VIEWS)
+            ctx.dbcnx.execute("SELECT * FROM %s" % constants.PLOTS)
+            # Fix the data URLs in the plots.
+            cursor = ctx.dbcnx.cursor()
+            cursor.execute("SELECT name, spec FROM %s" % constants.PLOTS)
+            plots = [{'name': row[0], 'spec': json.loads(row[1])}
+                     for row in cursor]
+            # First, identify the old URL root from a data url in a plot spec.
+            new_root = utils.get_url('home').rstrip('/')
+            old_root = None
+            search = dpath.util.search
+            for plot in plots:
+                for path,href in search(plot['spec'], 'data/url', yielded=True):
+                    parts = urllib.parse.urlparse(href)
+                    old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
+                    break
+            rx_table = re.compile(r'^.*/table/(.+)/.+$')
+            rx_view  = re.compile(r'^.*/view/(.+)/.+$')
+            for plot in plots:
+                for path,href in search(plot['spec'], 'data/url', yielded=True):
+                    # Next, replace old URL root with new.
+                    href = href.replace(old_root, new_root)
+                    # And, old database name with new in URL path.
+                    for m in [rx_table.match(href), rx_view.match(href)]:
+                        if m:
+                            href = href[: m.start(1)] + \
+                                   ctx.db['name'] + \
+                                   href[m.end(1) :]
+                            dpath.util.set(plot['spec'], path, href)
+                            break
+            with ctx.dbcnx:
+                sql = "UPDATE %s SET spec=? WHERE name=?" % constants.PLOTS
+                for plot in plots:
+                    cursor.execute(sql, (json.dumps(plot['spec']),plot['name']))
+        return ctx.db
+    except (ValueError, sqlite3.Error) as error:
+        try:
+            os.remove(utils.dbpath(dbname))
+        except FileNotFoundError:
+            pass
+        raise ValueError(str(error))

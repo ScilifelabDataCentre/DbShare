@@ -70,7 +70,7 @@ def get_cnx(write=False):
     If write is true, then assume the old connection is read-only,
     so close it and open a new one.
     """
-    path = utils.dbpath(constants.MASTER_DB_NAME)
+    path = utils.dbpath(constants.MASTER)
     if write:
         try:
             flask.g.cnx.close()
@@ -89,7 +89,7 @@ def get_cursor(write=False):
 
 def init(app):
     "Initialize tables in the master database, if not done."
-    path = utils.dbpath(constants.MASTER_DB_NAME,
+    path = utils.dbpath(constants.MASTER, 
                         dirpath=app.config['DATABASES_DIRPATH'])
     cnx = sqlite3.connect(path)
     for schema in MASTER_TABLES:
