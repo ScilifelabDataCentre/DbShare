@@ -135,11 +135,11 @@ def table(dbname):
             dbcnx = pleko.db.get_cnx(dbname, write=True)
             cursor = dbcnx.cursor()
             with dbcnx:
-                sql = "CREATE TABLE %s AS %s" % (tablename,
-                                                 get_sql_query(query))
+                sql = 'CREATE TABLE "%s" AS %s' % (tablename,
+                                                   get_sql_query(query))
                 cursor.execute(sql)
                 description = sql
-            sql = "PRAGMA table_info(%s)" % tablename
+            sql = 'PRAGMA table_info("%s")' % tablename
             cursor.execute(sql)
             columns = [{'name': row[1], 'type': row[2]} for row in cursor]
             with pleko.db.DbContext(db) as ctx:

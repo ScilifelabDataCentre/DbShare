@@ -82,7 +82,8 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         columns = [c['name'] for c in schema['columns']]
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
-        sql = "SELECT rowid, %s FROM %s" % (','.join(columns), tablename)
+        sql = 'SELECT rowid, %s FROM "%s"' % \
+              (','.join(['"%s"' % c for c in columns]), tablename)
         cursor.execute(sql)
         if tablename.ext is None or tablename.ext == 'html':
             return flask.render_template('table/rows.html', 
@@ -206,9 +207,9 @@ def row_insert(dbname, tablename):
             dbcnx = pleko.db.get_cnx(dbname, write=True)
             cursor = dbcnx.cursor()
             with dbcnx:
-                sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
                       (tablename,
-                       ','.join([c['name'] for c in schema['columns']]),
+                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
                        ','.join('?' * len(schema['columns'])))
                 cursor.execute(sql, values)
         except sqlite3.Error as error:
@@ -242,8 +243,9 @@ def row_edit(dbname, tablename, rowid):
 
     if utils.is_method_GET():
         cursor = dbcnx.cursor()
-        sql = "SELECT %s FROM %s WHERE rowid=?" % \
-              (','.join([c['name'] for c in schema['columns']]), schema['name'])
+        sql = 'SELECT %s FROM "%s" WHERE rowid=?' % \
+              (','.join(['"%(name)s"' % c for c in schema['columns']]),
+               schema['name'])
         cursor.execute(sql, (rowid,))
         rows = list(cursor)
         if len(rows) != 1:
@@ -270,11 +272,11 @@ def row_edit(dbname, tablename, rowid):
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         cursor = dbcnx.cursor()
         try:
-            values = values + (rowid,)
             with dbcnx:
-                sql = "UPDATE %s SET %s WHERE rowid=?" % \
+                sql = 'UPDATE "%s" SET %s WHERE rowid=?' % \
                       (tablename,
-                       ','.join(["%s=?"%c['name'] for c in schema['columns']]))
+                       ','.join(['"%(name)s"=?' %c for c in schema['columns']]))
+                values = values + (rowid,)
                 cursor.execute(sql, values)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
@@ -287,7 +289,7 @@ def row_edit(dbname, tablename, rowid):
     elif utils.is_method_DELETE():
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         with dbcnx:
-            sql = "DELETE FROM %s WHERE rowid=?" % schema['name']
+            sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
             dbcnx.execute(sql, (rowid,))
         return flask.redirect(flask.url_for('.rows',
                                             dbname=dbname,
@@ -383,9 +385,9 @@ def upload_csv(dbname, tablename):
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         cursor = dbcnx.cursor()
         with dbcnx:
-            sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
                   (tablename,
-                   ','.join([c['name'] for c in schema['columns']]),
+                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
                    ','.join('?' * len(schema['columns'])))
             cursor.executemany(sql, records)
         flask.flash("Inserted %s rows" % len(records), 'message')
@@ -433,11 +435,13 @@ def clone(dbname, tablename):
             dbcnx = ctx.dbcnx
             cursor = dbcnx.cursor()
             with dbcnx:
-                colnames = ','.join([c['name'] for c in schema['columns']])
-                sql = "INSERT INTO %s (%s) SELECT %s FROM %s" % (schema['name'],
-                                                                 colnames,
-                                                                 colnames,
-                                                                 tablename)
+                colnames = ','.join(['"%(name)s"' % c 
+                                     for c in schema['columns']])
+                sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % \
+                      (schema['name'],
+                       colnames,
+                       colnames,
+                       tablename)
                 dbcnx.execute(sql)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -477,16 +481,17 @@ def download_csv(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        columns = [c['name'] for c in schema['columns']]
         if utils.to_bool(flask.request.args.get('header')):
-            header = columns
+            header = [c['name'] for c in schema['columns']]
         else:
             header = None
         writer = utils.CsvWriter(header,
                                  delimiter=flask.request.args.get('delimiter'))
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         cursor = dbcnx.cursor()
-        sql = "SELECT %s FROM %s" % (','.join(columns), tablename)
+        colnames = ['"%(name)s"' % c for c in schema['columns']]
+        sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
+        print(sql)
         cursor.execute(sql)
         writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:

@@ -203,6 +203,8 @@ def upload(dbname):
                 for pos, char in enumerate(tablename):
                     if char not in constants.NAME_CHARS:
                         tablename[pos] = '_'
+                if tablename[0] not in constants.string.ascii_letters:
+                    tablename.insert(0, 'x')
                 tablename = ''.join(tablename)
             if tablename in db['tables']:
                 raise ValueError('table name already in use')
@@ -300,9 +302,9 @@ def upload(dbname):
             dbcnx = get_cnx(db['name'], write=True)
             cursor = dbcnx.cursor()
             with dbcnx:
-                sql = "INSERT INTO %s (%s) VALUES (%s)" % \
+                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
                       (tablename,
-                       ','.join([c['name'] for c in schema['columns']]),
+                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
                        ','.join('?' * len(schema['columns'])))
                 cursor.executemany(sql, records)
             flask.flash("Inserted %s rows" % len(records), 'message')
@@ -545,12 +547,14 @@ class DbContext:
             pass
         else:
             with self.cnx:
-                self.cnx.execute('PRAGMA foreign_keys=OFF')
+                sql = 'PRAGMA foreign_keys=OFF'
+                self.cnx.execute(sql)
                 sql = "UPDATE dbs SET name=? WHERE name=?"
                 self.cnx.execute(sql, (name, oldname))
                 sql = "UPDATE dbs_logs SET name=? WHERE name=?"
                 self.cnx.execute(sql, (name, oldname))
-                self.cnx.execute('PRAGMA foreign_keys=ON')
+                sql = 'PRAGMA foreign_keys=ON'
+                self.cnx.execute(sql)
             os.rename(utils.dbpath(oldname), utils.dbpath(name))
         self.db['name'] = name
 
@@ -634,9 +638,11 @@ class DbContext:
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.TABLES
             self.dbcnx.execute(sql, (tablename,))
-        self.dbcnx.execute("DROP TABLE %s" % tablename)
+        sql = 'DROP TABLE "%s"' % tablename
+        self.dbcnx.execute(sql)
         if vacuum:
-            self.dbcnx.execute('VACUUM')
+            sql = 'VACUUM'
+            self.dbcnx.execute(sql)
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."
@@ -661,7 +667,8 @@ class DbContext:
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.INDEXES
             self.dbcnx.execute(sql, (indexname,))
-        self.dbcnx.execute("DROP INDEX %s" % indexname)
+        sql = 'DROP INDEX "%s"' % indexname
+        self.dbcnx.execute(sql)
 
     def add_view(self, schema):
         "Create a view in the database and add to the database definition."
@@ -675,28 +682,30 @@ class DbContext:
             raise ValueError('name already in use for view')
         if not schema.get('query'):
             raise ValueError('no query statement defined')
-        sql = "CREATE VIEW %s AS %s" %(schema['name'],
-                                       pleko.query.get_sql_query(schema['query']))
+        sql = 'CREATE VIEW "%s" AS %s' % \
+              (schema['name'],
+               pleko.query.get_sql_query(schema['query']))
         self.dbcnx.execute(sql)
         cursor = self.dbcnx.cursor()
         try:
-            sql = "PRAGMA table_info(%s)" % schema['name']
+            sql = 'PRAGMA table_info("%s")' % schema['name']
             cursor.execute(sql)
         except sqlite3.Error:   # Invalid view
-            sql = "DROP VIEW %s" % schema['name']
+            sql = 'DROP VIEW "%s"' % schema['name']
             cursor.execute(sql)
             raise ValueError('invalid view; maybe non-existent column?')
-        schema['sources'] = [s.strip() for s in schema['query']['from'].split(',')]
+        schema['sources'] = [s.strip() 
+                             for s in schema['query']['from'].split(',')]
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
-        sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.VIEWS
         with self.dbcnx:
+            sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['views'][schema['name']] = schema
 
     def update_view(self, schema):
         "Update the view with the new schema."
-        sql = "UPDATE %s SET schema=? WHERE name=?" % constants.VIEWS
         with self.dbcnx:
+            sql = "UPDATE %s SET schema=? WHERE name=?" % constants.VIEWS
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['views'][schema['name']] = schema
 
@@ -722,7 +731,8 @@ class DbContext:
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.VIEWS
             self.dbcnx.execute(sql, (viewname,))
-        self.dbcnx.execute("DROP VIEW %s" % viewname)
+        sql = 'DROP VIEW "%s"' % viewname
+        self.dbcnx.execute(sql)
 
     def update_plot(self, plotname, spec, new_plotname=None):
         if new_plotname is None:
@@ -856,7 +866,7 @@ def get_sql_create_table(schema, if_not_exists=False):
     # Column definitions, including column constraints
     clauses = []
     for column in schema['columns']:
-        coldef = [column['name'], column['type']]
+        coldef = ['"%s" %s' % (column['name'], column['type'])]
         if column['name'] in primarykey:
             column['notnull'] = True
             if len(primarykey) == 1:
@@ -866,17 +876,18 @@ def get_sql_create_table(schema, if_not_exists=False):
         clauses.append(' '.join(coldef))
     # Primary key
     if len(primarykey) >= 2:
-        clauses.append("PRIMARY KEY (%s)" % ','.join(primarykey))
+        clauses.append('PRIMARY KEY (%s)' %
+                       ','.join(['"%s"' for k in primarykey]))
     # Foreign keys
     for foreignkey in schema.get('foreignkeys', []):
-        clauses.append("FOREIGN KEY (%s) REFERENCES %s (%s)" %
-                       (','.join(foreignkey['columns']),
+        clauses.append('FOREIGN KEY (%s) REFERENCES "%s" (%s)' %
+                       (','.join(['"%s"' % c for c in foreignkey['columns']]),
                         foreignkey['ref'],
-                        ','.join(foreignkey['refcolumns'])))
+                        ','.join(['"%s"'%c for c in foreignkey['refcolumns']])))
     sql = ['CREATE TABLE']
     if if_not_exists:
         sql.append('IF NOT EXISTS')
-    sql.append(schema['name'])
+    sql.append('"%s"' % schema['name'])
     sql.append("(%s)" % ', '.join(clauses))
     return ' '.join(sql)
 
@@ -894,8 +905,8 @@ def get_sql_create_index(schema, if_not_exists=False):
     sql.append('INDEX')
     if if_not_exists:
         sql.append('IF NOT EXISTS')
-    sql.append("%s ON %s" % (schema['name'], schema['table']))
-    sql.append("(%s)" % ','.join(schema['columns']))
+    sql.append('"%s" ON "%s"' % (schema['name'], schema['table']))
+    sql.append("(%s)" % ','.join(['"%s"' % c for c in schema['columns']]))
     return ' '.join(sql)
 
 def get_cnx(dbname, write=False):
@@ -970,7 +981,8 @@ def set_nrows(db):
 def get_nrows(name, dbcnx):
     "Get the number of rows in the table or view."
     cursor = dbcnx.cursor()
-    cursor.execute("SELECT COUNT(*) FROM %s" % name)
+    sql = 'SELECT COUNT(*) FROM "%s"' % name
+    cursor.execute(sql)
     return cursor.fetchone()[0]
 
 def add_database(dbname, description, infile):
@@ -991,13 +1003,18 @@ def add_database(dbname, description, infile):
                 infile.save(outfile)
             # Can the file be opened by sqlite3?
             # And does it have the required meta-data tables?
-            ctx.dbcnx.execute("SELECT * FROM %s" % constants.TABLES)
-            ctx.dbcnx.execute("SELECT * FROM %s" % constants.INDEXES)
-            ctx.dbcnx.execute("SELECT * FROM %s" % constants.VIEWS)
-            ctx.dbcnx.execute("SELECT * FROM %s" % constants.PLOTS)
+            sql = "SELECT * FROM %s" % constants.TABLES
+            ctx.dbcnx.execute(sql)
+            sql = "SELECT * FROM %s" % constants.INDEXES
+            ctx.dbcnx.execute(sql)
+            sql = "SELECT * FROM %s" % constants.VIEWS
+            ctx.dbcnx.execute(sql)
+            sql = "SELECT * FROM %s" % constants.PLOTS
+            ctx.dbcnx.execute(sql)
             # Fix the data URLs in the plots.
             cursor = ctx.dbcnx.cursor()
-            cursor.execute("SELECT name, spec FROM %s" % constants.PLOTS)
+            sql = "SELECT name, spec FROM %s" % constants.PLOTS
+            cursor.execute(sql)
             plots = [{'name': row[0], 'spec': json.loads(row[1])}
                      for row in cursor]
             # First, identify the old URL root from a data url in a plot spec.

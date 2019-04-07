@@ -108,7 +108,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         try:
             dbcnx = pleko.db.get_cnx(dbname)
             cursor = dbcnx.cursor()
-            sql = "SELECT * FROM %s" % viewname
+            sql = 'SELECT * FROM "%s"' % viewname
             cursor.execute(sql)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
@@ -227,16 +227,17 @@ def download_csv(dbname, viewname):
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        columns = schema['query']['columns']
+        colnames = schema['query']['columns']
         if utils.to_bool(flask.request.args.get('header')):
-            header = columns
+            header = colnames
         else:
             header = None
         writer = utils.CsvWriter(header,
                                  delimiter=flask.request.args.get('delimiter'))
         dbcnx = pleko.db.get_cnx(dbname)
         cursor = dbcnx.cursor()
-        sql = "SELECT %s FROM %s" % (','.join(columns), viewname)
+        sql = 'SELECT %s FROM "%s"' % (','.join(['"%s"' % c for c in colnames]),
+                                       viewname)
         cursor.execute(sql)
         writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
