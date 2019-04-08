@@ -154,7 +154,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 def schema(dbname, viewname):
     "Display the schema for a view."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=True)
+        db = pleko.db.get_check_read(dbname, nrows=[viewname])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -207,7 +207,7 @@ def clone(dbname, viewname):
 def download(dbname, viewname):
     "Download the rows in the view to a file."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -222,7 +222,7 @@ def download(dbname, viewname):
 def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=False)
+        db = pleko.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

@@ -13,9 +13,10 @@ from pleko import constants
 from pleko import utils
 
 
+# Rely on ordered dict items.
 INITIAL = {'$schema': 'https://vega.github.io/schema/vega-lite/v3.json'}
-INITIAL['title'] = 'A title for the visualization.'
-INITIAL['description'] = 'A description of the visualization.'
+INITIAL['title'] = 'A basic scatterplot visualization.'
+INITIAL['description'] = 'A skeleton for a scatterplot.'
 INITIAL['width'] = 400
 INITIAL['height'] = 400
 INITIAL['data'] = {'url': None, 'format': {'type': 'csv'}}

@@ -151,7 +151,7 @@ def edit(dbname, tablename):
 def schema(dbname, tablename):
     "Display the schema for a table."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=True)
+        db = pleko.db.get_check_read(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

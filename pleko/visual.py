@@ -67,12 +67,12 @@ def edit(dbname, visualname):
     try:
         visual = pleko.db.get_visual(db, visualname)
         schema = pleko.db.get_schema(db, visual['sourcename'])
-        pleko.db.set_nrows(db, nrows=[schema['name']])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.is_method_GET():
+        pleko.db.set_nrows(db, nrows=[schema['name']])
         return flask.render_template('visual/edit.html', 
                                      db=db,
                                      schema=schema,
@@ -88,7 +88,7 @@ def edit(dbname, visualname):
             newname = newname.lower()
             if newname != visualname:
                 try:
-                    get_visual(db, newname)
+                    pleko.db.get_visual(db, newname)
                 except ValueError:
                     pass
                 else:
