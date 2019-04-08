@@ -14,7 +14,7 @@ Explore, visualize and publish data sets with
 - Delete a database.
 - A database is owned by the user account that created it.
 - A database may be private or public.
-- Databases are independent of one another.
+- Databases are isolated from one another.
 - Display the tables, views, indexes and visualizations in a database.
 - Download the Sqlite3 table for a database.
 
@@ -39,6 +39,8 @@ Explore, visualize and publish data sets with
 ## Queries
 
 - Query the tables in a database.
+- A query is specified using Sqlite3 SQL.
+- Queries are made towards the database in read-only mode, hence are secure.
 - Edit the query.
 - Make a view out of the query.
 
