@@ -590,18 +590,32 @@ class DbContext:
         "Set the database description."
         self.db['description'] = description or None
 
-    def add_table(self, schema):
-        "Create the table in the database and add to the database definition."
+    def add_table(self, schema, query=None):
+        """Create the table in the database and add to the database definition.
+        If query is given, do 'CREATE TABLE AS', and fix up the schema.
+        """
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
         if schema['name'] in self.db['tables']:
             raise ValueError('name already in use for table')
         if schema['name'] in self.db['views']:
             raise ValueError('name already in use for view')
-        sql = get_sql_create_table(schema)
-        self.dbcnx.execute(sql)
-        sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.TABLES
+        if query:
+            sql = 'CREATE TABLE "%s" AS %s' % (schema['name'],
+                                               pleko.query.get_sql_query(query))
+            self.dbcnx.execute(sql)
+            if not schema.get('description'):
+                schema['description'] = sql
+            cursor = self.dbcnx.cursor()
+            sql = 'PRAGMA table_info("%s")' % schema['name']
+            cursor.execute(sql)
+            schema['columns'] = [{'name': row[1], 'type': row[2]} 
+                                 for row in cursor]
+        else:
+            sql = get_sql_create_table(schema)
+            self.dbcnx.execute(sql)
         with self.dbcnx:
+            sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
@@ -968,8 +982,7 @@ def get_check_read(dbname, nrows=False, complete=True):
         raise ValueError('no such database')
     if not has_read_access(db):
         raise ValueError('may not read the database')
-    if nrows:
-        set_nrows(db)
+    set_nrows(db, nrows)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -989,24 +1002,25 @@ def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
         raise ValueError('no such database')
     if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
-    if nrows:
-        set_nrows(db)
+    set_nrows(db, nrows)
     return db
 
-def set_nrows(db):
-    "Set the item 'nrows' in each table and view of the database."
+def set_nrows(db, nrows):
+    "Set the item 'nrows' for all or given tables and views of the database."
+    if not nrows: return
     dbcnx = get_cnx(db['name'])
-    for table in db['tables'].values():
-        table['nrows'] = get_nrows(table['name'], dbcnx)
-    for view in db['views'].values():
-        view['nrows'] = get_nrows(view['name'], dbcnx)
-
-def get_nrows(name, dbcnx):
-    "Get the number of rows in the table or view."
+    if nrows == True:
+        nrows = set(db['tables'].keys())
+        nrows.update(db['views'].keys())
+    else:
+        nrows = set(nrows)
     cursor = dbcnx.cursor()
-    sql = 'SELECT COUNT(*) FROM "%s"' % name
-    cursor.execute(sql)
-    return cursor.fetchone()[0]
+    items = list(db['tables'].values()) + list(db['views'].values())
+    for item in items:
+        if item['name'] in nrows:
+            sql = 'SELECT COUNT(*) FROM "%s"' % item['name']
+            cursor.execute(sql)
+            item['nrows'] = cursor.fetchone()[0]
 
 def add_database(dbname, description, infile):
     """Add the database present in the given HTTP request file object.

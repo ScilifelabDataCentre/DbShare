@@ -173,7 +173,7 @@ def schema(dbname, tablename):
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = pleko.db.get_check_write(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -184,8 +184,6 @@ def row_insert(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
         schema = db['tables'][tablename]
-        schema['nrows'] = pleko.db.get_nrows(schema['name'],
-                                             pleko.db.get_cnx(dbname))
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -230,7 +228,7 @@ def row_insert(dbname, tablename):
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = pleko.db.get_check_write(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -238,7 +236,6 @@ def row_edit(dbname, tablename, rowid):
     dbcnx = pleko.db.get_cnx(dbname)
     try:
         schema = db['tables'][tablename]
-        schema['nrows'] = pleko.db.get_nrows(schema['name'], dbcnx)
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))

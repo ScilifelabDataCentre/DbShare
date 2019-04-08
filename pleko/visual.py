@@ -37,12 +37,11 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
     try:
         visual = pleko.db.get_visual(db, str(visualname))
         schema = pleko.db.get_schema(db, visual['sourcename'])
+        pleko.db.set_nrows(db, nrows=[schema['name']])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    schema['nrows'] = pleko.db.get_nrows(schema['name'],
-                                         pleko.db.get_cnx(dbname))
     if visualname.ext is None or visualname.ext == 'html':
         return flask.render_template(
             'visual/display.html',
@@ -68,11 +67,10 @@ def edit(dbname, visualname):
     try:
         visual = pleko.db.get_visual(db, visualname)
         schema = pleko.db.get_schema(db, visual['sourcename'])
+        pleko.db.set_nrows(db, nrows=[schema['name']])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    schema['nrows'] = pleko.db.get_nrows(schema['name'],
-                                         pleko.db.get_cnx(dbname))
 
     if utils.is_method_GET():
         return flask.render_template('visual/edit.html', 

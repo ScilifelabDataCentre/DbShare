@@ -29,9 +29,7 @@ def create(dbname, tablename):
     positions = list(range(len(schema['columns'])))
 
     if utils.is_method_GET():
-        cnx = pleko.db.get_cnx(dbname)
-        for table in db['tables'].values():
-            table['nrows'] = pleko.db.get_nrows(table['name'], cnx)
+        pleko.db.set_nrows(db, nrows=db['tables'].keys())
         return flask.render_template('index/create.html',
                                      db=db,
                                      schema=schema,
