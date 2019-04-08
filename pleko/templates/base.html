@@ -78,8 +78,8 @@
             </div>
           </li>
           <li class="nav-item">
-            <a href="{{ url_for('plot.home', dbname=db['name']) }}"
-               class="nav-link">Plots</a>
+            <a href="{{ url_for('visual.home', dbname=db['name']) }}"
+               class="nav-link">Visualizations</a>
           </li>
           {% endif %}
           {% if g.is_admin %}

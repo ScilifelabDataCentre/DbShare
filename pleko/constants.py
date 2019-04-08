@@ -13,7 +13,7 @@ MASTER     = '_master'
 TABLES     = '_tables'
 INDEXES    = '_indexes'
 VIEWS      = '_views'
-PLOTS      = '_plots'
+VISUALS    = '_visuals'
 INDEX_PREFIX_TEMPLATE = "_index_%s_"
 
 # User roles

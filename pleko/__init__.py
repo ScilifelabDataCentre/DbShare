@@ -1,10 +1,10 @@
 """Pleko
-Web tool to explore, publish and plot data sets using Sqlite3 and Vega-Lite.
+Explore, visualize and publish data sets with Sqlite3 and Vega-Lite.
 """
 
 import os.path
 
-__version__ = '0.8.1'
+__version__ = '0.8.2'
 
 ROOT_DIR = os.path.dirname(__file__)
 
@@ -16,7 +16,7 @@ default_config = dict(
     FLASK_URL = 'http://flask.pocoo.org/',
     SQLITE_URL = 'https://www.sqlite.org/',
     BOOTSTRAP_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
-    VEGALITE_URL = 'https://vega.github.io/vega-lite/',
+    VEGA_LITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
     DATABASES_DIRPATH = 'data',
     SECRET_KEY = None,

@@ -94,34 +94,34 @@
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
 	    data-toggle="tooltip" data-placement="left"
-	    title="Delete this table and all its dependent views and plots."
+	    title="Delete this table and all its dependent views and visualizations."
             onclick="return confirm('Really delete? Cannot be undone.')">
       Delete</button>
   </form>
+</div>
+<div class="mt-3">
+    <a href="{{ url_for('vega-lite.create', dbname=db['name'], sourcename=schema['name']) }}"
+       role="button" class="btn btn-info btn-block">
+      Create Vega-Lite visualization</a>
 </div>
 {% endif %}
 {% endblock %}
 
 {% block info %}
+{% if visuals %}
 <div class="card border-info mt-3">
-  <div class="card-header bg-info text-white">Plots</div>
-  <div class="card-body">
-    {% for plot in utils.sorted_schema(db['plots'].get(schema['name'], [])) %}
-    <div class="mb-1">
-      <a href="{{ url_for('plot.display', dbname=db['name'], plotname=plot['name']) }}"
+  <div class="card-header bg-info text-white">Visualizations</div>
+  <div class="card-body my-0 py-1">
+    {% for visual in visuals %}
+    <div>
+      <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
 	 class="card-link">
-	{{ plot['name'] }}</a>
+	{{ visual['name'] }}</a>
     </div>
     {% endfor %}
   </div>
-  {% if has_write_access %}
-  <div class="card-footer">
-    <a href="{{ url_for('plot.select', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-sm btn-info btn-block">
-      Create plot</a>
-  </div>
-  {% endif %}
 </div>
+{% endif %}
 {% endblock %}
 
 {% block javascript %}

@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import itertools
 import json
 import os
 import os.path
@@ -15,7 +16,6 @@ import flask
 
 import pleko.master
 import pleko.table
-import pleko.plot
 import pleko.query
 import pleko.user
 from pleko import constants
@@ -39,17 +39,16 @@ VIEWS_TABLE = dict(
              dict(name='schema', type=constants.TEXT, notnull=True)]
 )
 
-PLOTS_TABLE = dict(
-    name=constants.PLOTS,
+VISUALS_TABLE = dict(
+    name=constants.VISUALS,
     columns=[dict(name='name', type=constants.TEXT, primarykey=True),
              dict(name='sourcename', type=constants.TEXT, notnull=True),
-             dict(name='type', type=constants.TEXT, notnull=True),
              dict(name='spec', type=constants.TEXT, notnull=True)]
 )
 
-PLOTS_INDEX = dict(
-    name=constants.PLOTS + '_index', 
-    table=constants.PLOTS,
+VISUALS_INDEX = dict(
+    name=constants.VISUALS + '_index', 
+    table=constants.VISUALS,
     columns=['sourcename'])
 
 
@@ -116,9 +115,9 @@ def create():
                 ctx.dbcnx.execute(sql)
                 sql = get_sql_create_table(VIEWS_TABLE)
                 ctx.dbcnx.execute(sql)
-                sql = get_sql_create_table(PLOTS_TABLE)
+                sql = get_sql_create_table(VISUALS_TABLE)
                 ctx.dbcnx.execute(sql)
-                sql = get_sql_create_index(PLOTS_INDEX)
+                sql = get_sql_create_index(VISUALS_INDEX)
                 ctx.dbcnx.execute(sql)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
@@ -560,7 +559,7 @@ class DbContext:
 
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,
-        the data URLs of plot specs must be updated.
+        the data URLs of visual specs must be updated.
         """
         old_table_url = utils.get_url('table.rows',
                                       values=dict(dbname=old_dbname, 
@@ -578,14 +577,14 @@ class DbContext:
                                      values=dict(dbname=self.db['name'],
                                                  viewname='x'))
         new_view_url = new_view_url[:-1]
-        for plot in [p for plotlist in self.db['plots'].values()
-                     for p in plotlist]:
-            spec = plot['spec']
+        for visual in [v for visuallist in self.db['visuals'].values()
+                       for v in visuallist]:
+            spec = visual['spec']
             for path, href in dpath.util.search(spec, 'data/url', yielded=True):
                 href = href.replace(old_table_url, new_table_url)
                 href = href.replace(old_view_url, new_view_url)
                 dpath.util.set(spec, path, href)
-            self.update_plot(plot['name'], spec)
+            self.update_visual(visual['name'], spec)
 
     def set_description(self, description):
         "Set the database description."
@@ -622,11 +621,11 @@ class DbContext:
         # Delete all indexes for this table.
         for indexname in list(self.db['indexes']):
             self.delete_index(indexname)
-        # Delete all plots having this table as source.
-        for plot in self.db['plots'].get(tablename, []):
-            self.delete_plot(plot['name'])
+        # Delete all visuals having this table as source.
+        for visual in self.db['visuals'].get(tablename, []):
+            self.delete_visual(visual['name'])
         # Delete all views having this table as source.
-        # Will recursively delete other dependent views and plots.
+        # Will recursively delete other dependent views and visuals.
         for view in list(self.db['views'].values()):
             if tablename in view['sources']:
                 # Need to catch KeyError, since recursion might
@@ -715,11 +714,11 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
-        # Delete all plots having this view as source.
-        for plot in self.db['plots'].get(viewname, []):
-            self.delete_plot(plot['name'])
+        # Delete all visuals having this view as source.
+        for visual in self.db['visuals'].get(viewname, []):
+            self.delete_visual(visual['name'])
         # Delete all views having this view as a source.
-        # Will recursively delete other dependent views and plots.
+        # Will recursively delete other dependent views and visuals.
         for view in list(self.db['views'].values()):
             if viewname in view['sources']:
                 # Need to catch KeyError, since recursion might
@@ -734,17 +733,25 @@ class DbContext:
         sql = 'DROP VIEW "%s"' % viewname
         self.dbcnx.execute(sql)
 
-    def update_plot(self, plotname, spec, new_plotname=None):
-        if new_plotname is None:
-            new_plotname = plotname
+    def add_visual(self, visualname, sourcename, spec):
         with self.dbcnx:
-            sql = "UPDATE %s SET name=?, spec=? WHERE name=?" % constants.PLOTS
-            self.dbcnx.execute(sql, (new_plotname, json.dumps(spec), plotname))
+            sql = "INSERT INTO %s (name, sourcename, spec)" \
+                  " VALUES (?, ?, ?)" % constants.VISUALS
+            self.dbcnx.execute(sql, (visualname,
+                                     sourcename,
+                                     json.dumps(spec)))
 
-    def delete_plot(self, plotname):
+    def update_visual(self, visualname, spec, new_visualname=None):
+        if new_visualname is None:
+            new_visualname = visualname
         with self.dbcnx:
-            sql = "DELETE FROM %s WHERE name=?" % constants.PLOTS
-            self.dbcnx.execute(sql, (plotname,))
+            sql = "UPDATE %s SET name=?,spec=? WHERE name=?" % constants.VISUALS
+            self.dbcnx.execute(sql,(new_visualname,json.dumps(spec),visualname))
+
+    def delete_visual(self, visualname):
+        with self.dbcnx:
+            sql = "DELETE FROM %s WHERE name=?" % constants.VISUALS
+            self.dbcnx.execute(sql, (visualname,))
 
 
 def get_dbs(public=None, owner=None, complete=False):
@@ -791,17 +798,27 @@ def get_db(name, complete=False):
         sql = "SELECT name, schema FROM %s" % constants.VIEWS
         cursor.execute(sql)
         db['views'] = dict([(row[0], json.loads(row[1])) for row in cursor])
-        sql = "SELECT name, sourcename, type, spec FROM %s" % constants.PLOTS
+        sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
         cursor.execute(sql)
-        plots = [{'name': row[0],
+        visuals = [{'name': row[0],
                   'sourcename': row[1], 
-                  'type': row[2],
-                  'spec': json.loads(row[3])} for row in cursor]
-        db['plots'] = {}
-        for plot in plots:
-            db['plots'].setdefault(plot['sourcename'], []).append(plot)
-        for sourcename, plotlist in list(db['plots'].items()):
-            db['plots'][sourcename] = utils.sorted_schema(plotlist)
+                  'spec': json.loads(row[2])} for row in cursor]
+        db['visuals'] = {}
+        for visual in visuals:
+            db['visuals'].setdefault(visual['sourcename'], []).append(visual)
+        for sourcename, visuallist in list(db['visuals'].items()):
+            db['visuals'][sourcename] = utils.sorted_schema(visuallist)
+
+        sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
+        cursor.execute(sql)
+        visuals = [{'name': row[0],
+                    'sourcename': row[1], 
+                    'spec': json.loads(row[2])} for row in cursor]
+        db['visuals'] = {}
+        for visual in visuals:
+            db['visuals'].setdefault(visual['sourcename'], []).append(visual)
+        for sourcename, visuallist in list(db['visuals'].items()):
+            db['visuals'][sourcename] = utils.sorted_schema(visuallist)
     return db
 
 def get_usage(username=None):
@@ -841,6 +858,12 @@ def get_schema(db, sourcename):
         except KeyError:
             raise ValueError('no such table/view')
     return schema
+
+def get_visual(db, visualname):
+    # db['visuals'] has source name as key and visual lists as values.
+    for visual in itertools.chain.from_iterable(db['visuals'].values()):
+        if visual['name'] == visualname: return visual
+    raise ValueError('no such visual')
 
 def get_sql_create_table(schema, if_not_exists=False):
     """Return SQL to create a table given by its schema.
@@ -1009,27 +1032,27 @@ def add_database(dbname, description, infile):
             ctx.dbcnx.execute(sql)
             sql = "SELECT * FROM %s" % constants.VIEWS
             ctx.dbcnx.execute(sql)
-            sql = "SELECT * FROM %s" % constants.PLOTS
+            sql = "SELECT * FROM %s" % constants.VISUALS
             ctx.dbcnx.execute(sql)
-            # Fix the data URLs in the plots.
+            # Fix the data URLs in the visuals.
             cursor = ctx.dbcnx.cursor()
-            sql = "SELECT name, spec FROM %s" % constants.PLOTS
+            sql = "SELECT name, spec FROM %s" % constants.VISUALS
             cursor.execute(sql)
-            plots = [{'name': row[0], 'spec': json.loads(row[1])}
-                     for row in cursor]
-            # First, identify the old URL root from a data url in a plot spec.
+            visuals = [{'name': row[0], 'spec': json.loads(row[1])}
+                       for row in cursor]
+            # First, identify the old URL root from a data url in a visual spec.
             new_root = utils.get_url('home').rstrip('/')
             old_root = None
             search = dpath.util.search
-            for plot in plots:
-                for path,href in search(plot['spec'], 'data/url', yielded=True):
+            for visual in visuals:
+                for path,href in search(visual['spec'],'data/url',yielded=True):
                     parts = urllib.parse.urlparse(href)
                     old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
                     break
             rx_table = re.compile(r'^.*/table/(.+)/.+$')
             rx_view  = re.compile(r'^.*/view/(.+)/.+$')
-            for plot in plots:
-                for path,href in search(plot['spec'], 'data/url', yielded=True):
+            for visual in visuals:
+                for path,href in search(visual['spec'],'data/url',yielded=True):
                     # Next, replace old URL root with new.
                     href = href.replace(old_root, new_root)
                     # And, old database name with new in URL path.
@@ -1038,12 +1061,13 @@ def add_database(dbname, description, infile):
                             href = href[: m.start(1)] + \
                                    ctx.db['name'] + \
                                    href[m.end(1) :]
-                            dpath.util.set(plot['spec'], path, href)
+                            dpath.util.set(visual['spec'], path, href)
                             break
             with ctx.dbcnx:
-                sql = "UPDATE %s SET spec=? WHERE name=?" % constants.PLOTS
-                for plot in plots:
-                    cursor.execute(sql, (json.dumps(plot['spec']),plot['name']))
+                sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
+                for visual in visuals:
+                    cursor.execute(sql,
+                                   (json.dumps(visual['spec']),visual['name']))
         return ctx.db
     except (ValueError, sqlite3.Error) as error:
         try:

@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Visualizations in database {{ db['name'] }}{% endblock %}
+
+{% block body_title %}
+Visualizations in database <strong>{{ db['name'] }}</strong>
+{% endblock %}
+
+{% block main %}
+<table id="visuals" class="table table-sm">
+  <thead>
+    <tr>
+      <th>Visualization</th>
+      <th>Description</th>
+      <th>Table or view</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for sourcename, visuals in db['visuals'].items() %}
+    {% for visual in visuals %}
+    <tr>
+      <td>
+	<a href="{{ url_for('.display', dbname=db['name'], visualname=visual['name']) }}">
+	  {{ visual['name'] }}</a>
+      <td>{{ visual['spec'].get('description') or '' }}</td>
+      <td>
+	{% if visual['sourcename'] in db['tables'] %}
+	<a href="{{url_for('table.rows', dbname=db['name'], tablename=visual['sourcename']) }}">
+	  {{ sourcename }}</a>
+	{% else %}
+	<a href="{{url_for('view.rows', dbname=db['name'], viewname=visual['sourcename']) }}">
+	  {{ sourcename }}</a>
+	{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block actions %}
+{% if has_write_access %}
+{#
+<div class="mt-3">
+  <a href="{{ url_for('.select', dbname=db['name']) }}"
+     role="button" class="btn btn-info btn-block">Create visual</a>
+</div>
+#}
+{% endif %} {# has_write_access #}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#visuals").DataTable( {
+      "pagingType": "full_numbers",
+      "pageLength": 25,
+      "order": [[2, "asc"]]
+    });
+  });
+</script>
+{% endblock %}

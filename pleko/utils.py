@@ -63,7 +63,7 @@ def get_cnx(path, write=False):
 
 def sorted_schema(schemalist):
     """Return a sorted list of the list schema dictionaries
-    according to the 'name' elements."""
+    using the 'name' element as key."""
     return sorted(schemalist, key=lambda d: d['name'])
 
 def dbpath(dbname, dirpath=None):
@@ -73,13 +73,6 @@ def dbpath(dbname, dirpath=None):
     dirpath = os.path.expanduser(dirpath)
     dirpath = os.path.expandvars(dirpath)
     return os.path.join(dirpath, dbname) + '.sqlite3'
-
-def plotpath(dbname):
-    "Return the file path for the plots of the given database."
-    dirpath = flask.current_app.config['DATABASES_DIRPATH']
-    dirpath = os.path.expanduser(dirpath)
-    dirpath = os.path.expandvars(dirpath)
-    return os.path.join(dirpath, '_plots_' + dbname) + '.json'
 
 def get_url(endpoint, values={}, query={}):
     "Get the absolute URL for the endpoint, with optional query part."

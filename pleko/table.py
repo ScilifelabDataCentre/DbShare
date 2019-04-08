@@ -86,10 +86,12 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
               (','.join(['"%s"' % c for c in columns]), tablename)
         cursor.execute(sql)
         if tablename.ext is None or tablename.ext == 'html':
+            visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             return flask.render_template('table/rows.html', 
                                          db=db,
                                          schema=schema,
                                          rows=list(cursor),
+                                         visuals=visuals,
                                          has_write_access=has_write_access)
         elif tablename.ext == 'csv':
             writer = utils.CsvWriter(header=columns)

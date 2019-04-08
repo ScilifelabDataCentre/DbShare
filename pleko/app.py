@@ -10,11 +10,12 @@ import pleko
 import pleko.db
 import pleko.index
 import pleko.master
-import pleko.plot
 import pleko.query
 import pleko.table
 import pleko.user
+import pleko.vega_lite
 import pleko.view
+import pleko.visual
 from pleko import constants
 from pleko import utils
 
@@ -41,7 +42,8 @@ app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
 app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
 app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
 app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
-app.register_blueprint(pleko.plot.blueprint, url_prefix='/plot')
+app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
+app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):

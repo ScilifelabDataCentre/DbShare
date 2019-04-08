@@ -1,6 +1,6 @@
 # Pleko
 
-Web tool to explore, publish and plot data sets using
+Explore, visualize and publish data sets with
 [Sqlite3](https://www.sqlite.org/) and 
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
