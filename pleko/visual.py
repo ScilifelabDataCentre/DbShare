@@ -26,36 +26,58 @@ def home(dbname):
                                  db=db,
                                  has_write_access=pleko.db.has_write_access(db))
 
-@blueprint.route('/<name:dbname>/display/<nameext:visualname>')
-def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
-    "Display the visualization."
-    try:
-        db = pleko.db.get_check_read(dbname)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
-    try:
-        visual = pleko.db.get_visual(db, str(visualname))
-        schema = pleko.db.get_schema(db, visual['sourcename'])
-        pleko.db.set_nrows(db, nrows=[schema['name']])
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
-
-    if visualname.ext is None or visualname.ext == 'html':
-        return flask.render_template(
-            'visual/display.html',
-            db=db,
-            schema=schema,
-            visual=visual,
-            has_write_access = pleko.db.has_write_access(db))
-    elif visualname.ext == 'json':
-        return flask.jsonify(visual['spec'])
-    else:
-        flask.abort(406)
-
-@blueprint.route('/<name:dbname>/edit/<name:visualname>', 
+@blueprint.route('/<name:dbname>/<nameext:visualname>',
                  methods=['GET', 'POST', 'DELETE'])
+def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
+    "Display the visualization. Or delete it."
+    if utils.is_method_GET():
+        try:
+            db = pleko.db.get_check_read(dbname)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('home'))
+        try:
+            visual = pleko.db.get_visual(db, str(visualname))
+            schema = pleko.db.get_schema(db, visual['sourcename'])
+            pleko.db.set_nrows(db, nrows=[schema['name']])
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+        if visualname.ext is None or visualname.ext == 'html':
+            return flask.render_template(
+                'visual/display.html',
+                db=db,
+                schema=schema,
+                visual=visual,
+                has_write_access = pleko.db.has_write_access(db))
+        elif visualname.ext == 'json':
+            return flask.jsonify(visual['spec'])
+        else:
+            flask.abort(406)
+
+    elif utils.is_method_DELETE():
+        try:
+            db = pleko.db.get_check_write(dbname)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('home'))
+        try:
+            visual = pleko.db.get_visual(db, str(visualname))
+            schema = pleko.db.get_schema(db, visual['sourcename'])
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+        try:
+            with pleko.db.DbContext(db) as ctx:
+                ctx.delete_visual(str(visualname))
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.home', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<name:visualname>/edit', 
+                 methods=['GET', 'POST'])
 @pleko.user.login_required
 def edit(dbname, visualname):
     "Edit the visualization."
@@ -113,15 +135,8 @@ def edit(dbname, visualname):
                                             dbname=dbname,
                                             visualname=newname))
 
-    elif utils.is_method_DELETE():
-        try:
-            with pleko.db.DbContext(db) as ctx:
-                ctx.delete_visual(visualname)
-        except sqlite3.Error as error:
-            flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
-
-@blueprint.route('/<name:dbname>/clone/<name:visualname>', methods=['GET','POST'])
+@blueprint.route('/<name:dbname>/<name:visualname>/clone',
+                 methods=['GET','POST'])
 @pleko.user.login_required
 def clone(dbname, visualname):
     "Clone the visual."

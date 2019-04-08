@@ -15,7 +15,7 @@ Explore, visualize and publish data sets with
 - A database is owned by the user account that created it.
 - A database may be private or public.
 - Databases are independent of one another.
-- Display the tables, views and indexes in a database.
+- Display the tables, views, indexes and visualizations in a database.
 - Download the Sqlite3 table for a database.
 
 ## Tables
@@ -26,6 +26,7 @@ Explore, visualize and publish data sets with
 - Delete a row.
 - Display the rows in a table.
 - Display the schema of a table.
+- List the visualizations of a table.
 - Upload CSV data to a table, inserting rows.
 - Upload CSV data to a table, updating rows. *TODO*
 - Create a table from a CSV file.
@@ -44,9 +45,9 @@ Explore, visualize and publish data sets with
 ## Views
 
 - Create a view.
-- Edit a view. *TODO*
 - Display the rows of a view.
 - Display the schema of a view.
+- List the visualizations of a table.
 - Delete a view.
 - Clone a view.
 - Download a view as CSV file.
@@ -57,20 +58,19 @@ Explore, visualize and publish data sets with
 - View the schema of an index.
 - Delete an index.
 
-## Plots
+## Visualization
 
-- Select plot type and table/view.
-- Create a plot.
-- Display a plot.
-- Clone a plot.
-- Edit a plot.
-- Create and edit a plot using explicit Vega-Lite spec.
+- Create a visualization of a table or view using
+  [Vega-Lite](https://vega.github.io/vega-lite/).
+- Display a visualization.
+- Clone a visualization.
+- Edit a visualization.
 
-## Access privileges
+## API (JSON)
 
 *TODO*
 
-## API (JSON)
+## Access privileges
 
 *TODO*
 
@@ -93,22 +93,23 @@ Explore, visualize and publish data sets with
 - **/db/{dbname}/readonly** Set the database to read-only mode.
 - **/table/{dbname}** Create a table in the database.
 - **/table/{dbname}/{tablename}** Display the rows of the table.
+   Delete the table.
 - **/table/{dbname}/{tablename}/schema** Display the schema of the table.
 - **/table/{dbname}/{tablename}/row** Insert a row into the table.
 - **/table/{dbname}/{tablename}/upload** Insert data from a file into the table.
 - **/table/{dbname}/{tablename}/clone** Clone the table.
 - **/table/{dbname}/{tablename}/download** Download the rows in the table to a file.
 - **/view/{dbname}** Create a view of the data in the database.
-- **/view/{dbname}/{viewname}** Display the rows of the view.
+- **/view/{dbname}/{viewname}** Display the rows of the view. Delete the view.
 - **/view/{dbname}/{viewname}/schema** Display the definition of the view.
 - **/view/{dbname}/{viewname}/clone** Clone the view.
 - **/view/{dbname}/{viewname}/download** Download the rows in the view to a file.
-- **/plot/{dbname}** List the plots in the database.
-- **/plot/{dbname}/display/{plotname}** Display the given plot in the database.
-- **/plot/{dbname}/select** Select plot type and table/view.
-- **/plot/{dbname}/create/{plottype}/{tableviewname}** Create the given plot.
-- **/plot/{dbname}/edit/{plotname}** Edit the plot.
-- **/plot/{dbname}/clone/{plotname}** Clone the plot.
+- **/vega-lite** Create a Vega-Lite visualization.
+- **/visual/{dbname}** List the visualizations in the database.
+- **/visual/{dbname}{visualname}** Display the visualization.
+  Delete the visualization
+- **/visual/{dbname}/{visualname}/edit** Edit the visualization.
+- **/visual/{dbname}/{visualname}/clone** Clone the visualization.
 
 ## Third-party packages used
 

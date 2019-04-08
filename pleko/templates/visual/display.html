@@ -51,7 +51,7 @@ Visualization <strong>{{ visual['name'] }}</strong>
     Clone</a>
 </div>
 <div class="mt-3">
-  <form action="{{ url_for('.edit', dbname=db['name'], visualname=visual['name']) }}"
+  <form action="{{ url_for('.display', dbname=db['name'], visualname=visual['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
