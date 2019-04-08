@@ -4,7 +4,7 @@ Explore, visualize and publish data sets with Sqlite3 and Vega-Lite.
 
 import os.path
 
-__version__ = '0.8.2'
+__version__ = '0.8.3'
 
 ROOT_DIR = os.path.dirname(__file__)
 
@@ -28,6 +28,7 @@ default_config = dict(
     USER_ENABLE_IMMEDIATELY = False,
     USER_ENABLE_EMAIL_WHITELIST = [], # Regexp's
     USER_DEFAULT_QUOTA = 2**22,       # 4 megabyte
+    MAX_NROWS_DISPLAY = 2000,
     TABLE_INITIAL_COLUMNS = 8,
     QUERY_DEFAULT_LIMIT = 100
 )

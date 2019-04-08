@@ -198,13 +198,7 @@ def upload(dbname):
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
-                tablename = list(tablename)
-                for pos, char in enumerate(tablename):
-                    if char not in constants.NAME_CHARS:
-                        tablename[pos] = '_'
-                if tablename[0] not in constants.string.ascii_letters:
-                    tablename.insert(0, 'x')
-                tablename = ''.join(tablename)
+                tablename = utils.clean_name(tablename)
             if tablename in db['tables']:
                 raise ValueError('table name already in use')
             schema = {'name': tablename}
@@ -220,9 +214,7 @@ def upload(dbname):
                 header = records.pop(0)
                 if len(header) == 0:
                     raise ValueError('empty header record in the CSV file')
-                for name in header:
-                    if not constants.NAME_RX.match(name):
-                        raise ValueError('invalid header column name')
+                header = [utils.clean_name(n) for n in header]
                 if len(header) != len(set(header)):
                     raise ValueError('non-unique header column names')
             else:
@@ -273,7 +265,6 @@ def upload(dbname):
                     column['type'] = type
 
             with DbContext(db) as ctx:
-                print(schema)
                 ctx.add_table(schema)
 
             # Actually convert values in records

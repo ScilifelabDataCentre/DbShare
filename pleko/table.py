@@ -69,7 +69,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display rows in the table."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname)
+            db = pleko.db.get_check_read(dbname, nrows=[str(tablename)])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -84,8 +84,15 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         cursor = cnx.cursor()
         sql = 'SELECT rowid, %s FROM "%s"' % \
               (','.join(['"%s"' % c for c in columns]), tablename)
-        cursor.execute(sql)
+
         if tablename.ext is None or tablename.ext == 'html':
+            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+            if schema['nrows'] > limit:
+                sql += " LIMIT %s" % limit
+                flask.flash('NOTE: The number of rows displayed'
+                            ' is limited to %s.' % limit,
+                            'message')
+            cursor.execute(sql)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             return flask.render_template('table/rows.html', 
                                          db=db,
@@ -93,11 +100,15 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                          rows=list(cursor),
                                          visuals=visuals,
                                          has_write_access=has_write_access)
+
         elif tablename.ext == 'csv':
+            cursor.execute(sql)
             writer = utils.CsvWriter(header=columns)
             writer.add_from_cursor(cursor, skip_rowid=True)
             return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
+
         elif tablename.ext == 'json':
+            cursor.execute(sql)
             return flask.jsonify({'$id': flask.request.url,
                                   'data': [dict(zip(columns, row[1:]))
                                            for row in cursor]})

@@ -101,6 +101,27 @@ def get_time(offset=None):
     instant = instant.isoformat()
     return instant[:17] + "{:06.3f}".format(float(instant[17:])) + "Z"
 
+def clean_name(name):
+    """Return a cleaned-up version of the name:
+    1) Strip blanks at either ends.
+    2) Remove first character(s) if offensive.
+    3) Replace all other offensive characters with underscore.
+    Raise ValueError if empty string.
+    """
+    chars = list(name.strip())
+    chars.reverse()
+    while chars:
+        if chars[-1] in constants.string.ascii_letters:
+            chars.reverse()
+            break
+        chars.pop()
+    else:
+        raise ValueError('empty string')
+    for pos, char in enumerate(chars):
+        if char not in constants.NAME_CHARS:
+            chars[pos] = '_'
+    return ''.join(chars)
+
 def is_method_GET():
     "Is the HTTP method GET?"
     return flask.request.method == 'GET'

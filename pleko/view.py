@@ -95,7 +95,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view."
     if utils.is_method_GET():
         try:
-            db = pleko.db.get_check_read(dbname)
+            db = pleko.db.get_check_read(dbname, nrows=[str(viewname)])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -106,36 +106,50 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.flash('no such view', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
-            dbcnx = pleko.db.get_cnx(dbname)
-            cursor = dbcnx.cursor()
+            cursor = pleko.db.get_cnx(dbname).cursor()
             sql = 'SELECT * FROM "%s"' % viewname
-            cursor.execute(sql)
+            columns = [c['name'] for c in schema['columns']]
+
+            if viewname.ext is None or viewname.ext == 'html':
+                limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+                if schema['nrows'] > limit:
+                    sql += " LIMIT %s" % limit
+                    flask.flash('NOTE: The number of rows displayed'
+                                ' is limited to %s.' % limit,
+                                'message')
+                cursor.execute(sql)
+                visuals = utils.sorted_schema(db['visuals'].get(schema['name'],
+                                                                []))
+                query = schema['query']
+                sql = pleko.query.get_sql_query(query)
+                return flask.render_template('view/rows.html', 
+                                             db=db,
+                                             schema=schema,
+                                             query=query,
+                                             sql=sql,
+                                             rows=list(cursor),
+                                             visuals=visuals,
+                                             has_write_access=has_write_access)
+
+            elif viewname.ext == 'csv':
+                cursor.execute(sql)
+                writer = utils.CsvWriter(header=columns)
+                writer.add_from_cursor(cursor)
+                return flask.Response(writer.get(),
+                                      mimetype=constants.CSV_MIMETYPE)
+
+            elif viewname.ext == 'json':
+                cursor.execute(sql)
+                return flask.jsonify({'$id': flask.request.url,
+                                      'data': [dict(zip(columns, row))
+                                               for row in cursor]})
+            else:
+                flask.abort(406)
+
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
-        columns = [c['name'] for c in schema['columns']]
-        if viewname.ext is None or viewname.ext == 'html':
-            visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-            query = schema['query']
-            return flask.render_template('view/rows.html', 
-                                         db=db,
-                                         schema=schema,
-                                         query=query,
-                                         sql=pleko.query.get_sql_query(query),
-                                         rows=list(cursor),
-                                         visuals=visuals,
-                                         has_write_access=has_write_access)
-        elif viewname.ext == 'csv':
-            writer = utils.CsvWriter(header=columns)
-            writer.add_from_cursor(cursor)
-            return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
-        elif viewname.ext == 'json':
-            return flask.jsonify({'$id': flask.request.url,
-                                  'data': [dict(zip(columns, row))
-                                           for row in cursor]})
-        else:
-            flask.abort(406)
 
     elif utils.is_method_DELETE():
         try:

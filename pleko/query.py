@@ -46,10 +46,15 @@ def rows(dbname):
     query = {}
     try:
         query = get_query_from_request(check=True)
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
+        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+        if query['limit'] is None or query['limit'] > limit:
+            query['limit'] = limit
+            flask.flash('NOTE: The number of rows displayed'
+                        ' is limited to %s.' % limit,
+                        'message')
+        cursor = pleko.db.get_cnx(dbname).cursor()
         sql = get_sql_query(query)
-        cursor.execute(sql)
+        cursor.execute(get_sql_query(query))
         rows = list(cursor)
         if query['columns'][0] == '*':
             try:
@@ -59,6 +64,7 @@ def rows(dbname):
         else:
             columns = query['columns']
     except (KeyError, sqlite3.Error) as error:
+        raise
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname, **query))
     return flask.render_template('query/rows.html',
@@ -83,8 +89,7 @@ def sql(dbname):
         if not sql:
             raise ValueError('no SQL statement provided')
         command = sql.split()[0].upper()
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
+        cursor = pleko.db.get_cnx(dbname).cursor()
         cursor.execute(sql)
         rows = list(cursor)
         # Will raise IndexError if no rows returned.
@@ -135,8 +140,6 @@ def table(dbname):
             flask.url_for('table.rows', dbname=dbname,tablename=schema['name']))
 
 
-# Utility functions
-
 def get_query_from_request(check=False):
     """Get the query data from the current request values (=form or args) data.
     Raise KeyError if a required part is missing.
@@ -161,14 +164,15 @@ def get_query_from_request(check=False):
         raise KeyError('no FROM part')
     result['where'] = flask.request.values.get('where')
     result['orderby'] = flask.request.values.get('orderby')
-    result['limit'] = flask.request.values.get('limit')
     try:
-        result['limit'] = flask.request.values['limit']
-    except KeyError:
-        result['limit']= flask.current_app.config['QUERY_DEFAULT_LIMIT']
-    else:
-        if result['limit'].lower() == 'none':
+        limit = flask.request.values['limit']
+        limit = limit.strip()
+        if limit:
+            result['limit'] = max(1, int(limit))
+        else:
             result['limit'] = None
+    except (KeyError, ValueError, TypeError):
+        result['limit'] = flask.current_app.config['QUERY_DEFAULT_LIMIT']
     return result
 
 def get_sql_query(statement):
@@ -179,5 +183,5 @@ def get_sql_query(statement):
     if statement.get('orderby'):
         parts.append('ORDER BY ' + statement['orderby'])
     if statement.get('limit'):
-        parts.append('LIMIT ' + statement['limit'])
+        parts.append("LIMIT %s" % statement['limit'])
     return ' '.join(parts)
