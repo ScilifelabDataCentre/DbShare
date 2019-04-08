@@ -64,7 +64,6 @@ def rows(dbname):
         else:
             columns = query['columns']
     except (KeyError, sqlite3.Error) as error:
-        raise
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname, **query))
     return flask.render_template('query/rows.html',

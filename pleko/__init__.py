@@ -4,7 +4,7 @@ Explore, visualize and publish data sets with Sqlite3 and Vega-Lite.
 
 import os.path
 
-__version__ = '0.8.3'
+__version__ = '0.8.4'
 
 ROOT_DIR = os.path.dirname(__file__)
 
@@ -30,5 +30,10 @@ default_config = dict(
     USER_DEFAULT_QUOTA = 2**22,       # 4 megabyte
     MAX_NROWS_DISPLAY = 2000,
     TABLE_INITIAL_COLUMNS = 8,
-    QUERY_DEFAULT_LIMIT = 100
+    QUERY_DEFAULT_LIMIT = 100,
+    CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
+                           'tab': {'label': "tab '\\t'", 'char': '\t'},
+                           'vertical-bar': {'label': "vertical-bar '|'", 
+                                            'char': '|'},
+                           'semicolon': {'label': "semicolon ';'", 'char': ';'}}
 )

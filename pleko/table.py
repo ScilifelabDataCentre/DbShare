@@ -345,14 +345,20 @@ def upload_csv(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        header = utils.to_bool(flask.request.form.get('header'))
+        delimiter = flask.request.form.get('delimiter') or 'comma'
+        try:
+            delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
+        except KeyError:
+            raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
         lines = csvfile.read().decode('utf-8').split('\n')
-        records = list(csv.reader(lines))
+        print('delimiter', delimiter)
+        records = list(csv.reader(lines, delimiter=delimiter))
         # Eliminate empty records
         records = [r for r in records if r]
         if not records:
             raise ValueError('empty CSV file')
+        header = utils.to_bool(flask.request.form.get('header'))
         if header:
             header = records.pop(0)
             for n, column in enumerate(schema['columns']):
