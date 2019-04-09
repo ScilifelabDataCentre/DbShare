@@ -739,8 +739,16 @@ class DbContext:
             sql = 'DROP VIEW "%s"' % schema['name']
             cursor.execute(sql)
             raise ValueError('invalid view; maybe non-existent column?')
-        schema['sources'] = [s.strip() 
-                             for s in schema['query']['from'].split(',')]
+        # Sources must not include any "AS" part.
+        schema['sources'] = []
+        for source in schema['query']['from'].split(','):
+            try:
+                pos = source.upper().index(' AS ')
+            except ValueError:
+                pass
+            else:
+                source = source[:pos]
+            schema['sources'].append(source.strip().strip('"'))
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
         with self.dbcnx:
             sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS

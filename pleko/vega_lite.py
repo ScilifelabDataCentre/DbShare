@@ -33,7 +33,7 @@ blueprint = flask.Blueprint('vega-lite', __name__)
 def create(dbname, sourcename):
     "Create a Vega-Lite visualization from scratch for the given table or view."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = pleko.db.get_check_write(dbname, nrows=[sourcename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))

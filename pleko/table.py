@@ -380,7 +380,6 @@ def upload_csv(dbname, tablename):
             raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
         lines = csvfile.read().decode('utf-8').split('\n')
-        print('delimiter', delimiter)
         records = list(csv.reader(lines, delimiter=delimiter))
         # Eliminate empty records
         records = [r for r in records if r]
