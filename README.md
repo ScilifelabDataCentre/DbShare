@@ -101,14 +101,17 @@ Explore, visualize and publish data sets with
    Delete the table.
 - **/table/{dbname}/{tablename}/schema** Display the schema of the table.
 - **/table/{dbname}/{tablename}/row** Insert a row into the table.
-- **/table/{dbname}/{tablename}/upload** Insert data from a file into the table.
+- **/table/{dbname}/{tablename}/insert** Insert data from a file into the table.
+- **/table/{dbname}/{tablename}/update** Update the table from data i a file.
 - **/table/{dbname}/{tablename}/clone** Clone the table.
-- **/table/{dbname}/{tablename}/download** Download the rows in the table to a file.
+- **/table/{dbname}/{tablename}/download** Download the rows in the table
+  to a file.
 - **/view/{dbname}** Create a view of the data in the database.
 - **/view/{dbname}/{viewname}** Display the rows of the view. Delete the view.
 - **/view/{dbname}/{viewname}/schema** Display the definition of the view.
 - **/view/{dbname}/{viewname}/clone** Clone the view.
-- **/view/{dbname}/{viewname}/download** Download the rows in the view to a file.
+- **/view/{dbname}/{viewname}/download** Download the rows in the view
+  to a file.
 - **/vega-lite** Create a Vega-Lite visualization.
 - **/visual/{dbname}** List the visualizations in the database.
 - **/visual/{dbname}{visualname}** Display the visualization.
