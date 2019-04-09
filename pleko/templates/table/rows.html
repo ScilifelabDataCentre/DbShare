@@ -74,12 +74,21 @@
     Insert row</a>
 </div>
 <div class="mt-3">
-  <a href="{{ url_for('.upload', dbname=db['name'], tablename=schema['name']) }}"
+  <a href="{{ url_for('.insert', dbname=db['name'], tablename=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
-     title="Upload CSV file and insert contents into the table."
+     title="Upload a file and insert its contents into the table."
      class="btn btn-primary btn-block">
-    Insert file</a>
+    Insert from file</a>
 </div>
+{% if updateable %}
+<div class="mt-3">
+  <a href="{{ url_for('.update', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Upload a file and update the table by its contents."
+     class="btn btn-primary btn-block">
+    Update from file</a>
+</div>
+{% endif %}
 <div class="mt-3">
   <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"

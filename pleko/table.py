@@ -35,8 +35,7 @@ def create(dbname):
 
     elif utils.is_method_POST():
         try:
-            schema = {'name': flask.request.form.get('name'),
-                      'description': flask.request.form.get('description')}
+            schema = {'name': flask.request.form.get('name')}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 name = flask.request.form.get("column%sname" % n)
@@ -95,12 +94,15 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             cursor.execute(sql)
             title = schema.get('title') or "Table {}".format(tablename)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
+            updateable = bool([c for c in schema['columns']
+                               if c.get('primarykey')])
             return flask.render_template('table/rows.html', 
                                          db=db,
                                          schema=schema,
                                          title=title,
                                          rows=list(cursor),
                                          visuals=visuals,
+                                         updateable=updateable,
                                          has_write_access=has_write_access)
 
         elif tablename.ext == 'csv':
@@ -335,8 +337,8 @@ def row_edit(dbname, tablename, rowid):
                                             tablename=tablename))
 
 
-@blueprint.route('/<name:dbname>/<name:tablename>/upload')
-def upload(dbname, tablename):
+@blueprint.route('/<name:dbname>/<name:tablename>/insert')
+def insert(dbname, tablename):
     "Insert data from a file into the table."
     try:
         db = pleko.db.get_check_write(dbname)
@@ -353,10 +355,10 @@ def upload(dbname, tablename):
     except KeyError:
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    return flask.render_template('table/upload.html', db=db, schema=schema)
+    return flask.render_template('table/insert.html', db=db, schema=schema)
 
-@blueprint.route('/<name:dbname>/<name:tablename>/upload/csv', methods=['POST'])
-def upload_csv(dbname, tablename):
+@blueprint.route('/<name:dbname>/<name:tablename>/insert/csv', methods=['POST'])
+def insert_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     utils.check_csrf_token()
     try:
@@ -438,12 +440,36 @@ def upload_csv(dbname, tablename):
         flask.flash("Inserted %s rows" % len(records), 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.upload',
+        return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
                                             tablename=tablename))
     return flask.redirect(flask.url_for('.rows',
                                         dbname=dbname,
                                         tablename=tablename))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/update')
+def update(dbname, tablename):
+    "Update data from a file into the table."
+    try:
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        pleko.db.check_quota()
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        schema = db['tables'].get(tablename)
+        if not schema: raise ValueError('no such table')
+        primarykeys = [c for c in schema['columns'] if c.get('primarykey')]
+        if not primarykeys:
+            raise ValueError('table has no primary key')
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    return flask.render_template('table/update.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/clone', 
                  methods=['GET', 'POST'])

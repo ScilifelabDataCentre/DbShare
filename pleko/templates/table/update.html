@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Insert data from file into table {{ schema['name'] }}
+Update data in table {{ schema['name'] }} from file
 {% endblock %}
 
 {% block body_title %}
-Insert data from file into table {{ schema['name'] }}
+Update data in table {{ schema['name'] }} from file
 {% endblock %}
 
 {% block main %}
@@ -20,22 +20,25 @@ Insert data from file into table {{ schema['name'] }}
         matching table column names.
       </li>
       <li>
+        The CSV file must contain the primary key column(s).
+      </li>
+      <li>
         The values of every CSV record must match the types of the
-        table columns.
+        specified table columns.
       </li>
       <li>
 	Every record in the CSV file must contain the same number of
 	items.
       </li>
       <li>
-        The CSV records are added as rows to the table.
+        Each CSV record must refer to an existing row, which will be updated.
       </li>
       <li>
         If a table column constraint is violated by a CSV record, the
-        entire operation is aborted, and no values are added.
+        entire operation is aborted, and no values are updated.
       </li>
     </ul>
-    <form action="{{ url_for('.upload_csv', dbname=db['name'], tablename=schema['name']) }}"
+    <form action="{{ url_for('.update_csv', dbname=db['name'], tablename=schema['name']) }}"
           enctype="multipart/form-data"
           method="POST"
           class="mt-4">
@@ -77,7 +80,7 @@ Insert data from file into table {{ schema['name'] }}
       <div class="form-group row">
         <div class="col-md-3 offset-md-1">
           <button type="submit"  class="btn btn-primary btn-lg btn-block">
-            Upload CSV file</button>
+            Update from CSV file</button>
         </div>
       </div>
     </form>

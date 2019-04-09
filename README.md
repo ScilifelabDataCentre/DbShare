@@ -16,23 +16,25 @@ Explore, visualize and publish data sets with
 - A database may be private or public.
 - Databases are isolated from one another.
 - Display the tables, views, indexes and visualizations in a database.
-- Download the Sqlite3 table for a database.
+- Download the Sqlite3 file containing a database.
+- Upload a database Sqlite3 file.
 
 ## Tables
 
 - Create a table, defining the columns.
-- Insert a row.
+- Insert a row of data.
 - Edit a row.
 - Delete a row.
 - Display the rows in a table.
 - Display the schema of a table.
 - List the visualizations of a table.
-- Upload CSV data to a table, inserting rows.
-- Upload CSV data to a table, updating rows. *TODO*
-- Create a table from a CSV file.
+- Insert rows in a table by uploading a CSV file.
+- Update rows in a table by uploading a CSV file. *TODO*
+- Create a table by uploading a CSV file.
 - Clone a table.
 - Delete a table.
 - Download a table as CSV file.
+- Fetch data in CSV or JSON format.
 - Add a column to a table. *TODO*
 - Define a foreign key. *TODO*
 
@@ -49,10 +51,11 @@ Explore, visualize and publish data sets with
 - Create a view.
 - Display the rows of a view.
 - Display the schema of a view.
-- List the visualizations of a table.
+- List the visualizations of a view.
 - Delete a view.
 - Clone a view.
 - Download a view as CSV file.
+- Fetch data in CSV or JSON format.
 
 ## Indexes
 
