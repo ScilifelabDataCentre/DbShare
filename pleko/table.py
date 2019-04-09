@@ -485,6 +485,7 @@ def update_csv(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
+        recpos = None
         delimiter = flask.request.form.get('delimiter') or 'comma'
         try:
             delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
@@ -502,38 +503,41 @@ def update_csv(dbname, tablename):
         primarykeys = set([c['name'] for c in schema['columns']
                            if c.get('primarykey')])
         columns = set([c['name'] for c in schema['columns']])
-        pk_pos = {}
+        pkpos = {}
         for pos, name in enumerate(header):
             if name in primarykeys:
-                pk_pos[name] = pos
-        if len(primarykeys) != len(pk_pos):
+                pkpos[name] = pos
+        if len(primarykeys) != len(pkpos):
             raise ValueError('missing primary key column(s) in CSV file')
-        col_pos = {}
+        colpos = {}
         for pos, name in enumerate(header):
             if name in primarykeys: continue
             if name not in columns: continue
-            col_pos[name] = pos
-        if not col_pos:
+            colpos[name] = pos
+        if not colpos:
             raise ValueError('no columns in CSV file for update')
         sql = 'UPDATE "%s" SET %s WHERE %s' % \
               (tablename,
-               ','.join(['"%s"=?' % pk for pk in col_pos.keys()]),
-               ' AND '.join(['"%s"=?' % pk for pk in pk_pos.keys()]))
-        col_pos = col_pos.values()
-        pk_pos = pk_pos.values()
+               ','.join(['"%s"=?' % pk for pk in colpos.keys()]),
+               ' AND '.join(['"%s"=?' % pk for pk in pkpos.keys()]))
+        colpos = colpos.values()
+        pkpos = pkpos.values()
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         count = 0
         cursor = dbcnx.cursor()
         with dbcnx:
-            for record in records:
-                values = [record[i] for i in col_pos]
-                pkeys = [record[i] for i in pk_pos]
+            for recpos, record in enumerate(records):
+                values = [record[i] for i in colpos]
+                pkeys = [record[i] for i in pkpos]
                 cursor.execute(sql, values+pkeys)
                 count += cursor.rowcount
         flask.flash("%s records; %s rows updated." % (len(records), count),
                     'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        if recpos is None:
+            flask.flash(str(error), 'error')
+        else:
+            flask.flash("record number %s; %s" (recpos+1, str(error)), 'error')
         return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
                                             tablename=tablename))
