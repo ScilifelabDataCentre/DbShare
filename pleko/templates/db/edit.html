@@ -2,9 +2,7 @@
 
 {% block head_title %}Edit database {{ db['name'] }} metadata{% endblock %}
 
-{% block body_title %}
-Edit database <strong>{{ db['name'] }}</strong> metadata
-{% endblock %}
+{% block body_title %}Edit database {{ db['name'] }} metadata{% endblock %}
 
 {% block main %}
 <form action="{{ url_for('.edit', dbname=db['name']) }}"
@@ -19,12 +17,11 @@ Edit database <strong>{{ db['name'] }}</strong> metadata
     </div>
   </div>
   <div class="form-group row">
-    <label for="description" class="col-md-2 col-form-label text-right">
-      Description</label>
+    <label for="title" class="col-md-2 col-form-label text-right">
+      Title</label>
     <div class="col-md-10">
-      <input id="description" name="description"
-	     type="text" class="form-control"
-	     value="{{ db.get('description') or '' }}">
+      <input id="title" name="title" type="text" class="form-control"
+	     value="{{ db.get('title') or '' }}">
     </div>
   </div>
   <div class="form-group row">

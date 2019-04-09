@@ -2,9 +2,7 @@
 
 {% block head_title %}Rows in view {{ schema['name'] }}{% endblock %}
 
-{% block body_title %}
-Rows in view <strong>{{ schema['name'] }}</strong>
-{% endblock %}
+{% block body_title %}Rows in view {{ schema['name'] }}{% endblock %}
 
 {% block main %}
 <div class="m-2">{{ schema.get('description') or 'No description.' }}</div>

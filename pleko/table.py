@@ -93,10 +93,12 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                             ' is limited to %s.' % limit,
                             'message')
             cursor.execute(sql)
+            title = schema.get('title') or "Table {}".format(tablename)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             return flask.render_template('table/rows.html', 
                                          db=db,
                                          schema=schema,
+                                         title=title,
                                          rows=list(cursor),
                                          visuals=visuals,
                                          has_write_access=has_write_access)

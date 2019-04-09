@@ -2,13 +2,11 @@
 
 {% block head_title %}Visualization {{ visual['name'] }}{% endblock %}
 
-{% block body_title %}
-Visualization <strong>{{ visual['name'] }}</strong>
-{% endblock %}
+{% block body_title %}Visualization {{ visual['name'] }}{% endblock %}
 
 {% block main %}
 <div class="m-2">
-  {{ visual['spec'].get('description') or '' }}
+  {{ visual['spec'].get('description') or 'No description.' }}
 </div>
 
 <div id="visual"></div>

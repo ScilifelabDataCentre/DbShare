@@ -1,12 +1,10 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Database {{ db['name'] }}{% endblock %}
+{% block head_title %}{{ title }}{% endblock %}
 
-{% block body_title %}Database <strong>{{ db['name'] }}</strong>{% endblock %}
+{% block body_title %}{{ title }}{% endblock %}
 
 {% block main %}
-<div class="m-2">{{ db.get('description') or 'No description.' }}</div>
-
 <div class="row">
   <div class="col-md-6">
     <div class="card border-primary">

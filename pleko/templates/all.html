@@ -15,7 +15,7 @@
   <thead>
     <tr>
       <th>Database</th>
-      <th>Description</th>
+      <th>Title</th>
       <th>Access</th>
       <th>Mode</th>
       <th>Owner</th>
@@ -30,7 +30,7 @@
         <a href="{{ url_for('db.home', dbname=db['name']) }}">
           {{ db['name'] }}</a>
       </th>
-      <td>{{ db.get('description') or '-' }}</td>
+      <td>{{ db.get('title') or '-' }}</td>
       <td>{{ db['public'] and 'public' or 'private'}}</td>
       <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
       <td>{{ db['owner'] }}</td>

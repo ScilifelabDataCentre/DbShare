@@ -67,6 +67,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             return flask.render_template(
                 'db/home.html', 
                 db=db,
+                title=db.get('title') or "Database {}".format(dbname),
                 has_write_access=has_write_access(db),
                 can_change_mode=has_write_access(db, check_mode=False))
         elif dbname.ext == 'json':
@@ -108,7 +109,7 @@ def create():
         try:
             with DbContext() as ctx:
                 ctx.set_name(flask.request.form['name'])
-                ctx.set_description(flask.request.form.get('description'))
+                ctx.set_title(flask.request.form.get('title'))
                 sql = get_sql_create_table(TABLES_TABLE)
                 ctx.dbcnx.execute(sql)
                 sql = get_sql_create_table(INDEXES_TABLE)
@@ -140,7 +141,7 @@ def edit(dbname):
         try:
             with DbContext(db) as ctx:
                 try:
-                    ctx.set_description(flask.request.form['description'])
+                    ctx.set_title(flask.request.form['title'])
                 except KeyError:
                     pass
                 try:
@@ -332,7 +333,7 @@ def clone(dbname):
             with DbContext() as ctx:
                 newname = flask.request.form['name']
                 ctx.set_name(newname)
-                ctx.set_description(flask.request.form.get('description'))
+                ctx.set_title(flask.request.form.get('title'))
                 ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
@@ -514,10 +515,10 @@ class DbContext:
         with self.cnx:
             # Update existing database entry in master
             if self.old:
-                sql = "UPDATE dbs SET owner=?, description=?, public=?," \
+                sql = "UPDATE dbs SET owner=?, title=?, public=?," \
                       " readonly=?, modified=? WHERE name=?"
                 self.cnx.execute(sql, (self.db['owner'],
-                                       self.db.get('description'),
+                                       self.db.get('title'),
                                        bool(self.db['public']),
                                        bool(self.db['readonly']),
                                        self.db['modified'],
@@ -531,11 +532,11 @@ class DbContext:
                 else:
                     db.close()
                 sql = "INSERT INTO dbs" \
-                      " (name, owner, description, public, readonly," \
+                      " (name, owner, title, public, readonly," \
                       "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.db['name'],
                                        self.db['owner'],
-                                       self.db.get('description'),
+                                       self.db.get('title'),
                                        bool(self.db['public']),
                                        bool(self.db['readonly']),
                                        self.db['created'], 
@@ -621,9 +622,9 @@ class DbContext:
                 dpath.util.set(spec, path, href)
             self.update_visual(visual['name'], spec)
 
-    def set_description(self, description):
-        "Set the database description."
-        self.db['description'] = description or None
+    def set_title(self, title):
+        "Set the database title."
+        self.db['title'] = title or None
 
     def add_table(self, schema, query=None):
         """Create the table in the database and add to the database definition.
@@ -827,20 +828,21 @@ def get_db(name, complete=False):
     Return None if no such database.
     """
     cursor = pleko.master.get_cursor()
-    sql = "SELECT owner, description, public, readonly," \
+    sql = "SELECT owner, title, description, public, readonly," \
           " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
-    db = {'name':        name,
-          'owner':       row[0],
-          'description': row[1],
-          'public':      bool(row[2]),
-          'readonly':    bool(row[3]),
-          'created':     row[4],
-          'modified':    row[5],
-          'size':        os.path.getsize(utils.dbpath(name))}
+    db = {'name':       name,
+          'owner':      row[0],
+          'title':      row[1],
+          'description':row[2],
+          'public':     bool(row[3]),
+          'readonly':   bool(row[4]),
+          'created':    row[5],
+          'modified':   row[6],
+          'size':       os.path.getsize(utils.dbpath(name))}
     if complete:
         cursor = get_cnx(name).cursor()
         sql = "SELECT name, schema FROM %s" % constants.TABLES

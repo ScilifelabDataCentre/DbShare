@@ -2,16 +2,14 @@
 
 {% block head_title %}Databases owned by user {{ username }}{% endblock %}
 
-{% block body_title %}
-Databases owned by user <strong>{{ username }}</strong>
-{% endblock %}
+{% block body_title %}Databases owned by user {{ username }}{% endblock %}
 
 {% block main %}
 <table id="dbs" class="table table-sm">
   <thead>
     <tr>
       <th>Database</th>
-      <th>Description</th>
+      <th>Title</th>
       <th>Access</th>
       <th>Mode</th>
       <th>Size (bytes)</th>
@@ -26,7 +24,7 @@ Databases owned by user <strong>{{ username }}</strong>
 	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
           {{ db['name'] }}</a>
       </th>
-      <td>{{ db.get('description') or '-' }}</td>
+      <td>{{ db.get('title') or '-' }}</td>
       <td>
 	{% if db['public'] %}
 	<span class="badge badge-success">public</span>
