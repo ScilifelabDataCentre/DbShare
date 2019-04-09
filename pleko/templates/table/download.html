@@ -13,7 +13,18 @@
     <form action="{{ url_for('.download_csv', dbname=db['name'], tablename=schema['name']) }}"
           method="GET">
       <div class="form-group row">
-	<div class="col-sm-2 text-right">Header</div>
+        <label for="delimiter" 
+	       class="col-md-2 col-form-label text-right">Delimiter</label>
+	<div class="col-md-2">
+	  <select id="delimiter" name="delimiter" class="custom-select">
+	    {% for name, data in config['CSV_FILE_DELIMITERS'].items() %}
+	    <option value="{{ name }}">{{ data['label']}}</option>
+	    {% endfor %}
+	  </select>
+        </div>
+      </div>
+      <div class="form-group row">
+        <label for="header" class="col-md-2  text-right">Header</label>
 	<div class="col-sm-10">
 	  <div class="form-check">
             <input id="header" name="header" type="checkbox"
@@ -25,18 +36,16 @@
 	</div>
       </div>
       <div class="form-group row">
-        <label for="delimiter" 
-	       class="col-md-2 col-form-label text-right">Delimiter</label>
-	<div class="col-md-3">
-	  <select id="delimiter" name="delimiter" class="form-control">
-	    <option value=",">comma</option>
-	    <option value="<tab>">tab</option>
-	    <option value=":">colon</option>
-	    <option value=";">semi-colon</option>
-	    <option value="|">vertical bar</option>
-	    <option value="<space>">space (blank)</option>
-	  </select>
-        </div>
+        <label for="rowid" class="col-md-2 text-right">Rowid</label>
+	<div class="col-sm-10">
+	  <div class="form-check">
+            <input id="rowid" name="rowid" type="checkbox"
+		   class="form-check-input" value="true">
+            <label class="form-check-label" for="rowid">
+	      Include the rowid as the first column.
+            </label>
+	  </div>
+	</div>
       </div>
       <div class="form-group row">
         <div class="col-md-3">

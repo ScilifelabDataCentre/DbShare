@@ -42,7 +42,7 @@
         <div class="col-md-2 text-right">
           <label for="delimiter" class="col-form-label">Delimiter</label>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-2">
 	  <select id="delimiter" name="delimiter" class="custom-select">
 	    {% for name, data in config['CSV_FILE_DELIMITERS'].items() %}
 	    <option value="{{ name }}">{{ data['label']}}</option>

@@ -525,17 +525,24 @@ def download_csv(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
+        delimiter = flask.request.form.get('delimiter') or 'comma'
+        try:
+            delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
+        except KeyError:
+            raise ValueError('invalid delimiter')
+        rowid = utils.to_bool(flask.request.args.get('rowid'))
         if utils.to_bool(flask.request.args.get('header')):
             header = [c['name'] for c in schema['columns']]
+            if rowid:
+                header.insert(0, 'rowid')
         else:
             header = None
-        writer = utils.CsvWriter(header,
-                                 delimiter=flask.request.args.get('delimiter'))
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
-        cursor = dbcnx.cursor()
+        writer = utils.CsvWriter(header, delimiter=delimiter)
         colnames = ['"%(name)s"' % c for c in schema['columns']]
+        if rowid:
+            colnames.insert(0, 'rowid')
+        cursor = pleko.db.get_cnx(dbname).cursor()
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
-        print(sql)
         cursor.execute(sql)
         writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
