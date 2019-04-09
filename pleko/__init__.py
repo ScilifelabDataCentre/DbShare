@@ -4,7 +4,7 @@ Explore, visualize and publish data sets with Sqlite3 and Vega-Lite.
 
 import os.path
 
-__version__ = '0.8.4'
+__version__ = '0.8.5'
 
 ROOT_DIR = os.path.dirname(__file__)
 

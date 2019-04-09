@@ -78,6 +78,7 @@ def sql(dbname):
     """Execute a complete SQL statement for the database.
     The set of allowed SQL commands excludes the clearly damaging ones.
     """
+    utils.check_csrf_token()
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:

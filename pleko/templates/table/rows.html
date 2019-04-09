@@ -88,6 +88,17 @@
     Clone</a>
 </div>
 <div class="mt-3">
+  <form action="{{ url_for('.empty', dbname=db['name'], tablename=schema['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Remove all rows from this; keep the table itself."
+            onclick="return confirm('Really empty? Cannot be undone.')">
+      Empty</button>
+  </form>
+</div>
+<div class="mt-3">
   <form action="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}

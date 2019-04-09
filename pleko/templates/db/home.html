@@ -162,6 +162,26 @@
      title="Make a complete copy of this database."
      class="btn btn-primary btn-block">Clone</a>
 </div>
+<div class="mt-3">
+  <form action="{{ url_for('.vacuum', dbname=db['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-outline-secondary btn-block"
+            data-toggle="tooltip" data-placement="left"
+            title="Remove unused memory space from the database.">
+      Vacuum</button>
+  </form>
+</div>
+<div class="mt-3">
+  <form action="{{ url_for('.analyze', dbname=db['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-outline-secondary btn-block"
+            data-toggle="tooltip" data-placement="left"
+            title="Collect internal statistics to improve performance.">
+      Analyze</button>
+  </form>
+</div>
 {% endif %} {# has_write_access #}
 
 {% if can_change_mode %}

@@ -355,11 +355,47 @@ def download(dbname):
                            mimetype='application/x-sqlite3',
                            as_attachment=True)
 
+@blueprint.route('/<name:dbname>/vacuum', methods=['POST'])
+@pleko.user.login_required
+def vacuum(dbname):
+    "Run VACUUM on the database."
+    utils.check_csrf_token()
+    try:
+        db = get_check_write(dbname, check_mode=False) # Allow even if read-only
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        dbcnx = get_cnx(db['name'], write=True)
+        sql = 'VACUUM'
+        dbcnx.execute(sql)
+    except sqlite3.Error as error:
+        flask.flash(str(error), 'error')
+    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+
+@blueprint.route('/<name:dbname>/analyze', methods=['POST'])
+@pleko.user.login_required
+def analyze(dbname):
+    "Run ANALYZE on the database."
+    utils.check_csrf_token()
+    try:
+        db = get_check_write(dbname, check_mode=False) # Allow even if read-only
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        dbcnx = get_cnx(db['name'], write=True)
+        sql = 'ANALYZE'
+        dbcnx.execute(sql)
+    except sqlite3.Error as error:
+        flask.flash(str(error), 'error')
+    return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
 @pleko.user.login_required
 def public(dbname):
     "Set the database to public access."
+    utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
@@ -378,6 +414,7 @@ def public(dbname):
 @pleko.user.login_required
 def private(dbname):
     "Set the database to private access."
+    utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
@@ -396,6 +433,7 @@ def private(dbname):
 @pleko.user.login_required
 def readwrite(dbname):
     "Set the database to read-write mode."
+    utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
@@ -414,6 +452,7 @@ def readwrite(dbname):
 @pleko.user.login_required
 def readonly(dbname):
     "Set the database to read-only mode."
+    utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
     except ValueError as error:
@@ -622,7 +661,7 @@ class DbContext:
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['tables'][schema['name']] = schema
 
-    def delete_table(self, tablename, vacuum=True):
+    def delete_table(self, tablename):
         "Delete the table from the database and from the database definition."
         try:
             self.db['tables'].pop(tablename)
@@ -645,13 +684,10 @@ class DbContext:
                 except KeyError:
                     pass
         with self.dbcnx:
-            sql = "DELETE FROM %s WHERE name=?" % constants.TABLES
+            sql = 'DELETE FROM "%s" WHERE name=?' % constants.TABLES
             self.dbcnx.execute(sql, (tablename,))
         sql = 'DROP TABLE "%s"' % tablename
         self.dbcnx.execute(sql)
-        if vacuum:
-            sql = 'VACUUM'
-            self.dbcnx.execute(sql)
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."

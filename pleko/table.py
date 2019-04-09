@@ -158,6 +158,33 @@ def edit(dbname, tablename):
                                             dbname=dbname,
                                             tablename=tablename))
 
+@blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
+@pleko.user.login_required
+def empty(dbname, tablename):
+    "Empty the table; delete all rows."
+    utils.check_csrf_token()
+    try:
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    try:
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        with dbcnx:
+            sql = 'DELETE FROM "%s"' % schema['name']
+            dbcnx.execute(sql)
+    except sqlite3.Error as error:
+        flask.flash(str(error), 'error')
+    return flask.redirect(flask.url_for('.rows',
+                                        dbname=dbname,
+                                        tablename=tablename))
+
 @blueprint.route('/<name:dbname>/<name:tablename>/schema')
 def schema(dbname, tablename):
     "Display the schema for a table."
@@ -329,6 +356,7 @@ def upload(dbname, tablename):
 @blueprint.route('/<name:dbname>/<name:tablename>/upload/csv', methods=['POST'])
 def upload_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
+    utils.check_csrf_token()
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
