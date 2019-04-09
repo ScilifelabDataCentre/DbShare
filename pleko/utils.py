@@ -101,7 +101,7 @@ def get_time(offset=None):
     instant = instant.isoformat()
     return instant[:17] + "{:06.3f}".format(float(instant[17:])) + "Z"
 
-def clean_name(name):
+def name_cleaned(name):
     """Return a cleaned-up version of the name:
     1) Strip blanks at either ends.
     2) Remove first character(s) if offensive.
@@ -121,6 +121,26 @@ def clean_name(name):
         if char not in constants.NAME_CHARS:
             chars[pos] = '_'
     return ''.join(chars)
+
+def name_before_as(name):
+    "Extract the part before 'AS', removing blanks and double-quotes."
+    name = name.strip()
+    try:
+        pos = name.upper().index(' AS ')
+        name = name[:pos]
+    except ValueError:
+        pass
+    return name.strip().strip('"')
+
+def name_after_as(name):
+    "Extract the part after 'AS', removing blanks and double-quotes."
+    name = name.strip()
+    try:
+        pos = name.upper().index(' AS ')
+        name = name[pos+len(' AS '):]
+    except ValueError:
+        pass
+    return name.strip().strip('"')
 
 def is_method_GET():
     "Is the HTTP method GET?"

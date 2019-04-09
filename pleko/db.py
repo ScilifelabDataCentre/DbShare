@@ -203,7 +203,7 @@ def upload(dbname):
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
-                tablename = utils.clean_name(tablename)
+                tablename = utils.name_cleaned(tablename)
             if tablename in db['tables']:
                 raise ValueError('table name already in use')
             schema = {'name': tablename}
@@ -220,7 +220,7 @@ def upload(dbname):
                 header = records.pop(0)
                 if len(header) == 0:
                     raise ValueError('empty header record in the CSV file')
-                header = [utils.clean_name(n) for n in header]
+                header = [utils.name_cleaned(n) for n in header]
                 if len(header) != len(set(header)):
                     raise ValueError('non-unique header column names')
             else:
@@ -743,13 +743,7 @@ class DbContext:
         # Sources must not include any "AS" part.
         schema['sources'] = []
         for source in schema['query']['from'].split(','):
-            try:
-                pos = source.upper().index(' AS ')
-            except ValueError:
-                pass
-            else:
-                source = source[:pos]
-            schema['sources'].append(source.strip().strip('"'))
+            schema['sources'].append(utils.name_before_as(source))
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
         with self.dbcnx:
             sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS

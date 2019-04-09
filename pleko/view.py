@@ -106,9 +106,9 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.flash('no such view', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
+            colnames = ['"%s"' % c for c in schema['query']['columns']]
             cursor = pleko.db.get_cnx(dbname).cursor()
-            sql = 'SELECT * FROM "%s"' % viewname
-            columns = [c['name'] for c in schema['columns']]
+            sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 
             if viewname.ext is None or viewname.ext == 'html':
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
@@ -132,6 +132,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                              has_write_access=has_write_access)
 
             elif viewname.ext == 'csv':
+                columns = [c['name'] for c in schema['columns']]
                 cursor.execute(sql)
                 writer = utils.CsvWriter(header=columns)
                 writer.add_from_cursor(cursor)
@@ -139,6 +140,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                       mimetype=constants.CSV_MIMETYPE)
 
             elif viewname.ext == 'json':
+                columns = [c['name'] for c in schema['columns']]
                 cursor.execute(sql)
                 return flask.jsonify({'$id': flask.request.url,
                                       'data': [dict(zip(columns, row))
@@ -147,6 +149,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 flask.abort(406)
 
         except sqlite3.Error as error:
+            raise
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
@@ -260,17 +263,19 @@ def download_csv(dbname, viewname):
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     try:
-        colnames = schema['query']['columns']
+        delimiter = flask.request.form.get('delimiter') or 'comma'
+        try:
+            delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
+        except KeyError:
+            raise ValueError('invalid delimiter')
         if utils.to_bool(flask.request.args.get('header')):
-            header = colnames
+            header = schema['query']['columns']
         else:
             header = None
-        writer = utils.CsvWriter(header,
-                                 delimiter=flask.request.args.get('delimiter'))
-        dbcnx = pleko.db.get_cnx(dbname)
-        cursor = dbcnx.cursor()
-        sql = 'SELECT %s FROM "%s"' % (','.join(['"%s"' % c for c in colnames]),
-                                       viewname)
+        writer = utils.CsvWriter(header, delimiter=delimiter)
+        colnames = ['"%s"' % c for c in schema['query']['columns']]
+        cursor = pleko.db.get_cnx(dbname).cursor()
+        sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
         cursor.execute(sql)
         writer.add_from_cursor(cursor)
     except (ValueError, sqlite3.Error) as error:
