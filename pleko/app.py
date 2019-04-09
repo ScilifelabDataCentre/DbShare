@@ -1,6 +1,7 @@
 "Pleko web app."
 
 import json
+import os.path
 import sqlite3
 
 import flask
@@ -19,10 +20,57 @@ import pleko.visual
 from pleko import constants
 from pleko import utils
 
+ROOT_DIR = os.path.dirname(__file__)
+
+CONFIG = dict(
+    VERSION = pleko.__version__,
+    SERVER_NAME = '127.0.0.1:5000',
+    SITE_NAME = 'Pleko',
+    DATABASES_DIRPATH = 'data',
+    SECRET_KEY = None,
+    SALT_LENGTH = 12,
+    JSONIFY_AS_ASCII = False,
+    JSON_SORT_KEYS = False,
+    MIN_PASSWORD_LENGTH = 6,
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
+    USER_ENABLE_IMMEDIATELY = False,
+    USER_ENABLE_EMAIL_WHITELIST = [], # Regexp's
+    USER_DEFAULT_QUOTA = 2**22,       # 4 megabyte
+    MAX_NROWS_DISPLAY = 2000,
+    TABLE_INITIAL_COLUMNS = 8,
+    QUERY_DEFAULT_LIMIT = 100,
+    CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
+                           'tab': {'label': "tab '\\t'", 'char': '\t'},
+                           'vertical-bar': {'label': "vertical-bar '|'", 
+                                            'char': '|'},
+                           'semicolon': {'label': "semicolon ';'", 'char': ';'}},
+    GITHUB_URL = 'https://github.com/pekrau/Pleko',
+    FLASK_URL = 'http://flask.pocoo.org/',
+    SQLITE_URL = 'https://www.sqlite.org/',
+    # Bootstrap 4.3.1
+    BOOTSTRAP_SITE_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
+    BOOTSTRAP_CSS_ATTRS = 'href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"',
+    JQUERY_JS_ATTRS = 'src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"',
+    POPPER_JS_ATTRS = 'src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"',
+    BOOTSTRAP_JS_ATTRS = 'src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"',
+    # DataTables 1.10.18 for bootstrap 4
+    DATATABLES_CSS_URL = 'https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css',
+    DATATABLES_JS_URL = 'https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js',
+    DATATABLES_BOOTSTRAP_JS_URL = 'https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js',
+    # D3, Vega and Vega-Lite
+    D3_JS_URL = 'https://cdn.jsdelivr.net/npm/d3@5',
+    TOPOJSON_JS_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3',
+    VEGA_CORE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega@5/build/vega-core.min.js',
+    VEGA_EMBED_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-embed@4',
+    VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
+    VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
+    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
+)
+
 def create_app():
     "Return the configured app object. Initialize the master, if not done."
     app = flask.Flask(__name__)
-    app.config.from_mapping(pleko.default_config)
+    app.config.from_mapping(CONFIG)
     app.config.from_json('config.json')
     app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
     with open(app.config['VEGA_LITE_SCHEMA']) as infile:

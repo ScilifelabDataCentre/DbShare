@@ -62,11 +62,11 @@
 {% endblock %}
 
 {% block javascript %}
-<script src="https://cdn.jsdelivr.net/npm/d3@5"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega@5/build/vega-core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-lite@3"></script>
-<script src="https://cdn.jsdelivr.net/npm/vega-embed@4"></script>
+<script src="{{ config['D3_JS_URL'] }}"></script>
+<script src="{{ config['TOPOJSON_JS_URL'] }}"></script>
+<script src="{{ config['VEGA_CORE_JS_URL'] }}"></script>
+<script src="{{ config['VEGA_LITE_JS_URL'] }}"></script>
+<script src="{{ config['VEGA_EMBED_JS_URL'] }}"></script>
 <script type="text/javascript">
   var visualSpec = {{ visual['spec']|tojson(indent=2) }};
   vegaEmbed('#visual', visualSpec);
