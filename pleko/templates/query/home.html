@@ -70,39 +70,7 @@ Query database <strong>{{ db['name'] }}</strong>
         </form>
       </div>
     </div>
-
-    <div class="card border-success mt-5">
-      <div class="card-header bg-success text-white">
-        <h5 class="card-title">SQL statement</h5>
-      </div>
-      <div class="card-body">
-        <form action="{{ url_for('.sql', dbname=db['name']) }}"
-              method="POST">
-          {{ csrf_token() }}
-          <div class="form-group row">
-            <label for="select" class="col-md-2 col-form-label text-right">
-              SQL</label>
-            <div class="col-md-10">
-              <textarea id="sql" name="sql" class="form-control"
-                        rows="4" aria-describedby="sqlHelp"
-			>{{ sql or '' }}</textarea>
-              <small id="sqlHelp" class="form-text text-muted">
-                The database is read-only while executing this command.
-                This means that a modifying SQL command will cause an error.
-              </small>
-            </div>
-          </div>
-          <div class="form-group row">
-            <div class="col-md-4 offset-md-2">
-              <button type="submit" class="btn btn-success btn-lg btn-block">
-                Execute SQL</button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
   </div>
-
   <div class="col-md">
     {% for table in utils.sorted_schema(db['tables'].values()) %}
     <div class="card border-primary mb-1">
@@ -112,7 +80,8 @@ Query database <strong>{{ db['name'] }}</strong>
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
           Table <strong>{{ table['name'] }}</strong> &darr;</button>
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
-           class="btn btn-sm btn-outline-primary" role="button" target="_blank">
+           class="btn btn-sm btn-outline-primary my-1" 
+           role="button" target="_blank">
           {{ table['nrows'] }} rows &#8599;</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
@@ -141,7 +110,8 @@ Query database <strong>{{ db['name'] }}</strong>
                 aria-expanded="false" aria-controls="{{ view['name'] }}">
           View <strong>{{ view['name'] }}</strong> &darr;</button>
         <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
-           class="btn btn-sm btn-outline-success" role="button" target="_blank">
+           class="btn btn-sm btn-outline-success my-1"
+           role="button" target="_blank">
           {{ view['nrows'] }} rows &#8599;</a>
       </div>
       <div id="{{ view['name'] }}" class="collapse">
