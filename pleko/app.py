@@ -44,7 +44,7 @@ CONFIG = dict(
                            'vertical-bar': {'label': "vertical-bar '|'", 
                                             'char': '|'},
                            'semicolon': {'label': "semicolon ';'", 'char': ';'}},
-    GITHUB_URL = 'https://github.com/pekrau/Pleko',
+    PLEKO_URL = 'https://github.com/pekrau/Pleko',
     FLASK_URL = 'http://flask.pocoo.org/',
     SQLITE_URL = 'https://www.sqlite.org/',
     # Bootstrap 4.3.1

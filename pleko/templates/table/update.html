@@ -16,8 +16,8 @@ Update data in table {{ schema['name'] }} from file
   <div class="card-body">
     <ul class="m-2">
       <li>
-        The CSV file may contain at most one header line containing
-        matching table column names.
+        The CSV file <strong>must</strong> contain one header line containing
+	the names of the table column to update.
       </li>
       <li>
         The CSV file must contain the primary key column(s).
@@ -27,15 +27,16 @@ Update data in table {{ schema['name'] }} from file
         specified table columns.
       </li>
       <li>
-	Every record in the CSV file must contain the same number of
-	items.
+	Every record in the CSV file must contain as many items as the
+	header. Superfluous items in a record are ignored.
       </li>
       <li>
-        Each CSV record must refer to an existing row, which will be updated.
+	If the primary key(s) in a CSV record match an existing row,
+	the table will be updated. If not, not.
       </li>
       <li>
-        If a table column constraint is violated by a CSV record, the
-        entire operation is aborted, and no values are updated.
+        If a table constraint is violated by a row update, the entire
+        operation is aborted, and no values are updated.
       </li>
     </ul>
     <form action="{{ url_for('.update_csv', dbname=db['name'], tablename=schema['name']) }}"
@@ -65,20 +66,7 @@ Update data in table {{ schema['name'] }} from file
         </div>
       </div>
       <div class="form-group row">
-        <legend class="col-md-2 col-form-label pt-0 text-right">
-	  Header record</legend>
-        <div class="col-md-6">
-	  <div class="form-check">
-	    <input id="header" name="header" type="checkbox"
-		   class="form-check-input" value="true" checked>
-	    <label class="form-check-label" for="header">
-	      First line of CSV file contains column names.
-	    </label>
-	  </div>
-        </div>
-      </div>
-      <div class="form-group row">
-        <div class="col-md-3 offset-md-1">
+        <div class="col-md-4 offset-md-1">
           <button type="submit"  class="btn btn-primary btn-lg btn-block">
             Update from CSV file</button>
         </div>

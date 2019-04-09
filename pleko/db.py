@@ -295,15 +295,14 @@ def upload(dbname):
                         if not record[i]:
                             record[i] = None
             # Insert the data
+            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+                  (tablename,
+                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
+                   ','.join('?' * len(schema['columns'])))
             dbcnx = get_cnx(db['name'], write=True)
-            cursor = dbcnx.cursor()
             with dbcnx:
-                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                      (tablename,
-                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                       ','.join('?' * len(schema['columns'])))
-                cursor.executemany(sql, records)
-            flask.flash("Inserted %s rows" % len(records), 'message')
+                dbcnx.executemany(sql, records)
+            flask.flash("Inserted %s rows." % len(records), 'message')
 
         except (ValueError, IndexError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -650,8 +649,8 @@ class DbContext:
         else:
             sql = get_sql_create_table(schema)
             self.dbcnx.execute(sql)
+        sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
         with self.dbcnx:
-            sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
@@ -745,8 +744,8 @@ class DbContext:
         for source in schema['query']['from'].split(','):
             schema['sources'].append(utils.name_before_as(source))
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
+        sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS
         with self.dbcnx:
-            sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['views'][schema['name']] = schema
 
@@ -783,9 +782,9 @@ class DbContext:
         self.dbcnx.execute(sql)
 
     def add_visual(self, visualname, sourcename, spec):
+        sql = "INSERT INTO %s (name, sourcename, spec)" \
+              " VALUES (?, ?, ?)" % constants.VISUALS
         with self.dbcnx:
-            sql = "INSERT INTO %s (name, sourcename, spec)" \
-                  " VALUES (?, ?, ?)" % constants.VISUALS
             self.dbcnx.execute(sql, (visualname,
                                      sourcename,
                                      json.dumps(spec)))

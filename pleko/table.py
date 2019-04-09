@@ -246,14 +246,13 @@ def row_insert(dbname, tablename):
                                          schema=schema,
                                          values=values)
         try:
+            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+                  (tablename,
+                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
+                   ','.join('?' * len(schema['columns'])))
             dbcnx = pleko.db.get_cnx(dbname, write=True)
-            cursor = dbcnx.cursor()
             with dbcnx:
-                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                      (tablename,
-                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                       ','.join('?' * len(schema['columns'])))
-                cursor.execute(sql, values)
+                dbcnx.execute(sql, values)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.render_template('table/row_insert.html', 
@@ -391,7 +390,7 @@ def insert_csv(dbname, tablename):
             raise ValueError('empty CSV file')
         header = utils.to_bool(flask.request.form.get('header'))
         if header:
-            header = records.pop(0)
+            header = [h.strip() for h in records.pop(0)]
             for n, column in enumerate(schema['columns']):
                 if header[n] != column['name']:
                     raise ValueError('header/column name mismatch')
@@ -429,15 +428,14 @@ def insert_csv(dbname, tablename):
         except (ValueError, TypeError, IndexError) as error:
             raise ValueError("line %s, column %s (%s): %s" %
                              (n+1, i+1, column['name'], str(error)))
+        sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+              (tablename,
+               ','.join(['"%(name)s"' % c for c in schema['columns']]),
+               ','.join('?' * len(schema['columns'])))
         dbcnx = pleko.db.get_cnx(dbname, write=True)
-        cursor = dbcnx.cursor()
         with dbcnx:
-            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                  (tablename,
-                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                   ','.join('?' * len(schema['columns'])))
-            cursor.executemany(sql, records)
-        flask.flash("Inserted %s rows" % len(records), 'message')
+            dbcnx.executemany(sql, records)
+        flask.flash("Inserted %s rows." % len(records), 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.insert',
@@ -449,7 +447,7 @@ def insert_csv(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update')
 def update(dbname, tablename):
-    "Update data from a file into the table."
+    "Update the table with data from a file."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:
@@ -470,6 +468,78 @@ def update(dbname, tablename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     return flask.render_template('table/update.html', db=db, schema=schema)
+
+@blueprint.route('/<name:dbname>/<name:tablename>/update/csv', methods=['POST'])
+def update_csv(dbname, tablename):
+    "Update the table with data from a CSV file."
+    utils.check_csrf_token()
+    try:
+        db = pleko.db.get_check_write(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    # Do not check quota; update should not be a problem...
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.flash('no such table', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        delimiter = flask.request.form.get('delimiter') or 'comma'
+        try:
+            delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
+        except KeyError:
+            raise ValueError('invalid delimiter')
+        csvfile = flask.request.files['csvfile']
+        lines = csvfile.read().decode('utf-8').split('\n')
+        records = list(csv.reader(lines, delimiter=delimiter))
+        # Eliminate empty records.
+        records = [r for r in records if r]
+        if not records:
+            raise ValueError('empty CSV file')
+        # Figure out mapping of CSV record columns to table columns.
+        header = [h.strip() for h in records.pop(0)]
+        primarykeys = set([c['name'] for c in schema['columns']
+                           if c.get('primarykey')])
+        columns = set([c['name'] for c in schema['columns']])
+        pk_pos = {}
+        for pos, name in enumerate(header):
+            if name in primarykeys:
+                pk_pos[name] = pos
+        if len(primarykeys) != len(pk_pos):
+            raise ValueError('missing primary key column(s) in CSV file')
+        col_pos = {}
+        for pos, name in enumerate(header):
+            if name in primarykeys: continue
+            if name not in columns: continue
+            col_pos[name] = pos
+        if not col_pos:
+            raise ValueError('no columns in CSV file for update')
+        sql = 'UPDATE "%s" SET %s WHERE %s' % \
+              (tablename,
+               ','.join(['"%s"=?' % pk for pk in col_pos.keys()]),
+               ' AND '.join(['"%s"=?' % pk for pk in pk_pos.keys()]))
+        col_pos = col_pos.values()
+        pk_pos = pk_pos.values()
+        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        count = 0
+        cursor = dbcnx.cursor()
+        with dbcnx:
+            for record in records:
+                values = [record[i] for i in col_pos]
+                pkeys = [record[i] for i in pk_pos]
+                cursor.execute(sql, values+pkeys)
+                count += cursor.rowcount
+        flask.flash("%s records; %s rows updated." % (len(records), count),
+                    'message')
+    except (ValueError, IndexError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.insert',
+                                            dbname=dbname,
+                                            tablename=tablename))
+    return flask.redirect(flask.url_for('.rows',
+                                        dbname=dbname,
+                                        tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/clone', 
                  methods=['GET', 'POST'])
@@ -503,16 +573,13 @@ def clone(dbname, tablename):
             schema['name'] = flask.request.form['name']
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
+            colnames = ','.join(['"%(name)s"' % c for c in schema['columns']])
+            sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % (schema['name'],
+                                                                 colnames,
+                                                                 colnames,
+                                                                 tablename)
             dbcnx = ctx.dbcnx
-            cursor = dbcnx.cursor()
             with dbcnx:
-                colnames = ','.join(['"%(name)s"' % c 
-                                     for c in schema['columns']])
-                sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % \
-                      (schema['name'],
-                       colnames,
-                       colnames,
-                       tablename)
                 dbcnx.execute(sql)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
