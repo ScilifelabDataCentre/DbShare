@@ -6,7 +6,7 @@
     <title>{% block head_title %}Pleko{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='logo64.png') }}">
     {# bootstrap 4.3.1 #}
-    <link {{ config['BOOTSTRAP_CSS_ATTRS']|safe }} rel="stylesheet" crossorigin="anonymous">
+    <link {{ config['BOOTSTRAP_CSS_ATTRS']|safe }} rel="stylesheet">
     <link href="{{ config['DATATABLES_CSS_URL'] }}" rel="stylesheet">
     <style>
       {% block style %}
@@ -154,9 +154,9 @@
       {% endblock %}
     </div>
     {# bootstrap 4.3.1 #}
-    <script {{ config['JQUERY_JS_ATTRS']|safe }} crossorigin="anonymous"></script>
-    <script {{ config['POPPER_JS_ATTRS']|safe }} crossorigin="anonymous"></script>
-    <script {{ config['BOOTSTRAP_JS_ATTRS']|safe }} crossorigin="anonymous"></script>
+    <script {{ config['JQUERY_JS_ATTRS']|safe }}></script>
+    <script {{ config['POPPER_JS_ATTRS']|safe }}></script>
+    <script {{ config['BOOTSTRAP_JS_ATTRS']|safe }}></script>
     {# datatables 1.10.18 #}
     <script src="{{ config['DATATABLES_JS_URL'] }}"></script>
     <script src="{{ config['DATATABLES_BOOTSTRAP_JS_URL'] }}"></script>
