@@ -93,6 +93,11 @@ app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
 app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
 
+# for rule in app.url_map.iter_rules():
+#     print(rule.rule, rule.methods, rule.endpoint)
+# for name, func in app.view_functions.items():
+#     print(name, func.__doc__)
+
 @app.template_filter('or_null_safe')
 def or_null_safe(value):
     "Output None as HTML '<NULL>' in safe mode."
