@@ -634,6 +634,7 @@ class DbContext:
         """
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
+        schema['name'] = schema['name'].lower()
         if schema['name'] in self.db['tables']:
             raise ValueError('name already in use for table')
         if schema['name'] in self.db['views']:
@@ -697,6 +698,7 @@ class DbContext:
         if schema['table'] not in self.db['tables']:
             raise ValueError("no such table %s for index %s" % (schema['table'],
                                                                 schema['name']))
+        schema['name'] = schema['name'].lower()
         if schema['name'] in self.db['indexes']:
             raise ValueError("index %s already defined" % schema['name'])
         sql = get_sql_create_index(schema)
@@ -722,6 +724,7 @@ class DbContext:
         "Create a view in the database and add to the database definition."
         if not schema.get('name'):
             raise ValueError('no view name defined')
+        schema['name'] = schema['name'].lower()
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid view name')
         if schema['name'] in self.db['tables']:
@@ -785,24 +788,29 @@ class DbContext:
         self.dbcnx.execute(sql)
 
     def add_visual(self, visualname, sourcename, spec):
+        "Add the visualization for the given source (table or view)."
         sql = "INSERT INTO %s (name, sourcename, spec)" \
               " VALUES (?, ?, ?)" % constants.VISUALS
         with self.dbcnx:
-            self.dbcnx.execute(sql, (visualname,
+            self.dbcnx.execute(sql, (visualname.lower(),
                                      sourcename,
                                      json.dumps(spec)))
 
     def update_visual(self, visualname, spec, new_visualname=None):
+        "Update the visualization for the given source (table or view)."
         if new_visualname is None:
             new_visualname = visualname
         with self.dbcnx:
             sql = "UPDATE %s SET name=?,spec=? WHERE name=?" % constants.VISUALS
-            self.dbcnx.execute(sql,(new_visualname,json.dumps(spec),visualname))
+            self.dbcnx.execute(sql,(new_visualname.lower(),
+                                    json.dumps(spec),
+                                    visualname.lower()))
 
     def delete_visual(self, visualname):
+        "Delete the visualization for the given source (table or view)."
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.VISUALS
-            self.dbcnx.execute(sql, (visualname,))
+            self.dbcnx.execute(sql, (visualname.lower(),))
 
 
 def get_dbs(public=None, owner=None, complete=False):

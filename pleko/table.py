@@ -35,7 +35,8 @@ def create(dbname):
 
     elif utils.is_method_POST():
         try:
-            schema = {'name': flask.request.form.get('name')}
+            schema = {'name': flask.request.form.get('name'),
+                      'title': flask.request.form.get('title') or None}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 name = flask.request.form.get("column%sname" % n)
@@ -154,6 +155,7 @@ def edit(dbname, tablename):
     elif utils.is_method_POST():
         try:
             with pleko.db.DbContext(db) as ctx:
+                schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
