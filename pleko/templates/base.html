@@ -6,7 +6,7 @@
     <title>{% block head_title %}Pleko{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='logo64.png') }}">
     {# bootstrap 4.3.1 #}
-    <link {{ config['BOOTSTRAP_CSS_ATTRS']|safe }} rel="stylesheet">
+    <link {{ config['BOOTSTRAP_CSS_ATTRS'] | safe }} rel="stylesheet">
     <link href="{{ config['DATATABLES_CSS_URL'] }}" rel="stylesheet">
     <style>
       {% block style %}
@@ -39,8 +39,7 @@
           <li class="nav-item">
             <a href="{{ url_for('db.home', dbname=db['name']) }}"
                class="nav-link active ml-3 font-weight-bold">
-              Database {{ db['name'] }}
-            </a>
+              Database {{ db['name'] }}</a>
          </li>
           <li class="nav-item">
             <a href="{{ url_for('query.home', dbname=db['name']) }}"
@@ -81,11 +80,9 @@
           <li class="nav-item dropdown ml-4">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
                role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">
-              Admin
-            </a>
+               aria-haspopup="true" aria-expanded="false">Admin</a>
             <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item" href="{{ url_for('all') }}">
+              <a class="dropdown-item" href="{{ url_for('dbs') }}">
                 All databases</a>
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
                 Users</a>
@@ -154,9 +151,9 @@
       {% endblock %}
     </div>
     {# bootstrap 4.3.1 #}
-    <script {{ config['JQUERY_JS_ATTRS']|safe }}></script>
-    <script {{ config['POPPER_JS_ATTRS']|safe }}></script>
-    <script {{ config['BOOTSTRAP_JS_ATTRS']|safe }}></script>
+    <script {{ config['JQUERY_JS_ATTRS'] | safe }}></script>
+    <script {{ config['POPPER_JS_ATTRS'] | safe }}></script>
+    <script {{ config['BOOTSTRAP_JS_ATTRS'] | safe }}></script>
     {# datatables 1.10.18 #}
     <script src="{{ config['DATATABLES_JS_URL'] }}"></script>
     <script src="{{ config['DATATABLES_BOOTSTRAP_JS_URL'] }}"></script>

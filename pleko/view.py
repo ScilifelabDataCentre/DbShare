@@ -1,4 +1,4 @@
-"Pleko view endpoint."
+"View endpoints."
 
 import copy
 import sqlite3

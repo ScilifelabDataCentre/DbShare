@@ -1,4 +1,4 @@
-"Pleko table endpoints."
+"Table endpoints."
 
 import copy
 import csv

@@ -1,4 +1,4 @@
-"Visualization display and edit endpoints."
+"Visualization endpoints."
 
 import json
 
@@ -50,6 +50,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
                 db=db,
                 schema=schema,
                 visual=visual,
+                title="Visualization {}".format(visualname),
                 has_write_access = pleko.db.has_write_access(db))
         elif visualname.ext == 'json':
             return flask.jsonify(visual['spec'])
@@ -95,7 +96,7 @@ def edit(dbname, visualname):
 
     if utils.is_method_GET():
         pleko.db.set_nrows(db, nrows=[schema['name']])
-        return flask.render_template('visual/edit.html', 
+        return flask.render_template('visual/edit.html',
                                      db=db,
                                      schema=schema,
                                      visual=visual)

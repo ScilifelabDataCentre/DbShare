@@ -13,6 +13,7 @@ import pleko.index
 import pleko.master
 import pleko.query
 import pleko.table
+import pleko.template
 import pleko.user
 import pleko.vega_lite
 import pleko.view
@@ -139,14 +140,22 @@ def owner(username):
                                  dbs=pleko.db.get_dbs(owner=username),
                                  username=username)
 
-@app.route('/all')
+@app.route('/dbs')
 @pleko.user.login_required
 @pleko.user.admin_required
-def all():
+def dbs():
     "List of all databases."
     dbs = pleko.db.get_dbs()
-    usage = sum([db['size'] for db in dbs])
-    return flask.render_template('all.html', dbs=dbs, usage=usage)
+    return flask.render_template('dbs.html',
+                                 dbs=dbs,
+                                 usage=sum([db['size'] for db in dbs]))
+
+@app.route('/templates')
+@pleko.user.login_required
+@pleko.user.admin_required
+def templates():
+    "List of all templates."
+    raise NotImplementedError
 
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required
