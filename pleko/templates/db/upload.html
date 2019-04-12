@@ -51,6 +51,25 @@
         </div>
       </div>
       <div class="form-group row">
+        <div class="col-md-2 text-right">
+          <label for="nullrepr" class="col-form-label">
+            NULL representation</label>
+        </div>
+        <div class="col-md-10">
+          <div class="row">
+            <div class="col-md-3">
+            <input id="nullrepr" name="nullrepr"
+                   aria-describedby="nullreprHelp"
+                   type="text" class="form-control">
+            </div>
+          </div>
+          <small id="nullreprHelp" class="form-text text-muted">
+            Specify the value used to represent NULL, if something other
+            than the empty string; e.g.  'NA', 'n/a' or similar.
+          </small>
+        </div>
+      </div>
+      <div class="form-group row">
         <legend class="col-md-2 col-form-label pt-0 text-right">
 	  Header record</legend>
 	<div class="col-md-6">
@@ -69,7 +88,8 @@
             Table name</label>
         </div>
         <div class="col-md-4">
-          <input id="tablename" name="tablename" type="text" class="form-control">
+          <input id="tablename" name="tablename"
+                 type="text" class="form-control">
           <small class="text-muted">
             If none specified, the filename will be used.
           </small>

@@ -196,6 +196,7 @@ def upload(dbname):
                 delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
             except KeyError:
                 raise ValueError('invalid delimiter')
+            nullrepr = flask.request.form.get('nullrepr') or ''
             csvfile = flask.request.files['csvfile']
             try:
                 tablename = flask.request.form['tablename']
@@ -203,7 +204,8 @@ def upload(dbname):
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
-                tablename = utils.name_cleaned(tablename)
+            tablename = utils.name_cleaned(tablename)
+            tablename = tablename.lower()
             if tablename in db['tables']:
                 raise ValueError('table name already in use')
             schema = {'name': tablename}
@@ -235,13 +237,13 @@ def upload(dbname):
                 type = None
                 for n, record in enumerate(records):
                     value = record[i]
-                    if value:
+                    if value == nullrepr:
+                        column['notnull'] = False
+                    else:
                         try:
                             int(value)
                         except (ValueError, TypeError):
                             break
-                    else:
-                        column['notnull'] = False
                 else:
                     type = constants.INTEGER
 
@@ -249,13 +251,13 @@ def upload(dbname):
                 if type is None:
                     for n, record in enumerate(records):
                         value = record[i]
-                        if value:
+                        if value == nullrepr:
+                            column['notnull'] = False
+                        else:
                             try:
                                 float(value)
                             except (ValueError, TypeError):
                                 break
-                        else:
-                            column['notnull'] = False
                     else:
                         type = constants.REAL
 
@@ -264,7 +266,8 @@ def upload(dbname):
                     column['type'] = constants.TEXT
                     if column['notnull']:
                         for record in records:
-                            if not record[i]:
+                            value = record[i]
+                            if value == nullrepr:
                                 column['notnull'] = False
                                 break
                 else:
@@ -279,20 +282,20 @@ def upload(dbname):
                 if type == constants.INTEGER:
                     for n, record in enumerate(records):
                         value = record[i]
-                        if value:
-                            record[i] = int(value)
-                        else:
+                        if value == nullrepr:
                             record[i] = None
+                        else:
+                            record[i] = int(value)
                 elif type == constants.REAL:
                     for n, record in enumerate(records):
                         value = record[i]
-                        if value:
-                            record[i] = float(value)
-                        else:
+                        if value == nullrepr:
                             record[i] = None
+                        else:
+                            record[i] = float(value)
                 else:
                     for n, record in enumerate(records):
-                        if not record[i]:
+                        if record[i] == nullrepr:
                             record[i] = None
             # Insert the data
             sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
