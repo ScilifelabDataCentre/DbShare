@@ -24,6 +24,7 @@ def create(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     viewname = flask.request.values.get('name')
+    title = flask.request.values.get('title')
     description = flask.request.values.get('description')
     # Do not check here.
     query = pleko.query.get_query_from_request()
@@ -40,7 +41,8 @@ def create(dbname):
             # Get again, with checking this time.
             query = pleko.query.get_query_from_request(check=True)
             schema = {'name': viewname,
-                      'description': description,
+                      'title': title or None,
+                      'description': description or None,
                       'query': query}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
@@ -77,6 +79,7 @@ def edit(dbname, viewname):
     elif utils.is_method_POST():
         try:
             with pleko.db.DbContext(db) as ctx:
+                schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_view(schema)
         except ValueError as error:
@@ -118,6 +121,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                 ' is limited to %s.' % limit,
                                 'message')
                 cursor.execute(sql)
+                title = schema.get('title') or "View {}".format(viewname)
                 visuals = utils.sorted_schema(db['visuals'].get(schema['name'],
                                                                 []))
                 query = schema['query']
@@ -127,6 +131,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                              schema=schema,
                                              query=query,
                                              sql=sql,
+                                             title=title,
                                              rows=list(cursor),
                                              visuals=visuals,
                                              has_write_access=has_write_access)
