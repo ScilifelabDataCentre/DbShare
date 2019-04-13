@@ -38,7 +38,7 @@
           {% if db is defined %}
           <li class="nav-item">
             <a href="{{ url_for('db.home', dbname=db['name']) }}"
-               class="nav-link active ml-3 font-weight-bold">
+               class="nav-link active font-weight-bold">
               Database {{ db['name'] }}</a>
          </li>
           <li class="nav-item">
@@ -76,8 +76,11 @@
                class="nav-link">Visualizations</a>
           </li>
           {% endif %}
+          <li class="nav-item">
+            <a href="{{ url_for('templates') }}" class="nav-link">Templates</a>
+          </li>
           {% if g.is_admin %}
-          <li class="nav-item dropdown ml-4">
+          <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Admin</a>

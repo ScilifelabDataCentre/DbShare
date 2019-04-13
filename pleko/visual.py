@@ -140,7 +140,7 @@ def edit(dbname, visualname):
                  methods=['GET','POST'])
 @pleko.user.login_required
 def clone(dbname, visualname):
-    "Clone the visual."
+    "Clone the visualization."
     try:
         db = pleko.db.get_check_write(dbname)
     except ValueError as error:

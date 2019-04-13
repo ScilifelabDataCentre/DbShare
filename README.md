@@ -1,7 +1,7 @@
 # Pleko
 
-Explore, visualize and publish data sets with
-[Sqlite3](https://www.sqlite.org/) and 
+Publish, query and visualize tabular data sets using 
+[Sqlite3](https://www.sqlite.org/) and
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
 πλέκω: to plait, twine, twist, weave, braid

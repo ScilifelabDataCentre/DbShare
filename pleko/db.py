@@ -636,9 +636,9 @@ class DbContext:
             raise ValueError('invalid table name')
         schema['name'] = schema['name'].lower()
         if schema['name'] in self.db['tables']:
-            raise ValueError('name already in use for table')
+            raise ValueError('name is already in use for a table')
         if schema['name'] in self.db['views']:
-            raise ValueError('name already in use for view')
+            raise ValueError('name is already in use for a view')
         if query:
             sql = 'CREATE TABLE "%s" AS %s' % (schema['name'],
                                                pleko.query.get_sql_query(query))
@@ -728,9 +728,9 @@ class DbContext:
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid view name')
         if schema['name'] in self.db['tables']:
-            raise ValueError('name already in use for table')
+            raise ValueError('name is already in use for a table')
         if schema['name'] in self.db['views']:
-            raise ValueError('name already in use for view')
+            raise ValueError('name is already in use for a view')
         if not schema.get('query'):
             raise ValueError('no query statement defined')
         sql = 'CREATE VIEW "%s" AS %s' % \

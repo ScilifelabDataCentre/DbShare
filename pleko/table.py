@@ -656,6 +656,13 @@ def download_csv(dbname, tablename):
                          filename="%s.csv" % tablename)
     return response
 
+@blueprint.route('/<name:dbname>/<name:tablename>/render')
+@pleko.user.login_required
+def render(dbname, tablename):
+    "Select template to create a visualization of the table."
+    raise NotImplementedError
+
+
 def get_row_values_errors(columns):
     "Return the values and errors from the form for a row given the columns."
     errors = {}

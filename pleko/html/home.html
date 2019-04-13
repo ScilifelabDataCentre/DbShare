@@ -1,16 +1,13 @@
 {% extends 'base.html' %}
 
-{% block body_title %}
-Pleko
-<small class="text-muted ml-2">
-  Explore, visualize and publish data sets with
-  <a href="{{ config['SQLITE_URL'] }}" target="_blank">Sqlite3</a> and
-  <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
-</small>
-{% endblock %}
-
 {% block main %}
-<h4 class="mt-2 mb-3 ml-3">Public databases</h2>
+<p class="lead ml-3">
+  Publish, query and visualize tabular data sets using 
+  <a href="{{ config['SQLITE3_URL'] }}" target="_blank">Sqlite3</a> and
+  <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
+</p>
+
+<h4 class="ml-3 my-4">Public databases</h2>
 <table id="dbs" class="table table-sm">
   <thead>
     <tr>

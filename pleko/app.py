@@ -47,7 +47,8 @@ CONFIG = dict(
                            'semicolon': {'label': "semicolon ';'", 'char': ';'}},
     PLEKO_URL = 'https://github.com/pekrau/Pleko',
     FLASK_URL = 'http://flask.pocoo.org/',
-    SQLITE_URL = 'https://www.sqlite.org/',
+    JINJA2_URL = 'http://jinja.pocoo.org/docs',
+    SQLITE3_URL = 'https://www.sqlite.org/',
     # Bootstrap 4.3.1
     BOOTSTRAP_SITE_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
     BOOTSTRAP_CSS_ATTRS = 'href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"',
@@ -92,6 +93,7 @@ app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
 app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
 app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
+app.register_blueprint(pleko.template.blueprint, url_prefix='/template')
 app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
 
 @app.context_processor
@@ -133,13 +135,14 @@ def finalize(response):
 
 @app.route('/')
 def home():
-    "Home page. List of public databases."
-    return flask.render_template('home.html', dbs=pleko.db.get_dbs(public=True))
+    "Home page; display the list of public databases."
+    return flask.render_template('home.html',
+                                 dbs=pleko.db.get_dbs(public=True))
 
 @app.route('/owner/<name:username>')
 @pleko.user.login_required
 def owner(username):
-    "List of databases owned by the given user."
+    "Display the list of databases owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
         flask.flash("you may not access the list of user's databases")
         return flask.redirect(flask.url_for('home'))
@@ -151,7 +154,7 @@ def owner(username):
 @pleko.user.login_required
 @pleko.user.admin_required
 def dbs():
-    "List of all databases."
+    "Display the list of all databases."
     dbs = pleko.db.get_dbs()
     return flask.render_template('dbs.html',
                                  dbs=dbs,
@@ -161,8 +164,9 @@ def dbs():
 @pleko.user.login_required
 @pleko.user.admin_required
 def templates():
-    "List of all visualization templates."
-    raise NotImplementedError
+    "Display the list of public visualization templates."
+    templates = pleko.template.get_templates(public=True)
+    return flask.render_template('templates.html', templates=templates)
 
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required

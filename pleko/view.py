@@ -53,12 +53,11 @@ def create(dbname):
                                                 name=viewname,
                                                 description=description,
                                                 **schema['query']))
-        else:
-            return flask.redirect(flask.url_for('.rows', 
-                                                dbname=dbname,
-                                                viewname=viewname))
+        return flask.redirect(flask.url_for('.rows', 
+                                            dbname=dbname,
+                                            viewname=viewname))
 
-@blueprint.route('/<name:dbname>(<name:viewname>/edit', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:viewname>/edit', methods=['GET', 'POST'])
 @pleko.user.login_required
 def edit(dbname, viewname):
     "Edit the view."
@@ -293,3 +292,9 @@ def download_csv(dbname, viewname):
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % viewname)
     return response
+
+@blueprint.route('/<name:dbname>/<name:viewname>/render')
+@pleko.user.login_required
+def render(dbname, viewname):
+    "Select template to create a visualization of the view."
+    raise NotImplementedError
