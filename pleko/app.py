@@ -150,23 +150,29 @@ def owner(username):
                                  dbs=pleko.db.get_dbs(owner=username),
                                  username=username)
 
-@app.route('/dbs')
+@app.route('/alldbs')
 @pleko.user.login_required
 @pleko.user.admin_required
-def dbs():
+def alldbs():
     "Display the list of all databases."
     dbs = pleko.db.get_dbs()
-    return flask.render_template('dbs.html',
+    return flask.render_template('alldbs.html',
                                  dbs=dbs,
                                  usage=sum([db['size'] for db in dbs]))
 
 @app.route('/templates')
-@pleko.user.login_required
-@pleko.user.admin_required
 def templates():
     "Display the list of public visualization templates."
     templates = pleko.template.get_templates(public=True)
     return flask.render_template('templates.html', templates=templates)
+
+@app.route('/alltemplates')
+@pleko.user.login_required
+@pleko.user.admin_required
+def alltemplates():
+    "Display the list of public visualization templates."
+    templates = pleko.template.get_templates()
+    return flask.render_template('alltemplates.html', templates=templates)
 
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required

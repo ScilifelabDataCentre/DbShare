@@ -85,8 +85,10 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Admin</a>
             <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item" href="{{ url_for('dbs') }}">
+              <a class="dropdown-item" href="{{ url_for('alldbs') }}">
                 All databases</a>
+              <a class="dropdown-item" href="{{ url_for('alltemplates') }}">
+                All templates</a>
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
                 Users</a>
             </div>
