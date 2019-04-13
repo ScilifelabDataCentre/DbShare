@@ -32,8 +32,20 @@
           {{ db['name'] }}</a>
       </th>
       <td>{{ db.get('title') or '-' }}</td>
-      <td>{{ db['public'] and 'public' or 'private'}}</td>
-      <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
+      <td>
+	{% if db['public'] %}
+	<span class="badge badge-success">public</span>
+	{% else %}
+	private
+	{% endif %}
+      </td>
+      <td>
+	{% if db['readonly'] %}
+	read-only
+	{% else %}
+	<span class="badge badge-warning">read-write</span>
+	{% endif %}
+      </td>
       <td>{{ db['owner'] }}</td>
       <td class="text-right">
         <span class="text-monospace mr-3">{{ '{:,}'.format(db['size']) }}</span>
