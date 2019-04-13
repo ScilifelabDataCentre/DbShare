@@ -78,18 +78,10 @@ Publish, query and visualize tabular data sets using
 - Clone a visualization.
 - Edit a visualization.
 
-## API (JSON)
-
-*TODO*
-
-## Access privileges
-
-*TODO*
-
 ## Third-party packages used
 
 - [Flask](http://flask.pocoo.org/)
 - [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
-- [Jinja2](http://jinja.pocoo.org/)
+- [Jinja2](http://jinja.pocoo.org/docs)
 - [jsonschema](https://github.com/Julian/jsonschema)
 - [dpath-python](https://github.com/akesterson/dpath-python)
