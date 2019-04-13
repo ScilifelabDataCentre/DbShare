@@ -66,7 +66,7 @@ def create(dbname):
 @blueprint.route('/<name:dbname>/<nameext:tablename>',
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
-    "Display rows in the table."
+    "Display rows in the table. Or delete the table."
     if utils.is_method_GET():
         try:
             db = pleko.db.get_check_read(dbname, nrows=[str(tablename)])

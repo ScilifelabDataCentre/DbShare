@@ -95,7 +95,7 @@ def edit(dbname, viewname):
 @blueprint.route('/<name:dbname>/<nameext:viewname>', 
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
-    "Display rows in the view."
+    "Display rows in the view. Or delete the view."
     if utils.is_method_GET():
         try:
             db = pleko.db.get_check_read(dbname, nrows=[str(viewname)])

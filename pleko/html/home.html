@@ -30,7 +30,7 @@ Pleko
           {{ db['name'] }}</a>
       </th>
       <td>{{ db.get('title') or '-' }}</td>
-      <td>{{ db['readonly'] and 'read-only' or 'read-write'}}</td>
+      <td>{{ db['readonly'] and 'read-only' or 'read-write' }}</td>
       <td>{{ db['owner'] }}</td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

@@ -181,6 +181,7 @@ def password():
 @blueprint.route('/profile/<name:username>')
 @login_required
 def profile(username):
+    "Display the profile of the given user."
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -198,6 +199,7 @@ def profile(username):
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
 def logs(username):
+    "Display the log records of the given user."
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -269,6 +271,7 @@ def edit(username):
 @login_required
 @admin_required
 def users():
+    "Display list of all users."
     cursor = pleko.master.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
@@ -295,6 +298,7 @@ def users():
 @login_required
 @admin_required
 def enable(username):
+    "Enable the given user account."
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -309,6 +313,7 @@ def enable(username):
 @login_required
 @admin_required
 def disable(username):
+    "Disable the given user account."
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')

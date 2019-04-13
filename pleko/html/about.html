@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block head_title %}About Pleko{% endblock %}
+
+{% block body_title %}About Pleko{% endblock %}
+
+{% block main %}
+<h4 class="mt-2 mb-3 ml-3">URL endpoints</h2>
+<table class="table table-sm">
+  <thead>
+    <tr>
+      <th>URL</th>
+      <th>Methods</th>
+      <th>Description</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for url, endpoint in urls %}
+    <tr>
+      <td>{{ url }}</td>
+      <td>{{ ', '.join(endpoint['methods']) }}</td>
+      <td>{{ endpoint['doc'] }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

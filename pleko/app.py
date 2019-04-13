@@ -70,7 +70,7 @@ CONFIG = dict(
 
 def create_app():
     "Return the configured app object. Initialize the master, if not done."
-    app = flask.Flask(__name__)
+    app = flask.Flask(__name__, template_folder='html')
     app.config.from_mapping(CONFIG)
     app.config.from_json('config.json')
     app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
@@ -94,10 +94,14 @@ app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
 app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
 
-# for rule in app.url_map.iter_rules():
-#     print(rule.rule, rule.methods, rule.endpoint)
-# for name, func in app.view_functions.items():
-#     print(name, func.__doc__)
+@app.context_processor
+def setup_template_context():
+    "Add useful stuff to the global context for Jinja2 templates."
+    return dict(constants=constants,
+                csrf_token=utils.csrf_token,
+                utils=utils,
+                len=len,
+                enumerate=enumerate)
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):
@@ -115,18 +119,21 @@ def prepare():
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
 
-@app.context_processor
-def setup_template_context():
-    "Add useful stuff to the global context for templates."
-    return dict(constants=constants,
-                csrf_token=utils.csrf_token,
-                utils=utils,
-                len=len,
-                enumerate=enumerate)
+@app.after_request
+def finalize(response):
+    try:
+        flask.g.cnx.close()
+    except AttributeError:
+        pass
+    try:
+        flask.g.dbcnx.close()
+    except AttributeError:
+        pass
+    return response
 
 @app.route('/')
 def home():
-    "Home page. List public databases."
+    "Home page. List of public databases."
     return flask.render_template('home.html', dbs=pleko.db.get_dbs(public=True))
 
 @app.route('/owner/<name:username>')
@@ -154,7 +161,7 @@ def dbs():
 @pleko.user.login_required
 @pleko.user.admin_required
 def templates():
-    "List of all templates."
+    "List of all visualization templates."
     raise NotImplementedError
 
 @app.route('/upload', methods=['GET', 'POST'])
@@ -174,18 +181,23 @@ def upload():
             return flask.redirect(flask.url_for('upload'))
         return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
-@app.after_request
-def finalize(response):
-    try:
-        flask.g.cnx.close()
-    except AttributeError:
-        pass
-    try:
-        flask.g.dbcnx.close()
-    except AttributeError:
-        pass
-    return response
+@app.route('/about')
+def about():
+    "Display information about the software system."
+    endpoints = {}
+    trivial_methods = set(['HEAD', 'OPTIONS'])
+    for rule in app.url_map.iter_rules():
+        endpoints[rule.endpoint] = {
+            'url': rule.rule,
+            'methods': sorted(rule.methods.difference(trivial_methods))}
+        # print(rule.rule, rule.methods, rule.endpoint)
+    for name, func in app.view_functions.items():
+        endpoints[name]['doc'] = func.__doc__
+    endpoints['static']['doc'] = 'Static web page support files.'
+    urls = sorted([(e['url'], e) for e in endpoints.values()])
+    return flask.render_template('about.html', urls=urls)
 
+    
 
 # This code is used only during testing.
 if __name__ == '__main__':
