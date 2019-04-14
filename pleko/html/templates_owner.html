@@ -24,7 +24,8 @@ Visualization templates owned by {{ username }}
     <tr>
       <th>
         <a href="{{ url_for('template.view', templatename=template['name']) }}"
-	   role="button" class="btn btn-sm btn-outline-info px-3 py-0">
+	   role="button" 
+	   class="btn btn-sm btn-outline-info px-3 py-0 font-weight-bold">
           {{ template['name'] }}</a>
       </th>
       <td>{{ template.get('title') or '-' }}</td>
@@ -51,7 +52,7 @@ Visualization templates owned by {{ username }}
      class="btn btn-info btn-block">Create</a>
 </div>
 <div class="mt-3">
-  <a href="{{ url_for('owner', username=username) }}"
+  <a href="{{ url_for('dbs_owner', username=username) }}"
      role="button" class="btn btn-primary btn-block">
     Databases owned by {{ username }}</a>
 </div>

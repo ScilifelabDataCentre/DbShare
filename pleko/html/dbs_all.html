@@ -26,11 +26,11 @@
   <tbody>
     {% for db in dbs %}
     <tr>
-      <th>
+      <td>
         <a href="{{ url_for('db.home', dbname=db['name']) }}" role="button" 
 	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
           {{ db['name'] }}</a>
-      </th>
+      </td>
       <td>{{ db.get('title') or '-' }}</td>
       <td>
 	{% if db['public'] %}

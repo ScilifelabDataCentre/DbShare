@@ -182,6 +182,7 @@ def password():
 @login_required
 def profile(username):
     "Display the profile of the given user."
+    import pleko.template
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -189,12 +190,13 @@ def profile(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    ndb, usage = pleko.db.get_usage(username)
+    ndbs, usage = pleko.db.get_usage(username)
     return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
-                                 ndb=ndb,
-                                 usage=usage)
+                                 ndbs=ndbs,
+                                 usage=usage,
+                                 ntemplates=len(pleko.template.get_templates(owner=username)))
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
@@ -272,25 +274,27 @@ def edit(username):
 @admin_required
 def users():
     "Display list of all users."
+    import pleko.template
     cursor = pleko.master.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
     cursor.execute(sql)
-    users = [{'username': row[0],
-              'email':    row[1],
-              'password': row[2],
-              'apikey':   row[3],
-              'role':     row[4],
-              'status':   row[5],
-              'quota':    row[6],
-              'created':  row[7],
-              'modified': row[8],
-              'ndb':      0,
-              'size':     0}
+    users = [{'username':   row[0],
+              'email':      row[1],
+              'password':   row[2],
+              'apikey':     row[3],
+              'role':       row[4],
+              'status':     row[5],
+              'quota':      row[6],
+              'created':    row[7],
+              'modified':   row[8],
+              'ndbs':       0,
+              'size':       0,
+              'ntemplates': len(pleko.template.get_templates(row[0]))}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
     for db in pleko.db.get_dbs():
-        lookup[db['owner']]['ndb']  += 1
+        lookup[db['owner']]['ndbs'] += 1
         lookup[db['owner']]['size'] += db['size']
     return flask.render_template('user/users.html', users=users)
 

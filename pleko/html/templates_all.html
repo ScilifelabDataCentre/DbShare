@@ -19,12 +19,12 @@
   <tbody>
     {% for template in templates %}
     <tr>
-      <th>
+      <td>
         <a href="{{ url_for('template.view', templatename=template['name']) }}" 
 	   role="button" 
-	   class="btn btn-sm px-3 py-0 font-weight-bold">
+	   class="btn btn-sm btn-outline-info px-3 py-0 font-weight-bold">
           {{ template['name'] }}</a>
-      </th>
+      </td>
       <td>{{ template.get('title') or '-' }}</td>
       <td>{{ template['type'] }}</td>
       <td>
@@ -34,7 +34,10 @@
 	private
 	{% endif %}
       </td>
-      <td>{{ template['owner'] }}</td>
+      <td>
+	<a href="{{ url_for('user.profile', username=template['owner']) }}">
+	  {{ template['owner'] }}</a>
+      </td>
       <td><small class="localtime">{{ template['modified'] }}</small></td>
     </tr>
     {% endfor %}

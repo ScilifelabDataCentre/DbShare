@@ -168,7 +168,7 @@ def get_templates(public=None, owner=None):
     cursor.execute(sql, tuple(criteria.values()))
     return [get_template(row[0]) for row in cursor]
 
-def get_template(name,):
+def get_template(name):
     """Return the database metadata for the given name.
     Return None if no such database.
     """

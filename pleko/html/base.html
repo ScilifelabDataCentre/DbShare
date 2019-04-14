@@ -31,7 +31,7 @@
           </li>
           {% if g.current_user %}
           <li class="nav-item">
-            <a href="{{ url_for('owner', username=g.current_user['username']) }}"
+            <a href="{{ url_for('dbs_owner', username=g.current_user['username']) }}"
                class="nav-link">My databases</a>
           </li>
           {% endif %}
@@ -82,12 +82,12 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">Admin</a>
             <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item" href="{{ url_for('alldbs') }}">
+              <a class="dropdown-item" href="{{ url_for('dbs_all') }}">
                 All databases</a>
-              <a class="dropdown-item" href="{{ url_for('alltemplates') }}">
+              <a class="dropdown-item" href="{{ url_for('templates_all') }}">
                 All templates</a>
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
-                Users</a>
+                All users</a>
             </div>
           </li>
           {% endif %}

@@ -5,81 +5,78 @@
 {% block body_title %}User {{ user['username'] }}{% endblock %}
 
 {% block main %}
-<div class="row">
-  <div class="col-md-6">
-    <table class="table table-borderless">
-      <tr>
-        <th class="text-right">Email</th>
-        <td>{{ user['email'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Role</th>
-        <td>{{ user['role'] }}</td>
-      </tr>
-      <tr>
-        <th class="text-right">Status</th>
-        <td>{{ user['status'] }}</td>
-        {% if enable_disable %}
-        <td>
-          {% if user['status'] != constants.ENABLED %}
-          <form action="{{ url_for('.enable', username=user['username']) }}"
-                method="POST">
-            {{ csrf_token() }}
-            <button type="submit" class="btn btn-success">Enable</button>
-          </form>
-          {% elif user['status'] == constants.ENABLED %}
-          <form action="{{ url_for('.disable', username=user['username']) }}"
-                method="POST">
-            {{ csrf_token() }}
-            <button type="submit" class="btn btn-danger">Disable</button>
-          </form>
-          {% endif %}
-        </td>
-        {% endif %}
-      </tr>
-      <tr>
-        <th class="text-right">API key</th>
-        <td>{{ user.get('apikey') or '-' }}</td>
-      </tr>
-      <tr>
-        <th class="text-right"># databases</th>
-        <td>
-	  {% if ndb %}
-	  <a href="{{ url_for('owner', username=user['username']) }}">
-	    <span class="badge badge-primary">{{ ndb }}</span></a>
-	  {% else %}
-	  0
-	  {% endif %}
-	</td>
-      </tr>
-      <tr>
-        <th class="text-right">Total size</th>
-        <td>
-          {% if user.get('quota') and usage > user['quota'] %}
-          <div class="text-danger">
-            <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
-            bytes; no more data may be added
-          </div>
-          {% else %}
-          <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
-          bytes
-          {% endif %}
-        </td>
-      </tr>
-      <tr>
-        <th class="text-right">Size quota</th>
-        <td>
-          {% if user.get('quota') %}
-          <span class="text-monospace">{{ '{:,}'.format(user['quota']) }}</span>
-          bytes
-          {% else %}
-          <em>no quota</em>
-          {% endif %}
-        </td>
-      </tr>
-    </table>
-  </div>
-</div>
+<table class="table table-sm table-borderless">
+  <col style="width:30%">
+  <col style="width:70%">
+  <tr>
+    <th class="text-right">Email</th>
+    <td>{{ user['email'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Role</th>
+    <td>{{ user['role'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Status</th>
+    <td>{{ user['status'] }}</td>
+    {% if enable_disable %}
+    <td>
+      {% if user['status'] != constants.ENABLED %}
+      <form action="{{ url_for('.enable', username=user['username']) }}"
+            method="POST">
+        {{ csrf_token() }}
+        <button type="submit" class="btn btn-success">Enable</button>
+      </form>
+      {% elif user['status'] == constants.ENABLED %}
+      <form action="{{ url_for('.disable', username=user['username']) }}"
+            method="POST">
+        {{ csrf_token() }}
+        <button type="submit" class="btn btn-danger">Disable</button>
+      </form>
+      {% endif %}
+    </td>
+    {% endif %}
+  </tr>
+  <tr>
+    <th class="text-right">API key</th>
+    <td>{{ user.get('apikey') or '-' }}</td>
+  </tr>
+  <tr>
+    <th class="text-right"># databases</th>
+    <td>
+      <a href="{{ url_for('dbs_owner', username=user['username']) }}">
+	<span class="badge badge-primary">{{ ndbs }}</span></a>
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Total size</th>
+    <td>
+      <span class="text-monospace">{{ '{:,}'.format(usage) }}</span> bytes
+      {% if user.get('quota') and usage > user['quota'] %}
+      <br>
+      <span class="text-danger">No more data may be added.</span>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Size quota</th>
+    <td>
+      {% if user.get('quota') %}
+      <span class="text-monospace">{{ '{:,}'.format(user['quota']) }}</span>
+      bytes
+      {% else %}
+      <em>none</em>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right"># visualization templates</th>
+    <td>
+      <a href="{{ url_for('templates_owner', username=user['username']) }}">
+	<span class="badge badge-info">{{ ntemplates }}</span></a>
+    </td>
+  </tr>
+</table>
 {% endblock %}
 
 {% block actions %}

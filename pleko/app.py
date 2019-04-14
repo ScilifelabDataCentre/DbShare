@@ -139,53 +139,53 @@ def home():
     return flask.render_template('home.html',
                                  dbs=pleko.db.get_dbs(public=True))
 
+@app.route('/dbs')
+@pleko.user.login_required
+@pleko.user.admin_required
+def dbs_all():
+    "Display the list of all databases."
+    dbs = pleko.db.get_dbs()
+    return flask.render_template('dbs_all.html',
+                                 dbs=dbs,
+                                 usage=sum([db['size'] for db in dbs]))
+
+@app.route('/owner/<name:username>')
+@pleko.user.login_required
+def dbs_owner(username):
+    "Display the list of databases owned by the given user."
+    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
+        flask.flash("you may not access the list of the user's databases")
+        return flask.redirect(flask.url_for('home'))
+    return flask.render_template(
+        'dbs_owner.html',
+        dbs=pleko.db.get_dbs(owner=username),
+        username=username)
+
 @app.route('/templates')
 def templates():
     "Display the list of public visualization templates."
     templates = pleko.template.get_templates(public=True)
     return flask.render_template('templates.html', templates=templates)
 
-@app.route('/owner/<name:username>')
+@app.route('/templates/all')
 @pleko.user.login_required
-def owner(username):
-    "Display the list of databases owned by the given user."
-    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
-        flask.flash("you may not access the list of the user's databases")
-        return flask.redirect(flask.url_for('home'))
-    return flask.render_template(
-        'owner.html',
-        dbs=pleko.db.get_dbs(owner=username),
-        username=username)
+@pleko.user.admin_required
+def templates_all():
+    "Display the list of public visualization templates."
+    return flask.render_template('templates_all.html',
+                                 templates=pleko.template.get_templates())
 
 @app.route('/owner/<name:username>/templates')
 @pleko.user.login_required
-def owner_templates(username):
+def templates_owner(username):
     "Display the list of visualization templates owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
         flask.flash("you may not access the list of the user's templates")
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
-        'owner_templates.html',
+        'templates_owner.html',
         templates=pleko.template.get_templates(owner=username),
         username=username)
-
-@app.route('/alldbs')
-@pleko.user.login_required
-@pleko.user.admin_required
-def alldbs():
-    "Display the list of all databases."
-    dbs = pleko.db.get_dbs()
-    return flask.render_template('alldbs.html',
-                                 dbs=dbs,
-                                 usage=sum([db['size'] for db in dbs]))
-
-@app.route('/alltemplates')
-@pleko.user.login_required
-@pleko.user.admin_required
-def alltemplates():
-    "Display the list of public visualization templates."
-    templates = pleko.template.get_templates()
-    return flask.render_template('alltemplates.html', templates=templates)
 
 @app.route('/upload', methods=['GET', 'POST'])
 @pleko.user.login_required

@@ -12,8 +12,9 @@
       <th>Email</th>
       <th>Role</th>
       <th>Status</th>
-      <th>Databases</th>
+      <th># databases</th>
       <th>Total size (bytes)</th>
+      <th># visualization templates</th>
     </tr>
   </thead>
   <tbody>
@@ -27,15 +28,15 @@
       <td>{{ user['role'] }}</td>
       <td>{{ user['status'] }}</td>
       <td>
-	{% if user['ndb'] %}
-	<a href="{{ url_for('owner', username=user['username']) }}">
-	  {{ user['ndb'] }} databases</a>
-	{% else %}
-	0 databases
-	{% endif %}
+	<a href="{{ url_for('dbs_owner', username=user['username']) }}">
+	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
       </td>
       <td class="text-right">
         <span class="text-monospace mr-3">{{ '{:,}'.format(user['size']) }}</span>
+      </td>
+      <td>
+	<a href="{{ url_for('templates_owner', username=user['username']) }}">
+	  <span class="badge badge-info">{{ user['ntemplates'] }}</span></a>
       </td>
     </tr>
     {% endfor %}
