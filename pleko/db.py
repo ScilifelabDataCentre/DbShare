@@ -89,7 +89,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             cnx.execute(sql, (str(dbname),))
             os.remove(utils.dbpath(str(dbname)))
         return flask.redirect(
-            flask.url_for('owner', username=flask.g.current_user['username']))
+            flask.url_for('dbs_owner', username=flask.g.current_user['username']))
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -512,19 +512,28 @@ class DbContext:
             if not self.db.get(key):
                 raise ValueError("invalid db: %s not set" % key)
         self.db['modified'] = utils.get_time()
-        if not self.old and get_db(self.db['name']):
-            raise ValueError('database name already in use')
         with self.cnx:
             # Update existing database entry in master
             if self.old:
-                sql = "UPDATE dbs SET owner=?, title=?, public=?," \
+                sql = 'PRAGMA foreign_keys=OFF'
+                self.cnx.execute(sql)
+                sql = "UPDATE dbs SET name=?, owner=?, title=?, public=?," \
                       " readonly=?, modified=? WHERE name=?"
-                self.cnx.execute(sql, (self.db['owner'],
+                self.cnx.execute(sql, (self.db['name'],
+                                       self.db['owner'],
                                        self.db.get('title'),
                                        bool(self.db['public']),
                                        bool(self.db['readonly']),
                                        self.db['modified'],
-                                       self.db['name']))
+                                       self.old['name']))
+                # Database renamed; fix entries in log records and rename file.
+                if self.old.get('name') != self.db['name']:
+                    sql = "UPDATE dbs_logs SET name=? WHERE name=?"
+                    self.cnx.execute(sql, (self.db['name'], self.old['name']))
+                    os.rename(utils.dbpath(self.old['name']),
+                              utils.dbpath(self.db['name']))
+                sql = 'PRAGMA foreign_keys=ON'
+                self.cnx.execute(sql)
             # Create database entry in master, and its Sqlite3 file
             else:
                 try:
@@ -577,21 +586,6 @@ class DbContext:
             raise ValueError('invalid database name')
         if get_db(name):
             raise ValueError('database name already in use')
-        try:
-            oldname = self.db['name']
-        except KeyError:
-            pass
-        else:
-            with self.cnx:
-                sql = 'PRAGMA foreign_keys=OFF'
-                self.cnx.execute(sql)
-                sql = "UPDATE dbs SET name=? WHERE name=?"
-                self.cnx.execute(sql, (name, oldname))
-                sql = "UPDATE dbs_logs SET name=? WHERE name=?"
-                self.cnx.execute(sql, (name, oldname))
-                sql = 'PRAGMA foreign_keys=ON'
-                self.cnx.execute(sql)
-            os.rename(utils.dbpath(oldname), utils.dbpath(name))
         self.db['name'] = name
 
     def update_spec_data_urls(self, old_dbname):

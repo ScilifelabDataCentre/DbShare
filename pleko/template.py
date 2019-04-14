@@ -8,6 +8,7 @@ import sqlite3
 
 import pleko.db
 import pleko.user
+import pleko.vega_lite
 from pleko import constants
 from pleko import utils
 
@@ -27,7 +28,12 @@ def create():
                 ctx.set_name(flask.request.form.get('name'))
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.set_type(flask.request.form.get('type'))
-                ctx.set_code(flask.request.form.get('code'))
+                if ctx.template['type'] == constants.VEGA_LITE:
+                    initial = copy.deepcopy(pleko.vega_lite.INITIAL)
+                    initial['$schema'] = flask.current_app.config['VEGA_LITE_SCHEMA_URL']
+                    ctx.set_code(json.dumps(initial, indent=2))
+                elif ctx.template['type'] == constants.VEGA:
+                    raise NotImplementedError('Vega initial template')
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create'))
@@ -42,7 +48,7 @@ def view(templatename):
         template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates'))
+        return flask.redirect(flask.url_for('templates_public'))
 
     write_access = has_write_access(template)
     if utils.is_method_GET():
@@ -56,7 +62,7 @@ def view(templatename):
                 raise ValueError('you may not delete the template')
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('templates'))
+            return flask.redirect(flask.url_for('templates_public'))
         cnx = pleko.master.get_cnx(write=True)
         with cnx:
             sql = "DELETE FROM templates WHERE name=?"
@@ -72,13 +78,18 @@ def edit(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates'))
+        return flask.redirect(flask.url_for('templates_public'))
 
     if utils.is_method_GET():
         return flask.render_template('template/edit.html', template=template)
 
     elif utils.is_method_POST():
-        raise NotImplementedError
+        with TemplateContext(template=template) as ctx:
+            ctx.set_name(flask.request.form.get('name'))
+            ctx.set_title(flask.request.form.get('title'))
+            ctx.set_code(flask.request.form.get('code'))
+        return flask.redirect(
+            flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
 @pleko.user.login_required
@@ -88,7 +99,7 @@ def clone(templatename):
         template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('templates_public'))
 
     if utils.is_method_GET():
         return flask.render_template('template/clone.html', template=template)
@@ -116,7 +127,7 @@ def public(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('templates_public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = True
@@ -135,7 +146,7 @@ def private(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
+        return flask.redirect(flask.url_for('templates_public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = False
@@ -164,8 +175,8 @@ class TemplateContext:
     def __init__(self, template=None):
         if template is None:
             self.template = {'owner':   flask.g.current_user['username'],
-                             'code': '',
                              'fields': {},
+                             'code': '',
                              'public':  False,
                              'created': utils.get_time()}
             self.old = {}
@@ -191,21 +202,20 @@ class TemplateContext:
             if not self.template.get(key):
                 raise ValueError("invalid template: %s not set" % key)
         self.template['modified'] = utils.get_time()
-        if not self.old and get_template(self.template['name']):
-            raise ValueError('template name already in use')
         with self.cnx:
             # Update existing template entry in master
             if self.old:
-                sql = "UPDATE templates SET owner=?, title=?, code=?," \
+                sql = "UPDATE templates SET name=?, owner=?, title=?, code=?," \
                       " type=?, fields=?, public=?, modified=? WHERE name=?"
-                self.cnx.execute(sql, (self.template['owner'],
+                self.cnx.execute(sql, (self.template['name'],
+                                       self.template['owner'],
                                        self.template.get('title'),
                                        self.template['code'],
                                        self.template['type'],
                                        json.dumps(self.template['fields']),
                                        bool(self.template['public']),
                                        self.template['modified'],
-                                       self.template['name']))
+                                       self.old['name']))
             # Create template entry in master
             else:
                 sql = "INSERT INTO templates" \
@@ -242,7 +252,7 @@ class TemplateContext:
 
     def set_code(self, code):
         "Set the template code."
-        self.template['code'] = code
+        self.template['code'] = code or ''
 
 
 def get_templates(public=None, owner=None):

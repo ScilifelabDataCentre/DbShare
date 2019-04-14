@@ -91,8 +91,14 @@
             </div>
           </li>
           {% endif %}
-          <li class="nav-item">
-            <a href="{{ url_for('about') }}"class="nav-link">About</a>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">About</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAbout">
+              <a href="{{ url_for('url_endpoints') }}"
+		 class="nav-link">URL endpoints</a>
+	    </div>
           </li>
         </ul>
         <ul class="nav justify-content-end">

@@ -1,0 +1,32 @@
+<table id="dbs" class="table table-sm my-4">
+  <thead>
+    <tr>
+      <th>Database</th>
+      <th>Title</th>
+      <th>Mode</th>
+      <th>Owner</th>
+      <th>Modified</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for db in dbs %}
+    <tr>
+      <td>
+        <a href="{{ url_for('db.home', dbname=db['name']) }}" role="button"
+	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
+          {{ db['name'] }}</a>
+      </td>
+      <td>{{ db.get('title') or '-' }}</td>
+      <td>
+	{% if db['readonly'] %}
+	read-only
+	{% else %}
+	<span class="badge badge-warning">read-write</span>
+	{% endif %}
+      </td>
+      <td>{{ db['owner'] }}</td>
+      <td><small class="localtime">{{ db['modified'] }}</small></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

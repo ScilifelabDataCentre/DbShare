@@ -66,6 +66,7 @@ CONFIG = dict(
     VEGA_EMBED_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-embed@4',
     VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
+    VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
     VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
 )
 
@@ -139,6 +140,12 @@ def home():
     return flask.render_template('home.html',
                                  dbs=pleko.db.get_dbs(public=True))
 
+@app.route('/dbs/public')
+def dbs_public():
+    "Display the list of public databases."
+    return flask.render_template('dbs_public.html',
+                                 dbs=pleko.db.get_dbs(public=True))
+
 @app.route('/dbs/all')
 @pleko.user.login_required
 @pleko.user.admin_required
@@ -161,11 +168,11 @@ def dbs_owner(username):
         dbs=pleko.db.get_dbs(owner=username),
         username=username)
 
-@app.route('/templates')
-def templates():
+@app.route('/templates/public')
+def templates_public():
     "Display the list of public visualization templates."
     templates = pleko.template.get_templates(public=True)
-    return flask.render_template('templates.html', templates=templates)
+    return flask.render_template('templates_public.html', templates=templates)
 
 @app.route('/templates/all')
 @pleko.user.login_required
@@ -204,9 +211,9 @@ def upload():
             return flask.redirect(flask.url_for('upload'))
         return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
-@app.route('/about')
-def about():
-    "Display information about the software system."
+@app.route('/about/url_endpoints')
+def url_endpoints():
+    "Display all URL endpoints."
     endpoints = {}
     trivial_methods = set(['HEAD', 'OPTIONS'])
     for rule in app.url_map.iter_rules():
@@ -218,7 +225,7 @@ def about():
         endpoints[name]['doc'] = func.__doc__
     endpoints['static']['doc'] = 'Static web page support files.'
     urls = sorted([(e['url'], e) for e in endpoints.values()])
-    return flask.render_template('about.html', urls=urls)
+    return flask.render_template('url_endpoints.html', urls=urls)
 
     
 

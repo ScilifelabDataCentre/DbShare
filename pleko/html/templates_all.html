@@ -45,6 +45,14 @@
 </table>
 {% endblock %}
 
+{% block actions %}
+<div class="mt-3">
+  <a href="{{ url_for('templates_public') }}"
+     role="button" class="btn btn-info btn-block">
+    Public visualization templates</a>
+</div>
+{% endblock %}
+
 {% block javascript %}
 <script>
   $(function() {

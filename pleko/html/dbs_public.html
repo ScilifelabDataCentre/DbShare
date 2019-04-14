@@ -1,14 +1,11 @@
 {% extends 'base.html' %}
 
+{% block head_title %}Public databases{% endblock %}
+
+{% block body_title %}Public databases{% endblock %}
+
 {% block main %}
-<p class="lead ml-4 mb-5">
-  Publish, query and visualize tabular data sets using 
-  <a href="{{ config['SQLITE3_URL'] }}" target="_blank">Sqlite3</a> and
-  <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
-</p>
-
 {% include 'list_dbs_public.html' %}
-
 {% endblock %}
 
 {% block actions %}
@@ -24,7 +21,7 @@
   $(function() {
     $("#dbs").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 10,
+      "pageLength": 25,
     });
   });
 </script>

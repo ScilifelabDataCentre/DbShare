@@ -57,6 +57,14 @@
 </table>
 {% endblock %}
 
+{% block actions %}
+<div class="mt-3">
+  <a href="{{ url_for('dbs_public') }}"
+     role="button" class="btn btn-primary btn-block">
+    Public databases</a>
+</div>
+{% endblock %}
+
 {% block javascript %}
 <script>
   $(function() {

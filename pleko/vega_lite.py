@@ -13,17 +13,12 @@ from pleko import constants
 from pleko import utils
 
 
-INITIAL = {'$schema': 'https://vega.github.io/schema/vega-lite/v3.json',
-           'title': 'A basic scatterplot visualization.',
-           'description': 'A skeleton for a scatterplot.',
+INITIAL = {'$schema': None,     # To be set on template creation.
+           'title': '{{ title }}',
+           'description': '{{ description }}',
            'width': 400,
            'height': 400,
-           'data': {'url': None, 'format': {'type': 'csv'}},
-           'mark': 'point',
-           'encoding': {'x': {'field': 'REPLACE', 'type': 'quantitative'},
-                        'y': {'field': 'REPLACE', 'type': 'quantitative'},
-                        'color': {'field': 'REPLACE', 'type': 'nominal'},
-                        'shape': {'field': 'REPLACE', 'type': 'nominal'}}}
+           'data': {'url': '{{ data_url }}', 'format': {'type': 'csv'}}}
 
 
 blueprint = flask.Blueprint('vega-lite', __name__)
@@ -47,6 +42,7 @@ def create(dbname, sourcename):
         spec = flask.request.args.get('spec')
         if not spec:
             spec = copy.deepcopy(INITIAL)
+            spec['$schema'] = flask.current_app.config['VEGA_LITE_SCHEMA_URL']
             if schema['type'] == constants.TABLE:
                 url =  utils.get_url('table.rows',
                                      values=dict(dbname=db['name'],
