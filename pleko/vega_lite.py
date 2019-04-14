@@ -16,8 +16,8 @@ from pleko import utils
 INITIAL = {'$schema': None,     # To be set on template creation.
            'title': '{{ title }}',
            'description': '{{ description }}',
-           'width': 400,
-           'height': 400,
+           'width': None,       # To be set on template creation.
+           'height': None,      # To be set on template creation.
            'data': {'url': '{{ data_url }}', 'format': {'type': 'csv'}}}
 
 
@@ -42,7 +42,10 @@ def create(dbname, sourcename):
         spec = flask.request.args.get('spec')
         if not spec:
             spec = copy.deepcopy(INITIAL)
-            spec['$schema'] = flask.current_app.config['VEGA_LITE_SCHEMA_URL']
+            config = flask.current_app.config
+            spec['$schema'] = config['VEGA_LITE_SCHEMA_URL']
+            spec['width']   = config['VEGA_LITE_DEFAULT_WIDTH']
+            spec['height']  = config['VEGA_LITE_DEFAULT_HEIGHT']
             if schema['type'] == constants.TABLE:
                 url =  utils.get_url('table.rows',
                                      values=dict(dbname=db['name'],

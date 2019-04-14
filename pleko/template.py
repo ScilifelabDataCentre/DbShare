@@ -30,7 +30,10 @@ def create():
                 ctx.set_type(flask.request.form.get('type'))
                 if ctx.template['type'] == constants.VEGA_LITE:
                     initial = copy.deepcopy(pleko.vega_lite.INITIAL)
-                    initial['$schema'] = flask.current_app.config['VEGA_LITE_SCHEMA_URL']
+                    config = flask.current_app.config
+                    initial['$schema'] = config['VEGA_LITE_SCHEMA_URL']
+                    initial['width']   = config['VEGA_LITE_DEFAULT_WIDTH']
+                    initial['height']  = config['VEGA_LITE_DEFAULT_HEIGHT']
                     ctx.set_code(json.dumps(initial, indent=2))
                 elif ctx.template['type'] == constants.VEGA:
                     raise NotImplementedError('Vega initial template')
@@ -156,17 +159,15 @@ def private(templatename):
         flask.flash('Visualization template public access revoked.', 'message')
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
-@blueprint.route('/<name:templatename>/field')
+@blueprint.route('/<name:templatename>/field', methods=['GET', 'POST'])
 @pleko.user.login_required
 def field(templatename):
     "Add an input field to the template definition."
-    raise NotImplementedError
+    if utils.is_method_GET():
+        return flask.render_template('template/field_create.html')
 
-@blueprint.route('/<name:templatename>/render/<name:dbname>/<name:sourcename>')
-@pleko.user.login_required
-def render(templatename):
-    "Render the given source (table or view) with the given template."
-    raise NotImplementedError
+    elif utils.is_method_POST():
+        raise NotImplementedError
 
 
 class TemplateContext:
@@ -236,6 +237,7 @@ class TemplateContext:
         if name == self.template.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid template name')
+        name = name.lower()
         if get_template(name):
             raise ValueError('template name already in use')
         self.template['name'] = name

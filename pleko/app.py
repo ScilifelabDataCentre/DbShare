@@ -68,6 +68,8 @@ CONFIG = dict(
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
     VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
     VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
+    VEGA_LITE_DEFAULT_WIDTH = 400,
+    VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
 
 def create_app():

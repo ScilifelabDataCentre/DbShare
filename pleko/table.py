@@ -659,7 +659,13 @@ def download_csv(dbname, tablename):
 @blueprint.route('/<name:dbname>/<name:tablename>/render')
 @pleko.user.login_required
 def render(dbname, tablename):
-    "Select template to create a visualization of the table."
+    "Select a visualization template to use for the table."
+    raise NotImplementedError
+
+@blueprint.route('/<name:dbname>/<name:tablename>/render/<name:templatename>')
+@pleko.user.login_required
+def render_template(dbname, tablename, templatename):
+    "Create a visualization of the table using the given template."
     raise NotImplementedError
 
 
