@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Visualization templates owned by {{ username }}
+{% endblock %}
+
+{% block body_title %}
+Visualization templates owned by {{ username }}
+{% endblock %}
+
+{% block main %}
+<table id="templates" class="table table-sm my-4">
+  <thead>
+    <tr>
+      <th>Template</th>
+      <th>Title</th>
+      <th>Type</th>
+      <th>Access</th>
+      <th>Modified</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for template in templates %}
+    <tr>
+      <th>
+        <a href="{{ url_for('template.view', templatename=template['name']) }}"
+	   role="button" class="btn btn-sm btn-outline-info px-3 py-0">
+          {{ template['name'] }}</a>
+      </th>
+      <td>{{ template.get('title') or '-' }}</td>
+      <td>{{ template['type'] }}</td>
+      <td>
+	{% if template['public'] %}
+	<span class="badge badge-success">public</span>
+	{% else %}
+	private
+	{% endif %}
+      </td>
+      <td><small class="localtime">{{ template['modified'] }}</small></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block actions %}
+<div class="mt-3">
+  <a href="{{ url_for('template.create') }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Create a new visualization template."
+     class="btn btn-info btn-block">Create</a>
+</div>
+<div class="mt-3">
+  <a href="{{ url_for('owner', username=username) }}"
+     role="button" class="btn btn-primary btn-block">
+    Databases owned by {{ username }}</a>
+</div>
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#templates").DataTable( {
+      "pagingType": "full_numbers",
+      "pageLength": 25,
+    });
+  });
+</script>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %}

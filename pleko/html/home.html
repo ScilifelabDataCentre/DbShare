@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
 
 {% block main %}
-<p class="lead ml-3">
+<p class="lead ml-4">
   Publish, query and visualize tabular data sets using 
   <a href="{{ config['SQLITE3_URL'] }}" target="_blank">Sqlite3</a> and
   <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
 </p>
 
-<h4 class="ml-3 my-4">Public databases</h2>
-<table id="dbs" class="table table-sm">
+<table id="dbs" class="table table-sm my-4">
   <thead>
     <tr>
       <th>Database</th>
@@ -40,6 +39,13 @@
     {% endfor %}
   </tbody>
 </table>
+{% endblock %}
+
+{% block actions %}
+<div class="mt-3">
+  <a href="{{ url_for('templates') }}"
+     role="button" class="btn btn-info btn-block">Visualization templates</a>
+</div>
 {% endblock %}
 
 {% block javascript %}

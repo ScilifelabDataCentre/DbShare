@@ -62,7 +62,9 @@ MASTER_TABLES = [
                   dict(name='owner', type=constants.TEXT, notnull=True),
                   dict(name='title', type=constants.TEXT),
                   dict(name='description', type=constants.TEXT),
+                  dict(name='type', type=constants.TEXT, notnull=True),
                   dict(name='code', type=constants.TEXT, notnull=True),
+                  dict(name='fields', type=constants.TEXT, notnull=True),
                   dict(name='public', type=constants.INTEGER, notnull=True),
                   dict(name='created', type=constants.TEXT, notnull=True),
                   dict(name='modified', type=constants.TEXT, notnull=True)

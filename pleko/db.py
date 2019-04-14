@@ -570,8 +570,7 @@ class DbContext:
                                    utils.get_time()))
 
     def set_name(self, name):
-        """Set or change the database name.
-        """
+        "Set or change the database name."
         assert not hasattr(self, '_dbcnx')
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
@@ -814,7 +813,7 @@ class DbContext:
 
 
 def get_dbs(public=None, owner=None, complete=False):
-    "Get a list of databases according to criteria."
+    "Get the list of databases according to criteria."
     sql = "SELECT name FROM dbs"
     criteria = {}
     if public is not None:

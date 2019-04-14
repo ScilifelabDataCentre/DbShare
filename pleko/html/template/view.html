@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Visualization template {{ template['name'] }}{% endblock %}
+
+{% block body_title %}Visualization template {{ template['name'] }}{% endblock %}
+
+{% block main %}
+<table class="table table-borderless">
+  <tr>
+    <th class="text-right">Name</th>
+    <td>{{ template['name'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Title</th>
+    <td>{{ template.get('title') or '-' }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Type</th>
+    <td>{{ template['type'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Public</th>
+    <td>
+      {% if template['public'] %}
+      <span class="badge badge-success">public</span>
+      {% else %}
+      private
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Owner</th>
+    <td>{{ template['owner'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Modified</th>
+    <td><small class="localtime">{{ template['modified'] }}</small></td>
+  </tr>
+  <tr>
+    <th class="text-right">Created</th>
+    <td><small class="localtime">{{ template['created'] }}</small></td>
+  </tr>
+  <tr>
+    <th class="text-right">Fields</th>
+    <td>
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Code</th>
+    <td><pre>{{ template['code'] }}</pre></td>
+  </tr>
+</table>
+{% endblock %}

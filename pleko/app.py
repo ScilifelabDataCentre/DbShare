@@ -139,16 +139,35 @@ def home():
     return flask.render_template('home.html',
                                  dbs=pleko.db.get_dbs(public=True))
 
+@app.route('/templates')
+def templates():
+    "Display the list of public visualization templates."
+    templates = pleko.template.get_templates(public=True)
+    return flask.render_template('templates.html', templates=templates)
+
 @app.route('/owner/<name:username>')
 @pleko.user.login_required
 def owner(username):
     "Display the list of databases owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
-        flask.flash("you may not access the list of user's databases")
+        flask.flash("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
-    return flask.render_template('owner.html',
-                                 dbs=pleko.db.get_dbs(owner=username),
-                                 username=username)
+    return flask.render_template(
+        'owner.html',
+        dbs=pleko.db.get_dbs(owner=username),
+        username=username)
+
+@app.route('/owner/<name:username>/templates')
+@pleko.user.login_required
+def owner_templates(username):
+    "Display the list of visualization templates owned by the given user."
+    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
+        flask.flash("you may not access the list of the user's templates")
+        return flask.redirect(flask.url_for('home'))
+    return flask.render_template(
+        'owner_templates.html',
+        templates=pleko.template.get_templates(owner=username),
+        username=username)
 
 @app.route('/alldbs')
 @pleko.user.login_required
@@ -159,12 +178,6 @@ def alldbs():
     return flask.render_template('alldbs.html',
                                  dbs=dbs,
                                  usage=sum([db['size'] for db in dbs]))
-
-@app.route('/templates')
-def templates():
-    "Display the list of public visualization templates."
-    templates = pleko.template.get_templates(public=True)
-    return flask.render_template('templates.html', templates=templates)
 
 @app.route('/alltemplates')
 @pleko.user.login_required
