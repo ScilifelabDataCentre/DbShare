@@ -1,5 +1,6 @@
 "Visualization template endpoints."
 
+import copy
 import json
 
 import flask
@@ -16,7 +17,7 @@ blueprint = flask.Blueprint('template', __name__)
 @blueprint.route('/', methods=['GET', 'POST'])
 @pleko.user.login_required
 def create():
-    "Create a template."
+    "Create a visualization template."
     if utils.is_method_GET():
         return flask.render_template('template/create.html')
 
@@ -33,26 +34,116 @@ def create():
         return flask.redirect(flask.url_for('.view',
                                             templatename=ctx.template['name']))
 
-@blueprint.route('/<name:templatename>')
+@blueprint.route('/<name:templatename>', methods=['GET', 'POST', 'DELETE'])
 @pleko.user.login_required
 def view(templatename):
-    "View the template definition."
+    "View the visualization template definition. Or delete it."
     try:
-        template = get_template(templatename)
-        if template is None:
-            raise ValueError('no such template')
-        if not has_read_access(template):
-            raise ValueError('may not read the templat')
+        template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates'))
-    return flask.render_template('template/view.html', template=template)
 
-@blueprint.route('/<name:templatename>/edit')
+    write_access = has_write_access(template)
+    if utils.is_method_GET():
+        return flask.render_template('template/view.html',
+                                     template=template,
+                                     has_write_access=write_access)
+
+    elif utils.is_method_DELETE():
+        try:
+            if not write_access:
+                raise ValueError('you may not delete the template')
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('templates'))
+        cnx = pleko.master.get_cnx(write=True)
+        with cnx:
+            sql = "DELETE FROM templates WHERE name=?"
+            cnx.execute(sql, (templatename,))
+        return flask.redirect(flask.url_for('templates_owner',
+                                            username=template['owner']))
+
+@blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST'])
 @pleko.user.login_required
 def edit(templatename):
-    "Edit the template definition."
-    raise NotImplementedError
+    "Edit the visualization template definition."
+    try:
+        template = get_check_write(templatename)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('templates'))
+
+    if utils.is_method_GET():
+        return flask.render_template('template/edit.html', template=template)
+
+    elif utils.is_method_POST():
+        raise NotImplementedError
+
+@blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
+@pleko.user.login_required
+def clone(templatename):
+    "Create a clone of the visualization template."
+    try:
+        template = get_check_read(templatename)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+
+    if utils.is_method_GET():
+        return flask.render_template('template/clone.html', template=template)
+
+    elif utils.is_method_POST():
+        try:
+            with TemplateContext() as ctx:
+                name = flask.request.form['name']
+                ctx.set_name(name)
+                ctx.set_title(flask.request.form.get('title'))
+                ctx.set_type(template['type'])
+                ctx.set_code(template['code'])
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.clone', name=templatename))
+        return flask.redirect(
+            flask.url_for('.view', templatename=ctx.template['name']))
+
+@blueprint.route('/<name:templatename>/public', methods=['POST'])
+@pleko.user.login_required
+def public(templatename):
+    "Set the visualization template to public access."
+    utils.check_csrf_token()
+    try:
+        template = get_check_write(templatename)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        with TemplateContext(template) as ctx:
+            ctx.template['public'] = True
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    else:
+        flask.flash('Visualization template set to public access.', 'message')
+    return flask.redirect(flask.url_for('.view', templatename=template['name']))
+
+@blueprint.route('/<name:templatename>/private', methods=['POST'])
+@pleko.user.login_required
+def private(templatename):
+    "Set the visualization template to private access."
+    utils.check_csrf_token()
+    try:
+        template = get_check_write(templatename)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        with TemplateContext(template) as ctx:
+            ctx.template['public'] = False
+    except (KeyError, ValueError) as error:
+        flask.flash(str(error), 'error')
+    else:
+        flask.flash('Visualization template public access revoked.', 'message')
+    return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field')
 @pleko.user.login_required
@@ -155,7 +246,7 @@ class TemplateContext:
 
 
 def get_templates(public=None, owner=None):
-    "Get the list of templates according to criteria."
+    "Get the list of visualization templates according to criteria."
     sql = "SELECT name FROM templates"
     criteria = {}
     if public is not None:
@@ -168,18 +259,18 @@ def get_templates(public=None, owner=None):
     cursor.execute(sql, tuple(criteria.values()))
     return [get_template(row[0]) for row in cursor]
 
-def get_template(name):
-    """Return the database metadata for the given name.
-    Return None if no such database.
+def get_template(templatename):
+    """Return the visualization template for the given name.
+    Return None if no such visualization template.
     """
     cursor = pleko.master.get_cursor()
     sql = "SELECT owner, title, description, code, type, fields, public," \
           " created, modified FROM templates WHERE name=?"
-    cursor.execute(sql, (name,))
+    cursor.execute(sql, (templatename,))
     rows = list(cursor)
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
-    template = {'name':       name,
+    template = {'name':       templatename,
                 'owner':      row[0],
                 'title':      row[1],
                 'description':row[2],
@@ -191,9 +282,37 @@ def get_template(name):
                 'modified':   row[8]}
     return template
 
+def get_check_read(templatename):
+    """Get the visualization template and check that
+    the current user has read access.
+    Raise ValueError if any problem."""
+    template = get_template(templatename)
+    if template is None:
+        raise ValueError('no such visualization template')
+    if not has_read_access(template):
+        raise ValueError('you may not read the visualization template')
+    return template
+
 def has_read_access(template):
     "Does the current user (if any) have read access to the template?"
     if template['public']: return True
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == template['owner']
+
+def get_check_write(templatename):
+    """Get the visualization template and check that
+    the current user has write access.
+    Raise ValueError if any problem."""
+    template = get_template(templatename)
+    if template is None:
+        raise ValueError('no such visualization template')
+    if not has_write_access(template):
+        raise ValueError('you may not write the visualization template')
+    return template
+
+def has_write_access(template):
+    "Does the current user (if any) have write access to the template?"
     if not flask.g.current_user: return False
     if flask.g.is_admin: return True
     return flask.g.current_user['username'] == template['owner']

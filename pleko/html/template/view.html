@@ -51,3 +51,59 @@
   </tr>
 </table>
 {% endblock %}
+
+{% block actions %}
+{% if g.current_user %}
+<div class="mt-3">
+  <a href="{{ url_for('.clone', templatename=template['name']) }}"
+     role="button" class="btn btn-info btn-block">Clone</a>
+</div>
+{% endif %}
+{% if has_write_access %}
+<div class="mt-3">
+  <a href="{{ url_for('.edit', templatename=template['name']) }}"
+     role="button" class="btn btn-info btn-block">Edit</a>
+</div>
+{% if template['public'] %}
+<div class="mt-3">
+  <form action="{{ url_for('.private', templatename=template['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('Only you will be able to use this template.')">
+      Set private access</button>
+  </form>
+</div>
+{% else %}
+<div class="mt-3">
+  <form action="{{ url_for('.public', templatename=template['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block"
+            onclick="return confirm('Everyone will be able to use this template.')">
+      Set public access</button>
+  </form>
+</div>
+{% endif %} {# public #}
+<div class="mt-3">
+  <form action="{{ url_for('.view', templatename=template['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this visualization template."
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete</button>
+  </form>
+</div>
+{% endif %} {# has_write_access #}
+{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %}

@@ -5,33 +5,35 @@
 {% block body_title %}Schema for view {{ schema['name'] }}{% endblock %}
 
 {% block main %}
-<table class="table">
+<table class="table table-sm table-borderless">
+  <col style="width:20%">
+  <col style="width:80%">
   <tr>
-    <th width="25%">Title</th>
+    <th class="text-right">Title</th>
     <td>{{ schema.get('title') or '' }}</td>
   </tr>
   <tr>
-    <th>Description</th>
+    <th class="text-right">Description</th>
     <td>{{ schema.get('description') or '' }}</td>
   </tr>
   <tr>
-    <th>SELECT</th>
+    <th class="text-right">SELECT</th>
     <td>{{ schema['query']['select'] }}</td>
   </tr>
   <tr>
-    <th>FROM</th>
+    <th class="text-right">FROM</th>
     <td>{{ html_from|safe }}</td>
   </tr>
   <tr>
-    <th>WHERE</th>
+    <th class="text-right">WHERE</th>
     <td>{{ schema['query']['where'] or ''}}</td>
   </tr>
   <tr>
-    <th>ORDER BY</th>
+    <th class="text-right">ORDER BY</th>
     <td>{{ schema['query']['orderby'] or ''}}</td>
   </tr>
   <tr>
-    <th>LIMIT</th>
+    <th class="text-right">LIMIT</th>
     <td>{{ schema['query']['limit'] or ''}}</td>
   </tr>
 </table>

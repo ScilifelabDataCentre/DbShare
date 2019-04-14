@@ -139,7 +139,7 @@ def home():
     return flask.render_template('home.html',
                                  dbs=pleko.db.get_dbs(public=True))
 
-@app.route('/dbs')
+@app.route('/dbs/all')
 @pleko.user.login_required
 @pleko.user.admin_required
 def dbs_all():
@@ -149,7 +149,7 @@ def dbs_all():
                                  dbs=dbs,
                                  usage=sum([db['size'] for db in dbs]))
 
-@app.route('/owner/<name:username>')
+@app.route('/dbs/owner/<name:username>')
 @pleko.user.login_required
 def dbs_owner(username):
     "Display the list of databases owned by the given user."
@@ -175,7 +175,7 @@ def templates_all():
     return flask.render_template('templates_all.html',
                                  templates=pleko.template.get_templates())
 
-@app.route('/owner/<name:username>/templates')
+@app.route('/templates/owner/<name:username>')
 @pleko.user.login_required
 def templates_owner(username):
     "Display the list of visualization templates owned by the given user."

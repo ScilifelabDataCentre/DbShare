@@ -150,6 +150,7 @@
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
       "pageLength": 25,
+      "scrollX": true,
       {% if has_write_access %}
       "columnDefs": [
         {"orderable": false, "targets": {{ len(schema['columns']) }} }

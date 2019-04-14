@@ -333,15 +333,15 @@ def clone(dbname):
     elif utils.is_method_POST():
         try:
             with DbContext() as ctx:
-                newname = flask.request.form['name']
-                ctx.set_name(newname)
+                name = flask.request.form['name']
+                ctx.set_name(name)
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
         shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
-        db = get_db(newname, complete=True)
+        db = get_db(name, complete=True)
         with DbContext(db) as ctx:
             ctx.update_spec_data_urls(dbname)
         return flask.redirect(flask.url_for('.home', dbname=db['name']))
@@ -1018,7 +1018,7 @@ def has_read_access(db):
     return flask.g.current_user['username'] == db['owner']
 
 def get_check_read(dbname, nrows=False, complete=True):
-    """Get the database and check that the current user as read access.
+    """Get the database and check that the current user has read access.
     Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
@@ -1038,7 +1038,7 @@ def has_write_access(db, check_mode=True):
     return flask.g.current_user['username'] == db['owner']
 
 def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
-    """Get the database and check that the current user as write access.
+    """Get the database and check that the current user has write access.
     Optionally add nrows for each table and view.
     Raise ValueError if any problem.
     """
