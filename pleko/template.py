@@ -10,6 +10,7 @@ import sqlite3
 
 import pleko.db
 import pleko.user
+import pleko.vega
 import pleko.vega_lite
 from pleko import constants
 from pleko import utils
@@ -30,15 +31,20 @@ def create():
                 ctx.set_name(flask.request.form.get('name'))
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.set_type(flask.request.form.get('type'))
-                if ctx.template['type'] == constants.VEGA_LITE:
+                if ctx.template['type'] == constants.VEGA:
+                    initial = copy.deepcopy(pleko.vega.INITIAL)
+                    config = flask.current_app.config
+                    initial['$schema'] = config['VEGA_SCHEMA_URL']
+                    initial['width']   = config['VEGA_DEFAULT_WIDTH']
+                    initial['height']  = config['VEGA_DEFAULT_HEIGHT']
+                    ctx.set_code(json.dumps(initial, indent=2))
+                elif ctx.template['type'] == constants.VEGA_LITE:
                     initial = copy.deepcopy(pleko.vega_lite.INITIAL)
                     config = flask.current_app.config
                     initial['$schema'] = config['VEGA_LITE_SCHEMA_URL']
                     initial['width']   = config['VEGA_LITE_DEFAULT_WIDTH']
                     initial['height']  = config['VEGA_LITE_DEFAULT_HEIGHT']
                     ctx.set_code(json.dumps(initial, indent=2))
-                elif ctx.template['type'] == constants.VEGA:
-                    raise NotImplementedError('Vega initial template')
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create'))
@@ -312,7 +318,11 @@ def render(templatename, dbname, sourcename):
                     context[field['name']] = colname
             strspec = jinja2.Template(template['code']).render(**context)
             spec = json.loads(strspec)
-            if template['type'] == constants.VEGA_LITE:
+            if template['type'] == constants.VEGA:
+                jsonschema.validate(
+                    instance=spec,
+                    schema=flask.current_app.config['VEGA_SCHEMA'])
+            elif template['type'] == constants.VEGA_LITE:
                 jsonschema.validate(
                     instance=spec,
                     schema=flask.current_app.config['VEGA_LITE_SCHEMA'])

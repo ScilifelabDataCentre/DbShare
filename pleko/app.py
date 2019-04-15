@@ -15,6 +15,7 @@ import pleko.query
 import pleko.table
 import pleko.template
 import pleko.user
+import pleko.vega
 import pleko.vega_lite
 import pleko.view
 import pleko.visual
@@ -64,6 +65,11 @@ CONFIG = dict(
     TOPOJSON_JS_URL = 'https://cdn.jsdelivr.net/npm/topojson-client@3',
     VEGA_CORE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega@5/build/vega-core.min.js',
     VEGA_EMBED_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-embed@4',
+    VEGA_SCHEMA_URL = 'https://vega.github.io/schema/vega/v5.json',
+    VEGA_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-v5.json'),
+    VEGA_DEFAULT_WIDTH = 400,
+    VEGA_DEFAULT_HEIGHT = 400,
+    VEGA_SITE_URL = 'https://vega.github.io/vega/',
     VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
     VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
@@ -78,6 +84,8 @@ def create_app():
     app.config.from_mapping(CONFIG)
     app.config.from_json('config.json')
     app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
+    with open(app.config['VEGA_SCHEMA']) as infile:
+        app.config['VEGA_SCHEMA'] = json.load(infile)
     with open(app.config['VEGA_LITE_SCHEMA']) as infile:
         app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
     app.url_map.converters['name'] = utils.NameConverter
@@ -97,6 +105,7 @@ app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
 app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
 app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
 app.register_blueprint(pleko.template.blueprint, url_prefix='/template')
+app.register_blueprint(pleko.vega.blueprint, url_prefix='/vega')
 app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
 
 @app.context_processor
