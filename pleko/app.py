@@ -105,8 +105,9 @@ def setup_template_context():
     return dict(constants=constants,
                 csrf_token=utils.csrf_token,
                 utils=utils,
+                enumerate=enumerate,
                 len=len,
-                enumerate=enumerate)
+                range=range)
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):

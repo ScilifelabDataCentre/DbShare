@@ -55,8 +55,11 @@ def view(templatename):
 
     write_access = has_write_access(template)
     if utils.is_method_GET():
+        fields = list(template['fields'].values())
+        fields.sort(key=lambda f: f['ordinal'])
         return flask.render_template('template/view.html',
                                      template=template,
+                                     fields=fields,
                                      has_write_access=write_access)
 
     elif utils.is_method_DELETE():
@@ -163,11 +166,57 @@ def private(templatename):
 @pleko.user.login_required
 def field(templatename):
     "Add an input field to the template definition."
+    try:
+        template = get_check_write(templatename)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('templates_public'))
+
     if utils.is_method_GET():
-        return flask.render_template('template/field_create.html')
+        return flask.render_template('template/field_add.html',
+                                     template=template)
 
     elif utils.is_method_POST():
-        raise NotImplementedError
+        try:
+            with TemplateContext(template) as ctx:
+                ctx.add_field_from_form()
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(
+            flask.url_for('.view', templatename=template['name']))
+
+@blueprint.route('/<name:templatename>/field/<name:fieldname>',
+                 methods=['GET', 'POST', 'DELETE'])
+@pleko.user.login_required
+def field_edit(templatename, fieldname):
+    "Edit the input field in the template definition. Or delete it."
+    try:
+        template = get_check_write(templatename)
+        if fieldname not in template['fields']:
+            raise ValueError('no such field in template')
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('templates_public'))
+
+    if utils.is_method_GET():
+        return flask.render_template('template/field_edit.html',
+                                     template=template,
+                                     field=template['fields'][fieldname])
+
+    elif utils.is_method_POST():
+        try:
+            with TemplateContext(template) as ctx:
+                ctx.edit_field_from_form(fieldname)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(
+            flask.url_for('.view', templatename=template['name']))
+
+    elif utils.is_method_DELETE():
+        with TemplateContext(template) as ctx:
+            ctx.remove_field(fieldname)
+        return flask.redirect(
+            flask.url_for('.view', templatename=template['name']))
 
 
 class TemplateContext:
@@ -255,6 +304,61 @@ class TemplateContext:
     def set_code(self, code):
         "Set the template code."
         self.template['code'] = code or ''
+
+    def add_field_from_form(self):
+        "Add a field from data in the request form."
+        name = flask.request.form.get('name')
+        if not name:
+            raise ValueError('no name provided for field')
+        if not constants.NAME_RX.match(name):
+            raise ValueError('invalid name for field')
+        name = name.lower()
+        if name in self.template['fields']:
+            raise ValueError('field name already in use')
+        field = {'name': name}
+        field['types'] = flask.request.form.getlist('type')
+        if set(field['types']).difference(constants.COLUMN_TYPES):
+            raise ValueError('invalid type provided for field')
+        field['title'] = flask.request.form.get('title') or None
+        field['description'] = flask.request.form.get('description') or None
+        field['optional'] = utils.to_bool(flask.request.form.get('optional'))
+        field['ordinal'] = len(self.template['fields'])
+        self.template['fields'][field['name']] = field
+
+    def edit_field_from_form(self, fieldname):
+        "Edit the field by data in the request form."
+        field = self.template['fields'][fieldname]
+        field['types'] = flask.request.form.getlist('type')
+        if set(field['types']).difference(constants.COLUMN_TYPES):
+            raise ValueError('invalid type provided for field')
+        field['title'] = flask.request.form.get('title') or None
+        field['description'] = flask.request.form.get('description') or None
+        field['optional'] = utils.to_bool(flask.request.form.get('optional'))
+        try:
+            ordinal = int(flask.request.form.get('ordinal'))
+        except (ValueError, TypeError):
+            pass
+        else:
+            fields = list(self.template['fields'].values())
+            if ordinal < field['ordinal']:
+                for field in fields:
+                    if field['ordinal'] >= ordinal: field['ordinal'] += 1
+            elif ordinal > field['ordinal']:
+                for field in fields:
+                    if field['ordinal'] <= ordinal: field['ordinal'] -= 1
+            field['ordinal'] = ordinal
+        self.renumber_fields()
+
+    def remove_field(self, fieldname):
+        "Remove the field with the given name, and renumber the remaining ones."
+        self.template['fields'].pop(fieldname)
+        self.renumber_fields()
+
+    def renumber_fields(self):
+        fields = list(self.template['fields'].values())
+        fields.sort(key=lambda f: f['ordinal'])
+        for ordinal, field in enumerate(fields):
+            field['ordinal'] = ordinal
 
 
 def get_templates(public=None, owner=None):

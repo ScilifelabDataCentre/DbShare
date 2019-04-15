@@ -1,8 +1,12 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Visualization template {{ template['name'] }}{% endblock %}
+{% block head_title %}
+Visualization template {{ template['name'] }}
+{% endblock %}
 
-{% block body_title %}Visualization template {{ template['name'] }}{% endblock %}
+{% block body_title %}
+Visualization template {{ template['name'] }}
+{% endblock %}
 
 {% block main %}
 <table class="table table-sm table-borderless">
@@ -19,30 +23,43 @@
     <td>{{ template['type'] }}</td>
   </tr>
   <tr>
-    <th class="text-right">Public</th>
-    <td>
-      {% if template['public'] %}
-      <span class="badge badge-success">public</span>
-      {% else %}
-      private
-      {% endif %}
-    </td>
-  </tr>
-  <tr>
-    <th class="text-right">Owner</th>
-    <td>{{ template['owner'] }}</td>
-  </tr>
-  <tr>
-    <th class="text-right">Modified</th>
-    <td><small class="localtime">{{ template['modified'] }}</small></td>
-  </tr>
-  <tr>
-    <th class="text-right">Created</th>
-    <td><small class="localtime">{{ template['created'] }}</small></td>
+    <th class="text-right">Description</th>
+    <td>{{ template.get('description') or '-' }}</td>
   </tr>
   <tr>
     <th class="text-right">Fields</th>
-    <td>
+    <td class="px-4">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type(s)</th>
+            <th>Title</th>
+            <th>Optional</th>
+            <th>Description</th>
+            {% if has_write_access %}
+            <th></th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for field in fields %}
+          <tr>
+            <th>{{ field['name'] }}</th>
+            <td>{{ ', '.join(field['types']) }}</td>
+            <td>{{ field['title'] or '-' }}</td>
+            <td>{{ field['optional'] and 'optional' or 'required' }}</td>
+            <td>{{ field['description'] or '-' }}</td>
+            {% if has_write_access %}
+            <td class="text-right px-0">
+	      <a href="{{ url_for('.field_edit', templatename=template['name'], fieldname=field['name']) }}"
+	         class="btn btn-sm btn-primary py-0 my-0" role="button">Edit</a>
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </td>
   </tr>
   <tr>
@@ -58,19 +75,23 @@
   <a href="{{ url_for('.edit', templatename=template['name']) }}"
      role="button" class="btn btn-info btn-block">Edit</a>
 </div>
+<div class="mt-3">
+  <a href="{{ url_for('.field', templatename=template['name']) }}"
+     role="button" class="btn btn-info btn-block">Add field</a>
+</div>
 {% endif %} {# has_write_access #}
 {% if g.current_user %}
 <div class="mt-3">
   <a href="{{ url_for('.clone', templatename=template['name']) }}"
      role="button" class="btn btn-info btn-block">Clone</a>
 </div>
-{% endif %}
-{% if has_write_access %}
-<div class="mt-3"> {# It is reasonable to make this link available here. #}
-  <a href="{{ url_for('templates_owner', username=template['owner']) }}"
+<div class="mt-3">
+  <a href="{{ url_for('templates_owner', username=g.current_user['username']) }}"
      role="button" class="btn btn-info btn-block">
-    Visualization templates</a>
+    My visualization templates</a>
 </div>
+{% endif %} {# if g.current_user #}
+{% if has_write_access %}
 {% if template['public'] %}
 <div class="mt-3">
   <form action="{{ url_for('.private', templatename=template['name']) }}"
@@ -81,7 +102,7 @@
       Set private access</button>
   </form>
 </div>
-{% else %}
+{% else %} {# public #}
 <div class="mt-3">
   <form action="{{ url_for('.public', templatename=template['name']) }}"
 	method="POST">
@@ -105,6 +126,34 @@
   </form>
 </div>
 {% endif %} {# has_write_access #}
+{% endblock %}
+
+{% block info %}
+<div class="small mt-3">
+  <div>
+    Access
+    {% if template['public'] %}
+    <span class="badge badge-success">public</span>
+    {% else %}
+    private
+    {% endif %}
+  </div>
+  <div class="pt-1">
+    Owner
+    {% if g.current_user %}
+    <a href="{{ url_for('user.profile', username=template['owner'])}}">
+      {{ template['owner'] }}</a>
+    {% else %}
+    {{ template['owner'] }}
+    {% endif %}
+  </div>
+  <div class="pt-1">
+    Modified <span class="localtime">{{ template['modified'] }}</span>
+  </div>
+  <div class="pt-1">
+    Created <span class="localtime">{{ template['created'] }}</span>
+  </div>
+</div>
 {% endblock %}
 
 {% block javascript %}
