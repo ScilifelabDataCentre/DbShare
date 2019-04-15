@@ -300,12 +300,16 @@ def render(templatename, dbname, sourcename):
             context = {'DATA_URL': utils.url_for_rows(db,
                                                       schema,
                                                       external=True,
-                                                      csv=True)}
+                                                      csv=True),
+                       'TITLE': f"{template['title'] or template['name']}" +
+                                f" of {schema['type']} {schema['name']}"}
             for field in template['fields'].values():
                 colname = flask.request.form.get(field['name']) or None
-                if colname is None and not field['optional']:
-                    raise ValueError("missing value for %s" % field['name'])
-                context[field['name']] = colname
+                if colname is None:
+                    if not field['optional']:
+                        raise ValueError(f"missing value for {field['name']}")
+                else:
+                    context[field['name']] = colname
             strspec = jinja2.Template(template['code']).render(**context)
             spec = json.loads(strspec)
             if template['type'] == constants.VEGA_LITE:
@@ -355,7 +359,7 @@ class TemplateContext:
         if etyp is not None: return False
         for key in ['name', 'owner']:
             if not self.template.get(key):
-                raise ValueError("invalid template: %s not set" % key)
+                raise ValueError(f"invalid template: {key} not set")
         self.template['modified'] = utils.get_time()
         with self.cnx:
             # Update existing template entry in master

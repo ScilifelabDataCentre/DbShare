@@ -5,11 +5,11 @@
 {% block body_title %}{{ title }}{% endblock %}
 
 {% block main %}
-<div class="m-2">
-  {{ visual['spec'].get('description') or 'No description.' }}
-</div>
-
 <div id="visual"></div>
+
+<div class="m-2">
+  {{ visual['spec'].get('description') or '' }}
+</div>
 {% endblock %}
 
 {% block meta %}

@@ -50,4 +50,8 @@ Create a Vega-Lite visualization for {{ schema['type'] }} {{ schema['name'] }}
      role="button" target="_blank" class="btn btn-outline-primary btn-block">
     {{ schema['type'].capitalize()}}<br>{{ schema['nrows'] }} rows &#8599;</a>
 </div>
+<div class="mt-3">
+  <a href="{{ utils.url_for_rows(db, schema) }}"
+     role="button" class="btn btn-dark btn-block">Cancel</a>
+</div>
 {% endblock %}

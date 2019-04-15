@@ -30,6 +30,9 @@ Render {{ schema['type'] }} {{ schema['name'] }} using {{ template['name'] }}
 	<div class="col-md-4">
           <select id="{{ field['name'] }}" name="{{ field['name'] }}"
                   class="custom-select">
+	    {% if field['optional'] %}
+	    <option value="">[none]</option>
+	    {% endif %}
             {% for column in schema['columns'] %}
             {% if column['type'] in field['types'] %}
             <option>{{ column['name'] }}</option>

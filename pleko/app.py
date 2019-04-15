@@ -214,8 +214,8 @@ def upload():
             return flask.redirect(flask.url_for('upload'))
         return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
-@app.route('/about/url_endpoints')
-def url_endpoints():
+@app.route('/about/endpoints')
+def endpoints():
     "Display all URL endpoints."
     endpoints = {}
     trivial_methods = set(['HEAD', 'OPTIONS'])
