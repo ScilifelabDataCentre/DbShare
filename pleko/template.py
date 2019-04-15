@@ -297,8 +297,10 @@ def render(templatename, dbname, sourcename):
                 pass
             else:
                 raise ValueError('visualization name already in use')
-            context = {'DATA_URL': 
-                       utils.url_for_rows(db, schema, external=True, csv=True)}
+            context = {'DATA_URL': utils.url_for_rows(db,
+                                                      schema,
+                                                      external=True,
+                                                      csv=True)}
             for field in template['fields'].values():
                 colname = flask.request.form.get(field['name']) or None
                 if colname is None and not field['optional']:
