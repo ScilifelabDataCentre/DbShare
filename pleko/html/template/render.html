@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block head_title %}
+Render {{ schema['type'] }} {{ schema['name'] }} using {{ template['name'] }}
+{% endblock %}
+
+{% block body_title %}
+Render {{ schema['type'] }} {{ schema['name'] }} using {{ template['name'] }}
+{% endblock %}
+
+{% block main %}
+<div class="card border-info">
+  <div class="card-body">
+    <form action="{{ url_for('.render', templatename=template['name'], dbname=db['name'], sourcename=schema['name']) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+	<label for="_visualname" class="col-md-2 col-form-label text-right">
+          Visualization name</label>
+        <div class="col-md-6">
+          <input id="_visualname" name="_visualname" type="text"
+		 class="form-control" autofocus>
+        </div>
+      </div>
+      {% for field in fields %}
+      <div class="form-group row">
+	<label for="{{ field['name'] }}" 
+               class="col-md-2 col-form-label text-right">
+          {{ field['title'] or field['name'] }}</label>
+	<div class="col-md-4">
+          <select id="{{ field['name'] }}" name="{{ field['name'] }}"
+                  class="custom-select">
+            {% for column in schema['columns'] %}
+            {% if column['type'] in field['types'] %}
+            <option>{{ column['name'] }}</option>
+            {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+	<div class="col-md-4">
+          <small class="text-muted">{{ field['description'] or '' }}</small>
+        </div>
+      </div>
+      {% endfor %}
+      <div class="form-group row">
+        <div class="offset-md-2 col-md-3">
+          <button type="submit"
+                  class="btn btn-info btn-lg btn-block">Render</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block actions %}
+<div class="mt-3">
+  <a href="{{ utils.url_for_rows(db, schema) }}"
+     role="button" class="btn btn-dark btn-block">Cancel</a>
+</div>
+{% endblock %}

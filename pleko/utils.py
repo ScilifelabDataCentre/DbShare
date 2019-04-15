@@ -81,6 +81,22 @@ def get_url(endpoint, values={}, query={}):
         url += '?' + urllib.parse.urlencode(query)
     return url
 
+def url_for_rows(db, schema, external=False, csv=False):
+    "Return the URL for the rows of the table or view."
+    if schema['type'] == constants.TABLE:
+        url = flask.url_for('table.rows',
+                            dbname=db['name'],
+                            tablename=schema['name'],
+                            _external=external)
+    else:
+        url = flask.url_for('view.rows',
+                            dbname=db['name'],
+                            viewname=schema['name'],
+                            _external=external)
+    if csv:
+        url += '.csv'
+    return url
+
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."
     return uuid.uuid4().hex
@@ -142,11 +158,11 @@ def name_after_as(name):
         pass
     return name.strip().strip('"')
 
-def is_method_GET():
+def http_GET():
     "Is the HTTP method GET?"
     return flask.request.method == 'GET'
 
-def is_method_POST(csrf=True):
+def http_POST(csrf=True):
     "Is the HTTP method POST? Check whether used for method tunneling."
     if flask.request.method != 'POST': return False
     if flask.request.form.get('_http_method') in (None, 'POST'):
@@ -155,11 +171,11 @@ def is_method_POST(csrf=True):
     else:
         return False
 
-def is_method_PUT():
+def http_PUT():
     "Is the HTTP method PUT? Is not tunneled."
     return flask.request.method == 'PUT'
 
-def is_method_DELETE(csrf=True):
+def http_DELETE(csrf=True):
     "Is the HTTP method DELETE? Check for method tunneling."
     if flask.request.method == 'DELETE': return True
     if flask.request.method == 'POST':

@@ -44,10 +44,10 @@ blueprint = flask.Blueprint('user', __name__)
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
     "Login to a user account."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('user/login.html',
                                      next=flask.request.args.get('next'))
-    if utils.is_method_POST():
+    if utils.http_POST():
         username = flask.request.form.get('username')
         password = flask.request.form.get('password')
         try:
@@ -87,10 +87,10 @@ def logout():
 @blueprint.route('/register', methods=['GET', 'POST'])
 def register():
     "Register a new user account."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('user/register.html')
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with UserContext() as ctx:
                 ctx.set_username(flask.request.form.get('username'))
@@ -121,10 +121,10 @@ def register():
 @blueprint.route('/reset', methods=['GET', 'POST'])
 def reset():
     "Reset the password for a user account and send email."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('user/reset.html')
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             user = get_user(email=flask.request.form['email'])
             if user is None: raise KeyError
@@ -153,13 +153,13 @@ def send_password_code(user, action):
 @blueprint.route('/password', methods=['GET', 'POST'])
 def password():
     "Set the password for a user account, and login user."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template(
             'user/password.html',
             username=flask.request.args.get('username'),
             code=flask.request.args.get('code'))
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             user = get_user(username=flask.request.form['username'])
             if user is None: raise KeyError
@@ -245,12 +245,12 @@ def edit(username):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('user/edit.html',
                                      user=user,
                                      change_role=is_admin_and_not_self(user))
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         with UserContext(user) as ctx:
             email = flask.request.form.get('email')
             if email != user['email']:

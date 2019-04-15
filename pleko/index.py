@@ -1,4 +1,4 @@
-"Pleko index endpoint."
+"Index endpoints."
 
 import sqlite3
 
@@ -28,14 +28,14 @@ def create(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
     positions = list(range(len(schema['columns'])))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         pleko.db.set_nrows(db, nrows=db['tables'].keys())
         return flask.render_template('index/create.html',
                                      db=db,
                                      schema=schema,
                                      positions=positions)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             prefix = constants.INDEX_PREFIX_TEMPLATE % schema['name']
             ordinal = -1

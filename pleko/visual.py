@@ -30,7 +30,7 @@ def home(dbname):
                  methods=['GET', 'POST', 'DELETE'])
 def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
     "Display the visualization. Or delete it."
-    if utils.is_method_GET():
+    if utils.http_GET():
         try:
             db = pleko.db.get_check_read(dbname)
         except ValueError as error:
@@ -57,7 +57,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         else:
             flask.abort(406)
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         try:
             db = pleko.db.get_check_write(dbname)
         except ValueError as error:
@@ -94,13 +94,13 @@ def edit(dbname, visualname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         pleko.db.set_nrows(db, nrows=[schema['name']])
         return flask.render_template('visual/edit.html',
                                      db=db,
                                      schema=schema,
                                      visual=visual)
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             newname = flask.request.form.get('name') or visualname
             strspec = flask.request.form.get('spec')
@@ -153,10 +153,10 @@ def clone(dbname, visualname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('visual/clone.html', db=db, visual=visual)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             visualname = flask.request.form.get('name')
             if not visualname:

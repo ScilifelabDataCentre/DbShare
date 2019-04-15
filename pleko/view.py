@@ -29,14 +29,14 @@ def create(dbname):
     # Do not check here.
     query = pleko.query.get_query_from_request()
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('view/create.html',
                                      db=db,
                                      name=viewname,
                                      description=description,
                                      query=query)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             # Get again, with checking this time.
             query = pleko.query.get_query_from_request(check=True)
@@ -72,10 +72,10 @@ def edit(dbname, viewname):
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('view/edit.html', db=db, schema=schema)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with pleko.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
@@ -95,7 +95,7 @@ def edit(dbname, viewname):
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view. Or delete the view."
-    if utils.is_method_GET():
+    if utils.http_GET():
         try:
             db = pleko.db.get_check_read(dbname, nrows=[str(viewname)])
         except ValueError as error:
@@ -158,7 +158,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         try:
             db = pleko.db.get_check_write(dbname)
         except ValueError as error:
@@ -220,10 +220,10 @@ def clone(dbname, viewname):
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('view/clone.html', db=db, schema=schema)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
@@ -292,15 +292,3 @@ def download_csv(dbname, viewname):
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % viewname)
     return response
-
-@blueprint.route('/<name:dbname>/<name:viewname>/render')
-@pleko.user.login_required
-def render(dbname, viewname):
-    "Select a visualization template to use for the view."
-    raise NotImplementedError
-
-@blueprint.route('/<name:dbname>/<name:viewname>/render/<name:templatename>')
-@pleko.user.login_required
-def render_template(dbname, viewname, templatename):
-    "Create a visualization of the view using the given template."
-    raise NotImplementedError

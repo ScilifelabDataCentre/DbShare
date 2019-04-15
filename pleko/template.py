@@ -4,6 +4,8 @@ import copy
 import json
 
 import flask
+import jinja2
+import jsonschema
 import sqlite3
 
 import pleko.db
@@ -19,10 +21,10 @@ blueprint = flask.Blueprint('template', __name__)
 @pleko.user.login_required
 def create():
     "Create a visualization template."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('template/create.html')
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with TemplateContext() as ctx:
                 ctx.set_name(flask.request.form.get('name'))
@@ -54,7 +56,7 @@ def view(templatename):
         return flask.redirect(flask.url_for('templates_public'))
 
     write_access = has_write_access(template)
-    if utils.is_method_GET():
+    if utils.http_GET():
         fields = list(template['fields'].values())
         fields.sort(key=lambda f: f['ordinal'])
         return flask.render_template('template/view.html',
@@ -62,7 +64,7 @@ def view(templatename):
                                      fields=fields,
                                      has_write_access=write_access)
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         try:
             if not write_access:
                 raise ValueError('you may not delete the template')
@@ -86,10 +88,10 @@ def edit(templatename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates_public'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('template/edit.html', template=template)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         with TemplateContext(template=template) as ctx:
             ctx.set_name(flask.request.form.get('name'))
             ctx.set_title(flask.request.form.get('title'))
@@ -107,10 +109,10 @@ def clone(templatename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates_public'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('template/clone.html', template=template)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with TemplateContext() as ctx:
                 name = flask.request.form['name']
@@ -172,11 +174,11 @@ def field(templatename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates_public'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('template/field_add.html',
                                      template=template)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with TemplateContext(template) as ctx:
                 ctx.add_field_from_form()
@@ -198,12 +200,12 @@ def field_edit(templatename, fieldname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates_public'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('template/field_edit.html',
                                      template=template,
                                      field=template['fields'][fieldname])
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with TemplateContext(template) as ctx:
                 ctx.edit_field_from_form(fieldname)
@@ -212,12 +214,113 @@ def field_edit(templatename, fieldname):
         return flask.redirect(
             flask.url_for('.view', templatename=template['name']))
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         with TemplateContext(template) as ctx:
             ctx.remove_field(fieldname)
         return flask.redirect(
             flask.url_for('.view', templatename=template['name']))
 
+@blueprint.route('/select/<name:dbname>/<name:sourcename>',
+                 methods=['GET', 'POST'])
+@pleko.user.login_required
+def select(dbname, sourcename):
+    "Select a visualization template to use for the table or view."
+    try:
+        db = pleko.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = pleko.db.get_schema(db, sourcename)
+    except KeyError:
+        flask.flash('no such table or view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.http_GET():
+        templates = get_templates(owner=flask.g.current_user['username'],
+                                  public=True)
+        return flask.render_template('template/select.html',
+                                     db=db,
+                                     schema=schema,
+                                     templates=templates)
+
+    elif utils.http_POST():
+        try:
+            template = get_check_read(flask.request.form.get('template'))
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            url = utils.url_for_rows(db, schema)
+        else:
+            url = flask.url_for('.render',
+                                templatename=template['name'],
+                                dbname=db['name'],
+                                sourcename=schema['name'])
+        return flask.redirect(url)
+
+@blueprint.route('/render/<name:templatename>/<name:dbname>/<name:sourcename>',
+                 methods=['GET', 'POST'])
+@pleko.user.login_required
+def render(templatename, dbname, sourcename):
+    "Create a visualization of the table or view using the given template."
+    try:
+        template = get_check_read(templatename)
+        db = pleko.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = pleko.db.get_schema(db, sourcename)
+    except KeyError:
+        flask.flash('no such table or view', 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+    if utils.http_GET():
+        fields = list(template['fields'].values())
+        fields.sort(key=lambda f: f['ordinal'])
+        return flask.render_template('template/render.html',
+                                     db=db,
+                                     schema=schema,
+                                     template=template,
+                                     fields=fields)
+
+    elif utils.http_POST():
+        visualname = flask.request.form.get('_visualname')
+        try:
+            if not visualname:
+                raise ValueError('no visual name given')
+            if not constants.NAME_RX.match(visualname):
+                raise ValueError('invalid visual name')
+            visualname = visualname.lower()
+            try:
+                pleko.db.get_visual(db, visualname)
+            except ValueError:
+                pass
+            else:
+                raise ValueError('visualization name already in use')
+            context = {'DATA_URL': 
+                       utils.url_for_rows(db, schema, external=True, csv=True)}
+            for field in template['fields'].values():
+                colname = flask.request.form.get(field['name']) or None
+                if colname is None and not field['optional']:
+                    raise ValueError("missing value for %s" % field['name'])
+                context[field['name']] = colname
+            strspec = jinja2.Template(template['code']).render(**context)
+            spec = json.loads(strspec)
+            if template['type'] == constants.VEGA_LITE:
+                jsonschema.validate(
+                    instance=spec,
+                    schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+            with pleko.db.DbContext(db) as ctx:
+                ctx.add_visual(visualname, schema['name'], spec)
+        except (ValueError, TypeError, jinja2.TemplateError) as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.render',
+                                                templatename=templatename,
+                                                dbname=dbname,
+                                                sourcename=sourcename))
+        return flask.redirect(flask.url_for('visual.display',
+                                            dbname=db['name'],
+                                            visualname=visualname))
 
 class TemplateContext:
     "Context handler to create, modify and save a visualization template."
@@ -370,7 +473,8 @@ def get_templates(public=None, owner=None):
     if owner:
         criteria['owner=?'] = owner
     if criteria:
-        sql += ' WHERE ' + ' AND '.join(criteria.keys())
+        sql += ' WHERE ' + ' OR '.join(criteria.keys())
+    sql += ' ORDER BY name'
     cursor = pleko.master.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_template(row[0]) for row in cursor]

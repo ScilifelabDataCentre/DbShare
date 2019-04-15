@@ -57,7 +57,7 @@ blueprint = flask.Blueprint('db', __name__)
 @blueprint.route('/<nameext:dbname>', methods=['GET', 'POST', 'DELETE'])
 def home(dbname):               # NOTE: dbname is a NameExt instance!
     "List the database tables, views and metadata. Delete the database."
-    if utils.is_method_GET():
+    if utils.http_GET():
         try:
             db = get_check_read(str(dbname), nrows=True)
         except ValueError as error:
@@ -75,7 +75,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
         else:
             flask.abort(406)
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         try:
             db = get_check_write(str(dbname))
         except ValueError as error:
@@ -102,10 +102,10 @@ def create():
         return flask.redirect(
             flask.url_for('owner', username=flask.g.current_user['username']))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('db/create.html')
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with DbContext() as ctx:
                 ctx.set_name(flask.request.form['name'])
@@ -134,10 +134,10 @@ def edit(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('db/edit.html', db=db)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with DbContext(db) as ctx:
                 try:
@@ -186,10 +186,10 @@ def upload(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('db/upload.html', db=db)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             delimiter = flask.request.form.get('delimiter') or 'comma'
             try:
@@ -327,10 +327,10 @@ def clone(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('db/clone.html', db=db)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with DbContext() as ctx:
                 name = flask.request.form['name']
@@ -815,7 +815,7 @@ def get_dbs(public=None, owner=None, complete=False):
     if owner:
         criteria['owner=?'] = owner
     if criteria:
-        sql += ' WHERE ' + ' AND '.join(criteria.keys())
+        sql += ' WHERE ' + ' OR '.join(criteria.keys())
     cursor = pleko.master.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_db(row[0], complete=complete) for row in cursor]

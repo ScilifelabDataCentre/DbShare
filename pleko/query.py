@@ -77,13 +77,13 @@ def table(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         query = get_query_from_request(check=False)
         return flask.render_template('query/table.html',
                                      db=db,
                                      query=query)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             query = get_query_from_request(check=True)
             schema = {'name': flask.request.form.get('name')}

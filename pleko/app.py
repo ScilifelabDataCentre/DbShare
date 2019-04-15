@@ -201,10 +201,10 @@ def templates_owner(username):
 @pleko.user.login_required
 def upload():
     "Upload a Pleko Sqlite3 database file."
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('upload.html')
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             db = pleko.db.add_database(flask.request.form.get('dbname'),
                                        flask.request.form.get('description'),

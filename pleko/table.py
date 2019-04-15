@@ -30,10 +30,10 @@ def create(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('table/create.html', db=db)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             schema = {'name': flask.request.form.get('name'),
                       'title': flask.request.form.get('title') or None}
@@ -67,7 +67,7 @@ def create(dbname):
                  methods=['GET', 'POST', 'DELETE'])
 def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display rows in the table. Or delete the table."
-    if utils.is_method_GET():
+    if utils.http_GET():
         try:
             db = pleko.db.get_check_read(dbname, nrows=[str(tablename)])
         except ValueError as error:
@@ -120,7 +120,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         else:
             flask.abort(406)
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         try:
             db = pleko.db.get_check_write(dbname)
         except ValueError as error:
@@ -149,10 +149,10 @@ def edit(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('table/edit.html', db=db, schema=schema)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             with pleko.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
@@ -232,13 +232,13 @@ def row_insert(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('table/row_insert.html',
                                      db=db,
                                      schema=schema,
                                      values={})
     
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         values, errors = get_row_values_errors(schema['columns'])
         if errors:
             for item in errors.items():
@@ -283,7 +283,7 @@ def row_edit(dbname, tablename, rowid):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         cursor = dbcnx.cursor()
         sql = 'SELECT %s FROM "%s" WHERE rowid=?' % \
               (','.join(['"%(name)s"' % c for c in schema['columns']]),
@@ -301,7 +301,7 @@ def row_edit(dbname, tablename, rowid):
                                      row=rows[0],
                                      rowid=rowid)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         values, errors = get_row_values_errors(schema['columns'])
         if errors:
             for item in errors.items():
@@ -328,7 +328,7 @@ def row_edit(dbname, tablename, rowid):
                                             dbname=dbname,
                                             tablename=tablename))
 
-    elif utils.is_method_DELETE():
+    elif utils.http_DELETE():
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         with dbcnx:
             sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
@@ -568,12 +568,12 @@ def clone(dbname, tablename):
         flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         return flask.render_template('table/clone.html',
                                      db=db,
                                      schema=schema)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
@@ -655,19 +655,6 @@ def download_csv(dbname, tablename):
     response.headers.set('Content-Disposition', 'attachment', 
                          filename="%s.csv" % tablename)
     return response
-
-@blueprint.route('/<name:dbname>/<name:tablename>/render')
-@pleko.user.login_required
-def render(dbname, tablename):
-    "Select a visualization template to use for the table."
-    raise NotImplementedError
-
-@blueprint.route('/<name:dbname>/<name:tablename>/render/<name:templatename>')
-@pleko.user.login_required
-def render_template(dbname, tablename, templatename):
-    "Create a visualization of the table using the given template."
-    raise NotImplementedError
-
 
 def get_row_values_errors(columns):
     "Return the values and errors from the form for a row given the columns."

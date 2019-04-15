@@ -15,10 +15,9 @@ from pleko import utils
 
 INITIAL = {'$schema': None,     # To be set on template creation.
            'title': '{{ title }}',
-           'description': '{{ description }}',
            'width': None,       # To be set on template creation.
            'height': None,      # To be set on template creation.
-           'data': {'url': '{{ data_url }}', 'format': {'type': 'csv'}}}
+           'data': {'url': '{{ DATA_URL }}', 'format': {'type': 'csv'}}}
 
 
 blueprint = flask.Blueprint('vega-lite', __name__)
@@ -38,7 +37,7 @@ def create(dbname, sourcename):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-    if utils.is_method_GET():
+    if utils.http_GET():
         spec = flask.request.args.get('spec')
         if not spec:
             spec = copy.deepcopy(INITIAL)
@@ -46,15 +45,10 @@ def create(dbname, sourcename):
             spec['$schema'] = config['VEGA_LITE_SCHEMA_URL']
             spec['width']   = config['VEGA_LITE_DEFAULT_WIDTH']
             spec['height']  = config['VEGA_LITE_DEFAULT_HEIGHT']
-            if schema['type'] == constants.TABLE:
-                url =  utils.get_url('table.rows',
-                                     values=dict(dbname=db['name'],
-                                                 tablename=schema['name']))
-            else:
-                url =  utils.get_url('view.rows', 
-                                     values=dict(dbname=db['name'],
-                                                 viewname=schema['name']))
-            spec['data']['url'] = url + '.csv'
+            spec['data']['url'] = utils.url_for_rows(db=db,
+                                                     schema=schema,
+                                                     external=True,
+                                                     csv=True)
             spec = json.dumps(spec, indent=2)
         return flask.render_template('vega-lite/create.html',
                                      db=db,
@@ -62,7 +56,7 @@ def create(dbname, sourcename):
                                      name=flask.request.args.get('name'),
                                      spec=spec)
 
-    elif utils.is_method_POST():
+    elif utils.http_POST():
         visualname = flask.request.form.get('name')
         strspec = flask.request.form.get('spec')
         try:
