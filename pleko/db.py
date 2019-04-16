@@ -1061,31 +1061,34 @@ def set_nrows(db, nrows):
             cursor.execute(sql)
             item['nrows'] = cursor.fetchone()[0]
 
-def add_database(dbname, description, infile):
-    """Add the database present in the given HTTP request file object.
-    Check its validity as a Pleko Sqlite3 database file.
+def add_database(dbname, title, content):
+    """Add the database present in the given file content.
+    Check the validity of the conten as a Pleko Sqlite3 database file.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
-    if not infile: raise ValueError('no database file provided')
     try:
         check_quota()
-        if not dbname:
-            dbname = os.path.splitext(os.path.basename(infile.filename))[0]
         with DbContext() as ctx:
             ctx.set_name(dbname) # Checks that name is not already used.
-            ctx.set_description(description)
+            ctx.set_title(title)
             with open(utils.dbpath(dbname), 'wb') as outfile:
-                infile.save(outfile)
+                outfile.write(content)
+            cursor = ctx.dbcnx.cursor()
             # Can the file be opened by sqlite3?
-            # And does it have the required meta-data tables?
-            sql = "SELECT * FROM %s" % constants.TABLES
+            # Check the required metadata tables and their content.
+            sql = "SELECT name FROM %s" % constants.TABLES
+            cursor.execute(sql)
+            tables1 = set([row[0] for row in cursor])
+            sql = "SELECT name FROM sqlite_master WHERE type=?"
+            cursor.execute(sql, ('table',))
+            tables2 = set([row[0] for row in cursor
+                           if not row[0].startswith('_')])
+            if tables1 != tables2:
+                raise ValueError('corrupt metadata in Pleko Sqlite3 file')
+            sql = "SELECT name, schema FROM %s" % constants.INDEXES
             ctx.dbcnx.execute(sql)
-            sql = "SELECT * FROM %s" % constants.INDEXES
-            ctx.dbcnx.execute(sql)
-            sql = "SELECT * FROM %s" % constants.VIEWS
-            ctx.dbcnx.execute(sql)
-            sql = "SELECT * FROM %s" % constants.VISUALS
+            sql = "SELECT name, schema FROM %s" % constants.VIEWS
             ctx.dbcnx.execute(sql)
             # Fix the data URLs in the visuals.
             cursor = ctx.dbcnx.cursor()
@@ -1122,7 +1125,7 @@ def add_database(dbname, description, infile):
                     cursor.execute(sql,
                                    (json.dumps(visual['spec']),visual['name']))
         return ctx.db
-    except (ValueError, sqlite3.Error) as error:
+    except (ValueError, TypeError, sqlite3.Error) as error:
         try:
             os.remove(utils.dbpath(dbname))
         except FileNotFoundError:

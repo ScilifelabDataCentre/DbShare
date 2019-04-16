@@ -33,14 +33,12 @@ Publish, query and visualize tabular data sets using
 - Edit a row.
 - Delete a row.
 - Insert rows in a table by uploading a CSV file.
-- Update rows in a table by uploading a CSV file. *TODO*
+- Update rows in a table by uploading a CSV file.
 - Clone a table.
 - Delete a table.
 - Download a table as CSV file.
 - Fetch data in CSV or JSON format.
 - List the visualizations based on a table.
-- Add a column to a table. *TODO*
-- Define a foreign key. *TODO*
 
 ## Queries
 
@@ -79,6 +77,8 @@ Publish, query and visualize tabular data sets using
 - Display a visualization.
 - Clone a visualization.
 - Edit a visualization.
+- Create a visualization template (Vega or Vega-Lite) with input fields
+  for pre-packaged charts.
 
 ## Software used
 

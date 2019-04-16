@@ -41,6 +41,7 @@
     <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <input type="hidden" name="sql" value="{{ sql or ''}}">
     <button type="submit" class="btn btn-success btn-block">Edit</button>
   </form>
@@ -54,6 +55,7 @@
     <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <input type="hidden" name="sql" value="{{ sql or ''}}">
     <button type="submit" class="btn btn-success btn-block">Re-run</button>
   </form>
@@ -70,6 +72,7 @@
     <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <button type="submit" class="btn btn-success btn-block">Create view</button>
   </form>
 </div>
@@ -81,6 +84,7 @@
     <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
+    <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <input type="hidden" name="sql" value="{{ sql or ''}}">
     <button type="submit" class="btn btn-primary btn-block">Create table</button>
   </form>

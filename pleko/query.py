@@ -126,6 +126,15 @@ def get_query_from_request(check=False):
             result['limit'] = None
     except (KeyError, ValueError, TypeError):
         result['limit'] = flask.current_app.config['QUERY_DEFAULT_LIMIT']
+    try:
+        offset = flask.request.values['offset']
+        offset = offset.strip()
+        if offset:
+            result['offset'] = max(1, int(offset))
+        else:
+            result['offset'] = None
+    except (KeyError, ValueError, TypeError):
+        pass
     return result
 
 def get_sql_query(statement):
@@ -137,4 +146,6 @@ def get_sql_query(statement):
         parts.append('ORDER BY ' + statement['orderby'])
     if statement.get('limit'):
         parts.append("LIMIT %s" % statement['limit'])
+        if statement.get('offset'):
+            parts.append("OFFSET %s" % statement['offset'])
     return ' '.join(parts)
