@@ -82,15 +82,16 @@ Publish, query and visualize tabular data sets using
 
 ## Software used
 
+- [Sqlite3](https://www.sqlite.org/)
 - [Flask](http://flask.pocoo.org/)
 - [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
 - [Jinja2](http://jinja.pocoo.org/docs)
 - [Vega](https://vega.github.io/vega/)
 - [Vega-Lite](https://vega.github.io/vega-lite/)
+- [D3](https://d3js.org/)
 - [jsonschema](https://github.com/Julian/jsonschema)
 - [dpath-python](https://github.com/akesterson/dpath-python)
-- [D3](https://d3js.org/)
 - [Bootstrap](https://getbootstrap.com/)
 - [jQuery](https://jquery.com/)
-- [DataTables](https://datatables.net/)
 - [jQuery localtime](https://plugins.jquery.com/jquery.localtime/)
+- [DataTables](https://datatables.net/)

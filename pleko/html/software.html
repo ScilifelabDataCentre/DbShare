@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Software{% endblock %}
+
+{% block body_title %}Software{% endblock %}
+
+{% block main %}
+<div class="lead">
+  Supporting software for this system.
+</div>
+
+<table class="table table-sm mt-4">
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Link</th>
+      <th>Version</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name, url, version in data %}
+    <tr>
+      <td>{{ name }}</td>
+      <td><a href="{{ url }}" target="_blank">{{ url }}</a></td>
+      <td>{{ version or '?' }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
