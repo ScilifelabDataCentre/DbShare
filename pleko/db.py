@@ -1074,6 +1074,10 @@ def add_database(dbname, title, content):
             ctx.set_title(title)
             with open(utils.dbpath(dbname), 'wb') as outfile:
                 outfile.write(content)
+    except (ValueError, TypeError, sqlite3.Error) as error:
+        raise ValueError(str(error))
+    try:
+        with DbContext() as ctx:
             cursor = ctx.dbcnx.cursor()
             # Can the file be opened by sqlite3?
             # Check the required metadata tables and their content.
@@ -1096,8 +1100,9 @@ def add_database(dbname, title, content):
             cursor.execute(sql)
             visuals = [{'name': row[0], 'spec': json.loads(row[1])}
                        for row in cursor]
-            # First, identify the old URL root from a data url in a visual spec.
+            # Update the data URLs in the visuals.
             new_root = utils.get_url('home').rstrip('/')
+            # Identify the old URL root from a data url in a visual spec.
             old_root = None
             search = dpath.util.search
             for visual in visuals:
@@ -1126,8 +1131,5 @@ def add_database(dbname, title, content):
                                    (json.dumps(visual['spec']),visual['name']))
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:
-        try:
-            os.remove(utils.dbpath(dbname))
-        except FileNotFoundError:
-            pass
+        os.remove(utils.dbpath(dbname))
         raise ValueError(str(error))

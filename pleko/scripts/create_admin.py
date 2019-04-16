@@ -10,8 +10,7 @@ import pleko.app
 import pleko.user
 from pleko import constants
 
-app = pleko.app.create_app()
-with app.app_context():
+with pleko.app.app.app_context():
     try:
         with pleko.user.UserContext() as ctx:
             ctx.set_username(input('username > '))

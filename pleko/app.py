@@ -78,25 +78,30 @@ CONFIG = dict(
     VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
 
-def create_app():
-    "Return the configured app object. Initialize the master, if not done."
-    app = flask.Flask(__name__, template_folder='html')
-    app.config.from_mapping(CONFIG)
-    app.config.from_json('config.json')
-    app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
-    with open(app.config['VEGA_SCHEMA']) as infile:
-        app.config['VEGA_SCHEMA'] = json.load(infile)
-    with open(app.config['VEGA_LITE_SCHEMA']) as infile:
-        app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
-    app.url_map.converters['name'] = utils.NameConverter
-    app.url_map.converters['nameext'] = utils.NameExtConverter
-    app.jinja_env.trim_blocks = True
-    app.jinja_env.lstrip_blocks = True
-    pleko.master.init(app)
-    utils.mail.init_app(app)
-    return app
+app = flask.Flask(__name__, template_folder='html')
+app.url_map.converters['name'] = utils.NameConverter
+app.url_map.converters['nameext'] = utils.NameExtConverter
+app.jinja_env.trim_blocks = True
+app.jinja_env.lstrip_blocks = True
 
-app = create_app()
+# Set the configuration.
+app.config.from_mapping(CONFIG)
+app.config.from_json('config.json')
+app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
+
+# Read the JSON Schema files.
+with open(app.config['VEGA_SCHEMA']) as infile:
+    app.config['VEGA_SCHEMA'] = json.load(infile)
+with open(app.config['VEGA_LITE_SCHEMA']) as infile:
+    app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
+
+# Init the master database.
+pleko.master.init(app)
+
+# Init the mail handler.
+utils.mail.init_app(app)
+
+# Set the URL map.
 app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
 app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
 app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
