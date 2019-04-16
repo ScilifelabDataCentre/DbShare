@@ -79,46 +79,60 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         except KeyError:
             flask.flash('no such table', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
-        columns = [c['name'] for c in schema['columns']]
-        cnx = pleko.db.get_cnx(dbname)
-        cursor = cnx.cursor()
-        sql = 'SELECT rowid, %s FROM "%s"' % \
-              (','.join([f'"{c}"' for c in columns]), tablename)
-
-        if tablename.ext is None or tablename.ext == 'html':
-            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-            if schema['nrows'] > limit:
-                sql += f" LIMIT {limit}"
-                flask.flash('NOTE: The number of rows displayed' +
-                            f' is limited to {limit}.',
-                            'message')
-            cursor.execute(sql)
+        try:
             title = schema.get('title') or "Table {}".format(tablename)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-            updateable = bool([c for c in schema['columns']
-                               if c.get('primarykey')])
-            return flask.render_template('table/rows.html', 
-                                         db=db,
-                                         schema=schema,
-                                         title=title,
-                                         rows=list(cursor),
-                                         visuals=visuals,
-                                         updateable=updateable,
-                                         has_write_access=has_write_access)
+            columns = [c['name'] for c in schema['columns']]
+            cnx = pleko.db.get_cnx(dbname)
+            cursor = cnx.cursor()
+            sql = 'SELECT rowid, %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), tablename)
 
-        elif tablename.ext == 'csv':
-            cursor.execute(sql)
-            writer = utils.CsvWriter(header=columns)
-            writer.add_from_cursor(cursor, skip_rowid=True)
-            return flask.Response(writer.get(), mimetype=constants.CSV_MIMETYPE)
+            if tablename.ext is None or tablename.ext == 'html':
+                limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+                if schema['nrows'] > limit:
+                    sql += f" LIMIT {limit}"
+                    flask.flash('NOTE: The number of rows displayed' +
+                                f' is limited to {limit}.',
+                                'message')
+                cursor.execute(sql)
+                updateable = bool([c for c in schema['columns']
+                                   if c.get('primarykey')])
+                return flask.render_template('table/rows.html', 
+                                             db=db,
+                                             schema=schema,
+                                             title=title,
+                                             rows=list(cursor),
+                                             visuals=visuals,
+                                             updateable=updateable,
+                                             has_write_access=has_write_access)
 
-        elif tablename.ext == 'json':
-            cursor.execute(sql)
-            return flask.jsonify({'$id': flask.request.url,
-                                  'data': [dict(zip(columns, row[1:]))
-                                           for row in cursor]})
-        else:
-            flask.abort(406)
+            elif tablename.ext == 'csv':
+                cursor.execute(sql)
+                writer = utils.CsvWriter(header=columns)
+                writer.add_from_cursor(cursor, skip_rowid=True)
+                return flask.Response(writer.get(),
+                                      mimetype=constants.CSV_MIMETYPE)
+
+            elif tablename.ext == 'json':
+                cursor.execute(sql)
+                return flask.jsonify(
+                    {'$id': flask.request.url,
+                     'title': title,
+                     'visualizations': 
+                     [{'name': v['name'],
+                       'href': utils.get_url('visual.display',
+                                             values={'dbname': dbname,
+                                                     'visualname': v['name']})}
+                      for v in visuals],
+                     'data': [dict(zip(columns, row[1:])) for row in cursor]})
+            else:
+                flask.abort(406)
+
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.schema',
+                                                tablename=str(tablename)))
 
     elif utils.http_DELETE():
         try:

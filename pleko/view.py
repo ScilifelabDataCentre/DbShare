@@ -108,6 +108,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.flash('no such view', 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
         try:
+            title = schema.get('title') or "View {}".format(viewname)
+            visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             colnames = ['"%s"' % c for c in schema['query']['columns']]
             cursor = pleko.db.get_cnx(dbname).cursor()
             sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
@@ -120,9 +122,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                 f' is limited to {limit}.',
                                 'message')
                 cursor.execute(sql)
-                title = schema.get('title') or "View {}".format(viewname)
-                visuals = utils.sorted_schema(db['visuals'].get(schema['name'],
-                                                                []))
                 query = schema['query']
                 sql = pleko.query.get_sql_query(query)
                 return flask.render_template('view/rows.html', 
@@ -146,14 +145,20 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             elif viewname.ext == 'json':
                 columns = [c['name'] for c in schema['columns']]
                 cursor.execute(sql)
-                return flask.jsonify({'$id': flask.request.url,
-                                      'data': [dict(zip(columns, row))
-                                               for row in cursor]})
+                return flask.jsonify(
+                    {'$id': flask.request.url,
+                     'title': title,
+                     'visualizations': 
+                     [{'name': v['name'],
+                       'href': utils.get_url('visual.display',
+                                             values={'dbname': dbname,
+                                                     'visualname': v['name']})}
+                      for v in visuals],
+                     'data': [dict(zip(columns, row)) for row in cursor]})
             else:
                 flask.abort(406)
 
         except sqlite3.Error as error:
-            raise
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
