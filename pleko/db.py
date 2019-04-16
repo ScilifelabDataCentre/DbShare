@@ -226,7 +226,7 @@ def upload(dbname):
                 if len(header) != len(set(header)):
                     raise ValueError('non-unique header column names')
             else:
-                header = ["column%i" % (i+1) for i in range(len(records[0]))]
+                header = [f"column{i+1}" for i in range(len(records[0]))]
 
             # Infer column types and constraints
             schema['columns'] = [{'name': name} for name in header]
@@ -305,7 +305,7 @@ def upload(dbname):
             dbcnx = get_cnx(db['name'], write=True)
             with dbcnx:
                 dbcnx.executemany(sql, records)
-            flask.flash("Inserted %s rows." % len(records), 'message')
+            flask.flash(f"Inserted {len(records)} rows.", 'message')
 
         except (ValueError, IndexError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -510,7 +510,7 @@ class DbContext:
         if etyp is not None: return False
         for key in ['name', 'owner']:
             if not self.db.get(key):
-                raise ValueError("invalid db: %s not set" % key)
+                raise ValueError(f"invalid db: {key} not set")
         self.db['modified'] = utils.get_time()
         with self.cnx:
             # Update existing database entry in master

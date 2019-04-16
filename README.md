@@ -2,6 +2,7 @@
 
 Publish, query and visualize tabular data sets using 
 [Sqlite3](https://www.sqlite.org/) and
+[Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
 πλέκω: to plait, twine, twist, weave, braid
@@ -73,15 +74,23 @@ Publish, query and visualize tabular data sets using
 ## Visualization
 
 - Create a visualization of a table or view using
+  [Vega](https://vega.github.io/vega/) or
   [Vega-Lite](https://vega.github.io/vega-lite/).
 - Display a visualization.
 - Clone a visualization.
 - Edit a visualization.
 
-## Third-party packages used
+## Software used
 
 - [Flask](http://flask.pocoo.org/)
 - [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
 - [Jinja2](http://jinja.pocoo.org/docs)
+- [Vega](https://vega.github.io/vega/)
+- [Vega-Lite](https://vega.github.io/vega-lite/)
 - [jsonschema](https://github.com/Julian/jsonschema)
 - [dpath-python](https://github.com/akesterson/dpath-python)
+- [D3](https://d3js.org/)
+- [Bootstrap](https://getbootstrap.com/)
+- [jQuery](https://jquery.com/)
+- [DataTables](https://datatables.net/)
+- [jQuery localtime](https://plugins.jquery.com/jquery.localtime/)

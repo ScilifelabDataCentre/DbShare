@@ -115,9 +115,9 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             if viewname.ext is None or viewname.ext == 'html':
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
                 if schema['nrows'] > limit:
-                    sql += " LIMIT %s" % limit
-                    flask.flash('NOTE: The number of rows displayed'
-                                ' is limited to %s.' % limit,
+                    sql += f" LIMIT {limit}"
+                    flask.flash('NOTE: The number of rows displayed' +
+                                f' is limited to {limit}.',
                                 'message')
                 cursor.execute(sql)
                 title = schema.get('title') or "View {}".format(viewname)

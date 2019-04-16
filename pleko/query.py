@@ -43,8 +43,8 @@ def rows(dbname):
         limit = flask.current_app.config['MAX_NROWS_DISPLAY']
         if query['limit'] is None or query['limit'] > limit:
             query['limit'] = limit
-            flask.flash('NOTE: The number of rows displayed'
-                        ' is limited to %s.' % limit,
+            flask.flash('NOTE: The number of rows displayed' +
+                        f' is limited to {limit}.',
                         'message')
         cursor = pleko.db.get_cnx(dbname).cursor()
         sql = get_sql_query(query)
@@ -52,7 +52,7 @@ def rows(dbname):
         rows = list(cursor)
         if query['columns'][0] == '*':
             try:
-                columns = ["column%i" % (i+1) for i in range(len(rows[0]))]
+                columns = [f"column{i+1}" for i in range(len(rows[0]))]
             except IndexError:
                 columns = ['columns']
         else:

@@ -39,21 +39,21 @@ def create(dbname):
                       'title': flask.request.form.get('title') or None}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
-                name = flask.request.form.get("column%sname" % n)
+                name = flask.request.form.get(f"column{n}name")
                 if not name: break
                 if not constants.NAME_RX.match(name):
-                    raise ValueError("invalid name in column %s" % (n+1))
+                    raise ValueError(f"invalid name in column {n+1}")
                 column = {'name': name.lower()}
-                type = flask.request.form.get("column%stype" % n)
+                type = flask.request.form.get(f"column{n}type")
                 if type not in constants.COLUMN_TYPES:
-                    raise ValueError("invalid type in column %s" % (n+1))
+                    raise ValueError(f"invalid type in column {n+1}")
                 column['type'] = type
                 column['primarykey'] = utils.to_bool(
-                    flask.request.form.get("column%sprimarykey" % n))
+                    flask.request.form.get(f"column{n}primarykey"))
                 column['notnull'] = utils.to_bool(
-                    flask.request.form.get("column%snotnull" % n))
+                    flask.request.form.get(f"column{n}notnull"))
                 column['unique'] = utils.to_bool(
-                    flask.request.form.get("column%sunique" % n))
+                    flask.request.form.get(f"column{n}unique"))
                 schema['columns'].append(column)
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
@@ -83,14 +83,14 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         cnx = pleko.db.get_cnx(dbname)
         cursor = cnx.cursor()
         sql = 'SELECT rowid, %s FROM "%s"' % \
-              (','.join(['"%s"' % c for c in columns]), tablename)
+              (','.join([f'"{c}"' for c in columns]), tablename)
 
         if tablename.ext is None or tablename.ext == 'html':
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] > limit:
-                sql += " LIMIT %s" % limit
-                flask.flash('NOTE: The number of rows displayed'
-                            ' is limited to %s.' % limit,
+                sql += f" LIMIT {limit}"
+                flask.flash('NOTE: The number of rows displayed' +
+                            f' is limited to {limit}.',
                             'message')
             cursor.execute(sql)
             title = schema.get('title') or "Table {}".format(tablename)
@@ -437,7 +437,7 @@ def insert_csv(dbname, tablename):
         dbcnx = pleko.db.get_cnx(dbname, write=True)
         with dbcnx:
             dbcnx.executemany(sql, records)
-        flask.flash("Inserted %s rows." % len(records), 'message')
+        flask.flash(f"Inserted {len(records)} rows.", 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.insert',
@@ -533,8 +533,7 @@ def update_csv(dbname, tablename):
                 pkeys = [record[i] for i in pkpos]
                 cursor.execute(sql, values+pkeys)
                 count += cursor.rowcount
-        flask.flash("%s records; %s rows updated." % (len(records), count),
-                    'message')
+        flask.flash(f"{len(records)} records; {count} rows updated.", 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         if recpos is None:
             flask.flash(str(error), 'error')
@@ -653,7 +652,7 @@ def download_csv(dbname, tablename):
     response = flask.make_response(writer.get())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
-                         filename="%s.csv" % tablename)
+                         filename=f"{tablename}.csv")
     return response
 
 def get_row_values_errors(columns):
