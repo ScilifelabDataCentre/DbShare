@@ -43,8 +43,8 @@ CONFIG = dict(
     TABLE_INITIAL_COLUMNS = 8,
     MAX_NROWS_DISPLAY = 2000,
     QUERY_DEFAULT_LIMIT = 100,
-    MAX_QUERY_TIME_LIMIT = 5.0,
-    QUERY_TIME_SLEEP = 0.25,
+    QUERY_TIMEOUT = 2.0,
+    QUERY_TIMEOUT_INCREMENT = 0.1,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'vertical-bar': {'label': "vertical-bar '|'", 
@@ -131,6 +131,11 @@ def setup_template_context():
                 enumerate=enumerate,
                 len=len,
                 range=range)
+
+@app.template_filter('thousands')
+def thousands(value):
+    "Output integer with thousands delimiters."
+    return '{:,}'.format(value)
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):

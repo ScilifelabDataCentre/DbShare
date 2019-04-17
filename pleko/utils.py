@@ -207,34 +207,39 @@ def html_none(value):
     else:
         return value
 
-def query_interruptor(cnx, event):
-    "Background thread to interrupt the main query thread if necessary."
-    print('query_interruptor')
+def _interrupt(cnx, event, timeout, increment):
+    "Background thread to interrupt the Sqlite3 query, if timeout."
+    assert timeout > 0.0
+    assert increment > 0.0
     event.wait()
     elapsed = 0.0
-    while elapsed < flask.current_app.config['MAX_QUERY_TIME_LIMIT']:
-        if not event.is_set():
-            print('event cleared')
-            return
-        print('sleeping...')
-        time.sleep(flask.current_app.config['QUERY_TIME_SLEEP'])
-        elapsed += flask.current_app.config['QUERY_TIME_SLEEP']
+    while elapsed < timeout:
+        if not event.is_set(): return
+        time.sleep(increment)
+        elapsed += increment
     cnx.interrupt()
 
-def query_limited_time(cnx, sql, values):
-    """Main query thread.
-    Returns a cursor containing the results, unless interrupted.
-    Raises sqlite3.OperationalError if interrupted.
+def query_timeout(cnx, sql, *values):
+    """Perform a query to be interrupted if it runs too long.
+    Returns a cursor containing the results.
+    Raises SystemError if interrupted by time-out.
     """
-    print('query_limited_time')
+    timeout = flask.current_app.config['QUERY_TIMEOUT']
+    increment = flask.current_app.config['QUERY_TIMEOUT_INCREMENT']
     event = threading.Event()
-    interruptor = threading.Thread(target=query_interruptor, args=(cnx, event))
-    interruptor.start()
+    thread = threading.Thread(target=_interrupt,
+                              args=(cnx, event, timeout, increment))
+    thread.start()
+    event.set()
     cursor = cnx.cursor()
-    cursor.execute(sql, values)
+    try:
+        cursor.execute(sql, values)
+        result = cursor.fetchall()
+    except sqlite3.OperationalError as error:
+        raise SystemError(f"execution time exceeded {timeout} s; interrupted")
     event.clear()
-    interruptor.join()
-    return cursor
+    thread.join()
+    return result
 
 class CsvWriter:
     "Create CSV file content from rows of data."
@@ -261,16 +266,15 @@ class CsvWriter:
         if header:
             self.writer.writerow(header)
 
-    def add_from_cursor(self, cursor, skip_rowid=False):
-        if skip_rowid:
-            for row in cursor:
-                self.writer.writerow(row[1:])
-        else:
-            for row in cursor:
-                self.writer.writerow(row)
-
     def add_row(self, row):
         self.writer.writerow(row)
+
+    def add_rows(self, rows, skip_rowid=False):
+        if skip_rowid:
+            for row in rows:
+                self.writer.writerow(row[1:])
+        else:
+            self.writer.writerows(rows)
 
     def get(self):
         return self.outfile.getvalue()

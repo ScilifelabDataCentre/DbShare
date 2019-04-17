@@ -42,19 +42,15 @@ def rows(dbname):
         query = get_query_from_request(check=True)
         sql = get_sql_query(query)
         limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+        sql = get_sql_query(query)
         query_limited = query.copy()
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
         dbcnx = pleko.db.get_cnx(dbname)
-        sql = get_sql_query(query_limited)
-        cursor = dbcnx.cursor()
-        cursor.execute(sql)
-        # cursor = utils.query_limited_time(dbcnx, sql, ())
-        rows = list(cursor)
+        rows = utils.query_timeout(dbcnx, get_sql_query(query_limited))
         if len(rows) >= query_limited['limit']:
             flask.flash('NOTE: The number of rows displayed' +
-                        f" is limited to {limit}.",
-                        'message')
+                        f" is limited to {limit}.", 'message')
         if query['columns'][0] == '*':
             try:
                 columns = [f"column{i+1}" for i in range(len(rows[0]))]
@@ -62,7 +58,7 @@ def rows(dbname):
                 columns = ['columns']
         else:
             columns = query['columns']
-    except (KeyError, sqlite3.Error) as error:
+    except (KeyError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=dbname, **query))
     return flask.render_template('query/rows.html',
@@ -94,7 +90,7 @@ def table(dbname):
             schema = {'name': flask.request.form.get('name')}
             with pleko.db.DbContext(db) as ctx:
                 ctx.add_table(schema, query=query)
-        except (KeyError, sqlite3.Error) as error:
+        except (KeyError, SystemError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.home',
                                                 dbname=dbname,

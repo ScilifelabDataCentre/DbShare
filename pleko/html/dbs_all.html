@@ -4,9 +4,8 @@
 
 {% block body_title %}All databases
 <small class="text-muted">
-  total size
-  <span class="text-monospace">{{ '{:,}'.format(usage) }}</span>
-  bytes
+  Total size
+  <span class="text-monospace">{{ usage|filesizeformat }}</span>
 </small>
 {% endblock %}
 
@@ -48,7 +47,7 @@
       </td>
       <td>{{ db['owner'] }}</td>
       <td class="text-right">
-        <span class="text-monospace mr-3">{{ '{:,}'.format(db['size']) }}</span>
+	<span class="text-monospace mr-3">{{ db['size']|thousands }}</span>
       </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

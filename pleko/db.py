@@ -625,6 +625,7 @@ class DbContext:
     def add_table(self, schema, query=None):
         """Create the table in the database and add to the database definition.
         If query is given, do 'CREATE TABLE AS', and fix up the schema.
+        Raises SystemError if the query is interrupted by time-out.
         """
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
@@ -636,7 +637,7 @@ class DbContext:
         if query:
             sql = 'CREATE TABLE "%s" AS %s' % (schema['name'],
                                                pleko.query.get_sql_query(query))
-            self.dbcnx.execute(sql)
+            utils.query_timeout(self.dbcnx, sql)
             if not schema.get('description'):
                 schema['description'] = sql
             cursor = self.dbcnx.cursor()

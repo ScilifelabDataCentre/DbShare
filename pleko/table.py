@@ -83,8 +83,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             title = schema.get('title') or "Table {}".format(tablename)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             columns = [c['name'] for c in schema['columns']]
-            cnx = pleko.db.get_cnx(dbname)
-            cursor = cnx.cursor()
+            dbcnx = pleko.db.get_cnx(dbname)
             sql = 'SELECT rowid, %s FROM "%s"' % \
                   (','.join([f'"{c}"' for c in columns]), tablename)
 
@@ -95,27 +94,33 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                     flask.flash('NOTE: The number of rows displayed' +
                                 f' is limited to {limit}.',
                                 'message')
-                cursor.execute(sql)
+                rows = utils.query_timeout(sql)
                 updateable = bool([c for c in schema['columns']
                                    if c.get('primarykey')])
                 return flask.render_template('table/rows.html', 
                                              db=db,
                                              schema=schema,
                                              title=title,
-                                             rows=list(cursor),
+                                             rows=rows,
                                              visuals=visuals,
                                              updateable=updateable,
                                              has_write_access=has_write_access)
 
             elif tablename.ext == 'csv':
-                cursor.execute(sql)
                 writer = utils.CsvWriter(header=columns)
-                writer.add_from_cursor(cursor, skip_rowid=True)
+                try:
+                    rows = utils.query_timeout(dbcnx, sql)
+                except SystemError:
+                    flask.abort(504) # "Gateway timeout"; least bad status code
+                writer.add_rows(rows, skip_rowid=True)
                 return flask.Response(writer.get(),
                                       mimetype=constants.CSV_MIMETYPE)
 
             elif tablename.ext == 'json':
-                cursor.execute(sql)
+                try:
+                    rows = utils.query_timeout(dbcnx, sql)
+                except SystemError:
+                    flask.abort(504) # "Gateway timeout"; least bad status code
                 return flask.jsonify(
                     {'$id': flask.request.url,
                      'title': title,
@@ -125,11 +130,11 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                              values={'dbname': dbname,
                                                      'visualname': v['name']})}
                       for v in visuals],
-                     'data': [dict(zip(columns, row[1:])) for row in cursor]})
+                     'data': [dict(zip(columns, row[1:])) for row in rows]})
             else:
                 flask.abort(406)
 
-        except sqlite3.Error as error:
+        except (SystemError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 tablename=str(tablename)))
@@ -654,11 +659,10 @@ def download_csv(dbname, tablename):
         colnames = ['"%(name)s"' % c for c in schema['columns']]
         if rowid:
             colnames.insert(0, 'rowid')
-        cursor = pleko.db.get_cnx(dbname).cursor()
+        dbcnx = pleko.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
-        cursor.execute(sql)
-        writer.add_from_cursor(cursor)
-    except (ValueError, sqlite3.Error) as error:
+        writer.add_rows(utils.query_timeout(dbcnx, sql))
+    except (ValueError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,

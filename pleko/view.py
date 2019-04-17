@@ -111,7 +111,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             title = schema.get('title') or "View {}".format(viewname)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             colnames = ['"%s"' % c for c in schema['query']['columns']]
-            cursor = pleko.db.get_cnx(dbname).cursor()
+            dbcnx = pleko.db.get_cnx(dbname)
             sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 
             if viewname.ext is None or viewname.ext == 'html':
@@ -119,32 +119,37 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 if schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"
                     flask.flash('NOTE: The number of rows displayed' +
-                                f' is limited to {limit}.',
-                                'message')
-                cursor.execute(sql) # Possibly with imposed limit
+                                f' is limited to {limit}.', 'message')
+                rows = utils.query_timeout(dbcnx, sql) # Maybe LIMIT imposed
                 query = schema['query']
-                sql = pleko.query.get_sql_query(query) # No imposed limit
+                sql = pleko.query.get_sql_query(query) # No imposed LIMIT
                 return flask.render_template('view/rows.html', 
                                              db=db,
                                              schema=schema,
                                              query=query,
                                              sql=sql,
                                              title=title,
-                                             rows=list(cursor),
+                                             rows=rows,
                                              visuals=visuals,
                                              has_write_access=has_write_access)
 
             elif viewname.ext == 'csv':
                 columns = [c['name'] for c in schema['columns']]
-                cursor.execute(sql)
                 writer = utils.CsvWriter(header=columns)
-                writer.add_from_cursor(cursor)
+                try:
+                    rows = utils.query_timeout(dbcnx, sql)
+                except SystemError:
+                    flask.abort(504) # "Gateway timeout"; least bad status code
+                writer.write_rows(rows)
                 return flask.Response(writer.get(),
                                       mimetype=constants.CSV_MIMETYPE)
 
             elif viewname.ext == 'json':
                 columns = [c['name'] for c in schema['columns']]
-                cursor.execute(sql)
+                try:
+                    rows = utils.query_timeout(dbcnx, sql)
+                except SystemError:
+                    flask.abort(504) # "Gateway timeout"; least bad status code
                 return flask.jsonify(
                     {'$id': flask.request.url,
                      'title': title,
@@ -154,11 +159,11 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                              values={'dbname': dbname,
                                                      'visualname': v['name']})}
                       for v in visuals],
-                     'data': [dict(zip(columns, row)) for row in cursor]})
+                     'data': [dict(zip(columns, row)) for row in rows]})
             else:
                 flask.abort(406)
 
-        except sqlite3.Error as error:
+        except (SystemError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.schema',
                                                 viewname=str(viewname)))
@@ -283,11 +288,10 @@ def download_csv(dbname, viewname):
             header = None
         writer = utils.CsvWriter(header, delimiter=delimiter)
         colnames = ['"%s"' % c for c in schema['query']['columns']]
-        cursor = pleko.db.get_cnx(dbname).cursor()
+        dbcnx = pleko.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
-        cursor.execute(sql)
-        writer.add_from_cursor(cursor)
-    except (ValueError, sqlite3.Error) as error:
+        writer.add_rows(utils.query_timeout(dbcnx, sql))
+    except (ValueError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
