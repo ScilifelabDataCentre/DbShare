@@ -40,16 +40,21 @@ def rows(dbname):
     query = {}
     try:
         query = get_query_from_request(check=True)
-        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-        if query['limit'] is None or query['limit'] > limit:
-            query['limit'] = limit
-            flask.flash('NOTE: The number of rows displayed' +
-                        f' is limited to {limit}.',
-                        'message')
-        cursor = pleko.db.get_cnx(dbname).cursor()
         sql = get_sql_query(query)
-        cursor.execute(get_sql_query(query))
+        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+        query_limited = query.copy()
+        if query['limit'] is None or query['limit'] > limit:
+            query_limited['limit'] = limit
+        dbcnx = pleko.db.get_cnx(dbname)
+        sql = get_sql_query(query_limited)
+        cursor = dbcnx.cursor()
+        cursor.execute(sql)
+        # cursor = utils.query_limited_time(dbcnx, sql, ())
         rows = list(cursor)
+        if len(rows) >= query_limited['limit']:
+            flask.flash('NOTE: The number of rows displayed' +
+                        f" is limited to {limit}.",
+                        'message')
         if query['columns'][0] == '*':
             try:
                 columns = [f"column{i+1}" for i in range(len(rows[0]))]

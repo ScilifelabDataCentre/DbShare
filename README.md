@@ -88,7 +88,6 @@ Publish, query and visualize tabular data sets using
 - [Jinja2](http://jinja.pocoo.org/docs)
 - [Vega](https://vega.github.io/vega/)
 - [Vega-Lite](https://vega.github.io/vega-lite/)
-- [D3](https://d3js.org/)
 - [jsonschema](https://github.com/Julian/jsonschema)
 - [dpath-python](https://github.com/akesterson/dpath-python)
 - [Bootstrap](https://getbootstrap.com/)

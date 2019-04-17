@@ -121,9 +121,9 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     flask.flash('NOTE: The number of rows displayed' +
                                 f' is limited to {limit}.',
                                 'message')
-                cursor.execute(sql)
+                cursor.execute(sql) # Possibly with imposed limit
                 query = schema['query']
-                sql = pleko.query.get_sql_query(query)
+                sql = pleko.query.get_sql_query(query) # No imposed limit
                 return flask.render_template('view/rows.html', 
                                              db=db,
                                              schema=schema,

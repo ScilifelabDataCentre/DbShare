@@ -6,6 +6,8 @@ import io
 import json
 import os.path
 import sqlite3
+import threading
+import time
 import urllib.parse
 import uuid
 
@@ -205,6 +207,34 @@ def html_none(value):
     else:
         return value
 
+def query_interruptor(cnx, event):
+    "Background thread to interrupt the main query thread if necessary."
+    print('query_interruptor')
+    event.wait()
+    elapsed = 0.0
+    while elapsed < flask.current_app.config['MAX_QUERY_TIME_LIMIT']:
+        if not event.is_set():
+            print('event cleared')
+            return
+        print('sleeping...')
+        time.sleep(flask.current_app.config['QUERY_TIME_SLEEP'])
+        elapsed += flask.current_app.config['QUERY_TIME_SLEEP']
+    cnx.interrupt()
+
+def query_limited_time(cnx, sql, values):
+    """Main query thread.
+    Returns a cursor containing the results, unless interrupted.
+    Raises sqlite3.OperationalError if interrupted.
+    """
+    print('query_limited_time')
+    event = threading.Event()
+    interruptor = threading.Thread(target=query_interruptor, args=(cnx, event))
+    interruptor.start()
+    cursor = cnx.cursor()
+    cursor.execute(sql, values)
+    event.clear()
+    interruptor.join()
+    return cursor
 
 class CsvWriter:
     "Create CSV file content from rows of data."

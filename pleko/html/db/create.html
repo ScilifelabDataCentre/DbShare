@@ -38,7 +38,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('owner', username=g.current_user['username']) }}"
+  <a href="{{ url_for('dbs_owner', username=g.current_user['username']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

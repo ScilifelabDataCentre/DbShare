@@ -100,7 +100,8 @@ def create():
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(
-            flask.url_for('owner', username=flask.g.current_user['username']))
+            flask.url_for('dbs_owner',
+                          username=flask.g.current_user['username']))
 
     if utils.http_GET():
         return flask.render_template('db/create.html')
