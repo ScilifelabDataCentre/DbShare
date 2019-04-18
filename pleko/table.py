@@ -94,7 +94,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                     flask.flash('NOTE: The number of rows displayed' +
                                 f' is limited to {limit}.',
                                 'message')
-                rows = utils.query_timeout(sql)
+                rows = utils.execute_timeout(dbcnx, sql)
                 updateable = bool([c for c in schema['columns']
                                    if c.get('primarykey')])
                 return flask.render_template('table/rows.html', 
@@ -109,7 +109,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             elif tablename.ext == 'csv':
                 writer = utils.CsvWriter(header=columns)
                 try:
-                    rows = utils.query_timeout(dbcnx, sql)
+                    rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
                 writer.add_rows(rows, skip_rowid=True)
@@ -118,7 +118,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
 
             elif tablename.ext == 'json':
                 try:
-                    rows = utils.query_timeout(dbcnx, sql)
+                    rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
                 return flask.jsonify(
@@ -308,7 +308,7 @@ def row_edit(dbname, tablename, rowid):
               (','.join(['"%(name)s"' % c for c in schema['columns']]),
                schema['name'])
         cursor.execute(sql, (rowid,))
-        rows = list(cursor)
+        rows = cursor.fetchall()
         if len(rows) != 1:
             flask.flash('no such row in table', 'error')
             return flask.redirect(flask.url_for('.rows',
@@ -661,7 +661,7 @@ def download_csv(dbname, tablename):
             colnames.insert(0, 'rowid')
         dbcnx = pleko.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
-        writer.add_rows(utils.query_timeout(dbcnx, sql))
+        writer.add_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',

@@ -637,7 +637,7 @@ class DbContext:
         if query:
             sql = 'CREATE TABLE "%s" AS %s' % (schema['name'],
                                                pleko.query.get_sql_query(query))
-            utils.query_timeout(self.dbcnx, sql)
+            utils.execute_timeout(self.dbcnx, sql)
             if not schema.get('description'):
                 schema['description'] = sql
             cursor = self.dbcnx.cursor()
@@ -830,7 +830,7 @@ def get_db(name, complete=False):
     sql = "SELECT owner, title, description, public, readonly," \
           " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
-    rows = list(cursor)
+    rows = cursor.fetchall()
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
     db = {'name':       name,
@@ -885,7 +885,7 @@ def get_usage(username=None):
     else:
         sql = "SELECT name FROM dbs"
         cursor.execute(sql)
-    rows = list(cursor)
+    rows = cursor.fetchall()
     return (len(rows),
             sum([os.path.getsize(utils.dbpath(row[0])) for row in rows]))
 

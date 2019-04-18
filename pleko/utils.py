@@ -219,13 +219,13 @@ def _interrupt(cnx, event, timeout, increment):
         elapsed += increment
     cnx.interrupt()
 
-def query_timeout(cnx, sql, *values):
+def execute_timeout(cnx, sql, *values):
     """Perform a query to be interrupted if it runs too long.
     Returns a cursor containing the results.
     Raises SystemError if interrupted by time-out.
     """
-    timeout = flask.current_app.config['QUERY_TIMEOUT']
-    increment = flask.current_app.config['QUERY_TIMEOUT_INCREMENT']
+    timeout = flask.current_app.config['EXECUTE_TIMEOUT']
+    increment = flask.current_app.config['EXECUTE_TIMEOUT_INCREMENT']
     event = threading.Event()
     thread = threading.Thread(target=_interrupt,
                               args=(cnx, event, timeout, increment))

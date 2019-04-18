@@ -47,7 +47,7 @@ def rows(dbname):
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
         dbcnx = pleko.db.get_cnx(dbname)
-        rows = utils.query_timeout(dbcnx, get_sql_query(query_limited))
+        rows = utils.execute_timeout(dbcnx, get_sql_query(query_limited))
         if len(rows) >= query_limited['limit']:
             flask.flash('NOTE: The number of rows displayed' +
                         f" is limited to {limit}.", 'message')

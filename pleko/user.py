@@ -357,7 +357,7 @@ class UserContext:
         cursor = self.cnx.cursor()
         cursor.execute("SELECT COUNT(*) FROM users WHERE username=?",
                        (self.user['username'],))
-        rows = list(cursor)
+        rows = cursor.fetchall()
         with self.cnx:
             # Update user
             if rows[0][0]:
@@ -496,7 +496,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     sql = "SELECT username, email, password, apikey, role, status," \
           " quota, created, modified FROM users" + criterion
     cursor.execute(sql, (name,))
-    rows = list(cursor)
+    rows = cursor.fetchall()
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
     return {'username': row[0],

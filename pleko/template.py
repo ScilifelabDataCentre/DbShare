@@ -503,7 +503,7 @@ def get_template(templatename):
     sql = "SELECT owner, title, description, code, type, fields, public," \
           " created, modified FROM templates WHERE name=?"
     cursor.execute(sql, (templatename,))
-    rows = list(cursor)
+    rows = cursor.fetchall()
     if len(rows) != 1: return None # 'rowcount' does not work?!
     row = rows[0]
     template = {'name':       templatename,

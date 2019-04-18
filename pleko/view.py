@@ -120,7 +120,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     sql += f" LIMIT {limit}"
                     flask.flash('NOTE: The number of rows displayed' +
                                 f' is limited to {limit}.', 'message')
-                rows = utils.query_timeout(dbcnx, sql) # Maybe LIMIT imposed
+                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
                 query = schema['query']
                 sql = pleko.query.get_sql_query(query) # No imposed LIMIT
                 return flask.render_template('view/rows.html', 
@@ -137,7 +137,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 columns = [c['name'] for c in schema['columns']]
                 writer = utils.CsvWriter(header=columns)
                 try:
-                    rows = utils.query_timeout(dbcnx, sql)
+                    rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
                 writer.write_rows(rows)
@@ -147,7 +147,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             elif viewname.ext == 'json':
                 columns = [c['name'] for c in schema['columns']]
                 try:
-                    rows = utils.query_timeout(dbcnx, sql)
+                    rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
                 return flask.jsonify(
@@ -290,7 +290,7 @@ def download_csv(dbname, viewname):
         colnames = ['"%s"' % c for c in schema['query']['columns']]
         dbcnx = pleko.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
-        writer.add_rows(utils.query_timeout(dbcnx, sql))
+        writer.add_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',
