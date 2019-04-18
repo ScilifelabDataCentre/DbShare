@@ -245,8 +245,10 @@ def upload():
 
     elif utils.http_POST():
         try:
+            infile = flask.request.files.get('sqlite3file')
+            if infile is None:
+                raise ValueError('no file given')
             dbname = flask.request.form.get('dbname')
-            infile = flask.request.files.get('dbfile')
             if not dbname:
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
             db = pleko.db.add_database(dbname,

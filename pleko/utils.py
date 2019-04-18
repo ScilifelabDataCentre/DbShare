@@ -198,6 +198,7 @@ def check_csrf_token():
     "Check the CSRF token for POST HTML."
     token = flask.session.pop('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
+        print('CSRF:', token, flask.request.form.get('_csrf_token'))
         flask.abort(400)
 
 def flash_message_limit(limit):

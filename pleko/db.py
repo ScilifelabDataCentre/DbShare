@@ -81,13 +81,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        cnx = pleko.master.get_cnx(write=True)
-        with cnx:
-            sql = 'DELETE FROM dbs_logs WHERE name=?'
-            cnx.execute(sql, (str(dbname),))
-            sql = 'DELETE FROM dbs WHERE name=?'
-            cnx.execute(sql, (str(dbname),))
-            os.remove(utils.dbpath(str(dbname)))
+        delete_database(str(dbname))
         return flask.redirect(
             flask.url_for('dbs_owner', username=flask.g.current_user['username']))
 
@@ -110,17 +104,8 @@ def create():
         try:
             with DbContext() as ctx:
                 ctx.set_name(flask.request.form['name'])
+                ctx.initialize()
                 ctx.set_title(flask.request.form.get('title'))
-                sql = get_sql_create_table(TABLES_TABLE)
-                ctx.dbcnx.execute(sql)
-                sql = get_sql_create_table(INDEXES_TABLE)
-                ctx.dbcnx.execute(sql)
-                sql = get_sql_create_table(VIEWS_TABLE)
-                ctx.dbcnx.execute(sql)
-                sql = get_sql_create_table(VISUALS_TABLE)
-                ctx.dbcnx.execute(sql)
-                sql = get_sql_create_index(VISUALS_INDEX)
-                ctx.dbcnx.execute(sql)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
@@ -535,14 +520,9 @@ class DbContext:
                               utils.dbpath(self.db['name']))
                 sql = 'PRAGMA foreign_keys=ON'
                 self.cnx.execute(sql)
-            # Create database entry in master, and its Sqlite3 file
+            # Create database entry in master.
+            # The db file itself has already been created in 'initialize'.
             else:
-                try:
-                    db = sqlite3.connect(utils.dbpath(self.db['name']))
-                except sqlite3.Error as error:
-                    raise ValueError(str(error))
-                else:
-                    db.close()
                 sql = "INSERT INTO dbs" \
                       " (name, owner, title, public, readonly," \
                       "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)"
@@ -589,6 +569,28 @@ class DbContext:
             raise ValueError('database name already in use')
         self.db['name'] = name
 
+    def initialize(self):
+        "Create the Pleko metadata tables and indexes if they do not exist."
+        # Implicitly creates the file, or checks that it is an Sqlite3 file.
+        sql = get_sql_create_table(TABLES_TABLE, if_not_exists=True)
+        self.dbcnx.execute(sql)
+        sql = get_sql_create_table(INDEXES_TABLE, if_not_exists=True)
+        self.dbcnx.execute(sql)
+        sql = get_sql_create_table(VIEWS_TABLE, if_not_exists=True)
+        self.dbcnx.execute(sql)
+        sql = get_sql_create_table(VISUALS_TABLE, if_not_exists=True)
+        self.dbcnx.execute(sql)
+        sql = get_sql_create_index(VISUALS_INDEX, if_not_exists=True)
+        self.dbcnx.execute(sql)
+
+    def import_content(self, content):
+        """Import the entire database file present in the given content.
+        Initialize the metadata tables and indexes if needed.
+        """
+        with open(utils.dbpath(self.db['name']), 'wb') as outfile:
+            outfile.write(content)
+        self.initialize()
+
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,
         the data URLs of visual specs must be updated.
@@ -622,9 +624,10 @@ class DbContext:
         "Set the database title."
         self.db['title'] = title or None
 
-    def add_table(self, schema, query=None):
+    def add_table(self, schema, query=None, create=True):
         """Create the table in the database and add to the database definition.
-        If query is given, do 'CREATE TABLE AS', and fix up the schema.
+        If 'query' is given, do 'CREATE TABLE AS', and fix up the schema.
+        If 'create' is True, then actually create the table.
         Raises SystemError if the query is interrupted by time-out.
         """
         if not constants.NAME_RX.match(schema['name']):
@@ -645,11 +648,11 @@ class DbContext:
             cursor.execute(sql)
             schema['columns'] = [{'name': row[1], 'type': row[2]} 
                                  for row in cursor]
-        else:
+        elif create:
             sql = get_sql_create_table(schema)
             self.dbcnx.execute(sql)
-        sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
         with self.dbcnx:
+            sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.db['tables'][schema['name']] = schema
 
@@ -1064,8 +1067,10 @@ def _set_nrows(cnx, targets=[]):
         target['nrows'] = cursor.fetchone()[0]
 
 def add_database(dbname, title, content):
-    """Add the database present in the given file content.
-    Check the validity of the conten as a Pleko Sqlite3 database file.
+    """Add the database file present in the given content.
+    If the database has the metadata of a Pleko Sqlite3 database, check it.
+    Else if the database appears to be a plain Sqlite3 database,
+    infer the Pleko metadata from it by inspection.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
@@ -1073,65 +1078,112 @@ def add_database(dbname, title, content):
         check_quota()
         with DbContext() as ctx:
             ctx.set_name(dbname) # Checks that name is not already used.
-            ctx.set_title(title)
-            with open(utils.dbpath(dbname), 'wb') as outfile:
-                outfile.write(content)
-    except (ValueError, TypeError, sqlite3.Error) as error:
+            ctx.import_content(content)
+    except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
     try:
-        with DbContext() as ctx:
+        with DbContext(get_db(dbname, complete=True)) as ctx: # Re-read db dict
+            ctx.set_title(title)
             cursor = ctx.dbcnx.cursor()
-            # Can the file be opened by sqlite3?
-            # Check the required metadata tables and their content.
-            sql = "SELECT name FROM %s" % constants.TABLES
+            sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
             cursor.execute(sql)
-            tables1 = set([row[0] for row in cursor])
-            sql = "SELECT name FROM sqlite_master WHERE type=?"
-            cursor.execute(sql, ('table',))
-            tables2 = set([row[0] for row in cursor
-                           if not row[0].startswith('_')])
-            if tables1 != tables2:
-                raise ValueError('corrupt metadata in Pleko Sqlite3 file')
-            sql = "SELECT name, schema FROM %s" % constants.INDEXES
-            ctx.dbcnx.execute(sql)
-            sql = "SELECT name, schema FROM %s" % constants.VIEWS
-            ctx.dbcnx.execute(sql)
-            # Fix the data URLs in the visuals.
-            cursor = ctx.dbcnx.cursor()
-            sql = "SELECT name, spec FROM %s" % constants.VISUALS
-            cursor.execute(sql)
-            visuals = [{'name': row[0], 'spec': json.loads(row[1])}
-                       for row in cursor]
-            # Update the data URLs in the visuals.
-            new_root = utils.get_url('home').rstrip('/')
-            # Identify the old URL root from a data url in a visual spec.
-            old_root = None
-            search = dpath.util.search
-            for visual in visuals:
-                for path,href in search(visual['spec'],'data/url',yielded=True):
-                    parts = urllib.parse.urlparse(href)
-                    old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
-                    break
-            rx_table = re.compile(r'^.*/table/(.+)/.+$')
-            rx_view  = re.compile(r'^.*/view/(.+)/.+$')
-            for visual in visuals:
-                for path,href in search(visual['spec'],'data/url',yielded=True):
-                    # Next, replace old URL root with new.
-                    href = href.replace(old_root, new_root)
-                    # And, old database name with new in URL path.
-                    for m in [rx_table.match(href), rx_view.match(href)]:
-                        if m:
-                            href = href[: m.start(1)] + \
-                                   ctx.db['name'] + \
-                                   href[m.end(1) :]
-                            dpath.util.set(visual['spec'], path, href)
-                            break
-            with ctx.dbcnx:
-                sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
-                for visual in visuals:
-                    cursor.execute(sql,
-                                   (json.dumps(visual['spec']),visual['name']))
+            if cursor.fetchone()[0] == 0: # No info in Pleko metadata.
+                infer_pleko_metadata(ctx)
+            check_pleko_metadata(ctx)
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:
-        os.remove(utils.dbpath(dbname))
+        delete_database(dbname)
         raise ValueError(str(error))
+
+def delete_database(dbname):
+    "Delete the database in the master and from disk."
+    cnx = pleko.master.get_cnx(write=True)
+    with cnx:
+        sql = 'DELETE FROM dbs_logs WHERE name=?'
+        cnx.execute(sql, (dbname,))
+        sql = 'DELETE FROM dbs WHERE name=?'
+        cnx.execute(sql, (dbname,))
+        try:
+            os.remove(utils.dbpath(dbname))
+        except FileNotFoundError:
+            pass
+
+def infer_pleko_metadata(ctx):
+    "Infer and save the Pleko metadata for the database."
+    cursor = ctx.dbcnx.cursor()
+    # Get the tables before creating the metatables, for simplicity.
+    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    cursor.execute(sql, ('table',))
+    tablenames = [row[0] for row in cursor 
+                  if not row[0].startswith('_')] # Ignore metadata tables.
+    # Check the Pleko validity of the table names.
+    for tablename in tablenames:
+        if not constants.NAME_RX.match(tablename):
+            raise ValueError(f"invalid table name '{tablename}' for Pleko")
+    # Infer the schema for the tables, and set the metadata.
+    for tablename in tablenames:
+        schema = {'name': tablename, 'columns': []}
+        sql = f'PRAGMA table_info("{tablename}")'
+        cursor.execute(sql)
+        for row in cursor:
+            column = {'name': row[1].lower(), 
+                      'type': row[2].upper(),
+                      'notnull': bool(row[3]),
+                      'primarykey': bool(row[5])}
+            schema['columns'].append(column)
+        ctx.add_table(schema, create=False)
+    # XXX Views are currently not inferred!
+    # XXX Indexes are currently not inferred!
+
+def check_pleko_metadata(ctx):
+    """Check the validity of the Pleko metadata for the database.
+    Raises ValueError or sqlite3.Error if any problem.
+    """
+    cursor = ctx.dbcnx.cursor()
+    sql = "SELECT name FROM %s" % constants.TABLES
+    cursor.execute(sql)
+    tables1 = set([row[0] for row in cursor])
+    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    cursor.execute(sql, ('table',))
+    tables2 = set([row[0].lower() for row in cursor
+                   if not row[0].startswith('_')]) # Ignore metadata tables.
+    if tables1 != tables2:
+        raise ValueError('corrupt metadata in Pleko Sqlite3 file')
+    # Does the index metatable exist?
+    sql = "SELECT name, schema FROM %s" % constants.INDEXES
+    cursor.execute(sql)
+    # Does the views metatable exist?
+    sql = "SELECT name, schema FROM %s" % constants.VIEWS
+    cursor.execute(sql)
+    # Fix the data URLs in the visuals.
+    sql = "SELECT name, spec FROM %s" % constants.VISUALS
+    cursor.execute(sql)
+    visuals = [{'name': row[0], 'spec': json.loads(row[1])} for row in cursor]
+    # Update the data URLs in the visuals.
+    new_root = utils.get_url('home').rstrip('/')
+    # Identify the old URL root from a data url in a visual spec.
+    old_root = None
+    search = dpath.util.search
+    for visual in visuals:
+        for path,href in search(visual['spec'],'data/url',yielded=True):
+            parts = urllib.parse.urlparse(href)
+            old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
+            break
+    rx_table = re.compile(r'^.*/table/(.+)/.+$')
+    rx_view  = re.compile(r'^.*/view/(.+)/.+$')
+    for visual in visuals:
+        for path,href in search(visual['spec'],'data/url',yielded=True):
+            # Next, replace old URL root with new.
+            href = href.replace(old_root, new_root)
+            # And, old database name with new in URL path.
+            for m in [rx_table.match(href), rx_view.match(href)]:
+                if m:
+                    href = href[: m.start(1)] + \
+                           ctx.db['name'] + \
+                           href[m.end(1) :]
+                    dpath.util.set(visual['spec'], path, href)
+                    break
+    with ctx.dbcnx:
+        sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
+        for visual in visuals:
+            cursor.execute(sql, (json.dumps(visual['spec']),visual['name']))
