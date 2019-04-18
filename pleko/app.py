@@ -140,11 +140,19 @@ def thousands(value):
     else:
         return value
 
-@app.template_filter('or_null_safe')
-def or_null_safe(value):
+@app.template_filter('none_as_literal_null')
+def none_as_literal_null(value):
     "Output None as HTML '<NULL>' in safe mode."
     if value is None:
         return jinja2.utils.Markup('<i>&lt;NULL&gt;</i>')
+    else:
+        return value
+
+@app.template_filter('none_as_empty_string')
+def none_as_empty_string(value):
+    "Output the value if not None, else an empty string."
+    if value is None:
+        return ''
     else:
         return value
 

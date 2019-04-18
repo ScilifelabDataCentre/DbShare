@@ -23,7 +23,7 @@
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="number" step="1" class="form-control"
-                   value="{{ utils.html_none(values[pos]) }}">
+                   value="{{ values[pos]|none_as_empty_string }}">
           </div>
           {% elif column['type'] == constants.REAL %}
           <div class="col-md-4">
@@ -31,7 +31,7 @@
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="text" class="form-control"
-                   value="{{ utils.html_none(values[pos]) }}">
+                   value="{{ values[pos]|none_as_empty_string }}">
           </div>
           {% elif column['type'] == constants.TEXT %}
           <div class="col-md-8">
@@ -39,7 +39,7 @@
                    aria-describedby="{{ column['name'] }}Help"
                    {{ column['notnull'] and 'required' or '' }}
                    type="text" class="form-control"
-                   value="{{ utils.html_none(values[pos]) }}">
+                   value="{{ values[pos]|none_as_empty_string }}">
           </div>
           {% elif column['type'] == constants.BLOB %}
           <div class="col-md-8">
@@ -47,7 +47,7 @@
                       aria-describedby="{{ column['name'] }}Help"
                       {{ column['notnull'] and 'required' or '' }}
                       class="form-control" rows="4"
-                      >{{ utils.html_none(values[pos]) }}</textarea>
+                      >{{ values[pos]|none_as_empty_string }}</textarea>
           </div>
           {% endif %}
           <div class="col-md">

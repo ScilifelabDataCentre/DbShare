@@ -22,7 +22,7 @@
     {% for row in rows %}
     <tr>
       {% for value in row[1:] %}
-      <td>{{ value | or_null_safe }}</td>
+      <td>{{ value|none_as_literal_null }}</td>
       {% endfor %}
       {% if has_write_access %}
       <td class="text-right px-0">

@@ -200,13 +200,6 @@ def check_csrf_token():
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
 
-def html_none(value):
-    "Output the value if not None, else an empty string."
-    if value is None:
-        return ''
-    else:
-        return value
-
 def flash_message_limit(limit):
     "Flash message about limit on number of rows."
     msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
