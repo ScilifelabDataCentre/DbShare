@@ -1049,19 +1049,19 @@ def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
 def set_nrows(db, nrows):
     "Set the item 'nrows' for all or given tables and views of the database."
     if not nrows: return
-    dbcnx = get_cnx(db['name'])
     if nrows == True:
-        nrows = set(db['tables'].keys())
-        nrows.update(db['views'].keys())
+        targets = list(db['tables'].values()) + list(db['views'].values())
     else:
-        nrows = set(nrows)
-    cursor = dbcnx.cursor()
-    items = list(db['tables'].values()) + list(db['views'].values())
-    for item in items:
-        if item['name'] in nrows:
-            sql = 'SELECT COUNT(*) FROM "%s"' % item['name']
-            cursor.execute(sql)
-            item['nrows'] = cursor.fetchone()[0]
+        targets = [get_schema(db, name) for name in nrows]
+    utils.execute_timeout(get_cnx(db['name']), _set_nrows, targets=targets)
+
+def _set_nrows(cnx, targets=[]):
+    "Actually set the nrow values; executed with time-out."
+    cursor = cnx.cursor()
+    for target in targets:
+        sql = 'SELECT COUNT(*) FROM "%s"' % target['name']
+        cursor.execute(sql)
+        target['nrows'] = cursor.fetchone()[0]
 
 def add_database(dbname, title, content):
     """Add the database present in the given file content.

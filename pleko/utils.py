@@ -205,7 +205,7 @@ def flash_message_limit(limit):
     msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
     flask.flash(msg, 'message')
 
-def _interrupt(cnx, event, timeout, increment):
+def _timeout_interrupt(cnx, event, timeout, increment):
     "Background thread to interrupt the Sqlite3 query, if timeout."
     assert timeout > 0.0
     assert increment > 0.0
@@ -217,27 +217,35 @@ def _interrupt(cnx, event, timeout, increment):
         elapsed += increment
     cnx.interrupt()
 
-def execute_timeout(cnx, sql, *values):
-    """Perform a query to be interrupted if it runs too long.
-    Returns a cursor containing the results.
+def execute_timeout(cnx, command, timeout=None, increment=None, **kwargs):
+    """Perform Sqlite3 command(s) to be interrupted if running too long.
+    If the given command is a string, it is executed as SQL and all rows
+    produced by it are returned.
+    If the command is a callable, call it with the cnx and any given
+    keyword arguments.
     Raises SystemError if interrupted by time-out.
     """
-    timeout = flask.current_app.config['EXECUTE_TIMEOUT']
-    increment = flask.current_app.config['EXECUTE_TIMEOUT_INCREMENT']
+    config = flask.current_app.config
+    timeout = timeout or config['EXECUTE_TIMEOUT']
+    increment = increment or config['EXECUTE_TIMEOUT_INCREMENT']
     event = threading.Event()
-    thread = threading.Thread(target=_interrupt,
+    thread = threading.Thread(target=_timeout_interrupt,
                               args=(cnx, event, timeout, increment))
     thread.start()
     event.set()
-    cursor = cnx.cursor()
     try:
-        cursor.execute(sql, values)
-        result = cursor.fetchall()
+        if isinstance(command, str): # SQL
+            cursor = cnx.cursor()
+            cursor.execute(command)
+            result = cursor.fetchall()
+        elif callable(command):
+            result = command(cnx, **kwargs)
     except sqlite3.OperationalError as error:
         raise SystemError(f"execution time exceeded {timeout} s; interrupted")
     event.clear()
     thread.join()
     return result
+
 
 class CsvWriter:
     "Create CSV file content from rows of data."

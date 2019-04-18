@@ -44,7 +44,7 @@ CONFIG = dict(
     MAX_NROWS_DISPLAY = 2000,
     QUERY_DEFAULT_LIMIT = 100,
     EXECUTE_TIMEOUT = 2.0,
-    EXECUTE_TIMEOUT_INCREMENT = 0.1,
+    EXECUTE_TIMEOUT_INCREMENT = 0.05,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'vertical-bar': {'label': "vertical-bar '|'", 
