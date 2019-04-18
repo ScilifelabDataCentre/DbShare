@@ -83,7 +83,7 @@
 <div class="mt-3">
   <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    {{ db['tables'][schema['name']]['nrows'] }} rows</a>
+    {{ db['tables'][schema['name']]['nrows']|thousands }} rows</a>
 </div>
 {% if has_write_access %}
 <div class="mt-3">

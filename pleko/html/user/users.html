@@ -32,7 +32,7 @@
 	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
       </td>
       <td class="text-right">
-        <span class="text-monospace mr-3">{{ '{:,}'.format(user['size']) }}</span>
+        <span class="text-monospace mr-4">{{ user['size']|thousands }}</span>
       </td>
       <td>
 	<a href="{{ url_for('templates_owner', username=user['username']) }}">

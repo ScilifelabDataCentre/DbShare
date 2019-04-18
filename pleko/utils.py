@@ -207,6 +207,11 @@ def html_none(value):
     else:
         return value
 
+def flash_message_limit(limit):
+    "Flash message about limit on number of rows."
+    msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
+    flask.flash(msg, 'message')
+
 def _interrupt(cnx, event, timeout, increment):
     "Background thread to interrupt the Sqlite3 query, if timeout."
     assert timeout > 0.0

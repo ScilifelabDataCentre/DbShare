@@ -25,7 +25,7 @@
 <div class="mt-3">
   <a href="{{ utils.url_for_rows(db, schema) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    {{ schema['type'].capitalize() }}<br>{{ schema['nrows'] }} rows</a>
+    {{ schema['type'].capitalize() }}<br>{{ schema['nrows']|thousands }} rows</a>
 </div>
 {% if has_write_access %}
 <div class="mt-3">

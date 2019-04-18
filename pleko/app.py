@@ -135,7 +135,10 @@ def setup_template_context():
 @app.template_filter('thousands')
 def thousands(value):
     "Output integer with thousands delimiters."
-    return '{:,}'.format(value)
+    if isinstance(value, int):
+        return '{:,}'.format(value)
+    else:
+        return value
 
 @app.template_filter('or_null_safe')
 def or_null_safe(value):

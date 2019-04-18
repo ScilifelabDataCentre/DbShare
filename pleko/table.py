@@ -91,9 +91,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
                 if schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"
-                    flask.flash('NOTE: The number of rows displayed' +
-                                f' is limited to {limit}.',
-                                'message')
+                    utils.flash_message_limit(limit)
                 rows = utils.execute_timeout(dbcnx, sql)
                 updateable = bool([c for c in schema['columns']
                                    if c.get('primarykey')])

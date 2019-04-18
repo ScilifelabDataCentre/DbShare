@@ -48,7 +48,10 @@ Create a Vega visualization for {{ schema['type'] }} {{ schema['name'] }}
 <div class="mt-3">
   <a href="{{ utils.url_for_rows(db, schema) }}"
      role="button" target="_blank" class="btn btn-outline-primary btn-block">
-    {{ schema['type'].capitalize()}}<br>{{ schema['nrows'] }} rows &#8599;</a>
+    {{ schema['type'].capitalize()}}
+    <br>
+    {{ schema['nrows']|thousands }} rows &#8599;
+  </a>
 </div>
 <div class="mt-3">
   <a href="{{ utils.url_for_rows(db, schema) }}"

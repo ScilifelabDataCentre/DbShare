@@ -118,8 +118,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
                 if schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"
-                    flask.flash('NOTE: The number of rows displayed' +
-                                f' is limited to {limit}.', 'message')
+                    utils.flash_message_limit(limit)
                 rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
                 query = schema['query']
                 sql = pleko.query.get_sql_query(query) # No imposed LIMIT

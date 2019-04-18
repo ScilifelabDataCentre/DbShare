@@ -108,7 +108,7 @@
           Table <strong>{{ table['name'] }}</strong></button>
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
            class="btn btn-sm btn-outline-primary" role="button" target="_blank">
-          {{ table['nrows'] }} rows</a>
+          {{ table['nrows']|thousands }} rows</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">

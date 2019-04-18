@@ -49,8 +49,7 @@ def rows(dbname):
         dbcnx = pleko.db.get_cnx(dbname)
         rows = utils.execute_timeout(dbcnx, get_sql_query(query_limited))
         if len(rows) >= query_limited['limit']:
-            flask.flash('NOTE: The number of rows displayed' +
-                        f" is limited to {limit}.", 'message')
+            utils.flash_limit(limit)
         if query['columns'][0] == '*':
             try:
                 columns = [f"column{i+1}" for i in range(len(rows[0]))]

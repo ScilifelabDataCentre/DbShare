@@ -89,7 +89,7 @@
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
            class="btn btn-sm btn-outline-primary my-1" 
            role="button" target="_blank">
-          {{ table['nrows'] }} rows &#8599;</a>
+          {{ table['nrows']|thousands }} rows &#8599;</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
@@ -119,7 +119,7 @@
         <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
            class="btn btn-sm btn-outline-success my-1"
            role="button" target="_blank">
-          {{ view['nrows'] }} rows &#8599;</a>
+          {{ view['nrows']|thousands }} rows &#8599;</a>
       </div>
       <div id="{{ view['name'] }}" class="collapse">
         <div class="card-body">

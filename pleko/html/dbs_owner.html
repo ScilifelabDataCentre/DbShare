@@ -40,7 +40,7 @@
 	{% endif %}
       </td>
       <td class="text-right">
-        <span class="text-monospace mr-3">{{ '{:,}'.format(db['size']) }}</span>
+        <span class="text-monospace mr-4">{{ db['size']|thousands }}</span>
       </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>
