@@ -583,12 +583,12 @@ class DbContext:
         sql = get_sql_create_index(VISUALS_INDEX, if_not_exists=True)
         self.dbcnx.execute(sql)
 
-    def import_content(self, content):
-        """Import the entire database file present in the given content.
+    def import_file(self, infile):
+        """Import the entire database file present in the given file object.
         Initialize the metadata tables and indexes if needed.
         """
         with open(utils.dbpath(self.db['name']), 'wb') as outfile:
-            outfile.write(content)
+            outfile.write(infile.read())
         self.initialize()
 
     def update_spec_data_urls(self, old_dbname):
@@ -1066,8 +1066,8 @@ def _set_nrows(cnx, targets=[]):
         cursor.execute(sql)
         target['nrows'] = cursor.fetchone()[0]
 
-def add_database(dbname, title, content):
-    """Add the database file present in the given content.
+def add_database(dbname, infile):
+    """Add the database file present in the given open file object.
     If the database has the metadata of a Pleko Sqlite3 database, check it.
     Else if the database appears to be a plain Sqlite3 database,
     infer the Pleko metadata from it by inspection.
@@ -1078,12 +1078,11 @@ def add_database(dbname, title, content):
         check_quota()
         with DbContext() as ctx:
             ctx.set_name(dbname) # Checks that name is not already used.
-            ctx.import_content(content)
+            ctx.import_file(infile)
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
     try:
         with DbContext(get_db(dbname, complete=True)) as ctx: # Re-read db dict
-            ctx.set_title(title)
             cursor = ctx.dbcnx.cursor()
             sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
             cursor.execute(sql)
@@ -1103,10 +1102,10 @@ def delete_database(dbname):
         cnx.execute(sql, (dbname,))
         sql = 'DELETE FROM dbs WHERE name=?'
         cnx.execute(sql, (dbname,))
-        try:
-            os.remove(utils.dbpath(dbname))
-        except FileNotFoundError:
-            pass
+    try:
+        os.remove(utils.dbpath(dbname))
+    except FileNotFoundError:
+        pass
 
 def infer_pleko_metadata(ctx):
     "Infer and save the Pleko metadata for the database."

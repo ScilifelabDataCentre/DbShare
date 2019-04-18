@@ -251,9 +251,7 @@ def upload():
             dbname = flask.request.form.get('dbname')
             if not dbname:
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
-            db = pleko.db.add_database(dbname,
-                                       flask.request.form.get('title'),
-                                       infile.read())
+            db = pleko.db.add_database(dbname, infile)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('upload'))
