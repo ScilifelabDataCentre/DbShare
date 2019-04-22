@@ -4,11 +4,17 @@ import sqlite3
 
 import flask
 
+import pleko
 from pleko import constants
 from pleko import utils
 import pleko.db
 
 MASTER_TABLES = [
+    dict(name='meta',
+         columns=[dict(name='key', type=constants.TEXT, primarykey= True),
+                  dict(name='value', type=constants.TEXT, notnull=True)
+         ]
+    ),
     dict(name='users',
          columns=[dict(name='username', type=constants.TEXT, primarykey= True),
                   dict(name='email', type=constants.TEXT, notnull=True),
@@ -111,5 +117,18 @@ def init(app):
     for schema in MASTER_INDEXES:
         sql = pleko.db.get_sql_create_index(schema, if_not_exists=True)
         cnx.execute(sql)
+    # Check or set major version number.
+    major = pleko.__version__.split('.')[0]
+    cursor = cnx.cursor()
+    sql = 'SELECT "value" FROM "meta" WHERE "key"=?'
+    cursor.execute(sql, ('version',))
+    rows = cursor.fetchall()
+    if len(rows) == 1:
+        if rows[0][0] != major:
+            raise ValueError('wrong major version of master database')
+    else:
+        with cnx:
+            sql = 'INSERT INTO "meta" ("key", "value") VALUES (?, ?)'
+            cnx.execute(sql, ('version', major))
     cnx.close()
     

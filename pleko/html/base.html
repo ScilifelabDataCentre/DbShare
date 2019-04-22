@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block head_title %}Pleko{% endblock %}</title>
-    <link rel="icon" href="{{ url_for('static', filename='logo64.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='dbportal-32.png') }}">
     {# bootstrap 4.3.1 #}
     <link {{ config['BOOTSTRAP_CSS_ATTRS'] | safe }} rel="stylesheet">
     <link href="{{ config['DATATABLES_CSS_URL'] }}" rel="stylesheet">
@@ -14,9 +14,8 @@
     </style>
   </head>
   <body>
-    <nav class="navbar navbar-expand-md navbar-light"
-         style="background-color: #e3f2fd;">
-      <img src="{{ url_for('static', filename='logo64.png') }}"
+    <nav class="navbar navbar-expand-md navbar-light bg-light">
+      <img src="{{ url_for('static', filename='dbportal-32.png') }}"
            width="32" height="32" title="Pleko" alt="Pleko">
       <button type="button" class="navbar-toggler navbar-toggler-right"
               data-toggle="collapse" data-target="#top_navbar"

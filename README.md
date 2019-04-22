@@ -18,8 +18,8 @@ Publish, query and visualize tabular data sets using
 - Rename a database.
 - Clone a database.
 - Delete a database.
-- Download the Sqlite3 file containing a database.
-- Upload a database Sqlite3 file.
+- Download the Sqlite3 file containing one database.
+- Upload a Sqlite3 database file.
 
 ## Tables
 
