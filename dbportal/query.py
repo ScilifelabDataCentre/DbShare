@@ -115,8 +115,8 @@ def get_query_from_request(check=False):
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
         raise KeyError('no FROM part')
-    result['where'] = flask.request.values.get('where')
-    result['orderby'] = flask.request.values.get('orderby')
+    result['where'] = flask.request.values.get('where') or None
+    result['orderby'] = flask.request.values.get('orderby') or None
     try:
         limit = flask.request.values['limit']
         limit = limit.strip()

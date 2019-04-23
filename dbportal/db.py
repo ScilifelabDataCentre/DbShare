@@ -584,8 +584,8 @@ class DbContext:
         sql = get_sql_create_index(VISUALS_INDEX, if_not_exists=True)
         self.dbcnx.execute(sql)
 
-    def import_file(self, infile):
-        """Import the entire database file present in the given file object.
+    def load_dbfile(self, infile):
+        """Load the entire database file present in the given file object.
         Initialize the metadata tables and indexes if needed.
         """
         with open(utils.dbpath(self.db['name']), 'wb') as outfile:
@@ -719,8 +719,10 @@ class DbContext:
         sql = 'DROP INDEX "%s"' % indexname
         self.dbcnx.execute(sql)
 
-    def add_view(self, schema):
-        "Create a view in the database and add to the database definition."
+    def add_view(self, schema, create=True):
+        """Create a view in the database and add to the database definition.
+        If 'create' is True, then actually create the view.
+        """
         if not schema.get('name'):
             raise ValueError('no view name defined')
         schema['name'] = schema['name'].lower()
@@ -732,10 +734,11 @@ class DbContext:
             raise ValueError('name is already in use for a view')
         if not schema.get('query'):
             raise ValueError('no query statement defined')
-        sql = 'CREATE VIEW "%s" AS %s' % \
-              (schema['name'],
-               dbportal.query.get_sql_query(schema['query']))
-        self.dbcnx.execute(sql)
+        if create:
+            sql = 'CREATE VIEW "%s" AS %s' % \
+                  (schema['name'],
+                   dbportal.query.get_sql_query(schema['query']))
+            self.dbcnx.execute(sql)
         cursor = self.dbcnx.cursor()
         try:
             sql = 'PRAGMA table_info("%s")' % schema['name']
@@ -1079,7 +1082,7 @@ def add_database(dbname, infile):
         check_quota()
         with DbContext() as ctx:
             ctx.set_name(dbname) # Checks that name is not already used.
-            ctx.import_file(infile)
+            ctx.load_dbfile(infile)
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
     try:
@@ -1111,7 +1114,7 @@ def delete_database(dbname):
 def infer_dbportal_metadata(ctx):
     "Infer and save the DbPortal metadata for the database."
     cursor = ctx.dbcnx.cursor()
-    # Get the tables before creating the metatables, for simplicity.
+    # Get the table names.
     sql = "SELECT name FROM sqlite_system WHERE type=?"
     cursor.execute(sql, ('table',))
     tablenames = [row[0] for row in cursor 
@@ -1132,7 +1135,62 @@ def infer_dbportal_metadata(ctx):
                       'primarykey': bool(row[5])}
             schema['columns'].append(column)
         ctx.add_table(schema, create=False)
-    # XXX Views are currently not inferred!
+    # Get the views, attempt to parse their SQL definitions, and add.
+    sql = "SELECT name, sql FROM sqlite_system WHERE type=?"
+    cursor.execute(sql, ('view',))
+    viewdata = [(row[0], row[1]) for row in cursor]
+    for viewname, sql in viewdata:
+        schema = {'name': viewname,
+                  'title': None,
+                  'description': None}
+        schema['query'] = query = {}
+        parts = sql.split()
+        parts.reverse()
+        try:
+            if parts.pop().upper() != 'CREATE': raise ValueError
+            if parts.pop().upper() != 'VIEW': raise ValueError
+            if parts.pop().strip('"') != viewname: raise ValueError
+            if parts.pop().upper() != 'AS': raise ValueError
+            if parts.pop().upper() != 'SELECT': raise ValueError
+            select = []
+            while parts:
+                item = parts.pop()
+                if item.upper() == 'FROM': break
+                select.append(item)
+            query['select'] = ' '.join(select)
+            query['columns'] = []
+            for name in query['select'].split(','):
+                query['columns'].append(utils.name_after_as(name))
+            from_ = []
+            while parts:
+                item = parts.pop()
+                if item.upper() == 'WHERE': break
+                from_.append(item)
+            query['from'] = ' '.join(from_)
+            where_ = []
+            while parts:
+                item = parts.pop()
+                if item.upper() == 'ORDER': break
+                if item.upper() == 'LIMIT': break
+                where_.append(item)
+            query['where'] = ' '.join(where_)
+            if item.upper() == 'ORDER':
+                orderby = []
+                if parts.pop() != 'BY': raise ValueError
+                while parts:
+                    item = parts.pop()
+                    if item.upper() == 'LIMIT': break
+                    orderby.append(item)
+                query['orderby'] = ' '.join(orderby)
+            if item.upper() == 'LIMIT':
+                query['limit'] = int(parts.pop())
+                if parts.pop().upper() == 'OFFSET':
+                    query['offset'] = int(parts.pop())
+            ctx.add_view(schema, create=False)
+        except (ValueError, IndexError, TypeError):
+            # Get rid of uninterpretable view.
+            sql = f"DROP VIEW {viewname}"
+            cursor.execute(sql)
     # XXX Indexes are currently not inferred!
 
 def check_dbportal_metadata(ctx):

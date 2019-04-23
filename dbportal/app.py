@@ -1,6 +1,7 @@
 "DbPortal web app."
 
 import json
+import os
 import os.path
 import sqlite3
 
@@ -26,6 +27,7 @@ from dbportal import utils
 
 ROOT_DIR = os.path.dirname(__file__)
 
+# Configurable values; the file 'config.json' is read to change these.
 CONFIG = dict(
     VERSION = dbportal.__version__,
     SERVER_NAME = '127.0.0.1:5000',
@@ -93,12 +95,14 @@ app.url_map.converters['nameext'] = utils.NameExtConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
-# Set the configuration.
+# Modify the configuration from a JSON file.
 app.config.from_mapping(CONFIG)
-app.config.from_json('config.json')
+config_filepath = os.environ.get('CONFIG_FILEPATH') or 'config.json'
+print(f"   Reading configuration file '{config_filepath}'")
+app.config.from_json(config_filepath)
 app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
 
-# Read the JSON Schema files.
+# Read the JSON Schema files; must be present.
 with open(app.config['VEGA_SCHEMA']) as infile:
     app.config['VEGA_SCHEMA'] = json.load(infile)
 with open(app.config['VEGA_LITE_SCHEMA']) as infile:
