@@ -1,5 +1,5 @@
-"""Pleko: Publish, query and visualize tabular data sets using Sqlite3
-and Vega or Vega-Lite.
+"""Pleko: Upload, publish and query tabular data sets in Sqlite3
+databases and visualize with Vega or Vega-Lite.
 """
 
-__version__ = '1.0.2'
+__version__ = '1.0.3'

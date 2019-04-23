@@ -1,4 +1,4 @@
-"Pleko master database."
+"Pleko system database."
 
 import sqlite3
 
@@ -9,7 +9,7 @@ from pleko import constants
 from pleko import utils
 import pleko.db
 
-MASTER_TABLES = [
+SYSTEM_TABLES = [
     dict(name='meta',
          columns=[dict(name='key', type=constants.TEXT, primarykey= True),
                   dict(name='value', type=constants.TEXT, notnull=True)
@@ -77,7 +77,7 @@ MASTER_TABLES = [
          ]),
 ]
 
-MASTER_INDEXES = [
+SYSTEM_INDEXES = [
     dict(name='users_email', table='users', columns=['email'], unique=True),
     dict(name='users_apikey', table='users', columns=['apikey']),
     dict(name='users_logs_username', table='users_logs', columns=['username']),
@@ -85,11 +85,11 @@ MASTER_INDEXES = [
 ]
 
 def get_cnx(write=False):
-    """Return the existing connection to the master database, else a new one.
+    """Return the existing connection to the system database, else a new one.
     If write is true, then assume the old connection is read-only,
     so close it and open a new one.
     """
-    path = utils.dbpath(constants.MASTER)
+    path = utils.dbpath(constants.SYSTEM)
     if write:
         try:
             flask.g.cnx.close()
@@ -103,18 +103,18 @@ def get_cnx(write=False):
         return flask.g.cnx
 
 def get_cursor(write=False):
-    "Return a cursor for the master database."
+    "Return a cursor for the system database."
     return get_cnx(write=write).cursor()
 
 def init(app):
-    "Initialize tables in the master database, if not done."
-    path = utils.dbpath(constants.MASTER, 
+    "Initialize tables in the system database, if not done."
+    path = utils.dbpath(constants.SYSTEM, 
                         dirpath=app.config['DATABASES_DIRPATH'])
     cnx = sqlite3.connect(path)
-    for schema in MASTER_TABLES:
+    for schema in SYSTEM_TABLES:
         sql = pleko.db.get_sql_create_table(schema, if_not_exists=True)
         cnx.execute(sql)
-    for schema in MASTER_INDEXES:
+    for schema in SYSTEM_INDEXES:
         sql = pleko.db.get_sql_create_index(schema, if_not_exists=True)
         cnx.execute(sql)
     # Check or set major version number.
@@ -125,7 +125,7 @@ def init(app):
     rows = cursor.fetchall()
     if len(rows) == 1:
         if rows[0][0] != major:
-            raise ValueError('wrong major version of master database')
+            raise ValueError('wrong major version of system database')
     else:
         with cnx:
             sql = 'INSERT INTO "meta" ("key", "value") VALUES (?, ?)'

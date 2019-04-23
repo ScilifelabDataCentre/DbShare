@@ -7,7 +7,6 @@ import sqlite3
 import flask
 
 import pleko.db
-import pleko.master
 import pleko.user
 from pleko import constants
 from pleko import utils

@@ -10,7 +10,7 @@ import flask
 import flask_mail
 import werkzeug.security
 
-import pleko.master
+import pleko.system
 from pleko import constants
 from pleko import utils
 
@@ -209,7 +209,7 @@ def logs(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
@@ -275,7 +275,7 @@ def edit(username):
 def users():
     "Display list of all users."
     import pleko.template
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
     cursor.execute(sql)
@@ -343,7 +343,7 @@ class UserContext:
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = pleko.master.get_cnx(write=True)
+        self.cnx = pleko.system.get_cnx(write=True)
 
     def __enter__(self):
         return self
@@ -490,7 +490,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     else:
         return None
     if cnx is None:
-        cursor = pleko.master.get_cursor()
+        cursor = pleko.system.get_cursor()
     else:
         cursor = cnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \

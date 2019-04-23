@@ -9,6 +9,7 @@ import jsonschema
 import sqlite3
 
 import pleko.db
+import pleko.system
 import pleko.user
 import pleko.vega
 import pleko.vega_lite
@@ -77,7 +78,7 @@ def view(templatename):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('templates_public'))
-        cnx = pleko.master.get_cnx(write=True)
+        cnx = pleko.system.get_cnx(write=True)
         with cnx:
             sql = "DELETE FROM templates WHERE name=?"
             cnx.execute(sql, (templatename,))
@@ -359,7 +360,7 @@ class TemplateContext:
             return self._cnx
         except AttributeError:
             # Don't close connection at exit; done externally to the context
-            self._cnx = pleko.master.get_cnx(write=True)
+            self._cnx = pleko.system.get_cnx(write=True)
             return self._cnx
 
     def __enter__(self):
@@ -372,7 +373,7 @@ class TemplateContext:
                 raise ValueError(f"invalid template: {key} not set")
         self.template['modified'] = utils.get_time()
         with self.cnx:
-            # Update existing template entry in master
+            # Update existing template entry in the system database
             if self.old:
                 sql = "UPDATE templates SET name=?, owner=?, title=?, code=?," \
                       " type=?, fields=?, public=?, modified=? WHERE name=?"
@@ -385,7 +386,7 @@ class TemplateContext:
                                        bool(self.template['public']),
                                        self.template['modified'],
                                        self.old['name']))
-            # Create template entry in master
+            # Create template entry in the system database
             else:
                 sql = "INSERT INTO templates" \
                       " (name, owner, title, code, type, fields, public," \
@@ -491,7 +492,7 @@ def get_templates(public=None, owner=None):
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
     sql += ' ORDER BY name'
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_template(row[0]) for row in cursor]
 
@@ -499,7 +500,7 @@ def get_template(templatename):
     """Return the visualization template for the given name.
     Return None if no such visualization template.
     """
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     sql = "SELECT owner, title, description, code, type, fields, public," \
           " created, modified FROM templates WHERE name=?"
     cursor.execute(sql, (templatename,))

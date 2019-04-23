@@ -1,7 +1,8 @@
 # Pleko
 
-Publish, query and visualize tabular data sets using 
-[Sqlite3](https://www.sqlite.org/) and
+Upload, publish and query tabular data sets in
+[Sqlite3](https://www.sqlite.org/) databases
+and visualize with
 [Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
 

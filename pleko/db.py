@@ -14,7 +14,7 @@ import urllib.parse
 import dpath
 import flask
 
-import pleko.master
+import pleko.system
 import pleko.table
 import pleko.query
 import pleko.user
@@ -149,7 +149,7 @@ def logs(dbname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE name=? ORDER BY timestamp DESC"
     cursor.execute(sql, (db['name'],))
@@ -477,7 +477,7 @@ class DbContext:
             return self._cnx
         except AttributeError:
             # Don't close connection at exit; done externally to the context
-            self._cnx = pleko.master.get_cnx(write=True)
+            self._cnx = pleko.system.get_cnx(write=True)
             return self._cnx
 
     @property
@@ -499,7 +499,7 @@ class DbContext:
                 raise ValueError(f"invalid db: {key} not set")
         self.db['modified'] = utils.get_time()
         with self.cnx:
-            # Update existing database entry in master
+            # Update existing database entry in system
             if self.old:
                 sql = 'PRAGMA foreign_keys=OFF'
                 self.cnx.execute(sql)
@@ -520,7 +520,7 @@ class DbContext:
                               utils.dbpath(self.db['name']))
                 sql = 'PRAGMA foreign_keys=ON'
                 self.cnx.execute(sql)
-            # Create database entry in master.
+            # Create database entry in system.
             # The db file itself has already been created in 'initialize'.
             else:
                 sql = "INSERT INTO dbs" \
@@ -821,7 +821,7 @@ def get_dbs(public=None, owner=None, complete=False):
         criteria['owner=?'] = owner
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_db(row[0], complete=complete) for row in cursor]
 
@@ -829,7 +829,7 @@ def get_db(name, complete=False):
     """Return the database metadata for the given name.
     Return None if no such database.
     """
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     sql = "SELECT owner, title, description, public, readonly," \
           " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
@@ -881,7 +881,7 @@ def get_db(name, complete=False):
 
 def get_usage(username=None):
     "Return the number and total size of the databases for the user, or all."
-    cursor = pleko.master.get_cursor()
+    cursor = pleko.system.get_cursor()
     if username:
         sql = "SELECT name FROM dbs WHERE owner=?"
         cursor.execute(sql, (username,))
@@ -1095,8 +1095,8 @@ def add_database(dbname, infile):
         raise ValueError(str(error))
 
 def delete_database(dbname):
-    "Delete the database in the master and from disk."
-    cnx = pleko.master.get_cnx(write=True)
+    "Delete the database in the system database and from disk."
+    cnx = pleko.system.get_cnx(write=True)
     with cnx:
         sql = 'DELETE FROM dbs_logs WHERE name=?'
         cnx.execute(sql, (dbname,))
@@ -1111,7 +1111,7 @@ def infer_pleko_metadata(ctx):
     "Infer and save the Pleko metadata for the database."
     cursor = ctx.dbcnx.cursor()
     # Get the tables before creating the metatables, for simplicity.
-    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    sql = "SELECT name FROM sqlite_system WHERE type=?"
     cursor.execute(sql, ('table',))
     tablenames = [row[0] for row in cursor 
                   if not row[0].startswith('_')] # Ignore metadata tables.
@@ -1142,7 +1142,7 @@ def check_pleko_metadata(ctx):
     sql = "SELECT name FROM %s" % constants.TABLES
     cursor.execute(sql)
     tables1 = set([row[0] for row in cursor])
-    sql = "SELECT name FROM sqlite_master WHERE type=?"
+    sql = "SELECT name FROM sqlite_system WHERE type=?"
     cursor.execute(sql, ('table',))
     tables2 = set([row[0].lower() for row in cursor
                    if not row[0].startswith('_')]) # Ignore metadata tables.

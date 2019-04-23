@@ -12,7 +12,7 @@ import jsonschema
 import pleko
 import pleko.db
 import pleko.index
-import pleko.master
+import pleko.system
 import pleko.query
 import pleko.table
 import pleko.template
@@ -104,8 +104,8 @@ with open(app.config['VEGA_SCHEMA']) as infile:
 with open(app.config['VEGA_LITE_SCHEMA']) as infile:
     app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
 
-# Init the master database.
-pleko.master.init(app)
+# Init the system database.
+pleko.system.init(app)
 
 # Init the mail handler.
 utils.mail.init_app(app)
@@ -158,8 +158,8 @@ def none_as_empty_string(value):
 
 @app.before_request
 def prepare():
-    "Connect to the master database (read-only); get the current user."
-    flask.g.cnx = pleko.master.get_cnx()
+    "Connect to the system database (read-only); get the current user."
+    flask.g.cnx = pleko.system.get_cnx()
     flask.g.current_user = pleko.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
