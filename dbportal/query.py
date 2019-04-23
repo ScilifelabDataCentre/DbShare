@@ -1,13 +1,13 @@
-"Pleko query endpoint."
+"Query endpoint."
 
 import sqlite3
 
 import flask
 
-import pleko.db
-import pleko.table
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.table
+from dbportal import constants
+from dbportal import utils
 
 
 blueprint = flask.Blueprint('query', __name__)
@@ -16,13 +16,13 @@ blueprint = flask.Blueprint('query', __name__)
 def home(dbname):
     "Create a query for the database."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=True)
+        db = dbportal.db.get_check_read(dbname, nrows=True)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    has_write_access = pleko.db.has_write_access(db)
+    has_write_access = dbportal.db.has_write_access(db)
     query = get_query_from_request(check=False)
-    cnx = pleko.db.get_cnx(dbname)
+    cnx = dbportal.db.get_cnx(dbname)
     return flask.render_template('query/home.html',
                                  db=db,
                                  query=query,
@@ -33,7 +33,7 @@ def rows(dbname):
     "Display results of a query to the database."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -46,7 +46,7 @@ def rows(dbname):
         query_limited = query.copy()
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
-        dbcnx = pleko.db.get_cnx(dbname)
+        dbcnx = dbportal.db.get_cnx(dbname)
         rows = utils.execute_timeout(dbcnx, get_sql_query(query_limited))
         if len(rows) >= query_limited['limit']:
             utils.flash_limit(limit)
@@ -68,11 +68,11 @@ def rows(dbname):
                                  rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def table(dbname):
     "Create a table containing the results of the query."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -87,7 +87,7 @@ def table(dbname):
         try:
             query = get_query_from_request(check=True)
             schema = {'name': flask.request.form.get('name')}
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_table(schema, query=query)
         except (KeyError, SystemError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')

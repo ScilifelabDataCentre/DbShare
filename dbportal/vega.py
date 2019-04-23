@@ -7,10 +7,10 @@ import sqlite3
 import flask
 import jsonschema
 
-import pleko.db
-import pleko.user
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.user
+from dbportal import constants
+from dbportal import utils
 
 
 INITIAL = {'$schema': None,     # To be set on template creation.
@@ -23,16 +23,16 @@ INITIAL = {'$schema': None,     # To be set on template creation.
 blueprint = flask.Blueprint('vega', __name__)
 
 @blueprint.route('/<name:dbname>/<name:sourcename>', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def create(dbname, sourcename):
     "Create a Vega visualization from scratch for the given table or view."
     try:
-        db = pleko.db.get_check_write(dbname, nrows=[sourcename])
+        db = dbportal.db.get_check_write(dbname, nrows=[sourcename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = pleko.db.get_schema(db, sourcename)
+        schema = dbportal.db.get_schema(db, sourcename)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -66,7 +66,7 @@ def create(dbname, sourcename):
                 raise ValueError('invalid visual name')
             visualname = visualname.lower()
             try:
-                pleko.db.get_visual(db, visualname)
+                dbportal.db.get_visual(db, visualname)
             except ValueError:
                 pass
             else:
@@ -75,7 +75,7 @@ def create(dbname, sourcename):
             jsonschema.validate(
                 instance=spec,
                 schema=flask.current_app.config['VEGA_SCHEMA'])
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], spec)
         except (ValueError, TypeError,
                 sqlite3.Error, jsonschema.ValidationError) as error:

@@ -14,12 +14,12 @@ import urllib.parse
 import dpath
 import flask
 
-import pleko.system
-import pleko.table
-import pleko.query
-import pleko.user
-from pleko import constants
-from pleko import utils
+import dbportal.system
+import dbportal.table
+import dbportal.query
+import dbportal.user
+from dbportal import constants
+from dbportal import utils
 
 TABLES_TABLE = dict(
     name=constants.TABLES,
@@ -83,10 +83,11 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             return flask.redirect(flask.url_for('home'))
         delete_database(str(dbname))
         return flask.redirect(
-            flask.url_for('dbs_owner', username=flask.g.current_user['username']))
+            flask.url_for('dbs_owner',
+                          username=flask.g.current_user['username']))
 
 @blueprint.route('/', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def create():
     "Create a database."
     try:
@@ -111,7 +112,7 @@ def create():
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def edit(dbname):
     "Edit the database metadata."
     try:
@@ -149,7 +150,7 @@ def logs(dbname):
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE name=? ORDER BY timestamp DESC"
     cursor.execute(sql, (db['name'],))
@@ -162,7 +163,7 @@ def logs(dbname):
     return flask.render_template('db/logs.html', db=db, logs=logs)
 
 @blueprint.route('/<name:dbname>/upload', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def upload(dbname):
     "Create a table from the data in a CSV file."
     try:
@@ -303,7 +304,7 @@ def upload(dbname):
                                             tablename=tablename))
 
 @blueprint.route('/<name:dbname>/clone', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def clone(dbname):
     "Create a clone of the database."
     try:
@@ -345,7 +346,7 @@ def download(dbname):
                            as_attachment=True)
 
 @blueprint.route('/<name:dbname>/vacuum', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def vacuum(dbname):
     "Run VACUUM on the database."
     utils.check_csrf_token()
@@ -363,7 +364,7 @@ def vacuum(dbname):
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/analyze', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def analyze(dbname):
     "Run ANALYZE on the database."
     utils.check_csrf_token()
@@ -381,7 +382,7 @@ def analyze(dbname):
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def public(dbname):
     "Set the database to public access."
     utils.check_csrf_token()
@@ -400,7 +401,7 @@ def public(dbname):
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/private', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def private(dbname):
     "Set the database to private access."
     utils.check_csrf_token()
@@ -419,7 +420,7 @@ def private(dbname):
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def readwrite(dbname):
     "Set the database to read-write mode."
     utils.check_csrf_token()
@@ -438,7 +439,7 @@ def readwrite(dbname):
     return flask.redirect(flask.url_for('.home', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def readonly(dbname):
     "Set the database to read-only mode."
     utils.check_csrf_token()
@@ -477,7 +478,7 @@ class DbContext:
             return self._cnx
         except AttributeError:
             # Don't close connection at exit; done externally to the context
-            self._cnx = pleko.system.get_cnx(write=True)
+            self._cnx = dbportal.system.get_cnx(write=True)
             return self._cnx
 
     @property
@@ -570,7 +571,7 @@ class DbContext:
         self.db['name'] = name
 
     def initialize(self):
-        "Create the Pleko metadata tables and indexes if they do not exist."
+        "Create the DbPortal metadata tables and indexes if they do not exist."
         # Implicitly creates the file, or checks that it is an Sqlite3 file.
         sql = get_sql_create_table(TABLES_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
@@ -638,8 +639,8 @@ class DbContext:
         if schema['name'] in self.db['views']:
             raise ValueError('name is already in use for a view')
         if query:
-            sql = 'CREATE TABLE "%s" AS %s' % (schema['name'],
-                                               pleko.query.get_sql_query(query))
+            sql = dbportal.query.get_sql_query(query)
+            sql = 'CREATE TABLE "%s" AS %s' % (schema['name'], sql)
             utils.execute_timeout(self.dbcnx, sql)
             if not schema.get('description'):
                 schema['description'] = sql
@@ -733,7 +734,7 @@ class DbContext:
             raise ValueError('no query statement defined')
         sql = 'CREATE VIEW "%s" AS %s' % \
               (schema['name'],
-               pleko.query.get_sql_query(schema['query']))
+               dbportal.query.get_sql_query(schema['query']))
         self.dbcnx.execute(sql)
         cursor = self.dbcnx.cursor()
         try:
@@ -821,7 +822,7 @@ def get_dbs(public=None, owner=None, complete=False):
         criteria['owner=?'] = owner
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_db(row[0], complete=complete) for row in cursor]
 
@@ -829,7 +830,7 @@ def get_db(name, complete=False):
     """Return the database metadata for the given name.
     Return None if no such database.
     """
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     sql = "SELECT owner, title, description, public, readonly," \
           " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
@@ -881,7 +882,7 @@ def get_db(name, complete=False):
 
 def get_usage(username=None):
     "Return the number and total size of the databases for the user, or all."
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     if username:
         sql = "SELECT name FROM dbs WHERE owner=?"
         cursor.execute(sql, (username,))
@@ -1068,9 +1069,9 @@ def _set_nrows(cnx, targets=[]):
 
 def add_database(dbname, infile):
     """Add the database file present in the given open file object.
-    If the database has the metadata of a Pleko Sqlite3 database, check it.
+    If the database has the metadata of a DbPortal Sqlite3 database, check it.
     Else if the database appears to be a plain Sqlite3 database,
-    infer the Pleko metadata from it by inspection.
+    infer the DbPortal metadata from it by inspection.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
@@ -1086,9 +1087,9 @@ def add_database(dbname, infile):
             cursor = ctx.dbcnx.cursor()
             sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
             cursor.execute(sql)
-            if cursor.fetchone()[0] == 0: # No info in Pleko metadata.
-                infer_pleko_metadata(ctx)
-            check_pleko_metadata(ctx)
+            if cursor.fetchone()[0] == 0: # No info in DbPortal metadata.
+                infer_dbportal_metadata(ctx)
+            check_dbportal_metadata(ctx)
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:
         delete_database(dbname)
@@ -1096,7 +1097,7 @@ def add_database(dbname, infile):
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
-    cnx = pleko.system.get_cnx(write=True)
+    cnx = dbportal.system.get_cnx(write=True)
     with cnx:
         sql = 'DELETE FROM dbs_logs WHERE name=?'
         cnx.execute(sql, (dbname,))
@@ -1107,18 +1108,18 @@ def delete_database(dbname):
     except FileNotFoundError:
         pass
 
-def infer_pleko_metadata(ctx):
-    "Infer and save the Pleko metadata for the database."
+def infer_dbportal_metadata(ctx):
+    "Infer and save the DbPortal metadata for the database."
     cursor = ctx.dbcnx.cursor()
     # Get the tables before creating the metatables, for simplicity.
     sql = "SELECT name FROM sqlite_system WHERE type=?"
     cursor.execute(sql, ('table',))
     tablenames = [row[0] for row in cursor 
                   if not row[0].startswith('_')] # Ignore metadata tables.
-    # Check the Pleko validity of the table names.
+    # Check the DbPortal validity of the table names.
     for tablename in tablenames:
         if not constants.NAME_RX.match(tablename):
-            raise ValueError(f"invalid table name '{tablename}' for Pleko")
+            raise ValueError(f"invalid table name '{tablename}' for DbPortal")
     # Infer the schema for the tables, and set the metadata.
     for tablename in tablenames:
         schema = {'name': tablename, 'columns': []}
@@ -1134,8 +1135,8 @@ def infer_pleko_metadata(ctx):
     # XXX Views are currently not inferred!
     # XXX Indexes are currently not inferred!
 
-def check_pleko_metadata(ctx):
-    """Check the validity of the Pleko metadata for the database.
+def check_dbportal_metadata(ctx):
+    """Check the validity of the DbPortal metadata for the database.
     Raises ValueError or sqlite3.Error if any problem.
     """
     cursor = ctx.dbcnx.cursor()
@@ -1147,7 +1148,7 @@ def check_pleko_metadata(ctx):
     tables2 = set([row[0].lower() for row in cursor
                    if not row[0].startswith('_')]) # Ignore metadata tables.
     if tables1 != tables2:
-        raise ValueError('corrupt metadata in Pleko Sqlite3 file')
+        raise ValueError('corrupt metadata in DbPortal Sqlite3 file')
     # Does the index metatable exist?
     sql = "SELECT name, schema FROM %s" % constants.INDEXES
     cursor.execute(sql)

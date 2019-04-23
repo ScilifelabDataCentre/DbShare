@@ -1,12 +1,10 @@
-# Pleko
+# DbPortal
 
 Upload, publish and query tabular data sets in
 [Sqlite3](https://www.sqlite.org/) databases
 and visualize with
 [Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
-
-πλέκω: to plait, twine, twist, weave, braid
 
 ## Databases
 

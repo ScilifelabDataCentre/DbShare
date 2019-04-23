@@ -6,10 +6,10 @@ import flask
 import jsonschema
 import sqlite3
 
-import pleko.db
-import pleko.user
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.user
+from dbportal import constants
+from dbportal import utils
 
 
 blueprint = flask.Blueprint('visual', __name__)
@@ -18,13 +18,14 @@ blueprint = flask.Blueprint('visual', __name__)
 def home(dbname):
     "List the visualizations in the database."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
+    write_access = dbportal.db.has_write_access(db)
     return flask.render_template('visual/home.html',
                                  db=db,
-                                 has_write_access=pleko.db.has_write_access(db))
+                                 has_write_access=write_access)
 
 @blueprint.route('/<name:dbname>/<nameext:visualname>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -32,14 +33,14 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
     "Display the visualization. Or delete it."
     if utils.http_GET():
         try:
-            db = pleko.db.get_check_read(dbname)
+            db = dbportal.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
-            visual = pleko.db.get_visual(db, str(visualname))
-            schema = pleko.db.get_schema(db, visual['sourcename'])
-            pleko.db.set_nrows(db, nrows=[schema['name']])
+            visual = dbportal.db.get_visual(db, str(visualname))
+            schema = dbportal.db.get_schema(db, visual['sourcename'])
+            dbportal.db.set_nrows(db, nrows=[schema['name']])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -51,7 +52,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
                 schema=schema,
                 visual=visual,
                 title="Visualization {}".format(visualname),
-                has_write_access = pleko.db.has_write_access(db))
+                has_write_access = dbportal.db.has_write_access(db))
         elif visualname.ext == 'json':
             return flask.jsonify(visual['spec'])
         else:
@@ -59,19 +60,19 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
 
     elif utils.http_DELETE():
         try:
-            db = pleko.db.get_check_write(dbname)
+            db = dbportal.db.get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
-            visual = pleko.db.get_visual(db, str(visualname))
-            schema = pleko.db.get_schema(db, visual['sourcename'])
+            visual = dbportal.db.get_visual(db, str(visualname))
+            schema = dbportal.db.get_schema(db, visual['sourcename'])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
         try:
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.delete_visual(str(visualname))
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
@@ -79,23 +80,23 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
 
 @blueprint.route('/<name:dbname>/<name:visualname>/edit', 
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def edit(dbname, visualname):
     "Edit the visualization."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        visual = pleko.db.get_visual(db, visualname)
-        schema = pleko.db.get_schema(db, visual['sourcename'])
+        visual = dbportal.db.get_visual(db, visualname)
+        schema = dbportal.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.http_GET():
-        pleko.db.set_nrows(db, nrows=[schema['name']])
+        dbportal.db.set_nrows(db, nrows=[schema['name']])
         return flask.render_template('visual/edit.html',
                                      db=db,
                                      schema=schema,
@@ -111,7 +112,7 @@ def edit(dbname, visualname):
             newname = newname.lower()
             if newname != visualname:
                 try:
-                    pleko.db.get_visual(db, newname)
+                    dbportal.db.get_visual(db, newname)
                 except ValueError:
                     pass
                 else:
@@ -122,7 +123,7 @@ def edit(dbname, visualname):
             jsonschema.validate(
                 instance=spec,
                 schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.update_visual(visualname, spec, newname)
         except (ValueError, TypeError,
                 sqlite3.Error, jsonschema.ValidationError) as error:
@@ -138,17 +139,17 @@ def edit(dbname, visualname):
 
 @blueprint.route('/<name:dbname>/<name:visualname>/clone',
                  methods=['GET','POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def clone(dbname, visualname):
     "Clone the visualization."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        visual = pleko.db.get_visual(db, visualname)
-        schema = pleko.db.get_schema(db, visual['sourcename'])
+        visual = dbportal.db.get_visual(db, visualname)
+        schema = dbportal.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -165,12 +166,12 @@ def clone(dbname, visualname):
                 raise ValueError('invalid visual name')
             visualname = visualname.lower()
             try:
-                pleko.db.get_visual(db, visualname)
+                dbportal.db.get_visual(db, visualname)
             except ValueError:
                 pass
             else:
                 raise ValueError('visual name already in use')
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], visual['spec'])
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')

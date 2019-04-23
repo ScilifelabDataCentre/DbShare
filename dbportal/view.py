@@ -5,21 +5,21 @@ import sqlite3
 
 import flask
 
-import pleko.db
-import pleko.table
-import pleko.user
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.table
+import dbportal.user
+from dbportal import constants
+from dbportal import utils
 
 
 blueprint = flask.Blueprint('view', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def create(dbname):
     "Create a view of the data in the database."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -27,7 +27,7 @@ def create(dbname):
     title = flask.request.values.get('title')
     description = flask.request.values.get('description')
     # Do not check here.
-    query = pleko.query.get_query_from_request()
+    query = dbportal.query.get_query_from_request()
 
     if utils.http_GET():
         return flask.render_template('view/create.html',
@@ -39,12 +39,12 @@ def create(dbname):
     elif utils.http_POST():
         try:
             # Get again, with checking this time.
-            query = pleko.query.get_query_from_request(check=True)
+            query = dbportal.query.get_query_from_request(check=True)
             schema = {'name': viewname,
                       'title': title or None,
                       'description': description or None,
                       'query': query}
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -58,11 +58,11 @@ def create(dbname):
                                             viewname=viewname))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/edit', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def edit(dbname, viewname):
     "Edit the view."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -77,7 +77,7 @@ def edit(dbname, viewname):
 
     elif utils.http_POST():
         try:
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_view(schema)
@@ -97,11 +97,11 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view. Or delete the view."
     if utils.http_GET():
         try:
-            db = pleko.db.get_check_read(dbname, nrows=[str(viewname)])
+            db = dbportal.db.get_check_read(dbname, nrows=[str(viewname)])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        has_write_access = pleko.db.has_write_access(db)
+        has_write_access = dbportal.db.has_write_access(db)
         try:
             schema = db['views'][str(viewname)]
         except KeyError:
@@ -111,7 +111,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             title = schema.get('title') or "View {}".format(viewname)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             colnames = ['"%s"' % c for c in schema['query']['columns']]
-            dbcnx = pleko.db.get_cnx(dbname)
+            dbcnx = dbportal.db.get_cnx(dbname)
             sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 
             if viewname.ext is None or viewname.ext == 'html':
@@ -121,7 +121,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     utils.flash_message_limit(limit)
                 rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
                 query = schema['query']
-                sql = pleko.query.get_sql_query(query) # No imposed LIMIT
+                sql = dbportal.query.get_sql_query(query) # No imposed LIMIT
                 return flask.render_template('view/rows.html', 
                                              db=db,
                                              schema=schema,
@@ -169,12 +169,12 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 
     elif utils.http_DELETE():
         try:
-            db = pleko.db.get_check_write(dbname)
+            db = dbportal.db.get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -184,7 +184,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 def schema(dbname, viewname):
     "Display the schema for a view."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=[viewname])
+        db = dbportal.db.get_check_read(dbname, nrows=[viewname])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -193,7 +193,7 @@ def schema(dbname, viewname):
     except KeyError:
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
-    sources = [pleko.db.get_schema(db, name) for name in schema['sources']]
+    sources = [dbportal.db.get_schema(db, name) for name in schema['sources']]
     # Special case: Create HTML links for sources, handling "AS" parts.
     html_from = schema['query']['from']
     for source in sources:
@@ -215,11 +215,11 @@ def schema(dbname, viewname):
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def clone(dbname, viewname):
     "Create a clone of the view."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -236,7 +236,7 @@ def clone(dbname, viewname):
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -251,7 +251,7 @@ def clone(dbname, viewname):
 def download(dbname, viewname):
     "Download the rows in the view to a file."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -266,7 +266,7 @@ def download(dbname, viewname):
 def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -287,7 +287,7 @@ def download_csv(dbname, viewname):
             header = None
         writer = utils.CsvWriter(header, delimiter=delimiter)
         colnames = ['"%s"' % c for c in schema['query']['columns']]
-        dbcnx = pleko.db.get_cnx(dbname)
+        dbcnx = dbportal.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
         writer.add_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:

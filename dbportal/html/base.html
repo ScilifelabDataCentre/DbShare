@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block head_title %}Pleko{% endblock %}</title>
+    <title>{% block head_title %}DbPortal{% endblock %}</title>
     <link rel="icon" href="{{ url_for('static', filename='dbportal-32.png') }}">
     {# bootstrap 4.3.1 #}
     <link {{ config['BOOTSTRAP_CSS_ATTRS'] | safe }} rel="stylesheet">
@@ -16,7 +16,7 @@
   <body>
     <nav class="navbar navbar-expand-md navbar-light bg-light">
       <img src="{{ url_for('static', filename='dbportal-32.png') }}"
-           width="32" height="32" title="Pleko" alt="Pleko">
+           width="32" height="32" title="DbPortal" alt="DbPortal">
       <button type="button" class="navbar-toggler navbar-toggler-right"
               data-toggle="collapse" data-target="#top_navbar"
               aria-controls="top_navbar" aria-expanded="false"
@@ -120,7 +120,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-9 offset-md-1">
-          <h2 class="mt-2 mb-3">{% block body_title %}Pleko{% endblock %}</h2>
+          <h2 class="mt-2 mb-3">{% block body_title %}DbPortal{% endblock %}</h2>
           {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
             <strong>Error:</strong> {{ msg }}
@@ -157,7 +157,8 @@
       <hr>
       <div class="row">
         <div class="col-md-4 offset-md-8 text-right">
-          <a href="{{ config['PLEKO_URL'] }}">Pleko</a> {{ config['VERSION'] }}
+          <a href="{{ config['DBPORTAL_URL'] }}">DbPortal</a>
+	  {{ config['VERSION'] }}
         </div>
       </div>
       {% endblock %}

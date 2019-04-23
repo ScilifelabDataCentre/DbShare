@@ -8,19 +8,19 @@ import jinja2
 import jsonschema
 import sqlite3
 
-import pleko.db
-import pleko.system
-import pleko.user
-import pleko.vega
-import pleko.vega_lite
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.system
+import dbportal.user
+import dbportal.vega
+import dbportal.vega_lite
+from dbportal import constants
+from dbportal import utils
 
 
 blueprint = flask.Blueprint('template', __name__)
 
 @blueprint.route('/', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def create():
     "Create a visualization template."
     if utils.http_GET():
@@ -33,14 +33,14 @@ def create():
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.set_type(flask.request.form.get('type'))
                 if ctx.template['type'] == constants.VEGA:
-                    initial = copy.deepcopy(pleko.vega.INITIAL)
+                    initial = copy.deepcopy(dbportal.vega.INITIAL)
                     config = flask.current_app.config
                     initial['$schema'] = config['VEGA_SCHEMA_URL']
                     initial['width']   = config['VEGA_DEFAULT_WIDTH']
                     initial['height']  = config['VEGA_DEFAULT_HEIGHT']
                     ctx.set_code(json.dumps(initial, indent=2))
                 elif ctx.template['type'] == constants.VEGA_LITE:
-                    initial = copy.deepcopy(pleko.vega_lite.INITIAL)
+                    initial = copy.deepcopy(dbportal.vega_lite.INITIAL)
                     config = flask.current_app.config
                     initial['$schema'] = config['VEGA_LITE_SCHEMA_URL']
                     initial['width']   = config['VEGA_LITE_DEFAULT_WIDTH']
@@ -53,7 +53,7 @@ def create():
                                             templatename=ctx.template['name']))
 
 @blueprint.route('/<name:templatename>', methods=['GET', 'POST', 'DELETE'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def view(templatename):
     "View the visualization template definition. Or delete it."
     try:
@@ -78,7 +78,7 @@ def view(templatename):
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('templates_public'))
-        cnx = pleko.system.get_cnx(write=True)
+        cnx = dbportal.system.get_cnx(write=True)
         with cnx:
             sql = "DELETE FROM templates WHERE name=?"
             cnx.execute(sql, (templatename,))
@@ -86,7 +86,7 @@ def view(templatename):
                                             username=template['owner']))
 
 @blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def edit(templatename):
     "Edit the visualization template definition."
     try:
@@ -107,7 +107,7 @@ def edit(templatename):
             flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def clone(templatename):
     "Create a clone of the visualization template."
     try:
@@ -134,7 +134,7 @@ def clone(templatename):
             flask.url_for('.view', templatename=ctx.template['name']))
 
 @blueprint.route('/<name:templatename>/public', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def public(templatename):
     "Set the visualization template to public access."
     utils.check_csrf_token()
@@ -153,7 +153,7 @@ def public(templatename):
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/private', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def private(templatename):
     "Set the visualization template to private access."
     utils.check_csrf_token()
@@ -172,7 +172,7 @@ def private(templatename):
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def field(templatename):
     "Add an input field to the template definition."
     try:
@@ -196,7 +196,7 @@ def field(templatename):
 
 @blueprint.route('/<name:templatename>/field/<name:fieldname>',
                  methods=['GET', 'POST', 'DELETE'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def field_edit(templatename, fieldname):
     "Edit the input field in the template definition. Or delete it."
     try:
@@ -229,16 +229,16 @@ def field_edit(templatename, fieldname):
 
 @blueprint.route('/select/<name:dbname>/<name:sourcename>',
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def select(dbname, sourcename):
     "Select a visualization template to use for the table or view."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = pleko.db.get_schema(db, sourcename)
+        schema = dbportal.db.get_schema(db, sourcename)
     except KeyError:
         flask.flash('no such table or view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -266,17 +266,17 @@ def select(dbname, sourcename):
 
 @blueprint.route('/render/<name:templatename>/<name:dbname>/<name:sourcename>',
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def render(templatename, dbname, sourcename):
     "Create a visualization of the table or view using the given template."
     try:
         template = get_check_read(templatename)
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        schema = pleko.db.get_schema(db, sourcename)
+        schema = dbportal.db.get_schema(db, sourcename)
     except KeyError:
         flask.flash('no such table or view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -299,7 +299,7 @@ def render(templatename, dbname, sourcename):
                 raise ValueError('invalid visual name')
             visualname = visualname.lower()
             try:
-                pleko.db.get_visual(db, visualname)
+                dbportal.db.get_visual(db, visualname)
             except ValueError:
                 pass
             else:
@@ -327,7 +327,7 @@ def render(templatename, dbname, sourcename):
                 jsonschema.validate(
                     instance=spec,
                     schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], spec)
         except (ValueError, TypeError, jinja2.TemplateError) as error:
             flask.flash(str(error), 'error')
@@ -360,7 +360,7 @@ class TemplateContext:
             return self._cnx
         except AttributeError:
             # Don't close connection at exit; done externally to the context
-            self._cnx = pleko.system.get_cnx(write=True)
+            self._cnx = dbportal.system.get_cnx(write=True)
             return self._cnx
 
     def __enter__(self):
@@ -492,7 +492,7 @@ def get_templates(public=None, owner=None):
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
     sql += ' ORDER BY name'
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [get_template(row[0]) for row in cursor]
 
@@ -500,7 +500,7 @@ def get_template(templatename):
     """Return the visualization template for the given name.
     Return None if no such visualization template.
     """
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     sql = "SELECT owner, title, description, code, type, fields, public," \
           " created, modified FROM templates WHERE name=?"
     cursor.execute(sql, (templatename,))

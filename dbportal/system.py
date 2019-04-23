@@ -1,13 +1,13 @@
-"Pleko system database."
+"System database; metadata key/value, users, db list, templates."
 
 import sqlite3
 
 import flask
 
-import pleko
-from pleko import constants
-from pleko import utils
-import pleko.db
+import dbportal
+from dbportal import constants
+from dbportal import utils
+import dbportal.db
 
 SYSTEM_TABLES = [
     dict(name='meta',
@@ -112,13 +112,13 @@ def init(app):
                         dirpath=app.config['DATABASES_DIRPATH'])
     cnx = sqlite3.connect(path)
     for schema in SYSTEM_TABLES:
-        sql = pleko.db.get_sql_create_table(schema, if_not_exists=True)
+        sql = dbportal.db.get_sql_create_table(schema, if_not_exists=True)
         cnx.execute(sql)
     for schema in SYSTEM_INDEXES:
-        sql = pleko.db.get_sql_create_index(schema, if_not_exists=True)
+        sql = dbportal.db.get_sql_create_index(schema, if_not_exists=True)
         cnx.execute(sql)
     # Check or set major version number.
-    major = pleko.__version__.split('.')[0]
+    major = dbportal.__version__.split('.')[0]
     cursor = cnx.cursor()
     sql = 'SELECT "value" FROM "meta" WHERE "key"=?'
     cursor.execute(sql, ('version',))

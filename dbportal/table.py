@@ -6,25 +6,25 @@ import sqlite3
 
 import flask
 
-import pleko.db
-import pleko.user
-from pleko import constants
-from pleko import utils
+import dbportal.db
+import dbportal.user
+from dbportal import constants
+from dbportal import utils
 
 
 blueprint = flask.Blueprint('table', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def create(dbname):
     "Create a table with columns in the database."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -54,7 +54,7 @@ def create(dbname):
                 column['unique'] = utils.to_bool(
                     flask.request.form.get(f"column{n}unique"))
                 schema['columns'].append(column)
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
         except ValueError as error:
             flask.flash(str(error), 'error')
@@ -68,11 +68,11 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display rows in the table. Or delete the table."
     if utils.http_GET():
         try:
-            db = pleko.db.get_check_read(dbname, nrows=[str(tablename)])
+            db = dbportal.db.get_check_read(dbname, nrows=[str(tablename)])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        has_write_access = pleko.db.has_write_access(db)
+        has_write_access = dbportal.db.has_write_access(db)
         try:
             schema = db['tables'][str(tablename)]
         except KeyError:
@@ -82,7 +82,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             title = schema.get('title') or "Table {}".format(tablename)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
             columns = [c['name'] for c in schema['columns']]
-            dbcnx = pleko.db.get_cnx(dbname)
+            dbcnx = dbportal.db.get_cnx(dbname)
             sql = 'SELECT rowid, %s FROM "%s"' % \
                   (','.join([f'"{c}"' for c in columns]), tablename)
 
@@ -138,12 +138,12 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
 
     elif utils.http_DELETE():
         try:
-            db = pleko.db.get_check_write(dbname)
+            db = dbportal.db.get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
@@ -151,11 +151,11 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def edit(dbname, tablename):
     "Edit the table metadata."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -170,7 +170,7 @@ def edit(dbname, tablename):
 
     elif utils.http_POST():
         try:
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_table(schema)
@@ -181,12 +181,12 @@ def edit(dbname, tablename):
                                             tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def empty(dbname, tablename):
     "Empty the table; delete all rows."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -197,7 +197,7 @@ def empty(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     try:
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         with dbcnx:
             sql = 'DELETE FROM "%s"' % schema['name']
             dbcnx.execute(sql)
@@ -211,7 +211,7 @@ def empty(dbname, tablename):
 def schema(dbname, tablename):
     "Display the schema for a table."
     try:
-        db = pleko.db.get_check_read(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_read(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -226,19 +226,19 @@ def schema(dbname, tablename):
         db=db,
         schema=schema,
         indexes=indexes,
-        has_write_access=pleko.db.has_write_access(db))
+        has_write_access=dbportal.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
-        db = pleko.db.get_check_write(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_write(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -268,7 +268,7 @@ def row_insert(dbname, tablename):
                   (tablename,
                    ','.join(['"%(name)s"' % c for c in schema['columns']]),
                    ','.join('?' * len(schema['columns'])))
-            dbcnx = pleko.db.get_cnx(dbname, write=True)
+            dbcnx = dbportal.db.get_cnx(dbname, write=True)
             with dbcnx:
                 dbcnx.execute(sql, values)
         except sqlite3.Error as error:
@@ -287,12 +287,12 @@ def row_insert(dbname, tablename):
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
-        db = pleko.db.get_check_write(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_write(dbname, nrows=[tablename])
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     # Do not check for quota; a loop-hole, but let it slide...
-    dbcnx = pleko.db.get_cnx(dbname)
+    dbcnx = dbportal.db.get_cnx(dbname)
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -327,7 +327,7 @@ def row_edit(dbname, tablename, rowid):
                                          schema=schema,
                                          row=values,
                                          rowid=rowid)
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         cursor = dbcnx.cursor()
         try:
             with dbcnx:
@@ -345,7 +345,7 @@ def row_edit(dbname, tablename, rowid):
                                             tablename=tablename))
 
     elif utils.http_DELETE():
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         with dbcnx:
             sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
             dbcnx.execute(sql, (rowid,))
@@ -358,12 +358,12 @@ def row_edit(dbname, tablename, rowid):
 def insert(dbname, tablename):
     "Insert data from a file into the table."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -379,12 +379,12 @@ def insert_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -450,7 +450,7 @@ def insert_csv(dbname, tablename):
               (tablename,
                ','.join(['"%(name)s"' % c for c in schema['columns']]),
                ','.join('?' * len(schema['columns'])))
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         with dbcnx:
             dbcnx.executemany(sql, records)
         flask.flash(f"Inserted {len(records)} rows.", 'message')
@@ -467,12 +467,12 @@ def insert_csv(dbname, tablename):
 def update(dbname, tablename):
     "Update the table with data from a file."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -492,7 +492,7 @@ def update_csv(dbname, tablename):
     "Update the table with data from a CSV file."
     utils.check_csrf_token()
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -540,7 +540,7 @@ def update_csv(dbname, tablename):
                ' AND '.join(['"%s"=?' % pk for pk in pkpos.keys()]))
         colpos = colpos.values()
         pkpos = pkpos.values()
-        dbcnx = pleko.db.get_cnx(dbname, write=True)
+        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         count = 0
         cursor = dbcnx.cursor()
         with dbcnx:
@@ -564,16 +564,16 @@ def update_csv(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/clone', 
                  methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def clone(dbname, tablename):
     "Create a clone of the table."
     try:
-        db = pleko.db.get_check_write(dbname)
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
-        pleko.db.check_quota()
+        dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -592,7 +592,7 @@ def clone(dbname, tablename):
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
-            with pleko.db.DbContext(db) as ctx:
+            with dbportal.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
             colnames = ','.join(['"%(name)s"' % c for c in schema['columns']])
             sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % (schema['name'],
@@ -615,7 +615,7 @@ def clone(dbname, tablename):
 def download(dbname, tablename):
     "Download the rows in the table to a file."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -630,7 +630,7 @@ def download(dbname, tablename):
 def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
-        db = pleko.db.get_check_read(dbname)
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -656,7 +656,7 @@ def download_csv(dbname, tablename):
         colnames = ['"%(name)s"' % c for c in schema['columns']]
         if rowid:
             colnames.insert(0, 'rowid')
-        dbcnx = pleko.db.get_cnx(dbname)
+        dbcnx = dbportal.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
         writer.add_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:

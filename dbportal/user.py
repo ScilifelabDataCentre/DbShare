@@ -10,9 +10,9 @@ import flask
 import flask_mail
 import werkzeug.security
 
-import pleko.system
-from pleko import constants
-from pleko import utils
+import dbportal.system
+from dbportal import constants
+from dbportal import utils
 
 
 def login_required(f):
@@ -182,7 +182,7 @@ def password():
 @login_required
 def profile(username):
     "Display the profile of the given user."
-    import pleko.template
+    import dbportal.template
     user = get_user(username=username)
     if user is None:
         flask.flash('no such user', 'error')
@@ -190,13 +190,14 @@ def profile(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    ndbs, usage = pleko.db.get_usage(username)
+    ndbs, usage = dbportal.db.get_usage(username)
+    ntemplates = len(dbportal.template.get_templates(owner=username))
     return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
                                  ndbs=ndbs,
                                  usage=usage,
-                                 ntemplates=len(pleko.template.get_templates(owner=username)))
+                                 ntemplates=ntemplates)
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
@@ -209,7 +210,7 @@ def logs(username):
     if not is_admin_or_self(user):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
-    cursor = pleko.system.get_cursor()
+    cursor = dbportal.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
@@ -274,8 +275,8 @@ def edit(username):
 @admin_required
 def users():
     "Display list of all users."
-    import pleko.template
-    cursor = pleko.system.get_cursor()
+    import dbportal.template
+    cursor = dbportal.system.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
     cursor.execute(sql)
@@ -290,10 +291,10 @@ def users():
               'modified':   row[8],
               'ndbs':       0,
               'size':       0,
-              'ntemplates': len(pleko.template.get_templates(row[0]))}
+              'ntemplates': len(dbportal.template.get_templates(row[0]))}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
-    for db in pleko.db.get_dbs():
+    for db in dbportal.db.get_dbs():
         lookup[db['owner']]['ndbs'] += 1
         lookup[db['owner']]['size'] += db['size']
     return flask.render_template('user/users.html', users=users)
@@ -337,13 +338,13 @@ class UserContext:
             else:
                 status = constants.PENDING
             self.user = {'status': status, 
-                         'quota': flask.current_app.config['USER_DEFAULT_QUOTA'],
+                         'quota':flask.current_app.config['USER_DEFAULT_QUOTA'],
                          'created': utils.get_time()}
             self.orig = {}
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = pleko.system.get_cnx(write=True)
+        self.cnx = dbportal.system.get_cnx(write=True)
 
     def __enter__(self):
         return self
@@ -490,7 +491,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     else:
         return None
     if cnx is None:
-        cursor = pleko.system.get_cursor()
+        cursor = dbportal.system.get_cursor()
     else:
         cursor = cnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \

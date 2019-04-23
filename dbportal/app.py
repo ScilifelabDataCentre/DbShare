@@ -1,4 +1,4 @@
-"Pleko web app."
+"DbPortal web app."
 
 import json
 import os.path
@@ -9,27 +9,27 @@ import flask_mail
 import jinja2.utils
 import jsonschema
 
-import pleko
-import pleko.db
-import pleko.index
-import pleko.system
-import pleko.query
-import pleko.table
-import pleko.template
-import pleko.user
-import pleko.vega
-import pleko.vega_lite
-import pleko.view
-import pleko.visual
-from pleko import constants
-from pleko import utils
+import dbportal
+import dbportal.db
+import dbportal.index
+import dbportal.system
+import dbportal.query
+import dbportal.table
+import dbportal.template
+import dbportal.user
+import dbportal.vega
+import dbportal.vega_lite
+import dbportal.view
+import dbportal.visual
+from dbportal import constants
+from dbportal import utils
 
 ROOT_DIR = os.path.dirname(__file__)
 
 CONFIG = dict(
-    VERSION = pleko.__version__,
+    VERSION = dbportal.__version__,
     SERVER_NAME = '127.0.0.1:5000',
-    SITE_NAME = 'Pleko',
+    SITE_NAME = 'DbPortal',
     DATABASES_DIRPATH = 'data',
     SECRET_KEY = None,
     SALT_LENGTH = 12,
@@ -50,7 +50,7 @@ CONFIG = dict(
                            'vertical-bar': {'label': "vertical-bar '|'", 
                                             'char': '|'},
                            'semicolon': {'label': "semicolon ';'", 'char': ';'}},
-    PLEKO_URL = 'https://github.com/pekrau/Pleko',
+    DBPORTAL_URL = 'https://github.com/pekrau/DbPortal',
     FLASK_URL = 'http://flask.pocoo.org/',
     JINJA2_URL = 'http://jinja.pocoo.org/docs',
     SQLITE3_URL = 'https://www.sqlite.org/',
@@ -105,22 +105,22 @@ with open(app.config['VEGA_LITE_SCHEMA']) as infile:
     app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
 
 # Init the system database.
-pleko.system.init(app)
+dbportal.system.init(app)
 
 # Init the mail handler.
 utils.mail.init_app(app)
 
 # Set the URL map.
-app.register_blueprint(pleko.user.blueprint, url_prefix='/user')
-app.register_blueprint(pleko.db.blueprint, url_prefix='/db')
-app.register_blueprint(pleko.table.blueprint, url_prefix='/table')
-app.register_blueprint(pleko.query.blueprint, url_prefix='/query')
-app.register_blueprint(pleko.view.blueprint, url_prefix='/view')
-app.register_blueprint(pleko.index.blueprint, url_prefix='/index')
-app.register_blueprint(pleko.visual.blueprint, url_prefix='/visual')
-app.register_blueprint(pleko.template.blueprint, url_prefix='/template')
-app.register_blueprint(pleko.vega.blueprint, url_prefix='/vega')
-app.register_blueprint(pleko.vega_lite.blueprint, url_prefix='/vega-lite')
+app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
+app.register_blueprint(dbportal.db.blueprint, url_prefix='/db')
+app.register_blueprint(dbportal.table.blueprint, url_prefix='/table')
+app.register_blueprint(dbportal.query.blueprint, url_prefix='/query')
+app.register_blueprint(dbportal.view.blueprint, url_prefix='/view')
+app.register_blueprint(dbportal.index.blueprint, url_prefix='/index')
+app.register_blueprint(dbportal.visual.blueprint, url_prefix='/visual')
+app.register_blueprint(dbportal.template.blueprint, url_prefix='/template')
+app.register_blueprint(dbportal.vega.blueprint, url_prefix='/vega')
+app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
 
 @app.context_processor
 def setup_template_context():
@@ -159,8 +159,8 @@ def none_as_empty_string(value):
 @app.before_request
 def prepare():
     "Connect to the system database (read-only); get the current user."
-    flask.g.cnx = pleko.system.get_cnx()
-    flask.g.current_user = pleko.user.get_current_user()
+    flask.g.cnx = dbportal.system.get_cnx()
+    flask.g.current_user = dbportal.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
 
@@ -180,26 +180,26 @@ def finalize(response):
 def home():
     "Home page; display the list of public databases."
     return flask.render_template('home.html',
-                                 dbs=pleko.db.get_dbs(public=True))
+                                 dbs=dbportal.db.get_dbs(public=True))
 
 @app.route('/dbs/public')
 def dbs_public():
     "Display the list of public databases."
     return flask.render_template('dbs_public.html',
-                                 dbs=pleko.db.get_dbs(public=True))
+                                 dbs=dbportal.db.get_dbs(public=True))
 
 @app.route('/dbs/all')
-@pleko.user.login_required
-@pleko.user.admin_required
+@dbportal.user.login_required
+@dbportal.user.admin_required
 def dbs_all():
     "Display the list of all databases."
-    dbs = pleko.db.get_dbs()
+    dbs = dbportal.db.get_dbs()
     return flask.render_template('dbs_all.html',
                                  dbs=dbs,
                                  usage=sum([db['size'] for db in dbs]))
 
 @app.route('/dbs/owner/<name:username>')
-@pleko.user.login_required
+@dbportal.user.login_required
 def dbs_owner(username):
     "Display the list of databases owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
@@ -207,25 +207,25 @@ def dbs_owner(username):
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
         'dbs_owner.html',
-        dbs=pleko.db.get_dbs(owner=username),
+        dbs=dbportal.db.get_dbs(owner=username),
         username=username)
 
 @app.route('/templates/public')
 def templates_public():
     "Display the list of public visualization templates."
-    templates = pleko.template.get_templates(public=True)
+    templates = dbportal.template.get_templates(public=True)
     return flask.render_template('templates_public.html', templates=templates)
 
 @app.route('/templates/all')
-@pleko.user.login_required
-@pleko.user.admin_required
+@dbportal.user.login_required
+@dbportal.user.admin_required
 def templates_all():
     "Display the list of public visualization templates."
     return flask.render_template('templates_all.html',
-                                 templates=pleko.template.get_templates())
+                                 templates=dbportal.template.get_templates())
 
 @app.route('/templates/owner/<name:username>')
-@pleko.user.login_required
+@dbportal.user.login_required
 def templates_owner(username):
     "Display the list of visualization templates owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
@@ -233,13 +233,13 @@ def templates_owner(username):
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
         'templates_owner.html',
-        templates=pleko.template.get_templates(owner=username),
+        templates=dbportal.template.get_templates(owner=username),
         username=username)
 
 @app.route('/upload', methods=['GET', 'POST'])
-@pleko.user.login_required
+@dbportal.user.login_required
 def upload():
-    "Upload a Pleko Sqlite3 database file."
+    "Upload a DbPortal Sqlite3 database file."
     if utils.http_GET():
         return flask.render_template('upload.html')
 
@@ -251,7 +251,7 @@ def upload():
             dbname = flask.request.form.get('dbname')
             if not dbname:
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
-            db = pleko.db.add_database(dbname, infile)
+            db = dbportal.db.add_database(dbname, infile)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('upload'))
@@ -277,7 +277,7 @@ def endpoints():
 def software():
     "Display software with links and version info."
     config = flask.current_app.config
-    data = [('Pleko', config['PLEKO_URL'], config['VERSION']),
+    data = [('DbPortal', config['DBPORTAL_URL'], config['VERSION']),
             ('Sqlite3', config['SQLITE3_URL'], sqlite3.version),
             ('Flask', config['FLASK_URL'], flask.__version__),
             ('Flask-Mail',

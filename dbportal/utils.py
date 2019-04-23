@@ -16,7 +16,7 @@ import flask_mail
 import jinja2.utils
 import werkzeug.routing
 
-from pleko import constants
+from dbportal import constants
 
 
 mail = flask_mail.Mail()

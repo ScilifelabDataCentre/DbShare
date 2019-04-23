@@ -5,14 +5,14 @@ import getpass
 
 import flask
 
-import pleko
-import pleko.app
-import pleko.user
-from pleko import constants
+import dbportal
+import dbportal.app
+import dbportal.user
+from dbportal import constants
 
-with pleko.app.app.app_context():
+with dbportal.app.app.app_context():
     try:
-        with pleko.user.UserContext() as ctx:
+        with dbportal.user.UserContext() as ctx:
             ctx.set_username(input('username > '))
             ctx.set_email(input('email > '))
             ctx.set_role(constants.ADMIN)
