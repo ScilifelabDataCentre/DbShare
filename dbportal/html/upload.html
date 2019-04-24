@@ -12,15 +12,22 @@
   <div class="card-body">
     <ul class="m-2">
       <li>
-	The file must be a valid Sqlite3 file. 
+        If the file is a DbPortal Sqlite3 file, the validity of its metadata
+        will be checked to some extent.
       </li>
       <li>
-        If the file is a plain Sqlite3 file, an attempt to infer the
-        DbPortal metadata from its contents will be made.
-      </li>
-      <li>
-        If the file is a DbPortal Sqlite3 file, its metadata validity
-        will be checked.
+        If the file is a plain Sqlite3 file, an attempt will be made
+        to infer the DbPortal metadata from its contents. The current
+        limitations are:
+        <ul>
+          <li>
+            Only views with simple definitions can be parsed. Other
+            views will be deleted.
+          </li>
+          <li>
+            All indexes will be deleted.
+          </li>
+        </ul>
       </li>
     </ul>
     <form action="{{ url_for('upload') }}"

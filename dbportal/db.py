@@ -585,12 +585,9 @@ class DbContext:
         self.dbcnx.execute(sql)
 
     def load_dbfile(self, infile):
-        """Load the entire database file present in the given file object.
-        Initialize the metadata tables and indexes if needed.
-        """
+        "Load the entire database file present in the given file object."
         with open(utils.dbpath(self.db['name']), 'wb') as outfile:
             outfile.write(infile.read())
-        self.initialize()
 
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,
@@ -814,6 +811,157 @@ class DbContext:
             sql = "DELETE FROM %s WHERE name=?" % constants.VISUALS
             self.dbcnx.execute(sql, (visualname.lower(),))
 
+    def check_metadata(self):
+        """Check the validity of the metadata for the database.
+        Fix the data URLs in the visuals.
+        Return False if no metadata (i.e. not a DbPortal file), else True.
+        Raises ValueError or sqlite3.Error if any problem.
+        """
+        cursor = self.dbcnx.cursor()
+        sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
+        cursor.execute(sql)
+        if cursor.fetchone()[0] == 0: return False # No metadata; skip.
+        sql = "SELECT name FROM %s" % constants.TABLES
+        cursor.execute(sql)
+        tables1 = set([row[0] for row in cursor])
+        sql = "SELECT name FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('table',))
+        tables2 = set([row[0].lower() for row in cursor
+                       if not row[0].startswith('_')]) # Ignore metadata tables.
+        if tables1 != tables2:
+            raise ValueError('corrupt metadata in DbPortal Sqlite3 file')
+        # Does the index metatable exist?
+        sql = "SELECT name, schema FROM %s" % constants.INDEXES
+        cursor.execute(sql)
+        # Does the views metatable exist?
+        sql = "SELECT name, schema FROM %s" % constants.VIEWS
+        cursor.execute(sql)
+        # Fix the data URLs in the visuals.
+        sql = "SELECT name, spec FROM %s" % constants.VISUALS
+        cursor.execute(sql)
+        visuals = [{'name': row[0], 'spec': json.loads(row[1])}
+                   for row in cursor]
+        # Update the data URLs in the visuals.
+        new_root = utils.get_url('home').rstrip('/')
+        # Identify the old URL root from a data url in a visual spec.
+        old_root = None
+        search = dpath.util.search
+        for visual in visuals:
+            for path,href in search(visual['spec'],'data/url',yielded=True):
+                parts = urllib.parse.urlparse(href)
+                old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
+                break
+        rx_table = re.compile(r'^.*/table/(.+)/.+$')
+        rx_view  = re.compile(r'^.*/view/(.+)/.+$')
+        for visual in visuals:
+            for path,href in search(visual['spec'],'data/url',yielded=True):
+                # Next, replace old URL root with new.
+                href = href.replace(old_root, new_root)
+                # And, old database name with new in URL path.
+                for m in [rx_table.match(href), rx_view.match(href)]:
+                    if m:
+                        href = href[: m.start(1)] + \
+                               self.db['name'] + \
+                               href[m.end(1) :]
+                        dpath.util.set(visual['spec'], path, href)
+                        break
+        with self.dbcnx:
+            sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
+            for visual in visuals:
+                cursor.execute(sql, (json.dumps(visual['spec']),visual['name']))
+        return True
+
+    def infer_metadata(self):
+        "Infer and save the metadata for the database."
+        cursor = self.dbcnx.cursor()
+        # Get the table names.
+        sql = "SELECT name FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('table',))
+        tablenames = [row[0] for row in cursor 
+                      if not row[0].startswith('_')] # Ignore metadata tables.
+        # Check the DbPortal validity of the table names.
+        for tablename in tablenames:
+            if not constants.NAME_RX.match(tablename):
+                raise ValueError(f"invalid table name '{tablename}' for DbPortal")
+        # Infer the schema for the tables, and set the metadata.
+        for tablename in tablenames:
+            schema = {'name': tablename, 'columns': []}
+            sql = f'PRAGMA table_info("{tablename}")'
+            cursor.execute(sql)
+            for row in cursor:
+                column = {'name': row[1].lower(), 
+                          'type': row[2].upper(),
+                          'notnull': bool(row[3]),
+                          'primarykey': bool(row[5])}
+                schema['columns'].append(column)
+            self.add_table(schema, create=False)
+        # Get the views, attempt to parse their SQL definitions, and add.
+        sql = "SELECT name, sql FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('view',))
+        viewdata = [(row[0], row[1]) for row in cursor]
+        for viewname, sql in viewdata:
+            schema = {'name': viewname,
+                      'title': None,
+                      'description': None}
+            schema['query'] = query = {}
+            parts = sql.split()
+            parts.reverse()
+            try:
+                if parts.pop().upper() != 'CREATE': raise ValueError
+                if parts.pop().upper() != 'VIEW': raise ValueError
+                if parts.pop().strip('"') != viewname: raise ValueError
+                if parts.pop().upper() != 'AS': raise ValueError
+                if parts.pop().upper() != 'SELECT': raise ValueError
+                select = []
+                while parts:
+                    item = parts.pop()
+                    if item.upper() == 'FROM': break
+                    select.append(item)
+                query['select'] = ' '.join(select)
+                query['columns'] = []
+                for name in query['select'].split(','):
+                    query['columns'].append(utils.name_after_as(name))
+                from_ = []
+                while parts:
+                    item = parts.pop()
+                    if item.upper() == 'WHERE': break
+                    from_.append(item)
+                query['from'] = ' '.join(from_)
+                where_ = []
+                while parts:
+                    item = parts.pop()
+                    if item.upper() == 'ORDER': break
+                    if item.upper() == 'LIMIT': break
+                    where_.append(item)
+                query['where'] = ' '.join(where_)
+                if item.upper() == 'ORDER':
+                    orderby = []
+                    if parts.pop() != 'BY': raise ValueError
+                    while parts:
+                        item = parts.pop()
+                        if item.upper() == 'LIMIT': break
+                        orderby.append(item)
+                    query['orderby'] = ' '.join(orderby)
+                if item.upper() == 'LIMIT':
+                    query['limit'] = int(parts.pop())
+                    if parts and parts.pop().upper() == 'OFFSET':
+                        query['offset'] = int(parts.pop())
+                self.add_view(schema, create=False)
+            except (ValueError, IndexError, TypeError):
+                # Get rid of uninterpretable view.
+                sql = f"DROP VIEW {viewname}"
+                cursor.execute(sql)
+        # Delete all indexes; currently not parsed and may interfere.
+        sql = "SELECT name FROM sqlite_master WHERE type=?"
+        cursor.execute(sql, ('index',))
+        indexnames = [row[0] for row in cursor.fetchall()]
+        # Do not attempt to delete Sqlite3 indexes, or visuals index.
+        indexnames = [n for n in indexnames 
+                      if not n.startswith('sqlite_autoindex')]
+        indexnames = [n for n in indexnames if not n.startswith('_')]
+        for name in indexnames:
+            sql = f"DROP INDEX {name}"
+            cursor.execute(sql)
 
 def get_dbs(public=None, owner=None, complete=False):
     "Get the list of databases according to criteria."
@@ -1083,20 +1231,18 @@ def add_database(dbname, infile):
         with DbContext() as ctx:
             ctx.set_name(dbname) # Checks that name is not already used.
             ctx.load_dbfile(infile)
+            ctx.initialize()
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
     try:
         with DbContext(get_db(dbname, complete=True)) as ctx: # Re-read db dict
-            cursor = ctx.dbcnx.cursor()
-            sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
-            cursor.execute(sql)
-            if cursor.fetchone()[0] == 0: # No info in DbPortal metadata.
-                infer_dbportal_metadata(ctx)
-            check_dbportal_metadata(ctx)
+            if not ctx.check_metadata():
+                ctx.infer_metadata()
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:
         delete_database(dbname)
-        raise ValueError(str(error))
+        raise
+        # raise ValueError(str(error))
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
@@ -1111,137 +1257,3 @@ def delete_database(dbname):
     except FileNotFoundError:
         pass
 
-def infer_dbportal_metadata(ctx):
-    "Infer and save the DbPortal metadata for the database."
-    cursor = ctx.dbcnx.cursor()
-    # Get the table names.
-    sql = "SELECT name FROM sqlite_system WHERE type=?"
-    cursor.execute(sql, ('table',))
-    tablenames = [row[0] for row in cursor 
-                  if not row[0].startswith('_')] # Ignore metadata tables.
-    # Check the DbPortal validity of the table names.
-    for tablename in tablenames:
-        if not constants.NAME_RX.match(tablename):
-            raise ValueError(f"invalid table name '{tablename}' for DbPortal")
-    # Infer the schema for the tables, and set the metadata.
-    for tablename in tablenames:
-        schema = {'name': tablename, 'columns': []}
-        sql = f'PRAGMA table_info("{tablename}")'
-        cursor.execute(sql)
-        for row in cursor:
-            column = {'name': row[1].lower(), 
-                      'type': row[2].upper(),
-                      'notnull': bool(row[3]),
-                      'primarykey': bool(row[5])}
-            schema['columns'].append(column)
-        ctx.add_table(schema, create=False)
-    # Get the views, attempt to parse their SQL definitions, and add.
-    sql = "SELECT name, sql FROM sqlite_system WHERE type=?"
-    cursor.execute(sql, ('view',))
-    viewdata = [(row[0], row[1]) for row in cursor]
-    for viewname, sql in viewdata:
-        schema = {'name': viewname,
-                  'title': None,
-                  'description': None}
-        schema['query'] = query = {}
-        parts = sql.split()
-        parts.reverse()
-        try:
-            if parts.pop().upper() != 'CREATE': raise ValueError
-            if parts.pop().upper() != 'VIEW': raise ValueError
-            if parts.pop().strip('"') != viewname: raise ValueError
-            if parts.pop().upper() != 'AS': raise ValueError
-            if parts.pop().upper() != 'SELECT': raise ValueError
-            select = []
-            while parts:
-                item = parts.pop()
-                if item.upper() == 'FROM': break
-                select.append(item)
-            query['select'] = ' '.join(select)
-            query['columns'] = []
-            for name in query['select'].split(','):
-                query['columns'].append(utils.name_after_as(name))
-            from_ = []
-            while parts:
-                item = parts.pop()
-                if item.upper() == 'WHERE': break
-                from_.append(item)
-            query['from'] = ' '.join(from_)
-            where_ = []
-            while parts:
-                item = parts.pop()
-                if item.upper() == 'ORDER': break
-                if item.upper() == 'LIMIT': break
-                where_.append(item)
-            query['where'] = ' '.join(where_)
-            if item.upper() == 'ORDER':
-                orderby = []
-                if parts.pop() != 'BY': raise ValueError
-                while parts:
-                    item = parts.pop()
-                    if item.upper() == 'LIMIT': break
-                    orderby.append(item)
-                query['orderby'] = ' '.join(orderby)
-            if item.upper() == 'LIMIT':
-                query['limit'] = int(parts.pop())
-                if parts.pop().upper() == 'OFFSET':
-                    query['offset'] = int(parts.pop())
-            ctx.add_view(schema, create=False)
-        except (ValueError, IndexError, TypeError):
-            # Get rid of uninterpretable view.
-            sql = f"DROP VIEW {viewname}"
-            cursor.execute(sql)
-    # XXX Indexes are currently not inferred!
-
-def check_dbportal_metadata(ctx):
-    """Check the validity of the DbPortal metadata for the database.
-    Raises ValueError or sqlite3.Error if any problem.
-    """
-    cursor = ctx.dbcnx.cursor()
-    sql = "SELECT name FROM %s" % constants.TABLES
-    cursor.execute(sql)
-    tables1 = set([row[0] for row in cursor])
-    sql = "SELECT name FROM sqlite_system WHERE type=?"
-    cursor.execute(sql, ('table',))
-    tables2 = set([row[0].lower() for row in cursor
-                   if not row[0].startswith('_')]) # Ignore metadata tables.
-    if tables1 != tables2:
-        raise ValueError('corrupt metadata in DbPortal Sqlite3 file')
-    # Does the index metatable exist?
-    sql = "SELECT name, schema FROM %s" % constants.INDEXES
-    cursor.execute(sql)
-    # Does the views metatable exist?
-    sql = "SELECT name, schema FROM %s" % constants.VIEWS
-    cursor.execute(sql)
-    # Fix the data URLs in the visuals.
-    sql = "SELECT name, spec FROM %s" % constants.VISUALS
-    cursor.execute(sql)
-    visuals = [{'name': row[0], 'spec': json.loads(row[1])} for row in cursor]
-    # Update the data URLs in the visuals.
-    new_root = utils.get_url('home').rstrip('/')
-    # Identify the old URL root from a data url in a visual spec.
-    old_root = None
-    search = dpath.util.search
-    for visual in visuals:
-        for path,href in search(visual['spec'],'data/url',yielded=True):
-            parts = urllib.parse.urlparse(href)
-            old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
-            break
-    rx_table = re.compile(r'^.*/table/(.+)/.+$')
-    rx_view  = re.compile(r'^.*/view/(.+)/.+$')
-    for visual in visuals:
-        for path,href in search(visual['spec'],'data/url',yielded=True):
-            # Next, replace old URL root with new.
-            href = href.replace(old_root, new_root)
-            # And, old database name with new in URL path.
-            for m in [rx_table.match(href), rx_view.match(href)]:
-                if m:
-                    href = href[: m.start(1)] + \
-                           ctx.db['name'] + \
-                           href[m.end(1) :]
-                    dpath.util.set(visual['spec'], path, href)
-                    break
-    with ctx.dbcnx:
-        sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
-        for visual in visuals:
-            cursor.execute(sql, (json.dumps(visual['spec']),visual['name']))
