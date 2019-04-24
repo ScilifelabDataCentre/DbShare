@@ -142,7 +142,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
-                writer.write_rows(rows)
+                writer.add_rows(rows)
                 return flask.Response(writer.get(),
                                       mimetype=constants.CSV_MIMETYPE)
 
