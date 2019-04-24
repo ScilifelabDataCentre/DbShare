@@ -110,7 +110,10 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         try:
             title = schema.get('title') or "View {}".format(viewname)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-            colnames = ['"%s"' % c for c in schema['query']['columns']]
+            if schema['query']['select'] == '*':
+                colnames = '*'
+            else:
+                colnames = ['"%s"' % c for c in schema['query']['columns']]
             dbcnx = dbportal.db.get_cnx(dbname)
             sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 

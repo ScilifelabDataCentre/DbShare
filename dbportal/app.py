@@ -46,7 +46,8 @@ CONFIG = dict(
     MAX_NROWS_DISPLAY = 2000,
     QUERY_DEFAULT_LIMIT = 100,
     EXECUTE_TIMEOUT = 2.0,
-    EXECUTE_TIMEOUT_INCREMENT = 0.05,
+    EXECUTE_TIMEOUT_INCREMENT = 0.01,
+    EXECUTE_TIMEOUT_BACKOFF = 1.3,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'vertical-bar': {'label': "vertical-bar '|'", 
@@ -101,6 +102,14 @@ config_filepath = os.environ.get('CONFIG_FILEPATH') or 'config.json'
 print(f"   Reading configuration file '{config_filepath}'")
 app.config.from_json(config_filepath)
 app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
+
+# Sanity check configuration.
+assert app.config['SECRET_KEY']
+assert app.config['SALT_LENGTH'] > 6
+assert app.config['MIN_PASSWORD_LENGTH'] > 4
+assert app.config['EXECUTE_TIMEOUT'] > 0.0
+assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
+assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
 
 # Read the JSON Schema files; must be present.
 with open(app.config['VEGA_SCHEMA']) as infile:

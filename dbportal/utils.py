@@ -198,7 +198,6 @@ def check_csrf_token():
     "Check the CSRF token for POST HTML."
     token = flask.session.pop('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
-        print('>>> CSRF:', token, flask.request.form.get('_csrf_token'))
         flask.abort(400)
 
 def flash_message_limit(limit):
@@ -206,19 +205,21 @@ def flash_message_limit(limit):
     msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
     flask.flash(msg, 'message')
 
-def _timeout_interrupt(cnx, event, timeout, increment):
-    "Background thread to interrupt the Sqlite3 query, if timeout."
+def _timeout_interrupt(cnx, event, timeout, increment, backoff):
+    "Background thread to interrupt the Sqlite3 query when timeout."
     assert timeout > 0.0
     assert increment > 0.0
+    assert backoff > 1.0
     event.wait()
     elapsed = 0.0
     while elapsed < timeout:
         if not event.is_set(): return
         time.sleep(increment)
         elapsed += increment
+        increment *= backoff
     cnx.interrupt()
 
-def execute_timeout(cnx, command, timeout=None, increment=None, **kwargs):
+def execute_timeout(cnx, command, **kwargs):
     """Perform Sqlite3 command(s) to be interrupted if running too long.
     If the given command is a string, it is executed as SQL and all rows
     produced by it are returned.
@@ -227,11 +228,14 @@ def execute_timeout(cnx, command, timeout=None, increment=None, **kwargs):
     Raises SystemError if interrupted by time-out.
     """
     config = flask.current_app.config
-    timeout = timeout or config['EXECUTE_TIMEOUT']
-    increment = increment or config['EXECUTE_TIMEOUT_INCREMENT']
     event = threading.Event()
-    thread = threading.Thread(target=_timeout_interrupt,
-                              args=(cnx, event, timeout, increment))
+    timeout = config['EXECUTE_TIMEOUT']
+    args = (cnx, 
+            event,
+            timeout,
+            config['EXECUTE_TIMEOUT_INCREMENT'],
+            config['EXECUTE_TIMEOUT_BACKOFF'])
+    thread = threading.Thread(target=_timeout_interrupt, args=args)
     thread.start()
     event.set()
     try:
@@ -242,6 +246,7 @@ def execute_timeout(cnx, command, timeout=None, increment=None, **kwargs):
         elif callable(command):
             result = command(cnx, **kwargs)
     except sqlite3.OperationalError as error:
+        raise
         raise SystemError(f"execution time exceeded {timeout} s; interrupted")
     event.clear()
     thread.join()

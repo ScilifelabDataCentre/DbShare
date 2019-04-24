@@ -49,7 +49,7 @@ def rows(dbname):
         dbcnx = dbportal.db.get_cnx(dbname)
         rows = utils.execute_timeout(dbcnx, get_sql_query(query_limited))
         if len(rows) >= query_limited['limit']:
-            utils.flash_limit(limit)
+            utils.flash_message_limit(limit)
         if query['columns'][0] == '*':
             try:
                 columns = [f"column{i+1}" for i in range(len(rows[0]))]
