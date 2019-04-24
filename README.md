@@ -17,8 +17,8 @@ and visualize with
 - Rename a database.
 - Clone a database.
 - Delete a database.
-- Download the Sqlite3 file containing one database.
-- Upload a Sqlite3 database file.
+- Download the Sqlite3 file containing one database and its DbPortal metadata.
+- Upload a Sqlite3 database file (plain or containing DbPortal metadata).
 
 ## Tables
 
@@ -28,6 +28,7 @@ and visualize with
 - Create a table by uploading a CSV file.
 - Display the rows in a table.
 - Display the schema of a table.
+- List the visualizations for a table.
 - Insert a row of data.
 - Edit a row.
 - Delete a row.
@@ -35,9 +36,8 @@ and visualize with
 - Update rows in a table by uploading a CSV file.
 - Clone a table.
 - Delete a table.
-- Download a table as CSV file.
-- Fetch data in CSV or JSON format.
-- List the visualizations based on a table.
+- Download a table as a CSV file.
+- Fetch the table data in CSV or JSON format.
 
 ## Queries
 
@@ -54,16 +54,16 @@ and visualize with
 - A view is a predefined query which can be used like a table.
 - Display the rows of a view.
 - Display the schema of a view.
-- List the visualizations based on a view.
+- List the visualizations for a view.
 - Create a view from a query.
 - Delete a view.
 - Clone a view.
-- Download a view as CSV file.
-- Fetch data in CSV or JSON format.
+- Download the view data as a CSV file.
+- Fetch the view data in CSV or JSON format.
 
 ## Indexes
 
-- Indexes optimize certain queries of a given table.
+- Indexes optimize certain queries involving a given table.
 - Create an index.
 - View the schema of an index.
 - Delete an index.
