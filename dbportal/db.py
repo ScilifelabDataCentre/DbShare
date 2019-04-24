@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import io
 import itertools
 import json
 import os
@@ -178,122 +179,28 @@ def upload(dbname):
 
     elif utils.http_POST():
         try:
+            csvfile = flask.request.files['csvfile']
+            infile = io.StringIO(csvfile.read().decode('utf-8'))
             delimiter = flask.request.form.get('delimiter') or 'comma'
             try:
                 delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
             except KeyError:
                 raise ValueError('invalid delimiter')
             nullrepr = flask.request.form.get('nullrepr') or ''
-            csvfile = flask.request.files['csvfile']
+            header = utils.to_bool(flask.request.form.get('header'))
             try:
                 tablename = flask.request.form['tablename']
                 if not tablename: raise KeyError
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
-            tablename = utils.name_cleaned(tablename)
-            tablename = tablename.lower()
-            if tablename in db['tables']:
-                raise ValueError('table name already in use')
-            schema = {'name': tablename}
-
-            # Preprocess CSV data
-            lines = csvfile.read().decode('utf-8').split('\n')
-            records = list(csv.reader(lines, delimiter=delimiter))
-            # Eliminate empty records
-            records = [r for r in records if r]
-            if not records:
-                raise ValueError('empty CSV file')
-            header = utils.to_bool(flask.request.form.get('header'))
-            if header:
-                header = records.pop(0)
-                if len(header) == 0:
-                    raise ValueError('empty header record in the CSV file')
-                header = [utils.name_cleaned(n) for n in header]
-                if len(header) != len(set(header)):
-                    raise ValueError('non-unique header column names')
-            else:
-                header = [f"column{i+1}" for i in range(len(records[0]))]
-
-            # Infer column types and constraints
-            schema['columns'] = [{'name': name} for name in header]
-            for i, column in enumerate(schema['columns']):
-
-                # First attempt: integer
-                column['notnull'] = True
-                type = None
-                for n, record in enumerate(records):
-                    value = record[i]
-                    if value == nullrepr:
-                        column['notnull'] = False
-                    else:
-                        try:
-                            int(value)
-                        except (ValueError, TypeError):
-                            break
-                else:
-                    type = constants.INTEGER
-
-                # Next attempt: float
-                if type is None:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value == nullrepr:
-                            column['notnull'] = False
-                        else:
-                            try:
-                                float(value)
-                            except (ValueError, TypeError):
-                                break
-                    else:
-                        type = constants.REAL
-
-                # Default: text
-                if type is None:
-                    column['type'] = constants.TEXT
-                    if column['notnull']:
-                        for record in records:
-                            value = record[i]
-                            if value == nullrepr:
-                                column['notnull'] = False
-                                break
-                else:
-                    column['type'] = type
-
             with DbContext(db) as ctx:
-                ctx.add_table(schema)
-
-            # Actually convert values in records
-            for i, column in enumerate(schema['columns']):
-                type = column['type']
-                if type == constants.INTEGER:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value == nullrepr:
-                            record[i] = None
-                        else:
-                            record[i] = int(value)
-                elif type == constants.REAL:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value == nullrepr:
-                            record[i] = None
-                        else:
-                            record[i] = float(value)
-                else:
-                    for n, record in enumerate(records):
-                        if record[i] == nullrepr:
-                            record[i] = None
-            # Insert the data
-            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                  (tablename,
-                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                   ','.join('?' * len(schema['columns'])))
-            dbcnx = get_cnx(db['name'], write=True)
-            with dbcnx:
-                dbcnx.executemany(sql, records)
-            flask.flash(f"Inserted {len(records)} rows.", 'message')
-
+                tablename, n = ctx.load_csvfile(infile,
+                                                tablename,
+                                                delimiter=delimiter,
+                                                nullrepr=nullrepr,
+                                                header=header)
+            flask.flash(f"Loaded {n} records.", 'message')
         except (ValueError, IndexError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.upload',
@@ -588,6 +495,108 @@ class DbContext:
         "Load the entire database file present in the given file object."
         with open(utils.dbpath(self.db['name']), 'wb') as outfile:
             outfile.write(infile.read())
+
+    def load_csvfile(self, infile, tablename, 
+                     delimiter=',', nullrepr='', header=True):
+        """Load the CSV file and infer column types and constraints.
+        Return the tablename and the number of records read from the file.
+        Raises ValueError or sqlite3.Error if any problem.
+        """
+        tablename = utils.name_cleaned(tablename)
+        tablename = tablename.lower()
+        if tablename in self.db['tables']:
+            raise ValueError('table name already in use')
+        schema = {'name': tablename}
+
+        # Preprocess CSV data; eliminate empty records
+        records = [r for r in csv.reader(infile, delimiter=delimiter) if r]
+        if not records:
+            raise ValueError('empty CSV file')
+        if header:
+            header = records.pop(0)
+            header = [utils.name_cleaned(n) for n in header]
+            if len(header) != len(set(header)):
+                raise ValueError('non-unique header column names')
+        else:
+            header = [f"column{i+1}" for i in range(len(records[0]))]
+
+        # Infer column types and constraints
+        schema['columns'] = [{'name': name} for name in header]
+        try:
+            for i, column in enumerate(schema['columns']):
+                # First attempt: integer
+                column['notnull'] = True
+                type = None
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value == nullrepr:
+                        column['notnull'] = False
+                    else:
+                        try:
+                            int(value)
+                        except (ValueError, TypeError):
+                            break
+                else:
+                    type = constants.INTEGER
+                # Next attempt: float
+                if type is None:
+                    for n, record in enumerate(records):
+                        value = record[i]
+                        if value == nullrepr:
+                            column['notnull'] = False
+                        else:
+                            try:
+                                float(value)
+                            except (ValueError, TypeError):
+                                break
+                    else:
+                        type = constants.REAL
+                # Default: text
+                if type is None:
+                    column['type'] = constants.TEXT
+                    if column['notnull']:
+                        for record in records:
+                            value = record[i]
+                            if value == nullrepr:
+                                column['notnull'] = False
+                                break
+                else:
+                    column['type'] = type
+        except IndexError:
+            raise ValueError(f"record {i+1} has too few items")
+
+        # Create the table
+        self.add_table(schema)
+
+        # Actually convert values in records
+        for i, column in enumerate(schema['columns']):
+            type = column['type']
+            if type == constants.INTEGER:
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value == nullrepr:
+                        record[i] = None
+                    else:
+                        record[i] = int(value)
+            elif type == constants.REAL:
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value == nullrepr:
+                        record[i] = None
+                    else:
+                        record[i] = float(value)
+            else:
+                for n, record in enumerate(records):
+                    if record[i] == nullrepr:
+                        record[i] = None
+        # Insert the data
+        sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+              (tablename,
+               ','.join(['"%(name)s"' % c for c in schema['columns']]),
+               ','.join('?' * len(schema['columns'])))
+        with self.dbcnx:
+            self.dbcnx.executemany(sql, records)
+        return tablename, len(records)
 
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,

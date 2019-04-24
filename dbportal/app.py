@@ -99,7 +99,6 @@ app.jinja_env.lstrip_blocks = True
 # Modify the configuration from a JSON file.
 app.config.from_mapping(CONFIG)
 config_filepath = os.environ.get('CONFIG_FILEPATH') or 'config.json'
-print(f"   Reading configuration file '{config_filepath}'")
 app.config.from_json(config_filepath)
 app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
 

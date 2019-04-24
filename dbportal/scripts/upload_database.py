@@ -11,12 +11,11 @@ import dbportal.app
 import dbportal.user
 from dbportal import constants
 
-parser = argparse.ArgumentParser('Upload a DbPortal Sqlite3 database file.')
-parser.add_argument('username', help='Owner of the uploaded database.')
-parser.add_argument('filename', help='Path of the file to upload.')
-args = parser.parse_args()
-
 with dbportal.app.app.app_context():
+    parser = argparse.ArgumentParser('Upload a DbPortal Sqlite3 database file.')
+    parser.add_argument('username', help='Owner of the uploaded database.')
+    parser.add_argument('filename', help='Path of the file to upload.')
+    args = parser.parse_args()
     try:
         user = dbportal.user.get_user(username=args.username)
         if user is None: raise ValueError('no such user')
@@ -26,5 +25,5 @@ with dbportal.app.app.app_context():
         dbname = os.path.splitext(os.path.basename(args.filename))[0]
         dbportal.db.add_database(dbname, None, content)
     except (ValueError, IOError) as error:
-        sys.exit("Error: %s" % error)
-    print('Uploaded database', dbname)
+        sys.exit(f"Error: {str(error)}")
+    print(f"Uploaded database {dbname}.")
