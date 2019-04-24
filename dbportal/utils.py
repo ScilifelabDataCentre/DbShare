@@ -19,6 +19,7 @@ import werkzeug.routing
 from dbportal import constants
 
 
+# Global instance.
 mail = flask_mail.Mail()
 
 class NameConverter(werkzeug.routing.BaseConverter):

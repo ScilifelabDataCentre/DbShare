@@ -22,10 +22,11 @@
         <ul>
           <li>
             Only views with simple definitions can be parsed. Other
-            views will be deleted.
+            views will be deleted to avoid name clashes.
           </li>
           <li>
-            All indexes will be deleted.
+            No user-defined indexes will be parsed. They will all be
+            deleted to avoid name clashes.
           </li>
         </ul>
       </li>
