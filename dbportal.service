@@ -1,0 +1,13 @@
+[Unit]
+Description=Python Flask app DbPortal served via uwsgi and nginx
+After=network.target
+
+[Service]
+Type=simple
+Environment=PYTHONPATH=/var/www/apps/DbPortal
+WorkingDirectory=/var/www/apps/DbPortal
+ExecStart=/usr/bin/scl enable rh-python36 -- uwsgi --ini uwsgi.ini
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
