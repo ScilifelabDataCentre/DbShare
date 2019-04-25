@@ -128,17 +128,13 @@ def edit(dbname):
     elif utils.http_POST():
         try:
             with DbContext(db) as ctx:
+                name = flask.request.form.get('name')
+                if name:
+                    ctx.set_name(name)
                 try:
                     ctx.set_title(flask.request.form['title'])
                 except KeyError:
                     pass
-                try:
-                    old_dbname = db['name']
-                    ctx.set_name(flask.request.form['name'])
-                except KeyError:
-                    pass
-                else:
-                    ctx.update_spec_data_urls(old_dbname)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=db['name']))
@@ -409,6 +405,8 @@ class DbContext:
         with self.cnx:
             # Update existing database entry in system
             if self.old:
+                # The foreign key from dbs_log to dbs will temporarily be wrong.
+                # Switch off enforcing foreign key until updating done.
                 sql = 'PRAGMA foreign_keys=OFF'
                 self.cnx.execute(sql)
                 sql = "UPDATE dbs SET name=?, owner=?, title=?, public=?," \
@@ -420,12 +418,11 @@ class DbContext:
                                        bool(self.db['readonly']),
                                        self.db['modified'],
                                        self.old['name']))
-                # Database renamed; fix entries in log records and rename file.
+                # Database renamed; fix entries in log records.
+                # The Sqlite3 database file was renamed in 'set_name'.
                 if self.old.get('name') != self.db['name']:
                     sql = "UPDATE dbs_logs SET name=? WHERE name=?"
                     self.cnx.execute(sql, (self.db['name'], self.old['name']))
-                    os.rename(utils.dbpath(self.old['name']),
-                              utils.dbpath(self.db['name']))
                 sql = 'PRAGMA foreign_keys=ON'
                 self.cnx.execute(sql)
             # Create database entry in system.
@@ -468,14 +465,23 @@ class DbContext:
                                    utils.get_time()))
 
     def set_name(self, name):
-        "Set or change the database name."
+        """Set or change the database name.
+        If changed, also update the spec data URLs.
+        """
         assert not hasattr(self, '_dbcnx')
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
         if get_db(name):
-            raise ValueError('database name already in use')
+            raise ValueError('database name already in use; not changed')
+        old_dbname = self.db.get('name')
+        if old_dbname:
+            # Rename the Sqlite3 file if the database already exists.
+            os.rename(utils.dbpath(old_dbname), utils.dbpath(name))
+            # The entries in the dbs_log will be fixed in '__exit__'
         self.db['name'] = name
+        if old_dbname:
+            self.update_spec_data_urls(old_dbname)
 
     def initialize(self):
         "Create the DbPortal metadata tables and indexes if they do not exist."
