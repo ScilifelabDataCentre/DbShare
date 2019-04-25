@@ -142,7 +142,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                     rows = utils.execute_timeout(dbcnx, sql)
                 except SystemError:
                     flask.abort(504) # "Gateway timeout"; least bad status code
-                writer.add_rows(rows)
+                writer.write_rows(rows)
                 return flask.Response(writer.get(),
                                       mimetype=constants.CSV_MIMETYPE)
 
@@ -292,7 +292,7 @@ def download_csv(dbname, viewname):
         colnames = ['"%s"' % c for c in schema['query']['columns']]
         dbcnx = dbportal.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
-        writer.add_rows(utils.execute_timeout(dbcnx, sql))
+        writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.download',

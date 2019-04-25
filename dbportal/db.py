@@ -465,10 +465,8 @@ class DbContext:
                                    utils.get_time()))
 
     def set_name(self, name):
-        """Set or change the database name.
-        If changed, also update the spec data URLs.
-        """
-        assert not hasattr(self, '_dbcnx')
+        "Set or change the database name."
+        assert not hasattr(self, '_dbcnx') # Must be done before any write ops.
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
@@ -480,6 +478,7 @@ class DbContext:
             os.rename(utils.dbpath(old_dbname), utils.dbpath(name))
             # The entries in the dbs_log will be fixed in '__exit__'
         self.db['name'] = name
+        # Update of spec data URLs must be done *after* db rename.
         if old_dbname:
             self.update_spec_data_urls(old_dbname)
 

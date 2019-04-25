@@ -257,32 +257,18 @@ def execute_timeout(cnx, command, **kwargs):
 class CsvWriter:
     "Create CSV file content from rows of data."
 
-    DELIMITERS = {',': ',',
-                  '<tab>': '\t',
-                  '\t': '\t',
-                  '<space>': ' ',
-                  ' ': ' ',
-                  ':': ':',
-                  ';': ';',
-                  '|': '|'}
-
     def __init__(self, header=None, delimiter=None):
-        if delimiter:
-            try:
-                delimiter = self.DELIMITERS[delimiter]
-            except KeyError:
-                raise ValueError('invalid CSV delimiter character')
-        else:
+        if delimiter is None:
             delimiter = ','
         self.outfile = io.StringIO()
         self.writer = csv.writer(self.outfile, delimiter=delimiter)
         if header:
             self.writer.writerow(header)
 
-    def add_row(self, row):
-        self.writer.writerow(row)
-
-    def add_rows(self, rows, skip_rowid=False):
+    def write_rows(self, rows, skip_rowid=False):
+        """Write the given rows.
+        If 'skip_rowid' is True, then skip the first item of each row.
+        """
         if skip_rowid:
             for row in rows:
                 self.writer.writerow(row[1:])
