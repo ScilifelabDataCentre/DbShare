@@ -28,14 +28,14 @@
       <td>{{ user['role'] }}</td>
       <td>{{ user['status'] }}</td>
       <td>
-	<a href="{{ url_for('dbs_owner', username=user['username']) }}">
+	<a href="{{ url_for('dbs.owner', username=user['username']) }}">
 	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
       </td>
       <td class="text-right">
         <span class="text-monospace mr-4">{{ user['size']|thousands }}</span>
       </td>
       <td>
-	<a href="{{ url_for('templates_owner', username=user['username']) }}">
+	<a href="{{ url_for('templates.owner', username=user['username']) }}">
 	  <span class="badge badge-info">{{ user['ntemplates'] }}</span></a>
       </td>
     </tr>

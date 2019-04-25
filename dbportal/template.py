@@ -59,7 +59,7 @@ def view(templatename):
         template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
 
     write_access = has_write_access(template)
     if utils.http_GET():
@@ -76,12 +76,12 @@ def view(templatename):
                 raise ValueError('you may not delete the template')
         except ValueError as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('templates_public'))
+            return flask.redirect(flask.url_for('templates.public'))
         cnx = dbportal.system.get_cnx(write=True)
         with cnx:
             sql = "DELETE FROM templates WHERE name=?"
             cnx.execute(sql, (templatename,))
-        return flask.redirect(flask.url_for('templates_owner',
+        return flask.redirect(flask.url_for('templates.owner',
                                             username=template['owner']))
 
 @blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST'])
@@ -92,7 +92,7 @@ def edit(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
         return flask.render_template('template/edit.html', template=template)
@@ -113,7 +113,7 @@ def clone(templatename):
         template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
         return flask.render_template('template/clone.html', template=template)
@@ -141,7 +141,7 @@ def public(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = True
@@ -160,7 +160,7 @@ def private(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = False
@@ -178,7 +178,7 @@ def field(templatename):
         template = get_check_write(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
         return flask.render_template('template/field_add.html',
@@ -204,7 +204,7 @@ def field_edit(templatename, fieldname):
             raise ValueError('no such field in template')
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('templates_public'))
+        return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
         return flask.render_template('template/field_edit.html',

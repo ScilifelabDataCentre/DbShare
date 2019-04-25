@@ -13,6 +13,7 @@ from dbportal import utils
 
 
 blueprint = flask.Blueprint('table', __name__)
+api_blueprint = flask.Blueprint('api_table', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
 @dbportal.user.login_required
@@ -142,6 +143,17 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+
+@api_blueprint.route('/<name:dbname>/<name:tablename>',
+                 methods=['GET', 'POST', 'DELETE'])
+def api_rows(dbname, tablename):
+    "Display rows in the table. Or delete the table."
+    if utils.http_GET():
+        raise NotImplementedError
+    elif utils.http_POST():
+        raise NotImplementedError
+    elif utils.http_DELETE():
+        raise NotImplementedError
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST'])

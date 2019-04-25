@@ -54,6 +54,7 @@ VISUALS_INDEX = dict(
 
 
 blueprint = flask.Blueprint('db', __name__)
+api_blueprint = flask.Blueprint('api_db', __name__)
 
 @blueprint.route('/<nameext:dbname>', methods=['GET', 'POST', 'DELETE'])
 def home(dbname):               # NOTE: dbname is a NameExt instance!
@@ -98,6 +99,16 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
         return flask.redirect(
             flask.url_for('dbs_owner',
                           username=flask.g.current_user['username']))
+
+@api_blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
+def api_home(dbname):
+    "List the database tables, views and metadata. Delete the database."
+    if utils.http_GET():
+        raise NotImplementedError
+    elif utils.http_POST():
+        raise NotImplementedError
+    elif utils.http_DELETE():
+        raise NotImplementedError
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required

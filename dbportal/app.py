@@ -12,11 +12,13 @@ import jsonschema
 
 import dbportal
 import dbportal.db
+import dbportal.dbs
 import dbportal.index
 import dbportal.system
 import dbportal.query
 import dbportal.table
 import dbportal.template
+import dbportal.templates
 import dbportal.user
 import dbportal.vega
 import dbportal.vega_lite
@@ -126,14 +128,19 @@ utils.mail.init_app(app)
 # Set the URL map.
 app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbportal.db.blueprint, url_prefix='/db')
+app.register_blueprint(dbportal.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbportal.table.blueprint, url_prefix='/table')
 app.register_blueprint(dbportal.query.blueprint, url_prefix='/query')
 app.register_blueprint(dbportal.view.blueprint, url_prefix='/view')
 app.register_blueprint(dbportal.index.blueprint, url_prefix='/index')
 app.register_blueprint(dbportal.visual.blueprint, url_prefix='/visual')
 app.register_blueprint(dbportal.template.blueprint, url_prefix='/template')
+app.register_blueprint(dbportal.templates.blueprint, url_prefix='/templates')
 app.register_blueprint(dbportal.vega.blueprint, url_prefix='/vega')
 app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
+
+app.register_blueprint(dbportal.db.api_blueprint, url_prefix='/api/v1/db')
+app.register_blueprint(dbportal.table.api_blueprint, url_prefix='/api/v1/table')
 
 @app.context_processor
 def setup_template_context():
@@ -195,60 +202,6 @@ def home():
     return flask.render_template('home.html',
                                  dbs=dbportal.db.get_dbs(public=True))
 
-@app.route('/dbs/public')
-def dbs_public():
-    "Display the list of public databases."
-    return flask.render_template('dbs_public.html',
-                                 dbs=dbportal.db.get_dbs(public=True))
-
-@app.route('/dbs/all')
-@dbportal.user.login_required
-@dbportal.user.admin_required
-def dbs_all():
-    "Display the list of all databases."
-    dbs = dbportal.db.get_dbs()
-    return flask.render_template('dbs_all.html',
-                                 dbs=dbs,
-                                 usage=sum([db['size'] for db in dbs]))
-
-@app.route('/dbs/owner/<name:username>')
-@dbportal.user.login_required
-def dbs_owner(username):
-    "Display the list of databases owned by the given user."
-    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
-        flask.flash("you may not access the list of the user's databases")
-        return flask.redirect(flask.url_for('home'))
-    return flask.render_template(
-        'dbs_owner.html',
-        dbs=dbportal.db.get_dbs(owner=username),
-        username=username)
-
-@app.route('/templates/public')
-def templates_public():
-    "Display the list of public visualization templates."
-    templates = dbportal.template.get_templates(public=True)
-    return flask.render_template('templates_public.html', templates=templates)
-
-@app.route('/templates/all')
-@dbportal.user.login_required
-@dbportal.user.admin_required
-def templates_all():
-    "Display the list of public visualization templates."
-    return flask.render_template('templates_all.html',
-                                 templates=dbportal.template.get_templates())
-
-@app.route('/templates/owner/<name:username>')
-@dbportal.user.login_required
-def templates_owner(username):
-    "Display the list of visualization templates owned by the given user."
-    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
-        flask.flash("you may not access the list of the user's templates")
-        return flask.redirect(flask.url_for('home'))
-    return flask.render_template(
-        'templates_owner.html',
-        templates=dbportal.template.get_templates(owner=username),
-        username=username)
-
 @app.route('/upload', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def upload():
@@ -288,7 +241,7 @@ def endpoints():
 
 @app.route('/about/software')
 def software():
-    "Display software with links and version info."
+    "Display software in system with links and version info."
     config = flask.current_app.config
     data = [('DbPortal', config['DBPORTAL_URL'], config['VERSION']),
             ('Sqlite3', config['SQLITE3_URL'], sqlite3.version),
