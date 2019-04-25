@@ -72,6 +72,8 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                 has_write_access=has_write_access(db),
                 can_change_mode=has_write_access(db, check_mode=False))
         elif dbname.ext == 'json':
+            # XXX Links to JSON definitions of tables, views, indexes, etc,
+            # XXX instead of the whole specifications.
             data = {'$id': flask.request.url}
             data.update(db)
             for tablename, table in data['tables'].items():
@@ -79,10 +81,9 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                                     dbname=db['name'],
                                     tablename=table['name'],
                                     _external=True)
-                table['rows'] = [{'type': 'html', 'href': url},
-                                 {'type': 'csv', 'href': url + '.csv'},
-                                 {'type': 'json', 'href': url + '.json'}]
-            # XXX Links to JSON definitions of tables, views, indexes, etc.
+                table['rows'] = [{'href': url, 'format': 'html'},
+                                 {'href': url + '.csv', 'format': 'csv'},
+                                 {'href': url + '.json', 'format': 'json'}]
             return flask.jsonify(data)
         else:
             flask.abort(406)

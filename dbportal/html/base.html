@@ -30,8 +30,62 @@
             <a class="nav-link" href="{{ url_for('home') }}">Home</a>
           </li>
 
-          {% if db is defined %}
+          {% if g.is_admin %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Admin</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
+              <a class="dropdown-item" href="{{ url_for('dbs_all') }}">
+                All databases</a>
+              <a class="dropdown-item" href="{{ url_for('templates_all') }}">
+                All templates</a>
+              <a class="dropdown-item" href="{{ url_for('user.users') }}">
+                All users</a>
+            </div>
+          </li>
+          {% endif %} {# if g.is_admin #}
+
+          {% if g.current_user %}
+          <li class="nav-item dropdown">
+            <a href="#" id="navbarMy"
+               class="nav-link dropdown-toggle" 
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">My items</a>
+            <div class="dropdown-menu" aria-labelledby="navbarMy">
+              <a href="{{ url_for('dbs_owner', username=g.current_user['username']) }}"
+                 class="dropdown-item">
+                Databases</a>
+              <a href="{{ url_for('templates_owner', username=g.current_user['username']) }}"
+                 class="dropdown-item">
+                Vis-templates</a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a href="#" id="navbarPublic"
+               class="nav-link dropdown-toggle" 
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Public</a>
+            <div class="dropdown-menu" aria-labelledby="navbarPublic">
+              <a href="{{ url_for('dbs_public') }}" class="dropdown-item">
+                Databases</a>
+              <a href="{{ url_for('templates_public') }}" class="dropdown-item">
+                Vis-templates</a>
+            </div>
+          </li>
+          {% else %} {# if g.current_user #}
           <li class="nav-item">
+            <a href="{{ url_for('dbs_public') }}" class="nav-link">
+              Databases</a>
+          </li>
+          <li class="nav-item">
+            <a href="{{ url_for('templates_public') }}" class="nav-link">
+              Vis-templates</a>
+          </li>
+          {% endif %} {# if g.current_user #}
+
+          {% if db is defined %}
+          <li class="nav-item ml-1">
             <a href="{{ url_for('db.home', dbname=db['name']) }}"
                class="btn btn-secondary">Database {{ db['name'] }}</a>
          </li>
@@ -71,58 +125,9 @@
           </li>
           {% endif %} {# if db is defined #}
 
-          {% if g.current_user %}
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarMy"
-               class="nav-link dropdown-toggle" 
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">My items</a>
-            <div class="dropdown-menu" aria-labelledby="navbarMy">
-              <a href="{{ url_for('dbs_owner', username=g.current_user['username']) }}"
-                 class="dropdown-item">
-                Databases</a>
-              <a href="{{ url_for('templates_owner', username=g.current_user['username']) }}"
-                 class="dropdown-item">
-                Vis-templates</a>
-            </div>
-          </li>
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarPublic"
-               class="nav-link dropdown-toggle" 
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Public</a>
-            <div class="dropdown-menu" aria-labelledby="navbarPublic">
-              <a href="{{ url_for('dbs_public') }}" class="dropdown-item">
-                Databases</a>
-              <a href="{{ url_for('templates_public') }}" class="dropdown-item">
-                Vis-templates</a>
-            </div>
-          </li>
-          {% else %} {# if g.current_user #}
-          <li class="nav-item">
-            <a href="{{ url_for('dbs_public') }}" class="nav-link">
-              Databases</a>
-          </li>
-          <li class="nav-item">
-            <a href="{{ url_for('templates_public') }}" class="nav-link">
-              Vis-templates</a>
-          </li>
-          {% endif %} {# if g.current_user #}
-          {% if g.is_admin %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Admin</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item" href="{{ url_for('dbs_all') }}">
-                All databases</a>
-              <a class="dropdown-item" href="{{ url_for('templates_all') }}">
-                All templates</a>
-              <a class="dropdown-item" href="{{ url_for('user.users') }}">
-                All users</a>
-            </div>
-          </li>
-          {% endif %} {# if g.is_admin #}
+        </ul>
+
+        <ul class="navbar-nav justify-content-end">
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
                role="button" data-toggle="dropdown"
@@ -134,9 +139,7 @@
 		 class="nav-link">Software</a>
 	    </div>
           </li>
-        </ul>
-        <ul class="nav justify-content-end">
-          <li class="mr-2">
+          <li class="mx-1">
             {% if g.current_user %}
             <a href="{{ url_for('user.profile', username=g.current_user['username']) }}"
                class="btn btn-outline-secondary">
