@@ -72,7 +72,18 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                 has_write_access=has_write_access(db),
                 can_change_mode=has_write_access(db, check_mode=False))
         elif dbname.ext == 'json':
-            return flask.jsonify(db)
+            data = {'$id': flask.request.url}
+            data.update(db)
+            for tablename, table in data['tables'].items():
+                url = flask.url_for('table.rows',
+                                    dbname=db['name'],
+                                    tablename=table['name'],
+                                    _external=True)
+                table['rows'] = [{'type': 'html', 'href': url},
+                                 {'type': 'csv', 'href': url + '.csv'},
+                                 {'type': 'json', 'href': url + '.json'}]
+            # XXX Links to JSON definitions of tables, views, indexes, etc.
+            return flask.jsonify(data)
         else:
             flask.abort(406)
 
@@ -607,21 +618,25 @@ class DbContext:
         """When renaming or cloning the database,
         the data URLs of visual specs must be updated.
         """
-        old_table_url = utils.get_url('table.rows',
-                                      values=dict(dbname=old_dbname, 
-                                                  tablename='x'))
+        old_table_url = flask.url_for('table.rows',
+                                      dbname=old_dbname, 
+                                      tablename='x',
+                                      _external=True)
         old_table_url = old_table_url[:-1]
-        new_table_url = utils.get_url('table.rows',
-                                      values=dict(dbname=self.db['name'],
-                                                  tablename='x'))
+        new_table_url = flask.url_for('table.rows',
+                                      dbname=self.db['name'],
+                                      tablename='x',
+                                      _external=True)
         new_table_url = new_table_url[:-1]
-        old_view_url = utils.get_url('view.rows',
-                                     values=dict(dbname=old_dbname,
-                                                 viewname='x'))
+        old_view_url = flask.url_for('view.rows',
+                                     dbname=old_dbname,
+                                     viewname='x',
+                                     _external=True)
         old_view_url = old_view_url[:-1]
-        new_view_url = utils.get_url('view.rows',
-                                     values=dict(dbname=self.db['name'],
-                                                 viewname='x'))
+        new_view_url = flask.url_for('view.rows',
+                                     dbname=self.db['name'],
+                                     viewname='x',
+                                     _external=True)
         new_view_url = new_view_url[:-1]
         for visual in [v for visuallist in self.db['visuals'].values()
                        for v in visuallist]:
@@ -856,7 +871,7 @@ class DbContext:
         visuals = [{'name': row[0], 'spec': json.loads(row[1])}
                    for row in cursor]
         # Update the data URLs in the visuals.
-        new_root = utils.get_url('home').rstrip('/')
+        new_root = flask.url_for('home', _external=True).rstrip('/')
         # Identify the old URL root from a data url in a visual spec.
         old_root = None
         search = dpath.util.search

@@ -54,7 +54,9 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
                 title="Visualization {}".format(visualname),
                 has_write_access = dbportal.db.has_write_access(db))
         elif visualname.ext == 'json':
-            return flask.jsonify(visual['spec'])
+            data = {'$id': flask.request.url}
+            data.update(visual['spec'])
+            return flask.jsonify(data)
         else:
             flask.abort(406)
 

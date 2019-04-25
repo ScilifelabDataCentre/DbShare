@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Public visualization templates{% endblock %}
+{% block head_title %}Public vis-templates{% endblock %}
 
-{% block body_title %}Public visualization templates{% endblock %}
+{% block body_title %}Public vis-templates{% endblock %}
 
 {% block main %}
 <table id="templates" class="table table-sm my-4">
@@ -30,14 +30,6 @@
     {% endfor %}
   </tbody>
 </table>
-{% endblock %}
-
-{% block actions %}
-<div class="mt-3">
-  <a href="{{ url_for('dbs_public') }}"
-     role="button" class="btn btn-primary btn-block">
-    Public databases</a>
-</div>
 {% endblock %}
 
 {% block javascript %}

@@ -1,4 +1,4 @@
-"Visualization template endpoints."
+"Vistemplate endpoints."
 
 import copy
 import json
@@ -22,7 +22,7 @@ blueprint = flask.Blueprint('template', __name__)
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def create():
-    "Create a visualization template."
+    "Create a vistemplate."
     if utils.http_GET():
         return flask.render_template('template/create.html')
 
@@ -53,9 +53,8 @@ def create():
                                             templatename=ctx.template['name']))
 
 @blueprint.route('/<name:templatename>', methods=['GET', 'POST', 'DELETE'])
-@dbportal.user.login_required
 def view(templatename):
-    "View the visualization template definition. Or delete it."
+    "View the vistemplate definition. Or delete it."
     try:
         template = get_check_read(templatename)
     except ValueError as error:
@@ -88,7 +87,7 @@ def view(templatename):
 @blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def edit(templatename):
-    "Edit the visualization template definition."
+    "Edit the vistemplate definition."
     try:
         template = get_check_write(templatename)
     except ValueError as error:
@@ -109,7 +108,7 @@ def edit(templatename):
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def clone(templatename):
-    "Create a clone of the visualization template."
+    "Create a clone of the vistemplate."
     try:
         template = get_check_read(templatename)
     except ValueError as error:
@@ -136,7 +135,7 @@ def clone(templatename):
 @blueprint.route('/<name:templatename>/public', methods=['POST'])
 @dbportal.user.login_required
 def public(templatename):
-    "Set the visualization template to public access."
+    "Set the vistemplate to public access."
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
@@ -149,13 +148,13 @@ def public(templatename):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
-        flask.flash('Visualization template set to public access.', 'message')
+        flask.flash('Vistemplate set to public access.', 'message')
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/private', methods=['POST'])
 @dbportal.user.login_required
 def private(templatename):
-    "Set the visualization template to private access."
+    "Set the vistemplate to private access."
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
@@ -168,7 +167,7 @@ def private(templatename):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
-        flask.flash('Visualization template public access revoked.', 'message')
+        flask.flash('Vistemplate public access revoked.', 'message')
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field', methods=['GET', 'POST'])
@@ -231,7 +230,7 @@ def field_edit(templatename, fieldname):
                  methods=['GET', 'POST'])
 @dbportal.user.login_required
 def select(dbname, sourcename):
-    "Select a visualization template to use for the table or view."
+    "Select a vistemplate to use for the table or view."
     try:
         db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
@@ -340,7 +339,7 @@ def render(templatename, dbname, sourcename):
                                             visualname=visualname))
 
 class TemplateContext:
-    "Context handler to create, modify and save a visualization template."
+    "Context handler to create, modify and save a vistemplate."
 
     def __init__(self, template=None):
         if template is None:
@@ -402,7 +401,7 @@ class TemplateContext:
                                        self.template['modified']))
 
     def set_name(self, name):
-        "Set or change the visualization template name."
+        "Set or change the vistemplate name."
         if name == self.template.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid template name')
@@ -482,7 +481,7 @@ class TemplateContext:
 
 
 def get_templates(public=None, owner=None):
-    "Get the list of visualization templates according to criteria."
+    "Get the list of vistemplates according to criteria."
     sql = "SELECT name FROM templates"
     criteria = {}
     if public is not None:
@@ -497,8 +496,8 @@ def get_templates(public=None, owner=None):
     return [get_template(row[0]) for row in cursor]
 
 def get_template(templatename):
-    """Return the visualization template for the given name.
-    Return None if no such visualization template.
+    """Return the vistemplate for the given name.
+    Return None if no such vistemplate.
     """
     cursor = dbportal.system.get_cursor()
     sql = "SELECT owner, title, description, code, type, fields, public," \
@@ -520,14 +519,14 @@ def get_template(templatename):
     return template
 
 def get_check_read(templatename):
-    """Get the visualization template and check that
+    """Get the vistemplate and check that
     the current user has read access.
     Raise ValueError if any problem."""
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such visualization template')
+        raise ValueError('no such vistemplate')
     if not has_read_access(template):
-        raise ValueError('you may not read the visualization template')
+        raise ValueError('you may not read the vistemplate')
     return template
 
 def has_read_access(template):
@@ -538,14 +537,14 @@ def has_read_access(template):
     return flask.g.current_user['username'] == template['owner']
 
 def get_check_write(templatename):
-    """Get the visualization template and check that
+    """Get the vistemplate and check that
     the current user has write access.
     Raise ValueError if any problem."""
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such visualization template')
+        raise ValueError('no such vistemplate')
     if not has_write_access(template):
-        raise ValueError('you may not write the visualization template')
+        raise ValueError('you may not write the vistemplate')
     return template
 
 def has_write_access(template):

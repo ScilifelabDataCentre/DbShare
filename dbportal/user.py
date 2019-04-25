@@ -20,9 +20,7 @@ def login_required(f):
     @functools.wraps(f)
     def wrap(*args, **kwargs):
         if not flask.g.current_user:
-            url = flask.url_for('user.login')
-            query = urllib.parse.urlencode({'next': flask.request.base_url})
-            url += '?' + query
+            url = flask.url_for('user.login', next=flask.request.base_url)
             return flask.redirect(url)
         return f(*args, **kwargs)
     return wrap
@@ -107,12 +105,13 @@ def register():
             flask.flash('User account created; check your email.')
         # Was set to 'pending'; send email to admins.
         else:
-            message = flask_mail.Message(
-                "{} user account pending".format(config['SITE_NAME']),
-                recipients=db.get_admins_email())
-            message.body = "To enable the user account, go to {}".format(
-                utils.get_url('.profile',
-                              values={'username': user['username']}))
+            site = flask.current_app.config['SITE_NAME']
+            message = flask_mail.Message(f"{site} user account pending",
+                                         recipients=db.get_admins_email())
+            url = flask.url_for('.profile',
+                                username=user['username'],
+                                external=True)
+            message.body = f"To enable the user account, go to {url}"
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
                         ' it has been enabled by the admin.')
@@ -140,14 +139,14 @@ def reset():
 
 def send_password_code(user, action):
     "Send an email with the one-time code to the user's email address."
-    message = flask_mail.Message(
-        "{} user account {}".format(flask.current_app.config['SITE_NAME'],
-                                    action),
-        recipients=[user['email']])
-    query = {'username': user['username'],
-             'code': user['password'][len('code:'):]}
-    message.body = "To set your password, go to {}".format(
-        utils.get_url('.password', query=query))
+    site = flask.current_app.config['SITE_NAME']
+    message = flask_mail.Message(f"{site} user account {action}",
+                                 recipients=[user['email']])
+    url = flask.url_for('.password',
+                        username=user['username'],
+                        code=user['password'][len('code:'):],
+                        _external=True)
+    message.body = f"To set your password, go to {url}"
     utils.mail.send(message)
 
 @blueprint.route('/password', methods=['GET', 'POST'])

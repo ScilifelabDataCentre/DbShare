@@ -155,12 +155,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 return flask.jsonify(
                     {'$id': flask.request.url,
                      'title': title,
-                     'visualizations': 
-                     [{'name': v['name'],
-                       'href': utils.get_url('visual.display',
-                                             values={'dbname': dbname,
-                                                     'visualname': v['name']})}
-                      for v in visuals],
                      'data': [dict(zip(columns, row)) for row in rows]})
             else:
                 flask.abort(406)

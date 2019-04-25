@@ -8,7 +8,6 @@ import os.path
 import sqlite3
 import threading
 import time
-import urllib.parse
 import uuid
 
 import flask
@@ -76,13 +75,6 @@ def dbpath(dbname, dirpath=None):
     dirpath = os.path.expanduser(dirpath)
     dirpath = os.path.expandvars(dirpath)
     return os.path.join(dirpath, dbname) + '.sqlite3'
-
-def get_url(endpoint, values={}, query={}):
-    "Get the absolute URL for the endpoint, with optional query part."
-    url = flask.url_for(endpoint, _external=True, **values)
-    if query:
-        url += '?' + urllib.parse.urlencode(query)
-    return url
 
 def url_for_rows(db, schema, external=False, csv=False):
     "Return the URL for the rows of the table or view."

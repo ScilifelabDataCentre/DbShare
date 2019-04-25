@@ -121,12 +121,6 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 return flask.jsonify(
                     {'$id': flask.request.url,
                      'title': title,
-                     'visualizations': 
-                     [{'name': v['name'],
-                       'href': utils.get_url('visual.display',
-                                             values={'dbname': dbname,
-                                                     'visualname': v['name']})}
-                      for v in visuals],
                      'data': [dict(zip(columns, row[1:])) for row in rows]})
             else:
                 flask.abort(406)

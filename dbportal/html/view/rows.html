@@ -38,11 +38,11 @@
 <div class="py-1">
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) + '.csv' }}"
-       class="badge badge-pill badge-primary">CSV format</a>
+       class="badge badge-pill badge-primary">CSV (rows)</a>
   </div>
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">JSON format</a>
+       class="badge badge-pill badge-primary">JSON (data)</a>
   </div>
 </div>
 {% endblock %}
