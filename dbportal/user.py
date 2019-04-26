@@ -164,7 +164,9 @@ def password():
 
     elif utils.http_POST():
         try:
-            user = get_user(username=flask.request.form['username'])
+            username = flask.request.form['username']
+            if not username: raise KeyError
+            user = get_user(username=username)
             if user is None: raise KeyError
             if user['password'] != "code:{}".format(flask.request.form['code']):
                 raise KeyError
@@ -314,7 +316,7 @@ def users():
               'modified':   row[8],
               'ndbs':       0,
               'size':       0,
-              'ntemplates': len(dbportal.template.get_templates(row[0]))}
+              'ntemplates': len(dbportal.template.get_templates(owner=row[0]))}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
     for db in dbportal.db.get_dbs():

@@ -26,7 +26,15 @@
       </td>
       <td>{{ user['email'] }}</td>
       <td>{{ user['role'] }}</td>
-      <td>{{ user['status'] }}</td>
+      <td>
+        {% if user['status'] == constants.PENDING %}
+	<span class="badge badge-warning">{{ user['status'] }}</span>
+        {% elif user['status'] == constants.DISABLED %}
+	<span class="badge badge-danger">{{ user['status'] }}</span>
+        {% else %}
+        {{ user['status'] }}
+        {% endif %}
+      </td>
       <td>
 	<a href="{{ url_for('dbs.owner', username=user['username']) }}">
 	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
