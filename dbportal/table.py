@@ -36,6 +36,7 @@ def create(dbname):
     elif utils.http_POST():
         try:
             schema = {'name': flask.request.form.get('name'),
+                      'nrows': 0,
                       'title': flask.request.form.get('title') or None}
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
@@ -69,7 +70,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display rows in the table. Or delete the table."
     if utils.http_GET():
         try:
-            db = dbportal.db.get_check_read(dbname, nrows=[str(tablename)])
+            db = dbportal.db.get_check_read(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
@@ -203,10 +204,11 @@ def empty(dbname, tablename):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     try:
-        dbcnx = dbportal.db.get_cnx(dbname, write=True)
-        with dbcnx:
-            sql = 'DELETE FROM "%s"' % schema['name']
-            dbcnx.execute(sql)
+        with dbportal.db.DbContext(db) as ctx:
+            with ctx.dbcnx:
+                sql = 'DELETE FROM "%s"' % schema['name']
+                ctx.dbcnx.execute(sql)
+                ctx.update_table_nrows(schema['name'])
     except sqlite3.Error as error:
         flask.flash(str(error), 'error')
     return flask.redirect(flask.url_for('.rows',
@@ -217,7 +219,7 @@ def empty(dbname, tablename):
 def schema(dbname, tablename):
     "Display the schema for a table."
     try:
-        db = dbportal.db.get_check_read(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -239,7 +241,7 @@ def schema(dbname, tablename):
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
-        db = dbportal.db.get_check_write(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -270,13 +272,14 @@ def row_insert(dbname, tablename):
                                          schema=schema,
                                          values=values)
         try:
-            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                  (tablename,
-                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                   ','.join('?' * len(schema['columns'])))
-            dbcnx = dbportal.db.get_cnx(dbname, write=True)
-            with dbcnx:
-                dbcnx.execute(sql, values)
+            with dbportal.db.DbContext(db) as ctx:
+                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+                      (tablename,
+                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
+                       ','.join('?' * len(schema['columns'])))
+                with ctx.dbcnx:
+                    ctx.dbcnx.execute(sql, values)
+                ctx.update_table_nrows(schema)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.render_template('table/row_insert.html', 
@@ -293,7 +296,7 @@ def row_insert(dbname, tablename):
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
-        db = dbportal.db.get_check_write(dbname, nrows=[tablename])
+        db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -333,15 +336,14 @@ def row_edit(dbname, tablename, rowid):
                                          schema=schema,
                                          row=values,
                                          rowid=rowid)
-        dbcnx = dbportal.db.get_cnx(dbname, write=True)
-        cursor = dbcnx.cursor()
         try:
-            with dbcnx:
-                sql = 'UPDATE "%s" SET %s WHERE rowid=?' % \
-                      (tablename,
-                       ','.join(['"%(name)s"=?' %c for c in schema['columns']]))
-                values = values + (rowid,)
-                cursor.execute(sql, values)
+            with dbportal.db.DbContext(db) as ctx:
+                with ctx.dbcnx:
+                    names = ','.join(['"%(name)s"=?' %c 
+                                      for c in schema['columns']])
+                    sql = 'UPDATE "%s" SET %s WHERE rowid=?' % (tablename,names)
+                    values = values + (rowid,)
+                    ctx.dbcnx.execute(sql, values)
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
         else:
@@ -351,10 +353,11 @@ def row_edit(dbname, tablename, rowid):
                                             tablename=tablename))
 
     elif utils.http_DELETE():
-        dbcnx = dbportal.db.get_cnx(dbname, write=True)
-        with dbcnx:
-            sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
-            dbcnx.execute(sql, (rowid,))
+        with dbportal.db.DbContext(db) as ctx:
+            with ctx.dbcnx:
+                sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
+                ctx.dbcnx.execute(sql, (rowid,))
+                ctx.update_table_nrows(schema)
         return flask.redirect(flask.url_for('.rows',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -452,13 +455,14 @@ def insert_csv(dbname, tablename):
         except (ValueError, TypeError, IndexError) as error:
             raise ValueError("line %s, column %s (%s): %s" %
                              (n+1, i+1, column['name'], str(error)))
-        sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-              (tablename,
-               ','.join(['"%(name)s"' % c for c in schema['columns']]),
-               ','.join('?' * len(schema['columns'])))
-        dbcnx = dbportal.db.get_cnx(dbname, write=True)
-        with dbcnx:
-            dbcnx.executemany(sql, records)
+        with dbportal.db.DbContext(db) as ctx:
+            with ctx.dbcnx:
+                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+                      (tablename,
+                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
+                       ','.join('?' * len(schema['columns'])))
+                ctx.dbcnx.executemany(sql, records)
+                ctx.update_table_nrows(schema)
         flask.flash(f"Inserted {len(records)} rows.", 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
@@ -546,15 +550,14 @@ def update_csv(dbname, tablename):
                ' AND '.join(['"%s"=?' % pk for pk in pkpos.keys()]))
         colpos = colpos.values()
         pkpos = pkpos.values()
-        dbcnx = dbportal.db.get_cnx(dbname, write=True)
         count = 0
-        cursor = dbcnx.cursor()
-        with dbcnx:
-            for recpos, record in enumerate(records):
-                values = [record[i] for i in colpos]
-                pkeys = [record[i] for i in pkpos]
-                cursor.execute(sql, values+pkeys)
-                count += cursor.rowcount
+        with dbportal.db.DbContext(db) as ctx:
+            with ctx.dbcnx:
+                for recpos, record in enumerate(records):
+                    values = [record[i] for i in colpos]
+                    pkeys = [record[i] for i in pkpos]
+                    cursor = ctx.dbcnx.execute(sql, values+pkeys)
+                    count += cursor.rowcount
         flask.flash(f"{len(records)} records; {count} rows updated.", 'message')
     except (ValueError, IndexError, sqlite3.Error) as error:
         if recpos is None:
@@ -600,14 +603,15 @@ def clone(dbname, tablename):
             schema['name'] = flask.request.form['name']
             with dbportal.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
-            colnames = ','.join(['"%(name)s"' % c for c in schema['columns']])
-            sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % (schema['name'],
-                                                                 colnames,
-                                                                 colnames,
-                                                                 tablename)
-            dbcnx = ctx.dbcnx
-            with dbcnx:
-                dbcnx.execute(sql)
+                colnames = ','.join(['"%(name)s"' % c 
+                                     for c in schema['columns']])
+                sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % \
+                      (schema['name'],
+                       colnames,
+                       colnames,
+                       tablename)
+                ctx.dbcnx.execute(sql)
+                ctx.update_table_nrows(schema)
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone',

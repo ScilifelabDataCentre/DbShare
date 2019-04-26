@@ -16,8 +16,12 @@
   <body>
     <nav class="navbar navbar-expand-md navbar-light"
          style="background-color: #e6e6e6;">
-      <img src="{{ url_for('static', filename='dbportal-32.png') }}"
-           width="32" height="32" title="DbPortal" alt="DbPortal">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img src="{{ url_for('static', filename='dbportal-32.png') }}"
+             width="32" height="32" title="DbPortal" alt="DbPortal"
+             class="d-inline-block align-top">
+        DbPortal
+      </a>
       <button type="button" class="navbar-toggler navbar-toggler-right"
               data-toggle="collapse" data-target="#top_navbar"
               aria-controls="top_navbar" aria-expanded="false"
@@ -26,41 +30,7 @@
       </button>
       <div class="collapse navbar-collapse" id="top_navbar">
         <ul class="navbar-nav mr-auto">
-          <li class="nav-item ml-1">
-            <a class="nav-link" href="{{ url_for('home') }}">Home</a>
-          </li>
-
-          {% if g.is_admin %}
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Admin</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
-              <a class="dropdown-item" href="{{ url_for('dbs.all') }}">
-                All databases</a>
-              <a class="dropdown-item" href="{{ url_for('templates.all') }}">
-                All templates</a>
-              <a class="dropdown-item" href="{{ url_for('user.users') }}">
-                All users</a>
-            </div>
-          </li>
-          {% endif %} {# if g.is_admin #}
-
           {% if g.current_user %}
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarMy"
-               class="nav-link dropdown-toggle" 
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">My items</a>
-            <div class="dropdown-menu" aria-labelledby="navbarMy">
-              <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
-                 class="dropdown-item">
-                Databases</a>
-              <a href="{{ url_for('templates.owner', username=g.current_user['username']) }}"
-                 class="dropdown-item">
-                Vis-templates</a>
-            </div>
-          </li>
           <li class="nav-item dropdown">
             <a href="#" id="navbarPublic"
                class="nav-link dropdown-toggle" 
@@ -72,6 +42,14 @@
               <a href="{{ url_for('templates.public') }}" class="dropdown-item">
                 Vis-templates</a>
             </div>
+          </li>
+          <li class="nav-item ml-1">
+            <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
+               class="nav-link">My databases</a>
+          </li>
+          <li>
+            <a href="{{ url_for('templates.owner', username=g.current_user['username']) }}"
+               class="nav-link">My vis-templates</a>
           </li>
           {% else %} {# if g.current_user #}
           <li class="nav-item">
@@ -128,6 +106,22 @@
         </ul>
 
         <ul class="navbar-nav justify-content-end">
+          {% if g.is_admin %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Admin</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
+              <a class="dropdown-item" href="{{ url_for('dbs.all') }}">
+                All databases</a>
+              <a class="dropdown-item" href="{{ url_for('templates.all') }}">
+                All templates</a>
+              <a class="dropdown-item" href="{{ url_for('user.users') }}">
+                All users</a>
+            </div>
+          </li>
+          {% endif %} {# if g.is_admin #}
+
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
                role="button" data-toggle="dropdown"

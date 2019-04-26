@@ -25,7 +25,7 @@ from dbportal import utils
 TABLES_TABLE = dict(
     name=constants.TABLES,
     columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='schema', type=constants.TEXT, notnull=True)]
+             dict(name='schema', type=constants.TEXT, notnull=True)],
 )
 
 INDEXES_TABLE = dict(
@@ -65,6 +65,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
+
         if dbname.ext is None or dbname.ext == 'html':
             return flask.render_template(
                 'db/home.html', 
@@ -72,6 +73,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                 title=db.get('title') or "Database {}".format(dbname),
                 has_write_access=has_write_access(db),
                 can_change_mode=has_write_access(db, check_mode=False))
+
         elif dbname.ext == 'json':
             # XXX Links to JSON definitions of tables, views, indexes, etc,
             # XXX instead of the whole specifications.
@@ -158,6 +160,9 @@ def edit(dbname):
                     ctx.set_title(flask.request.form['title'])
                 except KeyError:
                     pass
+                # Recompute number or rows in tables, while we are at it...
+                for schema in ctx.db['tables'].values():
+                    ctx.update_table_nrows(schema)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=db['name']))
@@ -682,9 +687,8 @@ class DbContext:
             utils.execute_timeout(self.dbcnx, sql)
             if not schema.get('description'):
                 schema['description'] = sql
-            cursor = self.dbcnx.cursor()
             sql = 'PRAGMA table_info("%s")' % schema['name']
-            cursor.execute(sql)
+            cursor = self.dbcnx.execute(sql)
             schema['columns'] = [{'name': row[1], 'type': row[2]} 
                                  for row in cursor]
         elif create:
@@ -701,6 +705,12 @@ class DbContext:
         with self.dbcnx:
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['tables'][schema['name']] = schema
+
+    def update_table_nrows(self, schema):
+        "Update the number of rows in the table."
+        sql = 'SELECT COUNT(*) FROM "%s"' % schema['name']
+        schema['nrows'] = self.dbcnx.execute(sql).fetchone()[0]
+        self.update_table(schema)
 
     def delete_table(self, tablename):
         "Delete the table from the database and from the database definition."
@@ -1246,7 +1256,7 @@ def set_nrows(db, nrows):
     "Set the item 'nrows' for all or given tables and views of the database."
     if not nrows: return
     if nrows == True:
-        targets = list(db['tables'].values()) + list(db['views'].values())
+        targets = list(db['views'].values())
     else:
         targets = [get_schema(db, name) for name in nrows]
     utils.execute_timeout(get_cnx(db['name']), _set_nrows, targets=targets)
