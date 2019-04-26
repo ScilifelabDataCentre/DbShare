@@ -105,9 +105,13 @@ def register():
             flask.flash('User account created; check your email.')
         # Was set to 'pending'; send email to admins.
         else:
+            cnx = dbportal.system.get_cnx()
+            sql = "SELECT email FROM users WHERE role=?"
+            cursor = cnx.execute(sql, (constants.ADMIN,))
+            emails = [row[0] for row in cursor]
             site = flask.current_app.config['SITE_NAME']
             message = flask_mail.Message(f"{site} user account pending",
-                                         recipients=db.get_admins_email())
+                                         recipients=emails)
             url = flask.url_for('.profile',
                                 username=user['username'],
                                 external=True)
@@ -177,7 +181,7 @@ def password():
             do_login(username, password)
         return flask.redirect(flask.url_for('home'))
 
-@blueprint.route('/profile/<name:username>')
+@blueprint.route('/profile/<name:username>', methods=['GET', 'POST', 'DELETE'])
 @login_required
 def profile(username):
     "Display the profile of the given user."
@@ -191,12 +195,32 @@ def profile(username):
         return flask.redirect(flask.url_for('home'))
     ndbs, usage = dbportal.db.get_usage(username)
     ntemplates = len(dbportal.template.get_templates(owner=username))
-    return flask.render_template('user/profile.html',
-                                 user=user,
-                                 enable_disable=is_admin_and_not_self(user),
-                                 ndbs=ndbs,
-                                 usage=usage,
-                                 ntemplates=ntemplates)
+    deletable = ndbs == 0 and ntemplates == 0
+
+    if utils.http_GET():
+        return flask.render_template('user/profile.html',
+                                     user=user,
+                                     enable_disable=is_admin_and_not_self(user),
+                                     ndbs=ndbs,
+                                     usage=usage,
+                                     ntemplates=ntemplates,
+                                     deletable=deletable)
+
+    elif utils.http_DELETE():
+        if not deletable:
+            flash.flash('cannot delete non-empty account', 'error')
+            return flask.redirect(flask.url_for('.profile', username=username))
+        cnx = dbportal.system.get_cnx(write=True)
+        with cnx:
+            sql = "DELETE FROM users_logs WHERE username=?"
+            cnx.execute(sql, (username,))
+            sql = "DELETE FROM users WHERE username=?"
+            cnx.execute(sql, (username,))
+        flask.flash(f"Deleted user {username}.", 'message')
+        if flask.g.is_admin:
+            return flask.redirect(flask.url_for('.users'))
+        else:
+            return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
