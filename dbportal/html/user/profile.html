@@ -73,13 +73,13 @@
   <form action="{{ url_for('.enable', username=user['username']) }}"
         method="POST">
     {{ csrf_token() }}
-    <button type="submit" class="btn btn-success">Enable</button>
+    <button type="submit" class="btn btn-block btn-success">Enable</button>
   </form>
   {% elif user['status'] == constants.ENABLED %}
   <form action="{{ url_for('.disable', username=user['username']) }}"
         method="POST">
     {{ csrf_token() }}
-    <button type="submit" class="btn btn-danger">Disable</button>
+    <button type="submit" class="btn btn-block btn-danger">Disable</button>
   </form>
   {% endif %}
 </div>
