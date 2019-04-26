@@ -629,6 +629,7 @@ class DbContext:
                ','.join('?' * len(schema['columns'])))
         with self.dbcnx:
             self.dbcnx.executemany(sql, records)
+        self.update_table_nrows(schema)
         return tablename, len(records)
 
     def update_spec_data_urls(self, old_dbname):
@@ -697,6 +698,7 @@ class DbContext:
         with self.dbcnx:
             sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
+        self.update_table_nrows(schema)
         self.db['tables'][schema['name']] = schema
 
     def update_table(self, schema):
