@@ -13,8 +13,8 @@
       <th>Role</th>
       <th>Status</th>
       <th># databases</th>
-      <th>Total size (bytes)</th>
       <th># vis-templates</th>
+      <th>Total size (bytes)</th>
     </tr>
   </thead>
   <tbody>
@@ -39,12 +39,12 @@
 	<a href="{{ url_for('dbs.owner', username=user['username']) }}">
 	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
       </td>
-      <td class="text-right">
-        <span class="text-monospace mr-4">{{ user['size']|thousands }}</span>
-      </td>
       <td>
 	<a href="{{ url_for('templates.owner', username=user['username']) }}">
 	  <span class="badge badge-info">{{ user['ntemplates'] }}</span></a>
+      </td>
+      <td class="text-right">
+        <span class="text-monospace mr-4">{{ user['size']|thousands }}</span>
       </td>
     </tr>
     {% endfor %}

@@ -1,6 +1,11 @@
 "About endpoints."
 
+import sqlite3
+
 import flask
+import flask_mail
+import jinja2
+import jsonschema
 
 blueprint = flask.Blueprint('about', __name__)
 

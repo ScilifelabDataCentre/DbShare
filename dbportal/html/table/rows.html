@@ -5,7 +5,7 @@
 {% block body_title %}{{ title }}{% endblock %}
 
 {% block main %}
-<div class="m-2">{{ schema.get('description') or 'No description.' }}</div>
+<div class="m-2">{{ schema.get('description') or '' }}</div>
 
 <table id="rows" class="table table-sm table-hover">
   <thead>
