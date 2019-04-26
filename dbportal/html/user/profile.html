@@ -19,23 +19,6 @@
   <tr>
     <th class="text-right">Status</th>
     <td>{{ user['status'] }}</td>
-    {% if enable_disable %}
-    <td>
-      {% if user['status'] != constants.ENABLED %}
-      <form action="{{ url_for('.enable', username=user['username']) }}"
-            method="POST">
-        {{ csrf_token() }}
-        <button type="submit" class="btn btn-success">Enable</button>
-      </form>
-      {% elif user['status'] == constants.ENABLED %}
-      <form action="{{ url_for('.disable', username=user['username']) }}"
-            method="POST">
-        {{ csrf_token() }}
-        <button type="submit" class="btn btn-danger">Disable</button>
-      </form>
-      {% endif %}
-    </td>
-    {% endif %}
   </tr>
   <tr>
     <th class="text-right">API key</th>
@@ -80,11 +63,28 @@
 {% endblock %}
 
 {% block actions %}
-{% if g.current_user %}
 <div class="mt-3">
   <a href="{{ url_for('.edit', username=user['username']) }}"
      role="button" class="btn btn-primary btn-block">Edit</a>
 </div>
+{% if enable_disable %}
+<div class="mt-3">
+  {% if user['status'] != constants.ENABLED %}
+  <form action="{{ url_for('.enable', username=user['username']) }}"
+        method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-success">Enable</button>
+  </form>
+  {% elif user['status'] == constants.ENABLED %}
+  <form action="{{ url_for('.disable', username=user['username']) }}"
+        method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-danger">Disable</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %} {# if enable_disable #}
+{% if g.current_user['username'] == user['username'] %}
 <div class="mt-3">
   <form action="{{ url_for('.logout') }}"
 	method="POST">
@@ -92,7 +92,7 @@
     <button type="submit" class="btn btn-warning btn-block">Logout</button>
   </form>
 </div>
-{% endif %} {# if g.current_user #}
+{% endif %} {# if g.current_user... #}
 {% if deletable %}
 <div class="mt-3">
   <form action="{{ url_for('.profile', username=user['username']) }}"
