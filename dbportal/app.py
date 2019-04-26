@@ -11,6 +11,7 @@ import jinja2.utils
 import jsonschema
 
 import dbportal
+import dbportal.about
 import dbportal.db
 import dbportal.dbs
 import dbportal.index
@@ -138,6 +139,7 @@ app.register_blueprint(dbportal.template.blueprint, url_prefix='/template')
 app.register_blueprint(dbportal.templates.blueprint, url_prefix='/templates')
 app.register_blueprint(dbportal.vega.blueprint, url_prefix='/vega')
 app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
+app.register_blueprint(dbportal.about.blueprint, url_prefix='/about')
 
 app.register_blueprint(dbportal.db.api_blueprint, url_prefix='/api/v1/db')
 app.register_blueprint(dbportal.table.api_blueprint, url_prefix='/api/v1/table')
@@ -202,71 +204,6 @@ def home():
     return flask.render_template('home.html',
                                  dbs=dbportal.db.get_dbs(public=True))
 
-@app.route('/upload', methods=['GET', 'POST'])
-@dbportal.user.login_required
-def upload():
-    "Upload a DbPortal Sqlite3 database file."
-    if utils.http_GET():
-        return flask.render_template('upload.html')
-
-    elif utils.http_POST():
-        try:
-            infile = flask.request.files.get('sqlite3file')
-            if infile is None:
-                raise ValueError('no file given')
-            dbname = flask.request.form.get('dbname')
-            if not dbname:
-                dbname = os.path.splitext(os.path.basename(infile.filename))[0]
-            db = dbportal.db.add_database(dbname, infile)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('upload'))
-        return flask.redirect(flask.url_for('db.home', dbname=db['name']))
-
-@app.route('/about/endpoints')
-def endpoints():
-    "Display all URL endpoints."
-    endpoints = {}
-    trivial_methods = set(['HEAD', 'OPTIONS'])
-    for rule in app.url_map.iter_rules():
-        endpoints[rule.endpoint] = {
-            'url': rule.rule,
-            'methods': sorted(rule.methods.difference(trivial_methods))}
-        # print(rule.rule, rule.methods, rule.endpoint)
-    for name, func in app.view_functions.items():
-        endpoints[name]['doc'] = func.__doc__
-    endpoints['static']['doc'] = 'Static web page support files.'
-    urls = sorted([(e['url'], e) for e in endpoints.values()])
-    return flask.render_template('url_endpoints.html', urls=urls)
-
-@app.route('/about/software')
-def software():
-    "Display software in system with links and version info."
-    config = flask.current_app.config
-    data = [('DbPortal', config['DBPORTAL_URL'], config['VERSION']),
-            ('Sqlite3', config['SQLITE3_URL'], sqlite3.version),
-            ('Flask', config['FLASK_URL'], flask.__version__),
-            ('Flask-Mail',
-             'https://pythonhosted.org/Flask-Mail', flask_mail.__version__),
-            ('Jinja2', config['JINJA2_URL'], jinja2.__version__),
-            ('Vega', config['VEGA_SITE_URL'], config['VEGA_VERSION']),
-            ('Vega-Lite', 
-             config['VEGA_LITE_SITE_URL'], config['VEGA_LITE_VERSION']),
-            ('jsonschema', 
-             'https://github.com/Julian/jsonschema', jsonschema.__version__),
-            ('dpath-python',
-             'https://github.com/akesterson/dpath-python', '1.4.2'),
-            ('Bootstrap',
-             config['BOOTSTRAP_SITE_URL'], config['BOOTSTRAP_VERSION']),
-            ('jQuery', 
-             config['JQUERY_SITE_URL'], config['JQUERY_VERSION']),
-            ('jQuery localtime', 
-             'https://plugins.jquery.com/jquery.localtime/', '0.9.1'),
-            ('DataTables', 
-             config['DATATABLES_SITE_URL'], config['DATATABLES_VERSION']),
-    ]
-    return flask.render_template('software.html', data=data)
-    
 
 # This code is used only during testing.
 if __name__ == '__main__':

@@ -17,8 +17,10 @@
       </li>
       <li>
         If the file is a plain Sqlite3 file, an attempt will be made
-        to infer the DbPortal metadata from its contents. The current
-        limitations are:
+        to infer the DbPortal metadata from its contents.
+      </li>
+      <li> 
+        Limitations for uploading a plain Sqlite3 file are currently:
         <ul>
           <li>
             Only views with simple definitions can be parsed. Other
@@ -31,7 +33,7 @@
         </ul>
       </li>
     </ul>
-    <form action="{{ url_for('upload') }}"
+    <form action="{{ url_for('.upload') }}"
           enctype="multipart/form-data"
           method="POST"
           class="mt-4">
@@ -70,7 +72,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
+  <a href="{{ url_for('.owner', username=g.current_user['username']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

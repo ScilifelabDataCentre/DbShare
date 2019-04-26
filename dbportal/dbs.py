@@ -5,7 +5,31 @@ import flask
 import dbportal.db
 import dbportal.user
 
+from dbportal import utils
+
+
 blueprint = flask.Blueprint('dbs', __name__)
+
+@blueprint.route('/upload', methods=['GET', 'POST'])
+@dbportal.user.login_required
+def upload():
+    "Upload a DbPortal Sqlite3 database file."
+    if utils.http_GET():
+        return flask.render_template('dbs/upload.html')
+
+    elif utils.http_POST():
+        try:
+            infile = flask.request.files.get('sqlite3file')
+            if infile is None:
+                raise ValueError('no file given')
+            dbname = flask.request.form.get('dbname')
+            if not dbname:
+                dbname = os.path.splitext(os.path.basename(infile.filename))[0]
+            db = dbportal.db.add_database(dbname, infile)
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.upload'))
+        return flask.redirect(flask.url_for('db.home', dbname=db['name']))
 
 @blueprint.route('/public')
 def public():
