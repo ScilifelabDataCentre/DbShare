@@ -14,8 +14,14 @@
         <label for="name" class="col-md-2 col-form-label text-right">
           Name</label>
         <div class="col-md-6">
-          <input id="name" name="name" type="text" 
-		 class="form-control" autofocus>
+          <input id="name" name="name" type="text" autofocus
+                 aria-describedby="nameHelp" class="form-control">
+          <small id="nameHelp" class="form-text text-muted">
+            The database name must be unique for this site.
+            <br>
+            This means that other user's database names restrict which
+            name you can use.
+          </small>
         </div>
       </div>
       <div class="form-group row">
