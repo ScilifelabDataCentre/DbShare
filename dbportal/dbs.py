@@ -1,5 +1,7 @@
 "Database lists endpoints."
 
+import os.path
+
 import flask
 
 import dbportal.db
