@@ -401,7 +401,10 @@ class UserContext:
                 if not password.startswith('code:'):
                     new['password'] = '***'
             try:
-                editor = flask.g.current_user['username']
+                if flask.g.current_user:
+                    editor = flask.g.current_user['username']
+                else:
+                    editor = None
             except AttributeError:
                 editor = None
             if flask.has_request_context():
