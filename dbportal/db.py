@@ -99,7 +99,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             return flask.redirect(flask.url_for('home'))
         delete_database(str(dbname))
         return flask.redirect(
-            flask.url_for('dbs_owner',
+            flask.url_for('dbs.owner',
                           username=flask.g.current_user['username']))
 
 @api_blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
@@ -121,7 +121,7 @@ def create():
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(
-            flask.url_for('dbs_owner',
+            flask.url_for('dbs.owner', 
                           username=flask.g.current_user['username']))
 
     if utils.http_GET():
