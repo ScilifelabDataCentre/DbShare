@@ -67,24 +67,24 @@
 
 {% block actions %}
 {% if has_write_access %}
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.edit', templatename=template['name']) }}"
      role="button" class="btn btn-primary btn-block">Edit</a>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.field', templatename=template['name']) }}"
      role="button" class="btn btn-primary btn-block">Add field</a>
 </div>
 {% endif %} {# has_write_access #}
 {% if g.current_user %}
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.clone', templatename=template['name']) }}"
      role="button" class="btn btn-primary btn-block">Clone</a>
 </div>
 {% endif %} {# if g.current_user #}
 {% if has_write_access %}
 {% if template['public'] %}
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.private', templatename=template['name']) }}"
 	method="POST">
     {{ csrf_token() }}
@@ -94,7 +94,7 @@
   </form>
 </div>
 {% else %} {# public #}
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.public', templatename=template['name']) }}"
 	method="POST">
     {{ csrf_token() }}
@@ -104,7 +104,7 @@
   </form>
 </div>
 {% endif %} {# public #}
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.view', templatename=template['name']) }}"
 	method="POST">
     {{ csrf_token() }}
@@ -120,7 +120,7 @@
 {% endblock %}
 
 {% block info %}
-<div class="small mt-3">
+<div class="small mt-4">
   <div>
     Access
     {% if template['public'] %}

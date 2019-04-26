@@ -88,11 +88,11 @@ Edit field {{ field['name'] }} in vis-template {{ template['name'] }}
 {% endblock %}
 
 {% block actions %}
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.view', templatename=template['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.field_edit', templatename=template['name'], fieldname=field['name']) }}"
 	method="POST">
     {{ csrf_token() }}

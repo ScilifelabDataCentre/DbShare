@@ -10,7 +10,7 @@
   &rarr; {{ len(rows)|thousands }} rows
 </div>
 
-<div class="mt-3">
+<div class="mt-4">
   <table id="rows" class="table table-sm table-hover">
     <thead>
       <tr>
@@ -33,7 +33,7 @@
 {% endblock %}
 
 {% block actions %}
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.home', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -46,7 +46,7 @@
     <button type="submit" class="btn btn-success btn-block">Edit</button>
   </form>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.rows', dbname=db['name']) }}"
         method="POST">
     {{ csrf_token() }}
@@ -60,11 +60,11 @@
     <button type="submit" class="btn btn-success btn-block">Re-run</button>
   </form>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.home', dbname=db['name']) }}"
      role="button" class="btn btn-success btn-block">New</a>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('view.create', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -76,7 +76,7 @@
     <button type="submit" class="btn btn-success btn-block">Create view</button>
   </form>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.table', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">

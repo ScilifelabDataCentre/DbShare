@@ -12,7 +12,7 @@
   &rarr; {{ schema['nrows']|thousands }} rows
 </div>
 
-<div class="mt-3">
+<div class="mt-4">
   <table id="rows" class="table table-sm table-hover">
     <thead>
       <tr>
@@ -48,25 +48,25 @@
 {% endblock %}
 
 {% block actions %}
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('view.schema', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-success btn-block">Schema</a>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.download', dbname=db['name'], viewname=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
      title="Download CSV or JSON file of the view contents."
      class="btn btn-outline-success btn-block">Download</a>
 </div>
 {% if has_write_access %}
-<div class="mt-3">
+<div class="mt-2">
   <a href="{{ url_for('.clone', dbname=db['name'], viewname=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
      title="Make a complete copy of this view."
      class="btn btn-success btn-block">
     Clone</a>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('query.home', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -77,7 +77,7 @@
     <button type="submit" class="btn btn-success btn-block">Query</button>
   </form>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('query.table', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
@@ -88,7 +88,7 @@
     <button type="submit" class="btn btn-primary btn-block">Create table</button>
   </form>
 </div>
-<div class="mt-3">
+<div class="mt-2">
   <form action="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
@@ -100,17 +100,19 @@
       Delete</button>
   </form>
 </div>
-<div class="mt-3">
+{% endif %}
+{% endblock %}
+
+{% block info %}
+{% if has_write_access %}
+<div class="mt-4">
     <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
       Create visualization</a>
 </div>
 {% endif %}
-{% endblock %}
-
-{% block info %}
 {% if visuals %}
-<div class="card border-info mt-4">
+<div class="card border-info mt-2">
   <div class="card-header text-info py-2">Visualizations</div>
   <div class="card-body my-0 py-1">
     {% for visual in visuals %}
