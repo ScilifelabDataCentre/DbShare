@@ -181,6 +181,7 @@ def http_DELETE(csrf=True):
 
 def csrf_token():
     "Output HTML for cross-site request forgery (CSRF) protection."
+    # Generate a token to last the session's lifetime.
     if '_csrf_token' not in flask.session:
         flask.session['_csrf_token'] = get_iuid()
     html = '<input type="hidden" name="_csrf_token" value="%s">' % \
@@ -189,7 +190,8 @@ def csrf_token():
 
 def check_csrf_token():
     "Check the CSRF token for POST HTML."
-    token = flask.session.pop('_csrf_token', None)
+    # Do not use up the token; keep it for the session's lifetime.
+    token = flask.session.get('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(400)
 
