@@ -73,7 +73,10 @@
     <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
-    <button type="submit" class="btn btn-primary btn-block">Create view</button>
+    <button type="submit" class="btn btn-primary btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Create a view out of the query."
+	    >Create view</button>
   </form>
 </div>
 <div class="mt-2">
@@ -86,7 +89,10 @@
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <input type="hidden" name="sql" value="{{ sql or ''}}">
-    <button type="submit" class="btn btn-primary btn-block">Create table</button>
+    <button type="submit" class="btn btn-primary btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Create a table from the query's results."
+	    >Create table</button>
   </form>
 </div>
 {% endblock %}
@@ -101,4 +107,9 @@
     });
   });
 </script>
-{% endblock %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %} {# block javascript #}
