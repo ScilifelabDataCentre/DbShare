@@ -190,6 +190,7 @@ def schema(dbname, viewname):
     except KeyError:
         flask.flash('no such view', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    has_write_access = dbportal.db.has_write_access(db)
     sources = [dbportal.db.get_schema(db, name) for name in schema['sources']]
     # Special case: Create HTML links for sources, handling "AS" parts.
     html_from = schema['query']['from']
@@ -207,6 +208,7 @@ def schema(dbname, viewname):
     return flask.render_template('view/schema.html',
                                  db=db,
                                  schema=schema,
+                                 has_write_access=has_write_access,
                                  sources=sources,
                                  html_from=html_from)
 

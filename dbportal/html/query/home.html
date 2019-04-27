@@ -110,14 +110,14 @@
     </div>
     {% endfor %}
     {% for view in utils.sorted_schema(db['views'].values()) %}
-    <div class="card border-success mb-1">
+    <div class="card border-primary mb-1">
       <div class="card-header">
-        <button type="button" class="btn btn-outline-success" 
+        <button type="button" class="btn btn-outline-primary" 
                 data-toggle="collapse" data-target="#{{ view['name'] }}"
                 aria-expanded="false" aria-controls="{{ view['name'] }}">
           View <strong>{{ view['name'] }}</strong> &darr;</button>
         <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
-           class="btn btn-sm btn-outline-success my-1"
+           class="btn btn-sm btn-outline-primary my-1"
            role="button" target="_blank">
           {{ view['nrows']|thousands }} rows &#8599;</a>
       </div>

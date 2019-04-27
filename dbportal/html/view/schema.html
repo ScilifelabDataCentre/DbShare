@@ -42,7 +42,7 @@
 {% block actions %}
 <div class="mt-2">
   <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
-     role="button" class="btn btn-outline-success btn-block">
+     role="button" class="btn btn-outline-primary btn-block">
     {{ db['views'][schema['name']]['nrows'] }} rows</a>
 </div>
 {% if has_write_access %}
@@ -50,7 +50,7 @@
   <a href="{{ url_for('.edit', dbname=db['name'], viewname=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
      title="Edit the metadata of this view."
-     role="button" class="btn btn-success btn-block">
+     role="button" class="btn btn-primary btn-block">
     Edit</a>
 </div>
 {% endif %}
@@ -67,7 +67,10 @@
            value="{{ schema['query'].get('orderby') or ''}}">
     <input type="hidden" name="limit"
            value="{{ schema['query'].get('limit') or ''}}">
-    <button type="submit" class="btn btn-success btn-block">Query</button>
+    <button type="submit" class="btn btn-success btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Prepare a new query from this view's definition.">
+      Query</button>
   </form>
 </div>
 {% endblock %}

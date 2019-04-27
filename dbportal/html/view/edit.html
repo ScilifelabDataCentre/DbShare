@@ -5,7 +5,7 @@
 {% block body_title %}Edit metadata fo view {{ schema['name'] }}{% endblock %}
 
 {% block main %}
-<div class="card border-success">
+<div class="card border-primary">
   <div class="card-body">
     <form action="{{ url_for('.edit', dbname=db['name'], viewname=schema['name']) }}"
           method="POST">
@@ -30,8 +30,8 @@
       </div>
       <div class="form-group row">
         <div class="col-md-4 offset-md-2">
-          <button type="submit"
-                  class="btn btn-success btn-lg btn-block">Save</button>
+          <button type="submit" class="btn btn-primary btn-lg btn-block">
+	    Save</button>
         </div>
       </div>
     </form>
