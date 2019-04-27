@@ -72,11 +72,11 @@
     </form>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block main #}
 
 {% block actions %}
-<div>
+<div class="mt-2">
   <a href="{{ url_for('.owner', username=g.current_user['username']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
-{% endblock %}
+{% endblock %} {# block actions #}

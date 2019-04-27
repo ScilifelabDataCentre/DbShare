@@ -37,7 +37,7 @@ and visualize with
 - Clone a table.
 - Delete a table.
 - Download a table as a CSV file.
-- Fetch the table data in CSV or JSON format.
+- Fetch the rows of the table in CSV or JSON format.
 
 ## Queries
 
@@ -45,9 +45,9 @@ and visualize with
 - A query can involve only one database; cross-database queries are
   currently not possible.
 - A query is written in Sqlite3 SQL.
-- Queries are made towards the database in read-only mode, hence are secure.
+- Queries are performed with the database in read-only mode, hence are secure.
 - Edit the query.
-- Make a view out of the query.
+- Create a view out of the query.
 
 ## Views
 
@@ -59,11 +59,12 @@ and visualize with
 - Delete a view.
 - Clone a view.
 - Download the view data as a CSV file.
-- Fetch the view data in CSV or JSON format.
+- Fetch the rows of the view in CSV or JSON format.
 
 ## Indexes
 
 - Indexes optimize certain queries involving a given table.
+- Indexes can be used to ensure that row values are unique in the table.
 - Create an index.
 - View the schema of an index.
 - Delete an index.
