@@ -65,41 +65,7 @@
           {% if db is defined %}
           <li class="nav-item ml-1">
             <a href="{{ url_for('db.home', dbname=db['name']) }}"
-               class="btn btn-secondary">Database {{ db['name'] }}</a>
-         </li>
-          <li class="nav-item ml-1">
-            <a href="{{ url_for('query.home', dbname=db['name']) }}"
-               class="btn btn-outline-secondary">Query</a>
-          </li>
-          <li class="nav-item dropdown ml-1">
-            <a href="#" id="navbarTables"
-               class="btn btn-outline-secondary dropdown-toggle" 
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Tables</a>
-            <div class="dropdown-menu" aria-labelledby="navbarTables">
-              {% for table in utils.sorted_schema(db['tables'].values()) %}
-              <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
-                 class="dropdown-item">
-                {{ table['name'] }}</a>
-              {% endfor %}
-            </div>
-          </li>
-          <li class="nav-item dropdown ml-1">
-            <a href="#" id="navbarViews"
-               class="btn btn-outline-secondary dropdown-toggle"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Views</a>
-            <div class="dropdown-menu" aria-labelledby="navbarViews">
-              {% for view in utils.sorted_schema(db['views'].values()) %}
-              <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
-                 class="dropdown-item">
-                {{ view['name'] }}</a>
-              {% endfor %}
-            </div>
-          </li>
-          <li class="nav-item mx-1">
-            <a href="{{ url_for('visual.home', dbname=db['name']) }}"
-               class="btn btn-outline-secondary">Visualizations</a>
+               class="btn btn-outline-secondary">Database {{ db['name'] }}</a>
           </li>
           {% endif %} {# if db is defined #}
 

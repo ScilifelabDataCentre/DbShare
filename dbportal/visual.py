@@ -14,19 +14,6 @@ from dbportal import utils
 
 blueprint = flask.Blueprint('visual', __name__)
 
-@blueprint.route('/<name:dbname>')
-def home(dbname):
-    "List the visualizations in the database."
-    try:
-        db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
-        flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('home'))
-    write_access = dbportal.db.has_write_access(db)
-    return flask.render_template('visual/home.html',
-                                 db=db,
-                                 has_write_access=write_access)
-
 @blueprint.route('/<name:dbname>/<nameext:visualname>',
                  methods=['GET', 'POST', 'DELETE'])
 def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
@@ -78,7 +65,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
                 ctx.delete_visual(str(visualname))
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:visualname>/edit', 
                  methods=['GET', 'POST'])
