@@ -9,7 +9,7 @@
       method="POST">
   {{ csrf_token() }}
   <div class="form-group row">
-    <label for="email" class="col-md-2 col-form-label">Email</label>
+    <label for="email" class="col-md-2 col-form-label text-right">Email</label>
     <div class="col-md-6">
       <input type="text" class="form-control" id="email" name="email"
              aria-describedby="emailHelp">
@@ -19,7 +19,7 @@
     </div>
   </div>
   <div class="form-group row">
-    <div class="col-md-6 offset-md-2">
+    <div class="col-md-4 offset-md-2">
       <button type="submit" class="btn btn-block btn-primary"
              aria-describedby="resetHelp">Reset</button>
       <small id="resetHelp" class="form-text text-muted">

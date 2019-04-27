@@ -69,6 +69,17 @@
           </li>
           {% endif %} {# if db is defined #}
 
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">About</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAbout">
+              <a href="{{ url_for('about.endpoints') }}"
+		 class="nav-link">URL endpoints</a>
+              <a href="{{ url_for('about.software') }}"
+		 class="nav-link">Software</a>
+	    </div>
+          </li>
         </ul>
 
         <ul class="navbar-nav justify-content-end">
@@ -88,25 +99,11 @@
           </li>
           {% endif %} {# if g.is_admin #}
 
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">About</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAbout">
-              <a href="{{ url_for('about.endpoints') }}"
-		 class="nav-link">URL endpoints</a>
-              <a href="{{ url_for('about.software') }}"
-		 class="nav-link">Software</a>
-	    </div>
-          </li>
           <li class="mx-1">
             {% if g.current_user %}
             <a href="{{ url_for('user.profile', username=g.current_user['username']) }}"
                class="btn btn-outline-secondary">
               User {{ g.current_user['username'] }}</a>
-            {% else %}
-            <a href="{{ url_for('user.login') }}" class="btn btn-secondary">
-              Login</a>
             {% endif %}
           </li>
         </ul>

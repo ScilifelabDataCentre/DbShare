@@ -8,10 +8,17 @@
   <a href="{{ config['VEGA_SITE_URL'] }}" target="_blank">Vega</a> or
   <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
 </p>
-
 {% include 'dbs/list_public.html' %}
+{% endblock %} {# block main #}
 
-{% endblock %}
+{% block actions %}
+{% if not g.current_user %}
+<div class="mt-2">
+  <a href="{{ url_for('user.login') }}" class="btn btn-block btn-secondary">
+    Login</a>
+</div>
+{% endif %}
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
