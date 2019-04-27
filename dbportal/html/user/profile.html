@@ -32,6 +32,13 @@
     </td>
   </tr>
   <tr>
+    <th class="text-right"># vis-templates</th>
+    <td>
+      <a href="{{ url_for('templates.owner', username=user['username']) }}">
+	<span class="badge badge-info">{{ ntemplates }}</span></a>
+    </td>
+  </tr>
+  <tr>
     <th class="text-right">Total size</th>
     <td>
       <span class="text-monospace">{{ '{:,}'.format(usage) }}</span> bytes
@@ -50,13 +57,6 @@
       {% else %}
       <em>none</em>
       {% endif %}
-    </td>
-  </tr>
-  <tr>
-    <th class="text-right"># vis-templates</th>
-    <td>
-      <a href="{{ url_for('templates.owner', username=user['username']) }}">
-	<span class="badge badge-info">{{ ntemplates }}</span></a>
     </td>
   </tr>
 </table>
