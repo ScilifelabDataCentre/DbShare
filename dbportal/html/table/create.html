@@ -35,60 +35,64 @@
 		    class="form-control" rows="2"></textarea>
         </div>
       </div>
-      <div class="form-row pt-4">
-        <div class="form-group col-md-4">
-          <label for="column0name">Column name</label>
-        </div>
-        <div class="form-group col-md-2">
-          <label for="column0type">Type</label>
-        </div>
-        <div class="form-group col-md-2">
-          <label for="column0primarykey">PRIMARY KEY</label>
-        </div>
-        <div class="form-group col-md-2">
-          <label for="column0notnull">NOT NULL</label>
-        </div>
-        <div class="form-group col-md-2">
-          <label for="column0unique">UNIQUE</label>
+      <div class="form-group row">
+        <label for="columns" class="col-md-2 col-form-label text-right">
+          Columns</label>
+        <div class="col-md-10">
+	  <table class="table table-sm table-borderless">
+	    <thead>
+	      <tr>
+		<td>Name</td>
+		<td>Type</td>
+		<td>PRIMARY KEY</td>
+		<td>NOT NULL</td>
+		<td>UNIQUE</td>
+	      </tr>
+	    </thead>
+	    <tbody>
+	      {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
+	      <tr class="form-group">
+		<td>
+		  <input id="column{{ n }}name" name="column{{ n }}name"
+			 type="text" size="32"
+			 class="form-control">
+		</td>
+		<td>
+		  <select id="column{{ n }}type" name="column{{ n }}type"
+			  class="form-control">
+		    {% for type in constants.COLUMN_TYPES %}
+		    <option>{{ type }}</option>
+		    {% endfor %}
+		  </select>
+		</td>
+		<td>
+		  <div class="form-check form-check-inline mx-4 py-2">
+		    <input id="column{{ n }}primarykey"
+			   name="column{{ n }}primarykey"
+			   type="checkbox" value="true"
+			   class="form-check-input">
+		  </div>
+		</td>
+		<td>
+		  <div class="form-check form-check-inline mx-4 py-2">
+		    <input id="column{{ n }}notnull" name="column{{ n }}notnull"
+			   type="checkbox" value="true"
+			   class="form-check-input">
+		  </div>
+		</td>
+		<td>
+		  <div class="form-check form-check-inline mx-4 py-2">
+		    <input id="column{{ n }}unique" name="column{{ n }}unique"
+			   type="checkbox" value="true"
+			   class="form-check-input">
+		  </div>
+		</td>
+	      </tr>
+	      {% endfor %}
+	    </tbody>
+	  </table>
         </div>
       </div>
-      {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
-      <div class="form-row">
-        <div class="form-group col-md-4">
-          <input id="column{{ n }}name" name="column{{ n }}name"
-                 type="text" class="form-control">
-        </div>
-        <div class="form-group col-md-2">
-          <select id="column{{ n }}type" name="column{{ n }}type"
-                  class="form-control">
-            {% for type in constants.COLUMN_TYPES %}
-            <option>{{ type }}</option>
-            {% endfor %}
-          </select>
-        </div>
-        <div class="col-md-2">
-          <div class="form-check form-check-inline p-2">
-            <input id="column{{ n }}primarykey" name="column{{ n }}primarykey"
-                   type="checkbox" class="form-check-input"
-                   value="true">
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="form-check form-check-inline p-2">
-            <input id="column{{ n }}notnull" name="column{{ n }}notnull"
-                   type="checkbox" class="form-check-input"
-                   value="true">
-          </div>
-        </div>
-        <div class="col-md-2">
-          <div class="form-check form-check-inline p-2">
-            <input id="column{{ n }}unique" name="column{{ n }}unique"
-                   type="checkbox" class="form-check-input"
-                   value="true">
-          </div>
-        </div>
-      </div>
-      {% endfor %}
       <div class="form-row">
         <div class="col-md-4 offset-md-2">
           <button type="submit" class="btn btn-primary btn-lg btn-block">

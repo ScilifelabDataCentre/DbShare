@@ -27,7 +27,7 @@ def upload():
             dbname = flask.request.form.get('dbname')
             if not dbname:
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
-            db = dbportal.db.add_database(dbname, infile)
+            db = dbportal.db.add_database(dbname, infile, modify_dbname=True)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.upload'))

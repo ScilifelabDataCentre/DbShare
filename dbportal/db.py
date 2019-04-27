@@ -499,7 +499,7 @@ class DbContext:
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
         if get_db(name):
-            raise ValueError('database name already in use; not changed')
+            raise ValueError('database name already in use')
         old_dbname = self.db.get('name')
         if old_dbname:
             # Rename the Sqlite3 file if the database already exists.
@@ -1271,18 +1271,33 @@ def _set_nrows(cnx, targets=[]):
         cursor.execute(sql)
         target['nrows'] = cursor.fetchone()[0]
 
-def add_database(dbname, infile):
+def add_database(dbname, infile, modify_dbname=False):
     """Add the database file present in the given open file object.
     If the database has the metadata of a DbPortal Sqlite3 database, check it.
     Else if the database appears to be a plain Sqlite3 database,
     infer the DbPortal metadata from it by inspection.
+    If 'modify_name' is True, then attempt to fix a non-unique name.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
     try:
         check_quota()
         with DbContext() as ctx:
-            ctx.set_name(dbname) # Checks that name is not already used.
+            try:
+                ctx.set_name(dbname)
+            except ValueError:
+                if not modify_dbname: raise
+                for n in range(1, 1000):
+                    try:
+                        modified_dbname = f"{dbname}-{n}"
+                        ctx.set_name(modified_dbname)
+                    except ValueError:
+                        pass
+                    else:
+                        dbname = modified_dbname
+                        break
+                else:
+                    raise ValueError('could not set database name')
             ctx.load_dbfile(infile)
             ctx.initialize()
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
@@ -1294,8 +1309,7 @@ def add_database(dbname, infile):
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:
         delete_database(dbname)
-        raise
-        # raise ValueError(str(error))
+        raise ValueError(str(error))
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."

@@ -6,9 +6,6 @@
 
 {% block main %}
 <div class="card border-primary">
-  <div class="card-header bg-primary text-white">
-    <h5 class="card-title">Sqlite3 file</h5>
-  </div>
   <div class="card-body">
     <ul class="m-2">
       <li>
@@ -20,7 +17,7 @@
         to infer the DbPortal metadata from its contents.
       </li>
       <li> 
-        Limitations for uploading a plain Sqlite3 file are currently:
+        Limitations for a plain Sqlite3 file are currently:
         <ul>
           <li>
             Only views with simple definitions can be parsed. Other
@@ -42,7 +39,7 @@
         <div class="col-md-2 text-right">
           <label for="sqlite3file" class="col-form-label">Sqlite3 file</label>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
           <input id="sqlite3file" name="sqlite3file"
                  type="file" class="form-control-file" autofocus>
         </div>
@@ -52,12 +49,14 @@
           <label for="dbname" class="col-form-label">
             Database name</label>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
           <input id="dbname" name="dbname" type="text" class="form-control">
           <small class="form-text text-muted">
             If none specified, the filename will be used.
             <br>
-            The database name must be unique for this site.
+            The database name must be unique for this site. If not, an
+            attempt will be made to add a suffix to it to make it
+            unique.
             <br>
             This means that other user's database names restrict which
             name you can use.
