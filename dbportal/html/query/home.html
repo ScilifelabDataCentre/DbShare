@@ -4,13 +4,10 @@
 
 {% block body_title %}Query database {{ db['name'] }}{% endblock %}
 
-{% block main %}
+{% block supermain %}
 <div class="row">
-  <div class="col-md-8">
+  <div class="col-md-7">
     <div class="card border-success">
-      <div class="card-header bg-success text-white">
-        <h5 class="card-title">SELECT query</h5>
-      </div>
       <div class="card-body">
         <form action="{{ url_for('.rows', dbname=db['name']) }}"
               method="POST">
@@ -78,7 +75,7 @@
       </div>
     </div>
   </div>
-  <div class="col-md">
+  <div class="col-md-5">
     {% for table in utils.sorted_schema(db['tables'].values()) %}
     <div class="card border-primary mb-1">
       <div class="card-header">
@@ -137,4 +134,4 @@
     {% endfor %}
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block supermain #}

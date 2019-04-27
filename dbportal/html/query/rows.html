@@ -30,7 +30,7 @@
     </tbody>
   </table>
 </div>
-{% endblock %}
+{% endblock %} {# block main #}
 
 {% block actions %}
 <div class="mt-2">
@@ -95,7 +95,7 @@
 	    >Create table</button>
   </form>
 </div>
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
@@ -103,6 +103,7 @@
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
       "pageLength": 25,
+      "scrollX": true,
       "ordering": false,
     });
   });
