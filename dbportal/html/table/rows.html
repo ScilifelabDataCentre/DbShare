@@ -47,19 +47,29 @@
        class="badge badge-pill badge-primary">JSON</a>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block meta #}
+
+{% block links %}
+{% if visuals %}
+<div class="card border-info mt-2">
+  <div class="card-header text-info py-2">Visualizations</div>
+  <div class="card-body my-0 py-1">
+    {% for visual in visuals %}
+    <div>
+      <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
+	 class="card-link text-info">
+	{{ visual['name'] }}</a>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+{% endblock %} {# block links #}
 
 {% block actions %}
 <div class="mt-2">
   <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">Schema</a>
-</div>
-<div class="mt-2">
-  <form action="{{ url_for('query.home', dbname=db['name']) }}"
-        method="GET">
-    <input type="hidden" name="from" value="{{ schema['name'] }}">
-    <button type="submit" class="btn btn-success btn-block">Query</button>
-  </form>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.download', dbname=db['name'], tablename=schema['name']) }}"
@@ -68,6 +78,11 @@
      class="btn btn-outline-primary btn-block">Download</a>
 </div>
 {% if has_write_access %}
+<div class="mt-2">
+    <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
+       role="button" class="btn btn-info btn-block">
+      Create visualization</a>
+</div>
 <div class="mt-2">
   <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-primary btn-block">
@@ -120,31 +135,7 @@
   </form>
 </div>
 {% endif %}
-{% endblock %}
-
-{% block info %}
-{% if has_write_access %}
-<div class="mt-4">
-    <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
-      Create visualization</a>
-</div>
-{% endif %}
-{% if visuals %}
-<div class="card border-info mt-2">
-  <div class="card-header text-info py-2">Visualizations</div>
-  <div class="card-body my-0 py-1">
-    {% for visual in visuals %}
-    <div>
-      <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
-	 class="card-link text-info">
-	{{ visual['name'] }}</a>
-    </div>
-    {% endfor %}
-  </div>
-</div>
-{% endif %}
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
@@ -166,4 +157,4 @@
     $('[data-toggle="tooltip"]').tooltip()
   })
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

@@ -140,10 +140,14 @@
         </div>
         <div class="col-md-2">
           <div>
+            {% block links %}
+            {% endblock %}
+          </div>
+          <div>
             {% block actions %}
             {% endblock %}
           </div>
-          <div class="mt-2">
+          <div>
             {% block info %}
             {% endblock %}
           </div>
