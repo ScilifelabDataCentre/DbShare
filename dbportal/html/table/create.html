@@ -36,25 +36,25 @@
         </div>
       </div>
       <div class="form-row pt-4">
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-4">
           <label for="column0name">Column name</label>
         </div>
         <div class="form-group col-md-2">
           <label for="column0type">Type</label>
         </div>
-        <div class="form-group col-md-1">
+        <div class="form-group col-md-2">
           <label for="column0primarykey">PRIMARY KEY</label>
         </div>
-        <div class="form-group col-md-1">
+        <div class="form-group col-md-2">
           <label for="column0notnull">NOT NULL</label>
         </div>
-        <div class="form-group col-md-1">
+        <div class="form-group col-md-2">
           <label for="column0unique">UNIQUE</label>
         </div>
       </div>
       {% for n in range(config['TABLE_INITIAL_COLUMNS']) %}
       <div class="form-row">
-        <div class="form-group col-md-3">
+        <div class="form-group col-md-4">
           <input id="column{{ n }}name" name="column{{ n }}name"
                  type="text" class="form-control">
         </div>
@@ -66,21 +66,21 @@
             {% endfor %}
           </select>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
           <div class="form-check form-check-inline p-2">
             <input id="column{{ n }}primarykey" name="column{{ n }}primarykey"
                    type="checkbox" class="form-check-input"
                    value="true">
           </div>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
           <div class="form-check form-check-inline p-2">
             <input id="column{{ n }}notnull" name="column{{ n }}notnull"
                    type="checkbox" class="form-check-input"
                    value="true">
           </div>
         </div>
-        <div class="col-md-1">
+        <div class="col-md-2">
           <div class="form-check form-check-inline p-2">
             <input id="column{{ n }}unique" name="column{{ n }}unique"
                    type="checkbox" class="form-check-input"
@@ -90,7 +90,7 @@
       </div>
       {% endfor %}
       <div class="form-row">
-        <div class="col-md-3 offset-md-2">
+        <div class="col-md-4 offset-md-2">
           <button type="submit" class="btn btn-primary btn-lg btn-block">
             Create</button>
         </div>
