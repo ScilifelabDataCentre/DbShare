@@ -75,11 +75,9 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                 can_change_mode=has_write_access(db, check_mode=False))
 
         elif dbname.ext == 'json':
-            # XXX Links to JSON definitions of tables, views, indexes, etc,
-            # XXX instead of the whole specifications.
             data = {'$id': flask.request.url}
             data.update(db)
-            for tablename, table in data['tables'].items():
+            for table in data['tables'].values():
                 url = flask.url_for('table.rows',
                                     dbname=db['name'],
                                     tablename=table['name'],
@@ -87,6 +85,23 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
                 table['rows'] = [{'href': url, 'format': 'html'},
                                  {'href': url + '.csv', 'format': 'csv'},
                                  {'href': url + '.json', 'format': 'json'}]
+            for view in data['views'].values():
+                url = flask.url_for('view.rows',
+                                    dbname=db['name'],
+                                    viewname=view['name'],
+                                    _external=True)
+                view['rows'] = [{'href': url, 'format': 'html'},
+                                {'href': url + '.csv', 'format': 'csv'},
+                                {'href': url + '.json', 'format': 'json'}]
+            for visuallist in data['visuals'].values():
+                for visual in visuallist:
+                    url = flask.url_for('visual.display',
+                                        dbname=db['name'],
+                                        visualname=visual['name'],
+                                        _external=True)
+                    visual['display'] = [
+                        {'href': url, 'format': 'html'},
+                        {'href': url + '.json', 'format': 'json'}]
             return flask.jsonify(data)
         else:
             flask.abort(406)
