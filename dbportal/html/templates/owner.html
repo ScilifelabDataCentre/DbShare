@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Vis-templates owned by {{ username }}{% endblock %}
+{% block head_title %}Viztemplates owned by {{ username }}{% endblock %}
 
-{% block body_title %}Vis-templates owned by {{ username }}{% endblock %}
+{% block body_title %}Viztemplates owned by {{ username }}{% endblock %}
 
 {% block main %}
 <table id="templates" class="table table-sm my-4">
@@ -26,28 +26,28 @@
       </th>
       <td>{{ template.get('title') or '-' }}</td>
       <td>{{ template['type'] }}</td>
-      <td>
-	{% if template['public'] %}
-	<span class="badge badge-success">public</span>
-	{% else %}
-	private
-	{% endif %}
-      </td>
+      <td>{{ template['public'] | access }}</td>
       <td><small class="localtime">{{ template['modified'] }}</small></td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
-{% endblock %}
+{% endblock %} {# block main #}
 
 {% block actions %}
 <div class="mt-2">
   <a href="{{ url_for('template.create') }}"
      role="button" data-toggle="tooltip" data-placement="left"
-     title="Create a new vis-template."
-     class="btn btn-info btn-block">Create</a>
+     title="Create a new viztemplate."
+     class="btn btn-primary btn-block">Create</a>
 </div>
-{% endblock %}
+<div class="mt-2">
+  <a href="{{ url_for('.upload') }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Upload a viztemplate file."
+     class="btn btn-primary btn-block">Upload</a>
+</div>
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
@@ -63,4 +63,4 @@
     $('[data-toggle="tooltip"]').tooltip()
   })
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

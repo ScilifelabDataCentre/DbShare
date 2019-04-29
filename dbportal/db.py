@@ -66,7 +66,7 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
 
-        if dbname.ext is None or dbname.ext == 'html':
+        if dbname.ext in (None, 'html'):
             return flask.render_template(
                 'db/home.html', 
                 db=db,
@@ -288,7 +288,7 @@ def download(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     return flask.send_file(utils.dbpath(dbname),
-                           mimetype='application/x-sqlite3',
+                           mimetype=constants.SQLITE3_MIMETYPE,
                            as_attachment=True)
 
 @blueprint.route('/<name:dbname>/vacuum', methods=['POST'])

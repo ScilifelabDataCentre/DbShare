@@ -201,6 +201,22 @@ def none_as_empty_string(value):
     else:
         return value
 
+@app.template_filter('access')
+def access(value):
+    "Output public or private according to the value."
+    if value:
+        return jinja2.utils.Markup('<span class="badge badge-info">public</span>')
+    else:
+        return jinja2.utils.Markup('<span class="badge badge-secondary">private</span>')
+
+@app.template_filter('mode')
+def mode(value):
+    "Output readonly or read-write according to the value."
+    if value:
+        return jinja2.utils.Markup('<span class="badge badge-success">read-only</span>')
+    else:
+        return jinja2.utils.Markup('<span class="badge badge-warning">read/write</span>')
+
 @app.before_request
 def prepare():
     "Connect to the system database (read-only); get the current user."

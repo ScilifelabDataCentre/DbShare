@@ -1,4 +1,4 @@
-"Vistemplate endpoints."
+"Viztemplate endpoints."
 
 import copy
 import json
@@ -22,7 +22,7 @@ blueprint = flask.Blueprint('template', __name__)
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def create():
-    "Create a vistemplate."
+    "Create a viztemplate."
     if utils.http_GET():
         return flask.render_template('template/create.html')
 
@@ -52,42 +52,48 @@ def create():
         return flask.redirect(flask.url_for('.view',
                                             templatename=ctx.template['name']))
 
-@blueprint.route('/<name:templatename>', methods=['GET', 'POST', 'DELETE'])
-def view(templatename):
-    "View the vistemplate definition. Or delete it."
+@blueprint.route('/<nameext:templatename>')
+def view(templatename):  # NOTE: templatename is a NameExt instance!
+    "View the viztemplate definition."
+    try:
+        template = get_check_read(str(templatename))
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('templates.public'))
+    write_access = has_write_access(template)
+    fields = list(template['fields'].values())
+    fields.sort(key=lambda f: f['ordinal'])
+
+    if templatename.ext in (None, 'html'):
+        return flask.render_template('template/view.html',
+                                     template=template,
+                                     fields=fields,
+                                     has_write_access=write_access)
+    elif templatename.ext == 'json':
+        data = {'$id': flask.request.url}
+        data.update(template)
+        return flask.jsonify(data)
+
+@blueprint.route('/<name:templatename>/download')
+def download(templatename):
+    "Download the viztemplate definition as a JSON file."
     try:
         template = get_check_read(templatename)
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
+    data = {'$id': flask.request.url}
+    data.update(template)
+    response = flask.make_response(json.dumps(data))
+    response.headers.set('Content-Type', constants.JSON_MIMETYPE)
+    response.headers.set('Content-Disposition', 'attachment', 
+                         filename=template['name'] + '.json')
+    return response
 
-    write_access = has_write_access(template)
-    if utils.http_GET():
-        fields = list(template['fields'].values())
-        fields.sort(key=lambda f: f['ordinal'])
-        return flask.render_template('template/view.html',
-                                     template=template,
-                                     fields=fields,
-                                     has_write_access=write_access)
-
-    elif utils.http_DELETE():
-        try:
-            if not write_access:
-                raise ValueError('you may not delete the template')
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('templates.public'))
-        cnx = dbportal.system.get_cnx(write=True)
-        with cnx:
-            sql = "DELETE FROM templates WHERE name=?"
-            cnx.execute(sql, (templatename,))
-        return flask.redirect(flask.url_for('templates.owner',
-                                            username=template['owner']))
-
-@blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST'])
+@blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(templatename):
-    "Edit the vistemplate definition."
+    "Edit the viztemplate definition. Or delete it"
     try:
         template = get_check_write(templatename)
     except ValueError as error:
@@ -105,10 +111,18 @@ def edit(templatename):
         return flask.redirect(
             flask.url_for('.view', templatename=template['name']))
 
+    elif utils.http_DELETE():
+        cnx = dbportal.system.get_cnx(write=True)
+        with cnx:
+            sql = "DELETE FROM templates WHERE name=?"
+            cnx.execute(sql, (templatename,))
+        return flask.redirect(flask.url_for('templates.owner',
+                                            username=template['owner']))
+
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def clone(templatename):
-    "Create a clone of the vistemplate."
+    "Create a clone of the viztemplate."
     try:
         template = get_check_read(templatename)
     except ValueError as error:
@@ -135,7 +149,7 @@ def clone(templatename):
 @blueprint.route('/<name:templatename>/public', methods=['POST'])
 @dbportal.user.login_required
 def public(templatename):
-    "Set the vistemplate to public access."
+    "Set the viztemplate to public access."
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
@@ -148,13 +162,13 @@ def public(templatename):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
-        flask.flash('Vistemplate set to public access.', 'message')
+        flask.flash('Viztemplate set to public access.', 'message')
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/private', methods=['POST'])
 @dbportal.user.login_required
 def private(templatename):
-    "Set the vistemplate to private access."
+    "Set the viztemplate to private access."
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
@@ -167,7 +181,7 @@ def private(templatename):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
-        flask.flash('Vistemplate public access revoked.', 'message')
+        flask.flash('Viztemplate public access revoked.', 'message')
     return flask.redirect(flask.url_for('.view', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field', methods=['GET', 'POST'])
@@ -230,7 +244,7 @@ def field_edit(templatename, fieldname):
                  methods=['GET', 'POST'])
 @dbportal.user.login_required
 def select(dbname, sourcename):
-    "Select a vistemplate to use for the table or view."
+    "Select a viztemplate to use for the table or view."
     try:
         db = dbportal.db.get_check_read(dbname)
     except ValueError as error:
@@ -339,7 +353,7 @@ def render(templatename, dbname, sourcename):
                                             visualname=visualname))
 
 class TemplateContext:
-    "Context handler to create, modify and save a vistemplate."
+    "Context handler to create, modify and save a viztemplate."
 
     def __init__(self, template=None):
         if template is None:
@@ -401,7 +415,7 @@ class TemplateContext:
                                        self.template['modified']))
 
     def set_name(self, name):
-        "Set or change the vistemplate name."
+        "Set or change the viztemplate name."
         if name == self.template.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid template name')
@@ -481,7 +495,7 @@ class TemplateContext:
 
 
 def get_templates(public=None, owner=None):
-    "Get the list of vistemplates according to criteria."
+    "Get the list of viztemplates according to criteria."
     sql = "SELECT name FROM templates"
     criteria = {}
     if public is not None:
@@ -496,8 +510,8 @@ def get_templates(public=None, owner=None):
     return [get_template(row[0]) for row in cursor]
 
 def get_template(templatename):
-    """Return the vistemplate for the given name.
-    Return None if no such vistemplate.
+    """Return the viztemplate for the given name.
+    Return None if no such viztemplate.
     """
     cursor = dbportal.system.get_cursor()
     sql = "SELECT owner, title, description, code, type, fields, public," \
@@ -519,14 +533,14 @@ def get_template(templatename):
     return template
 
 def get_check_read(templatename):
-    """Get the vistemplate and check that
+    """Get the viztemplate and check that
     the current user has read access.
     Raise ValueError if any problem."""
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such vistemplate')
+        raise ValueError('no such viztemplate')
     if not has_read_access(template):
-        raise ValueError('you may not read the vistemplate')
+        raise ValueError('you may not read the viztemplate')
     return template
 
 def has_read_access(template):
@@ -537,14 +551,14 @@ def has_read_access(template):
     return flask.g.current_user['username'] == template['owner']
 
 def get_check_write(templatename):
-    """Get the vistemplate and check that
+    """Get the viztemplate and check that
     the current user has write access.
     Raise ValueError if any problem."""
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such vistemplate')
+        raise ValueError('no such viztemplate')
     if not has_write_access(template):
-        raise ValueError('you may not write the vistemplate')
+        raise ValueError('you may not write the viztemplate')
     return template
 
 def has_write_access(template):

@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Edit vis-template {{ template['nme'] }}{% endblock %}
+{% block head_title %}Edit viztemplate {{ template['nme'] }}{% endblock %}
 
-{% block body_title %}Edit vis-template {{ template['nme'] }}{% endblock %}
+{% block body_title %}Edit viztemplate {{ template['nme'] }}{% endblock %}
 
 {% block main %}
-<div class="card border-info">
+<div class="card border-primary">
   <div class="card-body">
     <form action="{{ url_for('.edit', templatename=template['name']) }}"
           method="POST">
@@ -62,5 +62,17 @@
 <div class="mt-2">
   <a href="{{ url_for('.view', templatename=template['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
+</div>
+<div class="mt-2">
+  <form action="{{ url_for('.edit', templatename=template['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this viztemplate."
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete</button>
+  </form>
 </div>
 {% endblock %}

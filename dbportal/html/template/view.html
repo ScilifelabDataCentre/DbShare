@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Vis-template {{ template['name'] }}{% endblock %}
+{% block head_title %}Viztemplate {{ template['name'] }}{% endblock %}
 
-{% block body_title %}Vis-template {{ template['name'] }}{% endblock %}
+{% block body_title %}Viztemplate {{ template['name'] }}{% endblock %}
 
 {% block main %}
 <table class="table table-sm table-borderless">
@@ -63,9 +63,24 @@
     <td><pre>{{ template['code'] }}</pre></td>
   </tr>
 </table>
-{% endblock %}
+{% endblock %} {# block main #}
+
+{% block meta %}
+<div class="py-1">
+  <div>
+    <a href="{{ url_for('.view', templatename=template['name']) + '.json' }}"
+       class="badge badge-pill badge-primary">JSON</a>
+  </div>
+</div>
+{% endblock %} {# block meta #}
 
 {% block actions %}
+<div class="mt-2">
+  <a href="{{ url_for('.download', templatename=template['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Download the viztemplate definition JSON file."
+     class="btn btn-outline-primary btn-block">Download</a>
+</div>
 {% if has_write_access %}
 <div class="mt-2">
   <a href="{{ url_for('.edit', templatename=template['name']) }}"
@@ -103,21 +118,9 @@
       Set public access</button>
   </form>
 </div>
-{% endif %} {# public #}
-<div class="mt-2">
-  <form action="{{ url_for('.view', templatename=template['name']) }}"
-	method="POST">
-    {{ csrf_token() }}
-    <input type="hidden" name="_http_method" value="DELETE">
-    <button type="submit" class="btn btn-danger btn-block"
-	    data-toggle="tooltip" data-placement="left"
-	    title="Delete this vis-template."
-            onclick="return confirm('Really delete? Cannot be undone.')">
-      Delete</button>
-  </form>
-</div>
+{% endif %} {# if template['public'] #}
 {% endif %} {# has_write_access #}
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block info %}
 <div class="small mt-4">
@@ -145,7 +148,7 @@
     Created <span class="localtime">{{ template['created'] }}</span>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block info #}
 
 {% block javascript %}
 <script>
@@ -153,4 +156,4 @@
     $('[data-toggle="tooltip"]').tooltip()
   })
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

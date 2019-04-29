@@ -17,13 +17,7 @@
           {{ db['name'] }}</a>
       </td>
       <td>{{ db.get('title') or '-' }}</td>
-      <td>
-	{% if db['readonly'] %}
-	read-only
-	{% else %}
-	<span class="badge badge-warning">read-write</span>
-	{% endif %}
-      </td>
+      <td>{{ db['readonly'] | mode }}</td>
       <td>{{ db['owner'] }}</td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

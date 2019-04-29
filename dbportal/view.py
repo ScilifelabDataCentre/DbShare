@@ -117,7 +117,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             dbcnx = dbportal.db.get_cnx(dbname)
             sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 
-            if viewname.ext is None or viewname.ext == 'html':
+            if viewname.ext in (None, 'html'):
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
                 if schema['nrows'] == '?' or schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"

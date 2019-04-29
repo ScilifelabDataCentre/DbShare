@@ -88,7 +88,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             sql = 'SELECT rowid, %s FROM "%s"' % \
                   (','.join([f'"{c}"' for c in columns]), tablename)
 
-            if tablename.ext is None or tablename.ext == 'html':
+            if tablename.ext in (None, 'html'):
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
                 if schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"

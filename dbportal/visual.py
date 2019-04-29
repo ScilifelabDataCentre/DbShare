@@ -32,7 +32,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-        if visualname.ext is None or visualname.ext == 'html':
+        if visualname.ext in (None, 'html'):
             return flask.render_template(
                 'visual/display.html',
                 db=db,
