@@ -27,7 +27,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         try:
             visual = dbportal.db.get_visual(db, str(visualname))
             schema = dbportal.db.get_schema(db, visual['sourcename'])
-            dbportal.db.set_nrows(db, nrows=[schema['name']])
+            dbportal.db.set_nrows(db, targets=[schema['name']])
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
@@ -85,7 +85,7 @@ def edit(dbname, visualname):
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
     if utils.http_GET():
-        dbportal.db.set_nrows(db, nrows=[schema['name']])
+        dbportal.db.set_nrows(db, targets=[schema['name']])
         return flask.render_template('visual/edit.html',
                                      db=db,
                                      schema=schema,

@@ -1246,7 +1246,7 @@ def get_check_read(dbname, nrows=False, complete=True):
         raise ValueError('no such database')
     if not has_read_access(db):
         raise ValueError('may not read the database')
-    set_nrows(db, nrows)
+    set_nrows(db, targets=nrows)
     return db
 
 def has_write_access(db, check_mode=True):
@@ -1266,25 +1266,27 @@ def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
         raise ValueError('no such database')
     if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
-    set_nrows(db, nrows)
+    set_nrows(db, targets=nrows)
     return db
 
-def set_nrows(db, nrows):
+def set_nrows(db, targets):
     "Set the item 'nrows' for all or given tables and views of the database."
-    if not nrows: return
-    if nrows == True:
+    if not targets: return
+    if targets == True:
         targets = list(db['views'].values())
     else:
-        targets = [get_schema(db, name) for name in nrows]
-    utils.execute_timeout(get_cnx(db['name']), _set_nrows, targets=targets)
-
-def _set_nrows(cnx, targets=[]):
-    "Actually set the nrow values; executed with time-out."
-    cursor = cnx.cursor()
+        targets = [get_schema(db, name) for name in targets]
+    cnx = get_cnx(db['name'])
     for target in targets:
-        sql = 'SELECT COUNT(*) FROM "%s"' % target['name']
-        cursor.execute(sql)
-        target['nrows'] = cursor.fetchone()[0]
+        try:
+            utils.execute_timeout(cnx, _set_nrows, target=target)
+        except sqlite3.OperationalError:
+            target['nrows'] = '?'
+
+def _set_nrows(cnx, target):
+    "Actually set the nrow values for the given target; executed with time-out."
+    sql = 'SELECT COUNT(*) FROM "%s"' % target['name']
+    target['nrows'] = cnx.execute(sql).fetchone()[0]
 
 def add_database(dbname, infile, modify_dbname=False):
     """Add the database file present in the given open file object.

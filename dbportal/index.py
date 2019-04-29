@@ -29,7 +29,7 @@ def create(dbname, tablename):
     positions = list(range(len(schema['columns'])))
 
     if utils.http_GET():
-        dbportal.db.set_nrows(db, nrows=db['tables'].keys())
+        dbportal.db.set_nrows(db, targets=db['tables'].keys())
         return flask.render_template('index/create.html',
                                      db=db,
                                      schema=schema,
