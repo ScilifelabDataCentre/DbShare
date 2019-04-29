@@ -119,6 +119,18 @@
   </form>
 </div>
 {% endif %} {# if template['public'] #}
+<div class="mt-2">
+  <form action="{{ url_for('.view', templatename=template['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this viztemplate."
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete</button>
+  </form>
+</div>
 {% endif %} {# has_write_access #}
 {% endblock %} {# block actions #}
 
