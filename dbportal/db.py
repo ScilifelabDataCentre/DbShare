@@ -895,8 +895,9 @@ class DbContext:
         tables1 = set([row[0] for row in cursor])
         sql = "SELECT name FROM sqlite_master WHERE type=?"
         cursor.execute(sql, ('table',))
-        tables2 = set([row[0].lower() for row in cursor
-                       if not row[0].startswith('_')]) # Ignore metadata tables.
+        # Ignore metadata tables and sqlite statistics tables, if any.
+        tables2 = [r[0].lower() for r in cursor if not r[0].startswith('_')]
+        tables2 = set([n for n in tables2 if not n.startswith('sqlite_')])
         if tables1 != tables2:
             raise ValueError('corrupt metadata in DbPortal Sqlite3 file')
         # Does the index metatable exist?

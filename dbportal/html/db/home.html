@@ -17,7 +17,7 @@
           <tbody>
             {% for table in utils.sorted_schema(db['tables'].values()) %}
             <tr>
-	      <td rowspan="2">
+	      <td>
 		<strong>{{ table['title'] or table['name'] }}</strong>
 	      </td>
               <td>
@@ -29,8 +29,8 @@
                   schema</a>
               </td>
             </tr>
-	    <tr>
-	      <td colspan="2" class="mt-0 pt-0">
+	    <tr class="mt-0 pt-0">
+	      <td colspan="3" class="pl-5 mt-0 pt-0">
 		{% for visual in db['visuals'][table['name']] %}
 		<div>
 		  <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
@@ -60,7 +60,7 @@
           <tbody>
             {% for view in utils.sorted_schema(db['views'].values()) %}
             <tr>
-	      <td rowspan="2">
+	      <td>
 		<strong>{{ view['title'] or view['name'] }}</strong>
 	      </td>
               <td>
@@ -72,8 +72,8 @@
                   schema</a>
               </td>
 	    </tr>
-	    <tr>
-	      <td colspan="2">
+	    <tr class="mt-0 pt-0">
+	      <td colspan="3" class="pl-5 mt-0 pt-0">
 		{% for visual in db['visuals'][view['name']] %}
 		<div>
 		  <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
