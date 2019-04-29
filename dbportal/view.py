@@ -119,7 +119,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 
             if viewname.ext is None or viewname.ext == 'html':
                 limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-                if schema['nrows'] > limit:
+                if schema['nrows'] == '?' or schema['nrows'] > limit:
                     sql += f" LIMIT {limit}"
                     utils.flash_message_limit(limit)
                 rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed

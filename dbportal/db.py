@@ -1280,7 +1280,7 @@ def set_nrows(db, targets):
     for target in targets:
         try:
             utils.execute_timeout(cnx, _set_nrows, target=target)
-        except sqlite3.OperationalError:
+        except SystemError:
             target['nrows'] = '?'
 
 def _set_nrows(cnx, target):
