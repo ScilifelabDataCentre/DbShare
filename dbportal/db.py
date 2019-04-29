@@ -150,6 +150,7 @@ def create():
                 ctx.set_title(flask.request.form.get('title'))
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('.create'))
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
