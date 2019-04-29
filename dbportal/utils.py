@@ -209,9 +209,11 @@ def _timeout_interrupt(cnx, event, timeout, increment, backoff):
     elapsed = 0.0
     while elapsed < timeout:
         if not event.is_set(): return
+        print('sleep', increment, elapsed)
         time.sleep(increment)
         elapsed += increment
         increment *= backoff
+    print('interrupt', elapsed)
     cnx.interrupt()
 
 def execute_timeout(cnx, command, **kwargs):
