@@ -69,6 +69,7 @@ def do_login(username, password):
     Raise ValueError if some problem.
     """
     user = get_user(username)
+    if user is None: raise ValueError
     if not werkzeug.security.check_password_hash(user['password'], password):
         raise ValueError
     if user['status'] != constants.ENABLED:
