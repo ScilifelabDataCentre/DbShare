@@ -100,11 +100,23 @@ app.url_map.converters['nameext'] = utils.NameExtConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
-# Modify the configuration from a JSON file.
 app.config.from_mapping(CONFIG)
-config_filepath = os.environ.get('CONFIG_FILEPATH') or 'config.json'
-app.config.from_json(config_filepath)
 app.config['SQLITE_VERSION'] = sqlite3.sqlite_version
+
+# Modify the configuration from a JSON file.
+try:
+    filepath = os.environ['CONFIG_FILEPATH']
+    app.config.from_json(filepath)
+    # Raises an error if filepath variable defined, but no such file.
+except KeyError:
+    for filepath in ['config.json', '../site/config.json']:
+        try:
+            app.config.from_json(filepath)
+        except FileNotFoundError:
+            filepath = None
+        else:
+            break
+if filepath: print('   Configuration file:', filepath)
 
 # Sanity check configuration.
 assert app.config['SECRET_KEY']
