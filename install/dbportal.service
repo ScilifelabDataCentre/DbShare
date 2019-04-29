@@ -6,7 +6,7 @@ After=network.target
 Type=simple
 Environment=PYTHONPATH=/var/www/apps/DbPortal
 WorkingDirectory=/var/www/apps/DbPortal
-ExecStart=/usr/bin/scl enable rh-python36 -- uwsgi --ini uwsgi.ini
+ExecStart=/usr/bin/scl enable rh-python36 -- uwsgi --logto /var/log/uwsgi.log --ini site/uwsgi.ini
 Restart=always
 
 [Install]
