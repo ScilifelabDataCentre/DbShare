@@ -115,7 +115,7 @@ def register():
                                          recipients=emails)
             url = flask.url_for('.profile',
                                 username=user['username'],
-                                external=True)
+                                _external=True)
             message.body = f"To enable the user account, go to {url}"
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
