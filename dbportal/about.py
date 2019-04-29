@@ -1,6 +1,7 @@
 "About endpoints."
 
 import sqlite3
+import sys
 
 import flask
 import flask_mail
@@ -29,7 +30,10 @@ def endpoints():
 def software():
     "Display software in system with links and version info."
     config = flask.current_app.config
+    v = sys.version_info
     data = [('DbPortal', config['DBPORTAL_URL'], config['VERSION']),
+            ('Python', 'https://www.python.org/',
+             f"{v.major}.{v.minor}.{v.micro}"),
             ('Sqlite3', config['SQLITE3_URL'], sqlite3.version),
             ('Flask', config['FLASK_URL'], flask.__version__),
             ('Flask-Mail',
