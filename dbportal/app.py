@@ -28,7 +28,7 @@ import dbportal.visual
 from dbportal import constants
 from dbportal import utils
 
-ROOT_DIR = os.path.dirname(__file__)
+ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Configurable values; the file 'config.json' is read to change these.
 CONFIG = dict(
@@ -109,14 +109,15 @@ try:
     app.config.from_json(filepath)
     # Raises an error if filepath variable defined, but no such file.
 except KeyError:
-    for filepath in ['config.json', '../site/config.json']:
+    for filepath in [os.path.normpath(os.path.join(ROOT_DIR, 'config.json')),
+                     os.path.normpath(os.path.join(ROOT_DIR, '../site/config.json'))]:
         try:
             app.config.from_json(filepath)
         except FileNotFoundError:
             filepath = None
         else:
             break
-if filepath: print('   Configuration file:', filepath)
+if filepath: print(' > Configuration file:', filepath)
 
 # Sanity check configuration.
 assert app.config['SECRET_KEY']
