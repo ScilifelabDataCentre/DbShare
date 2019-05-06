@@ -886,31 +886,29 @@ class DbContext:
         Return False if no metadata (i.e. not a DbPortal file), else True.
         Raises ValueError or sqlite3.Error if any problem.
         """
-        cursor = self.dbcnx.cursor()
         sql = f"SELECT COUNT(*) FROM {constants.TABLES}"
-        cursor.execute(sql)
-        if cursor.fetchone()[0] == 0: return False # No metadata; skip.
-        sql = "SELECT name FROM %s" % constants.TABLES
-        cursor.execute(sql)
-        tables1 = set([row[0] for row in cursor])
+        if self.dbcnx.execute(sql).fetchone()[0] == 0:
+            return False # No metadata; skip.
+        sql = f"SELECT name FROM {constants.TABLES}"
+        tables1 = [r[0].lower() for r in self.dbcnx.execute(sql).fetchall()]
         sql = "SELECT name FROM sqlite_master WHERE type=?"
-        cursor.execute(sql, ('table',))
-        # Ignore metadata tables and sqlite statistics tables, if any.
-        tables2 = [r[0].lower() for r in cursor if not r[0].startswith('_')]
-        tables2 = set([n for n in tables2 if not n.startswith('sqlite_')])
-        if tables1 != tables2:
+        tables2 = [r[0].lower() 
+                   for r in self.dbcnx.execute(sql, ('table',)).fetchall()]
+        # Do not consider metadata tables and sqlite statistics tables, if any.
+        tables2 = [n for n in tables2 if not n.startswith('_')]
+        tables2 = [n for n in tables2 if not n.startswith('sqlite_')]
+        if set(tables1) != set(tables2):
             raise ValueError('corrupt metadata in DbPortal Sqlite3 file')
         # Does the index metatable exist?
-        sql = "SELECT name, schema FROM %s" % constants.INDEXES
-        cursor.execute(sql)
+        sql = f"SELECT name, schema FROM {constants.INDEXES}"
+        self.dbcnx.execute(sql)
         # Does the views metatable exist?
-        sql = "SELECT name, schema FROM %s" % constants.VIEWS
-        cursor.execute(sql)
+        sql = f"SELECT name, schema FROM {constants.VIEWS}"
+        self.dbcnx.execute(sql)
         # Fix the data URLs in the visuals.
-        sql = "SELECT name, spec FROM %s" % constants.VISUALS
-        cursor.execute(sql)
+        sql = f"SELECT name, spec FROM {constants.VISUALS}"
         visuals = [{'name': row[0], 'spec': json.loads(row[1])}
-                   for row in cursor]
+                   for row in self.dbcnx.execute(sql)]
         # Update the data URLs in the visuals.
         new_root = flask.url_for('home', _external=True).rstrip('/')
         # Identify the old URL root from a data url in a visual spec.
@@ -936,9 +934,10 @@ class DbContext:
                         dpath.util.set(visual['spec'], path, href)
                         break
         with self.dbcnx:
-            sql = "UPDATE %s SET spec=? WHERE name=?" % constants.VISUALS
+            sql = f"UPDATE {constants.VISUALS} SET spec=? WHERE name=?"
             for visual in visuals:
-                cursor.execute(sql, (json.dumps(visual['spec']),visual['name']))
+                self.dbcnx.execute(sql, (json.dumps(visual['spec']),
+                                         visual['name']))
         return True
 
     def infer_metadata(self):
