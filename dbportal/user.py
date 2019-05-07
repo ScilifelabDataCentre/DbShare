@@ -38,6 +38,7 @@ def admin_required(f):
 
 
 blueprint = flask.Blueprint('user', __name__)
+api_blueprint = flask.Blueprint('api_user', __name__)
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -224,6 +225,20 @@ def profile(username):
             return flask.redirect(flask.url_for('.users'))
         else:
             return flask.redirect(flask.url_for('home'))
+
+@api_blueprint.route('/profile/<name:username>')
+@login_required
+def api_profile(username):
+    "Return the profile of the given user."
+    import dbportal.template
+    user = get_user(username=username)
+    if user is None:
+        abort(404)
+    if not is_admin_or_self(user):
+        abort(401)
+    data = {'$id': flask.request.url,
+            'username': user['username']}
+    flask.jsonify(data)
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required

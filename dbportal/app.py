@@ -150,7 +150,6 @@ dbportal.system.init(app)
 utils.mail.init_app(app)
 
 # Set the URL map.
-app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbportal.db.blueprint, url_prefix='/db')
 app.register_blueprint(dbportal.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbportal.table.blueprint, url_prefix='/table')
@@ -162,10 +161,13 @@ app.register_blueprint(dbportal.template.blueprint, url_prefix='/template')
 app.register_blueprint(dbportal.templates.blueprint, url_prefix='/templates')
 app.register_blueprint(dbportal.vega.blueprint, url_prefix='/vega')
 app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
+app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbportal.about.blueprint, url_prefix='/about')
 
 app.register_blueprint(dbportal.db.api_blueprint, url_prefix='/api/v1/db')
+app.register_blueprint(dbportal.dbs.api_blueprint, url_prefix='/api/v1/dbs')
 app.register_blueprint(dbportal.table.api_blueprint, url_prefix='/api/v1/table')
+app.register_blueprint(dbportal.user.api_blueprint, url_prefix='/api/v1/user')
 
 @app.context_processor
 def setup_template_context():
@@ -242,6 +244,20 @@ def home():
     "Home page; display the list of public databases."
     return flask.render_template('home.html',
                                  dbs=dbportal.db.get_dbs(public=True))
+
+@app.route('/api/v1')
+def api_home():
+    "API home resource; links to other resources."
+    items = {'title': 'DbPortal', 
+             'version': CONFIG['VERSION'],
+             'databases': {'public': utils.url_for('api_dbs.api_public')}}
+    if flask.g.current_user:
+        items['databases']['owner'] = utils.url_for(
+            'api_dbs.api_owner',
+            username=flask.g.current_user['username'])
+    if flask.g.is_admin:
+        items['databases']['all'] = utils.url_for('api_dbs.api_all')
+    return flask.jsonify(utils.get_api(**items))
 
 
 # This code is used only during testing.

@@ -79,15 +79,9 @@ def dbpath(dbname, dirpath=None):
 def url_for_rows(db, schema, external=False, csv=False):
     "Return the URL for the rows of the table or view."
     if schema['type'] == constants.TABLE:
-        url = flask.url_for('table.rows',
-                            dbname=db['name'],
-                            tablename=schema['name'],
-                            _external=external)
+        url = url_for('table.rows', dbname=db['name'], tablename=schema['name'])
     else:
-        url = flask.url_for('view.rows',
-                            dbname=db['name'],
-                            viewname=schema['name'],
-                            _external=external)
+        url = url_for('view.rows', dbname=db['name'], viewname=schema['name'])
     if csv:
         url += '.csv'
     return url
@@ -152,6 +146,18 @@ def name_after_as(name):
     except ValueError:
         pass
     return name.strip().strip('"')
+
+def url_for(endpoint, **values):
+    "Same as 'flask.url_for', but with '_external' set to True."
+    return flask.url_for(endpoint, _external=True, **values)
+
+def get_api(**items):
+    "Return the standard JSON structure with additional items."
+    result = {'$id': flask.request.url,
+              'timestamp': get_time()}
+    result.update(items)
+    result['links'] = {'home': url_for('api_home')}
+    return result
 
 def http_GET():
     "Is the HTTP method GET?"
