@@ -18,7 +18,6 @@ def public():
     return flask.render_template('templates/public.html', templates=templates)
 
 @blueprint.route('/all')
-@dbportal.user.login_required
 @dbportal.user.admin_required
 def all():
     "Display the list of public viztemplates."

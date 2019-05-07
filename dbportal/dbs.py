@@ -50,22 +50,23 @@ def api_public():
                  
 
 @blueprint.route('/all')
-@dbportal.user.login_required
 @dbportal.user.admin_required
 def all():
     "Display the list of all databases."
     dbs = dbportal.db.get_dbs()
     return flask.render_template('dbs/all.html',
                                  dbs=dbs,
-                                 usage=sum([db['size'] for db in dbs]))
+                                 total_size=sum([db['size'] for db in dbs]))
 
 @api_blueprint.route('/all')
-@dbportal.user.login_required
 @dbportal.user.admin_required
 def api_all():
     "Return the list of all databases."
-    return flask.jsonify(utils.get_api(title='All databases',
-                                       databases=dbportal.db.get_dbs()))
+    dbs = dbportal.db.get_dbs()
+    return flask.jsonify(
+        utils.get_api(title='All databases',
+                      total_size=sum([db['size'] for db in dbs]),
+                      databases=get_api_dbs(dbs)))
 
 @blueprint.route('/owner/<name:username>')
 @dbportal.user.login_required
@@ -74,8 +75,10 @@ def owner(username):
     if not access(username):
         flask.flash("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
+    dbs = dbportal.db.get_dbs(owner=username)
     return flask.render_template('dbs/owner.html',
-                                 dbs=dbportal.db.get_dbs(owner=username),
+                                 dbs=dbs,
+                                 total_size=sum([db['size'] for db in dbs]),
                                  username=username)
 
 @api_blueprint.route('/owner/<name:username>')
@@ -86,8 +89,9 @@ def api_owner(username):
         return flask.abort(401)
     dbs = dbportal.db.get_dbs(owner=username)
     result = utils.get_api(title="User's databases",
+                           total_size=sum([db['size'] for db in dbs]),
                            databases=get_api_dbs(dbs))
-    result['links']['user'] = flask.url_for('api_user.api_profile',
+    result['links']['user'] = utils.url_for('api_user.api_profile',
                                             username=username)
     return flask.jsonify(result)
 
@@ -99,6 +103,10 @@ def get_api_dbs(dbs):
     "Return a JSON-formatted databases list."
     return [{'name': db['name'],
              'title': db.get('title'),
-             'href': flask.url_for('api_db.api_home',
-                                   dbname=db['name'], _external=True)}
+             'owner': db['owner'],
+             'public': db['public'],
+             'readonly': db['readonly'],
+             'size': db['size'],
+             'modified': db['modified'],
+             'href': utils.url_for('api_db.api_home', dbname=db['name'])}
             for db in dbs]

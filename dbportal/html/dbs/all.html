@@ -2,10 +2,11 @@
 
 {% block head_title %}All databases{% endblock %}
 
-{% block body_title %}All databases
+{% block body_title %}
+All databases
 <small class="text-muted">
-  Total size
-  <span class="text-monospace">{{ usage|filesizeformat }}</span>
+  total size
+  <span class="text-monospace">{{ total_size|filesizeformat }}</span>
 </small>
 {% endblock %}
 
@@ -42,15 +43,14 @@
     {% endfor %}
   </tbody>
 </table>
-{% endblock %}
+{% endblock %} {# block main #}
 
-{% block actions %}
-<div class="mt-2">
-  <a href="{{ url_for('dbs.public') }}"
-     role="button" class="btn btn-primary btn-block">
-    Public databases</a>
+{% block meta %}
+<div>
+  <a href="{{ url_for('api_dbs.api_all') }}"
+     class="badge badge-pill badge-dark">JSON</a>
 </div>
-{% endblock %}
+{% endblock %} {# block meta #}
 
 {% block javascript %}
 <script>
@@ -61,4 +61,4 @@
     });
   });
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

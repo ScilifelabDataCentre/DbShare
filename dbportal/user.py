@@ -114,9 +114,7 @@ def register():
             site = flask.current_app.config['SITE_NAME']
             message = flask_mail.Message(f"{site} user account pending",
                                          recipients=emails)
-            url = flask.url_for('.profile',
-                                username=user['username'],
-                                _external=True)
+            url = utils.url_for('.profile', username=user['username'])
             message.body = f"To enable the user account, go to {url}"
             utils.mail.send(message)
             flask.flash('User account created; an email will be sent when'
@@ -148,10 +146,9 @@ def send_password_code(user, action):
     site = flask.current_app.config['SITE_NAME']
     message = flask_mail.Message(f"{site} user account {action}",
                                  recipients=[user['email']])
-    url = flask.url_for('.password',
+    url = utils.url_for('.password',
                         username=user['username'],
-                        code=user['password'][len('code:'):],
-                        _external=True)
+                        code=user['password'][len('code:'):])
     message.body = f"To set your password, go to {url}"
     utils.mail.send(message)
 
@@ -312,7 +309,6 @@ def edit(username):
             flask.url_for('.profile', username=user['username']))
 
 @blueprint.route('/users')
-@login_required
 @admin_required
 def users():
     "Display list of all users."
@@ -341,7 +337,6 @@ def users():
     return flask.render_template('user/users.html', users=users)
 
 @blueprint.route('/enable/<name:username>', methods=['POST'])
-@login_required
 @admin_required
 def enable(username):
     "Enable the given user account."
@@ -356,7 +351,6 @@ def enable(username):
     return flask.redirect(flask.url_for('.profile', username=username))
 
 @blueprint.route('/disable/<name:username>', methods=['POST'])
-@login_required
 @admin_required
 def disable(username):
     "Disable the given user account."
