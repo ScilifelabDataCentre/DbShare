@@ -118,7 +118,11 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
 def api_home(dbname):
     "List the database tables, views and metadata. Delete the database."
     if utils.http_GET():
-        raise NotImplementedError
+        try:
+            db = get_check_read(str(dbname), nrows=True)
+        except ValueError as error:
+            flask.abort(404, message=str(error))
+        return flask.jsonify(utils.get_api(**get_db_json(db, complete=True)))
     elif utils.http_POST():
         raise NotImplementedError
     elif utils.http_DELETE():
@@ -1335,3 +1339,57 @@ def delete_database(dbname):
     except FileNotFoundError:
         pass
 
+def get_db_json(db, complete=False):
+    "Return JSON-formatted data for the database."
+    result = {'name': db['name'],
+              'title': db.get('title'),
+              'owner': db['owner'],
+              'public': db['public'],
+              'readonly': db['readonly'],
+              'size': db['size'],
+              'modified': db['modified'],
+              'created': db['created']}
+    if complete:
+        result['tables'] = {}
+        for tablename, table in db['tables'].items():
+            visuals = {}
+            for visual in db['visuals'].get(tablename, []):
+                url = utils.url_for('visual.display',
+                                    dbname=db['name'],
+                                    visualname=visual['name'])
+                visuals[visual['name']] = {
+                    'title': visual.get('title'),
+                    'spec': {'href': url + '.json'},
+                    'display': {'href': url, 'format': 'html'}}
+            url = utils.url_for('table.rows',
+                                dbname=db['name'],
+                                tablename=tablename)
+            result['tables'][tablename] = {
+                'title': table.get('title'),
+                'nrows': table['nrows'],
+                'rows': {'href': url + '.json'},
+                'data': {'href': url + '.csv', 'format': 'csv'},
+                'display': {'href': url, 'format': 'html'},
+                'visualizations': visuals}
+        result['views'] = {}
+        for viewname, view in db['views'].items():
+            visuals = {}
+            for visual in db['visuals'].get(viewname, []):
+                url = utils.url_for('visual.display',
+                                    dbname=db['name'],
+                                    visualname=visual['name'])
+                visuals[visual['name']] = {
+                    'title': visual.get('title'),
+                    'spec': url + '.json',
+                    'display': {'href': url, 'format': 'html'}}
+            url = utils.url_for('view.rows',
+                                dbname=db['name'],
+                                viewname=viewname)
+            result['views'][viewname] = {
+                'title': view.get('title'),
+                'nrows': view['nrows'],
+                'rows': {'href': url + '.json'},
+                'data': {'href': url + '.csv', 'format': 'csv'},
+                'display': {'href': url, 'format': 'html'},
+                'visualizations': visuals}
+    return result

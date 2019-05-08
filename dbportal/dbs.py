@@ -45,7 +45,10 @@ def api_public():
     "Return the list of public databases."
     dbs = dbportal.db.get_dbs(public=True)
     result = utils.get_api(title='Public databases',
-                           databases=get_api_dbs(dbs))
+                           databases=get_api_dbs(dbs),
+                           links={'display':
+                                  {'href': utils.url_for('dbs.public'),
+                                   'format': 'html'}})
     return flask.jsonify(result)
                  
 
@@ -63,10 +66,13 @@ def all():
 def api_all():
     "Return the list of all databases."
     dbs = dbportal.db.get_dbs()
-    return flask.jsonify(
-        utils.get_api(title='All databases',
-                      total_size=sum([db['size'] for db in dbs]),
-                      databases=get_api_dbs(dbs)))
+    result = utils.get_api(title='All databases',
+                           total_size=sum([db['size'] for db in dbs]),
+                           databases=get_api_dbs(dbs),
+                           links={'display':
+                                  {'href': utils.url_for('dbs.all'),
+                                   'format': 'html'}})
+    return flask.jsonify(result)
 
 @blueprint.route('/owner/<name:username>')
 @dbportal.user.login_required
@@ -89,10 +95,15 @@ def api_owner(username):
         return flask.abort(401)
     dbs = dbportal.db.get_dbs(owner=username)
     result = utils.get_api(title="User's databases",
+                           user={'username': username,
+                                 'href': utils.url_for('api_user.api_profile',
+                                                       username=username)},
                            total_size=sum([db['size'] for db in dbs]),
-                           databases=get_api_dbs(dbs))
-    result['links']['user'] = utils.url_for('api_user.api_profile',
-                                            username=username)
+                           databases=get_api_dbs(dbs),
+                           links={'display':
+                                  {'href': utils.url_for('dbs.owner',
+                                                         username=username),
+                                   'format': 'html'}})
     return flask.jsonify(result)
 
 def access(username):
@@ -100,13 +111,10 @@ def access(username):
     return flask.g.is_admin or flask.g.current_user['username'] == username
 
 def get_api_dbs(dbs):
-    "Return a JSON-formatted databases list."
-    return [{'name': db['name'],
-             'title': db.get('title'),
-             'owner': db['owner'],
-             'public': db['public'],
-             'readonly': db['readonly'],
-             'size': db['size'],
-             'modified': db['modified'],
-             'href': utils.url_for('api_db.api_home', dbname=db['name'])}
-            for db in dbs]
+    "Return a JSON-formatted databases map."
+    result = {}
+    for db in dbs:
+        data = dbportal.db.get_db_json(db)
+        data['href'] = utils.url_for('api_db.api_home', dbname=db['name'])
+        result[db['name']] = data
+    return result

@@ -156,7 +156,7 @@ def get_api(**items):
     result = {'$id': flask.request.url,
               'timestamp': get_time()}
     result.update(items)
-    result['links'] = {'home': url_for('api_home')}
+    result.setdefault('links', {})['home'] = {'href': url_for('api_home')}
     return result
 
 def http_GET():

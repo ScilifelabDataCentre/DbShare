@@ -250,13 +250,19 @@ def api_home():
     "API home resource; links to other resources."
     items = {'title': 'DbPortal', 
              'version': CONFIG['VERSION'],
-             'databases': {'public': utils.url_for('api_dbs.api_public')}}
+             'databases': {
+                 'public': {'href': utils.url_for('api_dbs.api_public')}
+             }
+    }
     if flask.g.current_user:
-        items['databases']['owner'] = utils.url_for(
-            'api_dbs.api_owner',
-            username=flask.g.current_user['username'])
+        items['databases']['owner'] = {
+            'href': utils.url_for('api_dbs.api_owner',
+                                  username=flask.g.current_user['username'])}
     if flask.g.is_admin:
-        items['databases']['all'] = utils.url_for('api_dbs.api_all')
+        items['databases']['all'] = {
+            'href': utils.url_for('api_dbs.api_all')}
+    items['links'] = {'display': {'href': utils.url_for('home'),
+                                  'format': 'html'}}
     return flask.jsonify(utils.get_api(**items))
 
 
