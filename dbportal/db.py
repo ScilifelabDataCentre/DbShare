@@ -78,27 +78,24 @@ def home(dbname):               # NOTE: dbname is a NameExt instance!
             data = {'$id': flask.request.url}
             data.update(db)
             for table in data['tables'].values():
-                url = flask.url_for('table.rows',
+                url = utils.url_for('table.rows',
                                     dbname=db['name'],
-                                    tablename=table['name'],
-                                    _external=True)
+                                    tablename=table['name'])
                 table['rows'] = [{'href': url, 'format': 'html'},
                                  {'href': url + '.csv', 'format': 'csv'},
                                  {'href': url + '.json', 'format': 'json'}]
             for view in data['views'].values():
-                url = flask.url_for('view.rows',
+                url = utils.url_for('view.rows',
                                     dbname=db['name'],
-                                    viewname=view['name'],
-                                    _external=True)
+                                    viewname=view['name'])
                 view['rows'] = [{'href': url, 'format': 'html'},
                                 {'href': url + '.csv', 'format': 'csv'},
                                 {'href': url + '.json', 'format': 'json'}]
             for visuallist in data['visuals'].values():
                 for visual in visuallist:
-                    url = flask.url_for('visual.display',
+                    url = utils.url_for('visual.display',
                                         dbname=db['name'],
-                                        visualname=visual['name'],
-                                        _external=True)
+                                        visualname=visual['name'])
                     visual['display'] = [
                         {'href': url, 'format': 'html'},
                         {'href': url + '.json', 'format': 'json'}]
@@ -652,25 +649,21 @@ class DbContext:
         """When renaming or cloning the database,
         the data URLs of visual specs must be updated.
         """
-        old_table_url = flask.url_for('table.rows',
+        old_table_url = utils.url_for('table.rows',
                                       dbname=old_dbname, 
-                                      tablename='x',
-                                      _external=True)
+                                      tablename='x')
         old_table_url = old_table_url[:-1]
-        new_table_url = flask.url_for('table.rows',
+        new_table_url = utils.url_for('table.rows',
                                       dbname=self.db['name'],
-                                      tablename='x',
-                                      _external=True)
+                                      tablename='x')
         new_table_url = new_table_url[:-1]
-        old_view_url = flask.url_for('view.rows',
+        old_view_url = utils.url_for('view.rows',
                                      dbname=old_dbname,
-                                     viewname='x',
-                                     _external=True)
+                                     viewname='x')
         old_view_url = old_view_url[:-1]
-        new_view_url = flask.url_for('view.rows',
+        new_view_url = utils.url_for('view.rows',
                                      dbname=self.db['name'],
-                                     viewname='x',
-                                     _external=True)
+                                     viewname='x')
         new_view_url = new_view_url[:-1]
         for visual in [v for visuallist in self.db['visuals'].values()
                        for v in visuallist]:
@@ -910,7 +903,7 @@ class DbContext:
         visuals = [{'name': row[0], 'spec': json.loads(row[1])}
                    for row in self.dbcnx.execute(sql)]
         # Update the data URLs in the visuals.
-        new_root = flask.url_for('home', _external=True).rstrip('/')
+        new_root = utils.url_for('home').rstrip('/')
         # Identify the old URL root from a data url in a visual spec.
         old_root = None
         search = dpath.util.search
