@@ -65,8 +65,8 @@
           {% if db is defined %}
           <li class="nav-item ml-1">
             <a href="{{ url_for('db.display', dbname=db['name']) }}"
-	       role="button"
-               class="btn btn-outline-secondary">Database {{ db['name'] }}</a>
+               class="nav-link font-weight-bold active">
+	      Database {{ db['name'] }}</a>
           </li>
           {% endif %} {# if db is defined #}
 
@@ -104,7 +104,7 @@
             {% if g.current_user %}
             <a href="{{ url_for('user.profile', username=g.current_user['username']) }}"
 	       role="button"
-               class="btn btn-outline-secondary">
+               class="btn btn-outline-secondary my-2 my-sm-0">
               User {{ g.current_user['username'] }}</a>
             {% endif %}
           </li>
