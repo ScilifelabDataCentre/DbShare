@@ -14,64 +14,42 @@ from dbportal import utils
 
 blueprint = flask.Blueprint('visual', __name__)
 
-@blueprint.route('/<name:dbname>/<nameext:visualname>',
-                 methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>/<nameext:visualname>')
 def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
-    "Display the visualization. Or delete it."
-    if utils.http_GET():
-        try:
-            db = dbportal.db.get_check_read(dbname)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        try:
-            visual = dbportal.db.get_visual(db, str(visualname))
-            schema = dbportal.db.get_schema(db, visual['sourcename'])
-            dbportal.db.set_nrows(db, targets=[schema['name']])
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
-
-        if visualname.ext in (None, 'html'):
-            return flask.render_template(
-                'visual/display.html',
-                db=db,
-                schema=schema,
-                visual=visual,
-                title="Visualization {}".format(visualname),
-                has_write_access = dbportal.db.has_write_access(db))
-        elif visualname.ext == 'json':
-            data = {'$id': flask.request.url}
-            data.update(visual['spec'])
-            return flask.jsonify(data)
-        else:
-            flask.abort(406)
-
-    elif utils.http_DELETE():
-        try:
-            db = dbportal.db.get_check_write(dbname)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        try:
-            visual = dbportal.db.get_visual(db, str(visualname))
-            schema = dbportal.db.get_schema(db, visual['sourcename'])
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
-
-        try:
-            with dbportal.db.DbContext(db) as ctx:
-                ctx.delete_visual(str(visualname))
-        except sqlite3.Error as error:
-            flask.flash(str(error), 'error')
+    "Display the visualization."
+    try:
+        db = dbportal.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        visual = dbportal.db.get_visual(db, str(visualname))
+        schema = dbportal.db.get_schema(db, visual['sourcename'])
+        dbportal.db.set_nrows(db, targets=[schema['name']])
+    except ValueError as error:
+        flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
+    if visualname.ext in (None, 'html'):
+        return flask.render_template(
+            'visual/display.html',
+            db=db,
+            schema=schema,
+            visual=visual,
+            title="Visualization {}".format(visualname),
+            has_write_access = dbportal.db.has_write_access(db))
+
+    elif visualname.ext == 'json':
+        return flask.jsonify(utils.get_api(**visual['spec']))
+
+    else:
+        flask.abort(406)
+
 @blueprint.route('/<name:dbname>/<name:visualname>/edit', 
-                 methods=['GET', 'POST'])
+                 methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(dbname, visualname):
-    "Edit the visualization."
+    "Edit the visualization. Or delete it."
     try:
         db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
@@ -125,6 +103,14 @@ def edit(dbname, visualname):
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             visualname=newname))
+
+    elif utils.http_DELETE():
+        try:
+            with dbportal.db.DbContext(db) as ctx:
+                ctx.delete_visual(str(visualname))
+        except sqlite3.Error as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:visualname>/clone',
                  methods=['GET','POST'])

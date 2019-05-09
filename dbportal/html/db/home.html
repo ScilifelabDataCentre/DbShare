@@ -93,16 +93,16 @@
     </div>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block main #}
 
 {% block meta %}
 <div class="py-1">
   <div>
-    <a href="{{ url_for('.home', dbname=db['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">JSON</a>
+    <a href="{{ url_for('api_db.api_home', dbname=db['name']) }}"
+       class="badge badge-pill badge-dark">JSON</a>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block meta #}
 
 {% block actions %}
 <div class="mt-2">
@@ -211,7 +211,7 @@
 
 {% if has_write_access %}
 <div class="mt-2">
-  <form action="{{ url_for('.home', dbname=db['name']) }}"
+  <form action="{{ url_for('.edit', dbname=db['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
@@ -223,7 +223,7 @@
   </form>
 </div>
 {% endif %} {# has_write_access #}
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block info %}
 <div class="small mt-4">
@@ -256,7 +256,7 @@
     Created <span class="localtime">{{ db['created'] }}</span>
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block info #}
 
 {% block javascript %}
 <script>

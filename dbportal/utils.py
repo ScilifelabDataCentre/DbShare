@@ -153,10 +153,10 @@ def url_for(endpoint, **values):
 
 def get_api(**items):
     "Return the standard JSON structure with additional items."
-    result = {'$id': flask.request.url,
-              'timestamp': get_time()}
+    result = {'$id': flask.request.url}
     result.update(items)
-    result.setdefault('links', {})['home'] = {'href': url_for('api_home')}
+    result['home'] = {'href': url_for('api_home')}
+    result['timestamp'] = get_time()
     return result
 
 def http_GET():

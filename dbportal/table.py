@@ -36,8 +36,10 @@ def create(dbname):
     elif utils.http_POST():
         try:
             schema = {'name': flask.request.form.get('name'),
-                      'nrows': 0,
-                      'title': flask.request.form.get('title') or None}
+                      'title': flask.request.form.get('title') or None,
+                      'description': flask.request.form.get('description') or None,
+                      'nrows': 0
+            }
             schema['columns'] = []
             for n in range(flask.current_app.config['TABLE_INITIAL_COLUMNS']):
                 name = flask.request.form.get(f"column{n}name")
@@ -64,103 +66,78 @@ def create(dbname):
         else:
             return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
-@blueprint.route('/<name:dbname>/<nameext:tablename>',
-                 methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>/<nameext:tablename>')
 def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
-    "Display rows in the table. Or delete the table."
-    if utils.http_GET():
-        try:
-            db = dbportal.db.get_check_read(dbname)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        has_write_access = dbportal.db.has_write_access(db)
-        try:
-            schema = db['tables'][str(tablename)]
-        except KeyError:
-            flask.flash('no such table', 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
-        try:
-            title = schema.get('title') or "Table {}".format(tablename)
-            visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-            columns = [c['name'] for c in schema['columns']]
-            dbcnx = dbportal.db.get_cnx(dbname)
-            sql = 'SELECT rowid, %s FROM "%s"' % \
-                  (','.join([f'"{c}"' for c in columns]), tablename)
-
-            if tablename.ext in (None, 'html'):
-                limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-                if schema['nrows'] > limit:
-                    sql += f" LIMIT {limit}"
-                    utils.flash_message_limit(limit)
-                rows = utils.execute_timeout(dbcnx, sql)
-                updateable = bool([c for c in schema['columns']
-                                   if c.get('primarykey')])
-                return flask.render_template('table/rows.html', 
-                                             db=db,
-                                             schema=schema,
-                                             title=title,
-                                             rows=rows,
-                                             visuals=visuals,
-                                             updateable=updateable,
-                                             has_write_access=has_write_access)
-
-            elif tablename.ext == 'csv':
-                writer = utils.CsvWriter(header=columns)
-                try:
-                    rows = utils.execute_timeout(dbcnx, sql)
-                except SystemError:
-                    flask.abort(504) # "Gateway timeout"; least bad status code
-                writer.write_rows(rows, skip_rowid=True)
-                return flask.Response(writer.get(),
-                                      mimetype=constants.CSV_MIMETYPE)
-
-            elif tablename.ext == 'json':
-                try:
-                    rows = utils.execute_timeout(dbcnx, sql)
-                except SystemError:
-                    flask.abort(504) # "Gateway timeout"; least bad status code
-                return flask.jsonify(
-                    {'$id': flask.request.url,
-                     'title': title,
-                     'data': [dict(zip(columns, row[1:])) for row in rows]})
-            else:
-                flask.abort(406)
-
-        except (SystemError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.schema',
-                                                tablename=str(tablename)))
-
-    elif utils.http_DELETE():
-        try:
-            db = dbportal.db.get_check_write(dbname)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        try:
-            with dbportal.db.DbContext(db) as ctx:
-                ctx.delete_table(str(tablename))
-        except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+    "Display the rows in the table."
+    try:
+        db = dbportal.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    has_write_access = dbportal.db.has_write_access(db)
+    try:
+        schema = db['tables'][str(tablename)]
+    except KeyError:
+        flask.flash('no such table', 'error')
         return flask.redirect(flask.url_for('db.home', dbname=dbname))
+    try:
+        title = schema.get('title') or "Table {}".format(tablename)
+        visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
+        columns = [c['name'] for c in schema['columns']]
+        dbcnx = dbportal.db.get_cnx(dbname)
+        sql = 'SELECT rowid, %s FROM "%s"' % \
+              (','.join([f'"{c}"' for c in columns]), tablename)
 
-@api_blueprint.route('/<name:dbname>/<name:tablename>',
-                 methods=['GET', 'POST', 'DELETE'])
-def api_rows(dbname, tablename):
-    "Display rows in the table. Or delete the table."
-    if utils.http_GET():
-        raise NotImplementedError
-    elif utils.http_POST():
-        raise NotImplementedError
-    elif utils.http_DELETE():
-        raise NotImplementedError
+        if tablename.ext in (None, 'html'):
+            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+            if schema['nrows'] > limit:
+                sql += f" LIMIT {limit}"
+                utils.flash_message_limit(limit)
+            rows = utils.execute_timeout(dbcnx, sql)
+            updateable = bool([c for c in schema['columns']
+                               if c.get('primarykey')])
+            return flask.render_template('table/rows.html', 
+                                         db=db,
+                                         schema=schema,
+                                         title=title,
+                                         rows=rows,
+                                         visuals=visuals,
+                                         updateable=updateable,
+                                         has_write_access=has_write_access)
+
+        elif tablename.ext == 'csv':
+            writer = utils.CsvWriter(header=columns)
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(504) # "Gateway timeout"; least bad status code
+            writer.write_rows(rows, skip_rowid=True)
+            return flask.Response(writer.get(),
+                                  mimetype=constants.CSV_MIMETYPE)
+
+        elif tablename.ext == 'json':
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(504) # "Gateway timeout"; least bad status code
+            return flask.jsonify(utils.get_api(
+                name=tablename,
+                title=title,
+                schema={'href': 'XXX'},
+                data=[dict(zip(columns, row[1:])) for row in rows]))
+        else:
+            flask.abort(406)
+
+    except (SystemError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.schema',
+                                            tablename=str(tablename)))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
-                 methods=['GET', 'POST'])
+                 methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(dbname, tablename):
-    "Edit the table metadata."
+    "Edit the table metadata. Or delete the table."
     try:
         db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
@@ -186,6 +163,14 @@ def edit(dbname, tablename):
         return flask.redirect(flask.url_for('.schema',
                                             dbname=dbname,
                                             tablename=tablename))
+
+    elif utils.http_DELETE():
+        try:
+            with dbportal.db.DbContext(db) as ctx:
+                ctx.delete_table(str(tablename))
+        except (ValueError, sqlite3.Error) as error:
+            flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('db.home', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
 @dbportal.user.login_required
@@ -235,6 +220,23 @@ def schema(dbname, tablename):
         schema=schema,
         indexes=indexes,
         has_write_access=dbportal.db.has_write_access(db))
+
+@api_blueprint.route('/<name:dbname>/<name:tablename>')
+def api_table(dbname, tablename):
+    "The schema for a table."
+    try:
+        db = dbportal.db.get_check_read(dbname)
+    except ValueError as error:
+        flask.abort(404, message=str(error))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(404)
+    result = schema.copy()
+    result['indexes'] = [i for i in db['indexes'].values() 
+                         if i['table'] == tablename]
+    result.update(get_api_table(db, schema, reduced=True))
+    return flask.jsonify(utils.get_api(**result))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
@@ -699,3 +701,34 @@ def get_row_values_errors(columns):
             errors[column['name']] = str(error)
         values.append(value)
     return tuple(values), errors
+
+def get_api_table(db, table, reduced=False):
+    "Return the API JSON for the table."
+    if reduced:
+        result = {}
+    else:
+        result = {'name': table['name'],
+                  'title': table.get('title'),
+                  'table': {'href': utils.url_for('api_table.api_table',
+                                                  dbname=db['name'],
+                                                  tablename=table['name'])}}
+    visuals = {}
+    for visual in db['visuals'].get(table['name'], []):
+        url = utils.url_for('visual.display',
+                            dbname=db['name'],
+                            visualname=visual['name'])
+        visuals[visual['name']] = {
+            'title': visual.get('title'),
+            'spec': {'href': url + '.json'},
+            'display': {'href': url, 'format': 'html'}}
+    url = utils.url_for('table.rows',
+                        dbname=db['name'],
+                        tablename=table['name'])
+    result.update({
+        'nrows': table['nrows'],
+        'rows': {'href': url + '.json'},
+        'data': {'href': url + '.csv', 'format': 'csv'},
+        'display': {'href': url, 'format': 'html'},
+        'visualizations': visuals})
+    return result
+

@@ -119,7 +119,7 @@
   </form>
 </div>
 <div class="mt-2">
-  <form action="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
+  <form action="{{ url_for('.schema', dbname=db['name'], viewname=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

@@ -56,63 +56,20 @@ VISUALS_INDEX = dict(
 blueprint = flask.Blueprint('db', __name__)
 api_blueprint = flask.Blueprint('api_db', __name__)
 
-@blueprint.route('/<nameext:dbname>', methods=['GET', 'POST', 'DELETE'])
-def home(dbname):               # NOTE: dbname is a NameExt instance!
-    "List the database tables, views and metadata. Delete the database."
-    if utils.http_GET():
-        try:
-            db = get_check_read(str(dbname), nrows=True)
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-
-        if dbname.ext in (None, 'html'):
-            return flask.render_template(
-                'db/home.html', 
-                db=db,
-                title=db.get('title') or "Database {}".format(dbname),
-                has_write_access=has_write_access(db),
-                can_change_mode=has_write_access(db, check_mode=False))
-
-        elif dbname.ext == 'json':
-            data = {'$id': flask.request.url}
-            data.update(db)
-            for table in data['tables'].values():
-                url = utils.url_for('table.rows',
-                                    dbname=db['name'],
-                                    tablename=table['name'])
-                table['rows'] = [{'href': url, 'format': 'html'},
-                                 {'href': url + '.csv', 'format': 'csv'},
-                                 {'href': url + '.json', 'format': 'json'}]
-            for view in data['views'].values():
-                url = utils.url_for('view.rows',
-                                    dbname=db['name'],
-                                    viewname=view['name'])
-                view['rows'] = [{'href': url, 'format': 'html'},
-                                {'href': url + '.csv', 'format': 'csv'},
-                                {'href': url + '.json', 'format': 'json'}]
-            for visuallist in data['visuals'].values():
-                for visual in visuallist:
-                    url = utils.url_for('visual.display',
-                                        dbname=db['name'],
-                                        visualname=visual['name'])
-                    visual['display'] = [
-                        {'href': url, 'format': 'html'},
-                        {'href': url + '.json', 'format': 'json'}]
-            return flask.jsonify(data)
-        else:
-            flask.abort(406)
-
-    elif utils.http_DELETE():
-        try:
-            db = get_check_write(str(dbname))
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        delete_database(str(dbname))
-        return flask.redirect(
-            flask.url_for('dbs.owner',
-                          username=flask.g.current_user['username']))
+@blueprint.route('/<name:dbname>')
+def home(dbname):
+    "List the database tables, views and metadata."
+    try:
+        db = get_check_read(dbname, nrows=True)
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    return flask.render_template(
+        'db/home.html', 
+        db=db,
+        title=db.get('title') or "Database {}".format(dbname),
+        has_write_access=has_write_access(db),
+        can_change_mode=has_write_access(db, check_mode=False))
 
 @api_blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
 def api_home(dbname):
@@ -154,10 +111,10 @@ def create():
             return flask.redirect(flask.url_for('.create'))
         return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
 
-@blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(dbname):
-    "Edit the database metadata."
+    "Edit the database metadata. Or delete the database."
     try:
         db = get_check_write(dbname)
     except ValueError as error:
@@ -183,6 +140,17 @@ def edit(dbname):
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.home', dbname=db['name']))
+
+    elif utils.http_DELETE():
+        try:
+            db = get_check_write(str(dbname))
+        except ValueError as error:
+            flask.flash(str(error), 'error')
+            return flask.redirect(flask.url_for('home'))
+        delete_database(str(dbname))
+        return flask.redirect(
+            flask.url_for('dbs.owner',
+                          username=flask.g.current_user['username']))
 
 @blueprint.route('/<name:dbname>/logs')
 def logs(dbname):
@@ -1343,7 +1311,9 @@ def get_db_json(db, complete=False):
     "Return JSON-formatted data for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
-              'owner': db['owner'],
+              'owner': {'username': db['owner'],
+                        'href': utils.url_for('api_user.api_profile', 
+                                              username=db['owner'])},
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],
@@ -1352,25 +1322,8 @@ def get_db_json(db, complete=False):
     if complete:
         result['tables'] = {}
         for tablename, table in db['tables'].items():
-            visuals = {}
-            for visual in db['visuals'].get(tablename, []):
-                url = utils.url_for('visual.display',
-                                    dbname=db['name'],
-                                    visualname=visual['name'])
-                visuals[visual['name']] = {
-                    'title': visual.get('title'),
-                    'spec': {'href': url + '.json'},
-                    'display': {'href': url, 'format': 'html'}}
-            url = utils.url_for('table.rows',
-                                dbname=db['name'],
-                                tablename=tablename)
-            result['tables'][tablename] = {
-                'title': table.get('title'),
-                'nrows': table['nrows'],
-                'rows': {'href': url + '.json'},
-                'data': {'href': url + '.csv', 'format': 'csv'},
-                'display': {'href': url, 'format': 'html'},
-                'visualizations': visuals}
+            result['tables'][tablename] = dbportal.table.get_api_table(db,
+                                                                       table)
         result['views'] = {}
         for viewname, view in db['views'].items():
             visuals = {}
@@ -1392,4 +1345,5 @@ def get_db_json(db, complete=False):
                 'data': {'href': url + '.csv', 'format': 'csv'},
                 'display': {'href': url, 'format': 'html'},
                 'visualizations': visuals}
+        result['display'] = {'href': utils.url_for('db.home',dbname=db['name'])}
     return result

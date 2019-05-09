@@ -252,17 +252,29 @@ def api_home():
              'version': CONFIG['VERSION'],
              'databases': {
                  'public': {'href': utils.url_for('api_dbs.api_public')}
+             },
+             'templates': {
+                 'public': {'href': 'XXX'}
              }
     }
     if flask.g.current_user:
         items['databases']['owner'] = {
             'href': utils.url_for('api_dbs.api_owner',
-                                  username=flask.g.current_user['username'])}
+                                  username=flask.g.current_user['username'])
+        }
+        items['templates']['owner'] = {
+            'href': 'XXX'
+        }
     if flask.g.is_admin:
         items['databases']['all'] = {
-            'href': utils.url_for('api_dbs.api_all')}
+            'href': utils.url_for('api_dbs.api_all')
+        }
+        items['templates']['all'] = {
+            'href': 'XXX'
+        }
     items['links'] = {'display': {'href': utils.url_for('home'),
-                                  'format': 'html'}}
+                                  'format': 'html'}
+    }
     return flask.jsonify(utils.get_api(**items))
 
 

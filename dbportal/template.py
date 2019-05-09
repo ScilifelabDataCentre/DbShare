@@ -52,37 +52,30 @@ def create():
         return flask.redirect(flask.url_for('.view',
                                             templatename=ctx.template['name']))
 
-@blueprint.route('/<nameext:templatename>', methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<nameext:templatename>')
 def view(templatename):  # NOTE: templatename is a NameExt instance!
-    "View the viztemplate definition. Or delete it."
+    "View the viztemplate definition."
     try:
         template = get_check_read(str(templatename))
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
 
-    if utils.http_GET():
-        write_access = has_write_access(template)
-        fields = list(template['fields'].values())
-        fields.sort(key=lambda f: f['ordinal'])
+    write_access = has_write_access(template)
+    fields = list(template['fields'].values())
+    fields.sort(key=lambda f: f['ordinal'])
 
-        if templatename.ext in (None, 'html'):
-            return flask.render_template('template/view.html',
-                                         template=template,
-                                         fields=fields,
-                                         has_write_access=write_access)
-        elif templatename.ext == 'json':
-            data = {'$id': flask.request.url}
-            data.update(template)
-            return flask.jsonify(data)
+    if templatename.ext in (None, 'html'):
+        return flask.render_template('template/view.html',
+                                     template=template,
+                                     fields=fields,
+                                     has_write_access=write_access)
 
-    elif utils.http_DELETE():
-        cnx = dbportal.system.get_cnx(write=True)
-        with cnx:
-            sql = "DELETE FROM templates WHERE name=?"
-            cnx.execute(sql, (template['name'],))
-        return flask.redirect(flask.url_for('templates.owner',
-                                            username=template['owner']))
+    elif templatename.ext == 'json':
+        return flask.jsonify(utils.get_api(**template))
+
+    else:
+        flask.abort(406)
 
 @blueprint.route('/<name:templatename>/download')
 def download(templatename):
@@ -103,7 +96,7 @@ def download(templatename):
 @blueprint.route('/<name:templatename>/edit', methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(templatename):
-    "Edit the viztemplate definition. Or delete it"
+    "Edit the viztemplate definition. Or delete it."
     try:
         template = get_check_write(templatename)
     except ValueError as error:
@@ -120,6 +113,14 @@ def edit(templatename):
             ctx.set_code(flask.request.form.get('code'))
         return flask.redirect(
             flask.url_for('.view', templatename=template['name']))
+
+    elif utils.http_DELETE():
+        cnx = dbportal.system.get_cnx(write=True)
+        with cnx:
+            sql = "DELETE FROM templates WHERE name=?"
+            cnx.execute(sql, (template['name'],))
+        return flask.redirect(flask.url_for('templates.owner',
+                                            username=template['owner']))
 
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
 @dbportal.user.login_required

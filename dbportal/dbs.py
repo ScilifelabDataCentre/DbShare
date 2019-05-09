@@ -46,9 +46,8 @@ def api_public():
     dbs = dbportal.db.get_dbs(public=True)
     result = utils.get_api(title='Public databases',
                            databases=get_api_dbs(dbs),
-                           links={'display':
-                                  {'href': utils.url_for('dbs.public'),
-                                   'format': 'html'}})
+                           display={'href': utils.url_for('dbs.public'),
+                                    'format': 'html'})
     return flask.jsonify(result)
                  
 
@@ -69,16 +68,15 @@ def api_all():
     result = utils.get_api(title='All databases',
                            total_size=sum([db['size'] for db in dbs]),
                            databases=get_api_dbs(dbs),
-                           links={'display':
-                                  {'href': utils.url_for('dbs.all'),
-                                   'format': 'html'}})
+                           display={'href': utils.url_for('dbs.all'),
+                                    'format': 'html'})
     return flask.jsonify(result)
 
 @blueprint.route('/owner/<name:username>')
 @dbportal.user.login_required
 def owner(username):
     "Display the list of databases owned by the given user."
-    if not access(username):
+    if not has_access(username):
         flask.flash("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
     dbs = dbportal.db.get_dbs(owner=username)
@@ -91,22 +89,21 @@ def owner(username):
 @dbportal.user.login_required
 def api_owner(username):
     "Return the list of databases owned by the given user."
-    if not access(username):
+    if not has_access(username):
         return flask.abort(401)
     dbs = dbportal.db.get_dbs(owner=username)
-    result = utils.get_api(title="User's databases",
+    result = utils.get_api(title=f"Databases owned by {username}",
                            user={'username': username,
                                  'href': utils.url_for('api_user.api_profile',
                                                        username=username)},
                            total_size=sum([db['size'] for db in dbs]),
                            databases=get_api_dbs(dbs),
-                           links={'display':
-                                  {'href': utils.url_for('dbs.owner',
-                                                         username=username),
-                                   'format': 'html'}})
+                           display={'href': utils.url_for('dbs.owner',
+                                                          username=username),
+                                    'format': 'html'})
     return flask.jsonify(result)
 
-def access(username):
+def has_access(username):
     "May the current user access the user's list of databases?"
     return flask.g.is_admin or flask.g.current_user['username'] == username
 

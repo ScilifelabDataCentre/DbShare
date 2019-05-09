@@ -34,7 +34,7 @@
     {% endfor %}
   </tbody>
 </table>
-{% endblock %}
+{% endblock %} {# block main #}
 
 {% block meta %}
 <div class="py-1">
@@ -44,7 +44,7 @@
   </div>
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">JSON</a>
+       class="badge badge-pill badge-primary">JSON data</a>
   </div>
 </div>
 {% endblock %} {# block meta #}
@@ -103,7 +103,7 @@
      class="btn btn-primary btn-block">
     Update from file</a>
 </div>
-{% endif %}
+{% endif %} {# if updateable #}
 <div class="mt-2">
   <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
@@ -123,7 +123,7 @@
   </form>
 </div>
 <div class="mt-2">
-  <form action="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
+  <form action="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">
@@ -134,7 +134,7 @@
       Delete</button>
   </form>
 </div>
-{% endif %}
+{% endif %} {# if has_write_access #}
 {% endblock %} {# block actions #}
 
 {% block javascript %}
