@@ -68,8 +68,8 @@
 {% block meta %}
 <div class="py-1">
   <div>
-    <a href="{{ url_for('.view', templatename=template['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">JSON</a>
+    <a href="{{ url_for('api_template.api_view', templatename=template['name'])  }}"
+       class="badge badge-pill badge-dark">API JSON</a>
   </div>
 </div>
 {% endblock %} {# block meta #}

@@ -565,3 +565,8 @@ def get_current_user():
     else:
         flask.session.pop('username', None)
         return None
+
+def get_api_user(username):
+    "Get the API JSON entry for a user or owner."
+    return {'username': username,
+            'href': utils.url_for('api_user.api_profile', username=username)}

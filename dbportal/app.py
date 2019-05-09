@@ -167,6 +167,8 @@ app.register_blueprint(dbportal.about.blueprint, url_prefix='/about')
 app.register_blueprint(dbportal.db.api_blueprint, url_prefix='/api/v1/db')
 app.register_blueprint(dbportal.dbs.api_blueprint, url_prefix='/api/v1/dbs')
 app.register_blueprint(dbportal.table.api_blueprint, url_prefix='/api/v1/table')
+app.register_blueprint(dbportal.template.api_blueprint,
+                       url_prefix='/api/v1/template')
 app.register_blueprint(dbportal.user.api_blueprint, url_prefix='/api/v1/user')
 
 @app.context_processor

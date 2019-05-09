@@ -18,6 +18,7 @@ from dbportal import utils
 
 
 blueprint = flask.Blueprint('template', __name__)
+api_blueprint = flask.Blueprint('api_template', __name__)
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
@@ -52,30 +53,31 @@ def create():
         return flask.redirect(flask.url_for('.view',
                                             templatename=ctx.template['name']))
 
-@blueprint.route('/<nameext:templatename>')
-def view(templatename):  # NOTE: templatename is a NameExt instance!
+@blueprint.route('/<name:templatename>')
+def view(templatename):
     "View the viztemplate definition."
     try:
         template = get_check_read(str(templatename))
     except ValueError as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
-
     write_access = has_write_access(template)
     fields = list(template['fields'].values())
     fields.sort(key=lambda f: f['ordinal'])
+    return flask.render_template('template/view.html',
+                                 template=template,
+                                 fields=fields,
+                                 has_write_access=write_access)
 
-    if templatename.ext in (None, 'html'):
-        return flask.render_template('template/view.html',
-                                     template=template,
-                                     fields=fields,
-                                     has_write_access=write_access)
-
-    elif templatename.ext == 'json':
-        return flask.jsonify(utils.get_api(**template))
-
-    else:
-        flask.abort(406)
+@api_blueprint.route('/<name:templatename>')
+def api_view(templatename):
+    "View the viztemplate definition."
+    try:
+        template = get_check_read(str(templatename))
+    except ValueError as error:
+        flask.abort(404)
+    template['owner'] = dbportal.user.get_api_user(template['owner'])
+    return flask.jsonify(utils.get_api(**template))
 
 @blueprint.route('/<name:templatename>/download')
 def download(templatename):

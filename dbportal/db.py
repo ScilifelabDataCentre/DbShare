@@ -1311,9 +1311,7 @@ def get_db_json(db, complete=False):
     "Return JSON-formatted data for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
-              'owner': {'username': db['owner'],
-                        'href': utils.url_for('api_user.api_profile', 
-                                              username=db['owner'])},
+              'owner': dbportal.user.get_api_user(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],

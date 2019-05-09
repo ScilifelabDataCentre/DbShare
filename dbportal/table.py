@@ -707,13 +707,16 @@ def get_row_values_errors(columns):
 def get_api_table(db, table, reduced=False):
     "Return the API JSON for the table."
     if reduced:
-        result = {}
+        result = {'database': {'href': utils.url_for('api_db.api_home',
+                                                     dbname=db['name'])}
+        }
     else:
         result = {'name': table['name'],
                   'title': table.get('title'),
                   'table': {'href': utils.url_for('api_table.api_table',
                                                   dbname=db['name'],
-                                                  tablename=table['name'])}}
+                                                  tablename=table['name'])}
+        }
     visuals = {}
     for visual in db['visuals'].get(table['name'], []):
         url = utils.url_for('visual.display',
@@ -721,7 +724,7 @@ def get_api_table(db, table, reduced=False):
                             visualname=visual['name'])
         visuals[visual['name']] = {
             'title': visual.get('title'),
-            'spec': {'href': url + '.json'},
+            'specification': {'href': url + '.json'},
             'display': {'href': url, 'format': 'html'}}
     url = utils.url_for('table.rows',
                         dbname=db['name'],
