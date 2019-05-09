@@ -1,4 +1,4 @@
-"Viztemplate lists endpoints."
+"Template lists endpoints."
 
 import json
 
@@ -13,21 +13,21 @@ blueprint = flask.Blueprint('templates', __name__)
 
 @blueprint.route('/public')
 def public():
-    "Display the list of public viztemplates."
+    "Display the list of public templates."
     templates = dbportal.template.get_templates(public=True)
     return flask.render_template('templates/public.html', templates=templates)
 
 @blueprint.route('/all')
 @dbportal.user.admin_required
 def all():
-    "Display the list of public viztemplates."
+    "Display the list of public templates."
     return flask.render_template('templates/all.html',
                                  templates=dbportal.template.get_templates())
 
 @blueprint.route('/owner/<name:username>')
 @dbportal.user.login_required
 def owner(username):
-    "Display the list of viztemplates owned by the given user."
+    "Display the list of templates owned by the given user."
     if not (flask.g.is_admin or flask.g.current_user['username'] == username):
         flask.flash("you may not access the list of the user's templates")
         return flask.redirect(flask.url_for('home'))
@@ -39,7 +39,7 @@ def owner(username):
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
 def upload():
-    "Upload a viztemplate from JSON."
+    "Upload a template from JSON."
     if utils.http_GET():
         return flask.render_template('templates/upload.html')
 

@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Viztemplate {{ template['name'] }}{% endblock %}
+{% block head_title %}Template {{ template['name'] }}{% endblock %}
 
-{% block body_title %}Viztemplate {{ template['name'] }}{% endblock %}
+{% block body_title %}Template {{ template['name'] }}{% endblock %}
 
 {% block main %}
 <table class="table table-sm table-borderless">
@@ -78,7 +78,7 @@
 <div class="mt-2">
   <a href="{{ url_for('.download', templatename=template['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
-     title="Download the viztemplate definition JSON file."
+     title="Download the template definition JSON file."
      class="btn btn-outline-primary btn-block">Download</a>
 </div>
 {% if has_write_access %}
@@ -126,7 +126,7 @@
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
 	    data-toggle="tooltip" data-placement="left"
-	    title="Delete this viztemplate."
+	    title="Delete this template."
             onclick="return confirm('Really delete? Cannot be undone.')">
       Delete</button>
   </form>

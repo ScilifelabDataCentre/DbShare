@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Upload a viztemplate file{% endblock %}
+{% block head_title %}Upload a template file{% endblock %}
 
-{% block body_title %}Upload a viztemplate file{% endblock %}
+{% block body_title %}Upload a template file{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
   <div class="card-body">
     <ul class="m-2">
       <li>
-        The file must a valid DbPortal viztemplate file in JSON format.
+        The file must a valid DbPortal template file in JSON format.
       </li>
     </ul>
     <form action="{{ url_for('.upload') }}"
@@ -20,7 +20,7 @@
       <div class="form-group row">
         <div class="col-md-2 text-right">
           <label for="templatefile" class="col-form-label">
-            Viztemplate file</label>
+            Template file</label>
         </div>
         <div class="col-md-8">
           <input id="templatefile" name="templatefile"
@@ -30,7 +30,7 @@
       <div class="form-group row">
         <div class="col-md-2 text-right">
           <label for="templatename" class="col-form-label">
-            Viztemplate name</label>
+            Template name</label>
         </div>
         <div class="col-md-8">
           <input id="templatename" name="templatename"
@@ -38,11 +38,11 @@
           <small class="form-text text-muted">
             If none specified, the name in the file will be used.
             <br>
-            The viztemplate name must be unique for this site. If not,
+            The template name must be unique for this site. If not,
             an attempt will be made to add a suffix to it to make it
             unique.
             <br>
-            This means that other user's viztemplate names restrict which
+            This means that other user's template names restrict which
             name you can use.
           </small>
         </div>

@@ -40,7 +40,7 @@
               <a href="{{ url_for('dbs.public') }}" class="dropdown-item">
                 Databases</a>
               <a href="{{ url_for('templates.public') }}" class="dropdown-item">
-                Viztemplates</a>
+                Templates</a>
             </div>
           </li>
           <li class="nav-item ml-1">
@@ -49,7 +49,7 @@
           </li>
           <li>
             <a href="{{ url_for('templates.owner', username=g.current_user['username']) }}"
-               class="nav-link">My viztemplates</a>
+               class="nav-link">My templates</a>
           </li>
           {% else %} {# if g.current_user #}
           <li class="nav-item">
@@ -58,7 +58,7 @@
           </li>
           <li class="nav-item">
             <a href="{{ url_for('templates.public') }}" class="nav-link">
-              Viztemplates</a>
+              Templates</a>
           </li>
           {% endif %} {# if g.current_user #}
 
@@ -93,7 +93,7 @@
               <a class="dropdown-item" href="{{ url_for('dbs.all') }}">
                 All databases</a>
               <a class="dropdown-item" href="{{ url_for('templates.all') }}">
-                All viztemplates</a>
+                All templates</a>
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
                 All users</a>
             </div>
