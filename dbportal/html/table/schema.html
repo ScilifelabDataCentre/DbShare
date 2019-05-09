@@ -77,7 +77,16 @@
     {% endif %}
   </div>
 </div>
-{% endblock %}
+{% endblock %} {# block main #}
+
+{% block meta %}
+<div class="py-1">
+  <div>
+    <a href="{{ url_for('api_table.api_table', dbname=db['name'], tablename=schema['name']) }}"
+       class="badge badge-pill badge-dark">JSON API</a>
+  </div>
+</div>
+{% endblock %} {# block meta #}
 
 {% block actions %}
 <div class="mt-2">
@@ -99,7 +108,7 @@
     Create index</a>
 </div>
 {% endif %}
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
@@ -107,4 +116,4 @@
     $('[data-toggle="tooltip"]').tooltip()
   })
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

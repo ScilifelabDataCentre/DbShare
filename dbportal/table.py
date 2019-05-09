@@ -121,9 +121,11 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             except SystemError:
                 flask.abort(504) # "Gateway timeout"; least bad status code
             return flask.jsonify(utils.get_api(
-                name=tablename,
+                name=str(tablename),
                 title=title,
-                schema={'href': 'XXX'},
+                table={'href': utils.url_for('api_table.api_table',
+                                             dbname=db['name'],
+                                             tablename=str(tablename))},
                 data=[dict(zip(columns, row[1:])) for row in rows]))
         else:
             flask.abort(406)
