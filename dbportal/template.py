@@ -50,12 +50,12 @@ def create():
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create'))
-        return flask.redirect(flask.url_for('.view',
-                                            templatename=ctx.template['name']))
+        return flask.redirect(
+            flask.url_for('.display', templatename=ctx.template['name']))
 
 @blueprint.route('/<name:templatename>')
-def view(templatename):
-    "View the template definition."
+def display(templatename):
+    "Display the template definition."
     try:
         template = get_check_read(str(templatename))
     except ValueError as error:
@@ -64,14 +64,14 @@ def view(templatename):
     write_access = has_write_access(template)
     fields = list(template['fields'].values())
     fields.sort(key=lambda f: f['ordinal'])
-    return flask.render_template('template/view.html',
+    return flask.render_template('template/display.html',
                                  template=template,
                                  fields=fields,
                                  has_write_access=write_access)
 
 @api_blueprint.route('/<name:templatename>')
-def api_view(templatename):
-    "View the template definition."
+def api_display(templatename):
+    "Display the template definition."
     try:
         template = get_check_read(str(templatename))
     except ValueError as error:
@@ -114,7 +114,7 @@ def edit(templatename):
             ctx.set_title(flask.request.form.get('title'))
             ctx.set_code(flask.request.form.get('code'))
         return flask.redirect(
-            flask.url_for('.view', templatename=template['name']))
+            flask.url_for('.display', templatename=template['name']))
 
     elif utils.http_DELETE():
         cnx = dbportal.system.get_cnx(write=True)
@@ -149,7 +149,7 @@ def clone(templatename):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', name=templatename))
         return flask.redirect(
-            flask.url_for('.view', templatename=ctx.template['name']))
+            flask.url_for('.display', templatename=ctx.template['name']))
 
 @blueprint.route('/<name:templatename>/public', methods=['POST'])
 @dbportal.user.login_required
@@ -168,7 +168,8 @@ def public(templatename):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Template set to public access.', 'message')
-    return flask.redirect(flask.url_for('.view', templatename=template['name']))
+    return flask.redirect(
+        flask.url_for('.display', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/private', methods=['POST'])
 @dbportal.user.login_required
@@ -187,7 +188,8 @@ def private(templatename):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Template public access revoked.', 'message')
-    return flask.redirect(flask.url_for('.view', templatename=template['name']))
+    return flask.redirect(
+        flask.url_for('.display', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field', methods=['GET', 'POST'])
 @dbportal.user.login_required
@@ -210,7 +212,7 @@ def field(templatename):
         except ValueError as error:
             flask.flash(str(error), 'error')
         return flask.redirect(
-            flask.url_for('.view', templatename=template['name']))
+            flask.url_for('.display', templatename=template['name']))
 
 @blueprint.route('/<name:templatename>/field/<name:fieldname>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -237,13 +239,13 @@ def field_edit(templatename, fieldname):
         except ValueError as error:
             flask.flash(str(error), 'error')
         return flask.redirect(
-            flask.url_for('.view', templatename=template['name']))
+            flask.url_for('.display', templatename=template['name']))
 
     elif utils.http_DELETE():
         with TemplateContext(template) as ctx:
             ctx.remove_field(fieldname)
         return flask.redirect(
-            flask.url_for('.view', templatename=template['name']))
+            flask.url_for('.display', templatename=template['name']))
 
 @blueprint.route('/select/<name:dbname>/<name:sourcename>',
                  methods=['GET', 'POST'])

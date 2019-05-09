@@ -57,5 +57,5 @@ def upload():
         except (TypeError, ValueError, KeyError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.upload'))
-        return flask.redirect(flask.url_for('template.view',
+        return flask.redirect(flask.url_for('template.display',
                                             templatename=ctx.template['name']))
