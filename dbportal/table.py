@@ -28,7 +28,7 @@ def create(dbname):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('table/create.html', db=db)
@@ -64,7 +64,7 @@ def create(dbname):
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>')
 def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
@@ -79,7 +79,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         schema = db['tables'][str(tablename)]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "Table {}".format(tablename)
         visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
@@ -149,7 +149,7 @@ def edit(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('table/edit.html', db=db, schema=schema)
@@ -172,7 +172,7 @@ def edit(dbname, tablename):
                 ctx.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
 @dbportal.user.login_required
@@ -188,7 +188,7 @@ def empty(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     try:
         with dbportal.db.DbContext(db) as ctx:
@@ -214,7 +214,7 @@ def schema(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
     return flask.render_template(
         'table/schema.html',
@@ -253,12 +253,12 @@ def row_insert(dbname, tablename):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('table/row_insert.html',
@@ -310,7 +310,7 @@ def row_edit(dbname, tablename, rowid):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         cursor = dbcnx.cursor()
@@ -379,12 +379,12 @@ def insert(dbname, tablename):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/insert.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert/csv', methods=['POST'])
@@ -400,12 +400,12 @@ def insert_csv(dbname, tablename):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
         try:
@@ -489,7 +489,7 @@ def update(dbname, tablename):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'].get(tablename)
         if not schema: raise ValueError('no such table')
@@ -498,7 +498,7 @@ def update(dbname, tablename):
             raise ValueError('table has no primary key')
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/update.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update/csv', methods=['POST'])
@@ -515,7 +515,7 @@ def update_csv(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         recpos = None
         delimiter = flask.request.form.get('delimiter') or 'comma'
@@ -589,12 +589,12 @@ def clone(dbname, tablename):
         dbportal.db.check_quota()
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('table/clone.html',
@@ -637,7 +637,7 @@ def download(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/download.csv')
@@ -652,7 +652,7 @@ def download_csv(dbname, tablename):
         schema = db['tables'][tablename]
     except KeyError:
         flask.flash('no such table', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
         try:

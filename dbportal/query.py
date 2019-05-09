@@ -13,8 +13,8 @@ from dbportal import utils
 blueprint = flask.Blueprint('query', __name__)
 
 @blueprint.route('/<name:dbname>')
-def home(dbname):
-    "Create a query for the database."
+def define(dbname):
+    "Define a query of the database."
     try:
         db = dbportal.db.get_check_read(dbname, nrows=True)
     except ValueError as error:
@@ -23,7 +23,7 @@ def home(dbname):
     has_write_access = dbportal.db.has_write_access(db)
     query = get_query_from_request(check=False)
     cnx = dbportal.db.get_cnx(dbname)
-    return flask.render_template('query/home.html',
+    return flask.render_template('query/define.html',
                                  db=db,
                                  query=query,
                                  has_write_access=has_write_access)
@@ -59,7 +59,7 @@ def rows(dbname):
             columns = query['columns']
     except (KeyError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname, **query))
+        return flask.redirect(flask.url_for('.define', dbname=dbname, **query))
     return flask.render_template('query/rows.html',
                                  db=db,
                                  query=query,
@@ -91,7 +91,7 @@ def table(dbname):
                 ctx.add_table(schema, query=query)
         except (KeyError, SystemError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.home',
+            return flask.redirect(flask.url_for('.define',
                                                 dbname=dbname,
                                                 **query))
         return flask.redirect(

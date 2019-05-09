@@ -57,7 +57,7 @@ blueprint = flask.Blueprint('db', __name__)
 api_blueprint = flask.Blueprint('api_db', __name__)
 
 @blueprint.route('/<name:dbname>')
-def home(dbname):
+def display(dbname):
     "List the database tables, views and metadata."
     try:
         db = get_check_read(dbname, nrows=True)
@@ -65,7 +65,7 @@ def home(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
-        'db/home.html', 
+        'db/display.html', 
         db=db,
         title=db.get('title') or "Database {}".format(dbname),
         has_write_access=has_write_access(db),
@@ -109,7 +109,7 @@ def create():
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.create'))
-        return flask.redirect(flask.url_for('.home', dbname=ctx.db['name']))
+        return flask.redirect(flask.url_for('.display', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
@@ -119,7 +119,7 @@ def edit(dbname):
         db = get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('db/edit.html', db=db)
@@ -139,7 +139,7 @@ def edit(dbname):
                     ctx.update_table_nrows(schema)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=db['name']))
+        return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
     elif utils.http_DELETE():
         try:
@@ -181,7 +181,7 @@ def upload(dbname):
         db = get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('.home', dbname=dbname))
+        return flask.redirect(flask.url_for('.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('db/upload.html', db=db)
@@ -247,7 +247,7 @@ def clone(dbname):
         db = get_db(name, complete=True)
         with DbContext(db) as ctx:
             ctx.update_spec_data_urls(dbname)
-        return flask.redirect(flask.url_for('.home', dbname=db['name']))
+        return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/download')
 def download(dbname):
@@ -277,7 +277,7 @@ def vacuum(dbname):
         dbcnx.execute(sql)
     except sqlite3.Error as error:
         flask.flash(str(error), 'error')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/analyze', methods=['POST'])
 @dbportal.user.login_required
@@ -295,7 +295,7 @@ def analyze(dbname):
         dbcnx.execute(sql)
     except sqlite3.Error as error:
         flask.flash(str(error), 'error')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
 @dbportal.user.login_required
@@ -314,7 +314,7 @@ def public(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to public access.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/private', methods=['POST'])
 @dbportal.user.login_required
@@ -333,7 +333,7 @@ def private(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database public access revoked.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
 @dbportal.user.login_required
@@ -352,7 +352,7 @@ def readwrite(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-write mode.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 @dbportal.user.login_required
@@ -371,7 +371,7 @@ def readonly(dbname):
         flask.flash(str(error), 'error')
     else:
         flask.flash('Database set to read-only mode.', 'message')
-    return flask.redirect(flask.url_for('.home', dbname=db['name']))
+    return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 
 class DbContext:
@@ -1343,5 +1343,6 @@ def get_db_json(db, complete=False):
                 'data': {'href': url + '.csv', 'format': 'csv'},
                 'display': {'href': url, 'format': 'html'},
                 'visualizations': visuals}
-        result['display'] = {'href': utils.url_for('db.home',dbname=db['name'])}
+        result['display'] = {'href': utils.url_for('db.display',
+                                                   dbname=db['name'])}
     return result

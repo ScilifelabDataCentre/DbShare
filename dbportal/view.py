@@ -65,12 +65,12 @@ def edit(dbname, viewname):
         db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('view/edit.html', db=db, schema=schema)
@@ -105,7 +105,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             schema = db['views'][str(viewname)]
         except KeyError:
             flask.flash('no such view', 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.display', dbname=dbname))
         try:
             title = schema.get('title') or "View {}".format(viewname)
             visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
@@ -179,7 +179,7 @@ def schema(dbname, viewname):
             schema = db['views'][viewname]
         except KeyError:
             flask.flash('no such view', 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.display', dbname=dbname))
         has_write_access = dbportal.db.has_write_access(db)
         sources = [dbportal.db.get_schema(db, name) for name in schema['sources']]
         # Special case: Create HTML links for sources, handling "AS" parts.
@@ -213,7 +213,7 @@ def schema(dbname, viewname):
                 ctx.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])
@@ -229,7 +229,7 @@ def clone(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('view/clone.html', db=db, schema=schema)
@@ -261,7 +261,7 @@ def download(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/csv')
@@ -276,7 +276,7 @@ def download_csv(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.flash('no such view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
         try:

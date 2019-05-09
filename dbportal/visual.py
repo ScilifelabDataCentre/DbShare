@@ -28,7 +28,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         dbportal.db.set_nrows(db, targets=[schema['name']])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if visualname.ext in (None, 'html'):
         return flask.render_template(
@@ -60,7 +60,7 @@ def edit(dbname, visualname):
         schema = dbportal.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         dbportal.db.set_nrows(db, targets=[schema['name']])
@@ -110,7 +110,7 @@ def edit(dbname, visualname):
                 ctx.delete_visual(str(visualname))
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:visualname>/clone',
                  methods=['GET','POST'])
@@ -127,7 +127,7 @@ def clone(dbname, visualname):
         schema = dbportal.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         return flask.render_template('visual/clone.html', db=db, visual=visual)
@@ -150,7 +150,7 @@ def clone(dbname, visualname):
                 ctx.add_visual(visualname, schema['name'], visual['spec'])
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('db.home', dbname=dbname))
+            return flask.redirect(flask.url_for('db.display', dbname=dbname))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,
                                             visualname=visualname))

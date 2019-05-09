@@ -32,7 +32,7 @@ def upload():
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.upload'))
-        return flask.redirect(flask.url_for('db.home', dbname=db['name']))
+        return flask.redirect(flask.url_for('db.display', dbname=db['name']))
 
 @blueprint.route('/public')
 def public():

@@ -35,7 +35,7 @@ def create(dbname, sourcename):
         schema = dbportal.db.get_schema(db, sourcename)
     except ValueError as error:
         flask.flash(str(error), 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         spec = flask.request.args.get('spec')

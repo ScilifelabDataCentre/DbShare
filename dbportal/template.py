@@ -259,7 +259,7 @@ def select(dbname, sourcename):
         schema = dbportal.db.get_schema(db, sourcename)
     except KeyError:
         flask.flash('no such table or view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         templates = get_templates(owner=flask.g.current_user['username'],
@@ -297,7 +297,7 @@ def render(templatename, dbname, sourcename):
         schema = dbportal.db.get_schema(db, sourcename)
     except KeyError:
         flask.flash('no such table or view', 'error')
-        return flask.redirect(flask.url_for('db.home', dbname=dbname))
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
         fields = list(template['fields'].values())

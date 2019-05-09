@@ -12,7 +12,7 @@
     {% for db in dbs %}
     <tr>
       <td>
-        <a href="{{ url_for('db.home', dbname=db['name']) }}" role="button"
+        <a href="{{ url_for('db.display', dbname=db['name']) }}" role="button"
 	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
           {{ db['name'] }}</a>
       </td>

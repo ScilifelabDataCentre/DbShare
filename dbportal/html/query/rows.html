@@ -34,7 +34,7 @@
 
 {% block actions %}
 <div class="mt-2">
-  <form action="{{ url_for('.home', dbname=db['name']) }}"
+  <form action="{{ url_for('.define', dbname=db['name']) }}"
         method="GET">
     <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
     <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
@@ -61,7 +61,7 @@
   </form>
 </div>
 <div class="mt-2">
-  <a href="{{ url_for('.home', dbname=db['name']) }}"
+  <a href="{{ url_for('.define', dbname=db['name']) }}"
      role="button" class="btn btn-success btn-block">New</a>
 </div>
 <div class="mt-2">
