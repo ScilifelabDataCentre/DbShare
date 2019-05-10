@@ -17,7 +17,7 @@ def define(dbname):
     "Define a query of the database."
     try:
         db = dbportal.db.get_check_read(dbname, nrows=True)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbportal.db.has_write_access(db)
@@ -34,7 +34,7 @@ def rows(dbname):
     utils.check_csrf_token()
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     query = {}
@@ -73,7 +73,7 @@ def table(dbname):
     "Create a table containing the results of the query."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 

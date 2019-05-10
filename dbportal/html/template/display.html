@@ -25,7 +25,7 @@
   <tr>
     <th class="text-right">Fields</th>
     <td class="px-4">
-      <table class="table">
+      <table class="table table-sm">
         <thead>
           <tr>
             <th>Name</th>
@@ -40,7 +40,7 @@
         </thead>
         <tbody>
           {% for field in fields %}
-          <tr>
+          <tr style="border-top-style: solid; border-width: 1px; border-color: lightgrey;">
             <th>{{ field['name'] }}</th>
             <td>{{ ', '.join(field['types']) }}</td>
             <td>{{ field['title'] or '-' }}</td>
@@ -68,8 +68,8 @@
 {% block meta %}
 <div class="py-1">
   <div>
-    <a href="{{ url_for('api_template.api_view', templatename=template['name'])  }}"
-       class="badge badge-pill badge-dark">API JSON</a>
+    <a href="{{ url_for('api_template.template', templatename=template['name'])  }}"
+       class="badge badge-pill badge-dark">API</a>
   </div>
 </div>
 {% endblock %} {# block meta #}

@@ -6,6 +6,7 @@ import dbportal.dbs
 import dbportal.user
 
 import dbportal.api_db
+import dbportal.api_user
 
 from dbportal import utils
 
@@ -42,9 +43,7 @@ def owner(username):
         return flask.abort(401)
     dbs = dbportal.dbs.get_dbs(owner=username)
     result = utils.get_api(title=f"Databases owned by {username}",
-                           user={'username': username,
-                                 'href': utils.url_for('api_user.api_profile',
-                                                       username=username)},
+                           user=dbportal.api_user.get_api(username),
                            total_size=sum([db['size'] for db in dbs]),
                            databases=get_api(dbs),
                            display={'href': utils.url_for('dbs.owner',

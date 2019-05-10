@@ -57,7 +57,7 @@ def display(templatename):
     "Display the template definition."
     try:
         template = get_check_read(str(templatename))
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
     write_access = has_write_access(template)
@@ -73,7 +73,7 @@ def download(templatename):
     "Download the template definition as a JSON file."
     try:
         template = get_check_read(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
     data = {'$id': flask.request.url}
@@ -90,7 +90,7 @@ def edit(templatename):
     "Edit the template definition. Or delete it."
     try:
         template = get_check_write(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
 
@@ -119,7 +119,7 @@ def clone(templatename):
     "Create a clone of the template."
     try:
         template = get_check_read(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
 
@@ -147,7 +147,7 @@ def public(templatename):
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
     try:
@@ -167,7 +167,7 @@ def private(templatename):
     utils.check_csrf_token()
     try:
         template = get_check_write(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
     try:
@@ -186,7 +186,7 @@ def field(templatename):
     "Add an input field to the template definition."
     try:
         template = get_check_write(templatename)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
 
@@ -212,7 +212,7 @@ def field_edit(templatename, fieldname):
         template = get_check_write(templatename)
         if fieldname not in template['fields']:
             raise ValueError('no such field in template')
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('templates.public'))
 
@@ -243,7 +243,7 @@ def select(dbname, sourcename):
     "Select a template to use for the table or view."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -263,7 +263,7 @@ def select(dbname, sourcename):
     elif utils.http_POST():
         try:
             template = get_check_read(flask.request.form.get('template'))
-        except ValueError as error:
+        except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             url = utils.url_for_rows(db, schema)
         else:
@@ -281,7 +281,7 @@ def render(templatename, dbname, sourcename):
     try:
         template = get_check_read(templatename)
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -515,10 +515,12 @@ def get_template(templatename):
 def get_check_read(templatename):
     """Get the template and check that
     the current user has read access.
-    Raise ValueError if any problem."""
+    Raise KeyError if no such template.
+    Raise ValueError if may not access.
+    """
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such template')
+        raise KeyError('no such template')
     if not has_read_access(template):
         raise ValueError('you may not read the template')
     return template
@@ -533,10 +535,12 @@ def has_read_access(template):
 def get_check_write(templatename):
     """Get the template and check that
     the current user has write access.
-    Raise ValueError if any problem."""
+    Raise KeyError if no such template.
+    Raise ValueError if may not access.
+    """
     template = get_template(templatename)
     if template is None:
-        raise ValueError('no such template')
+        raise KeyError('no such template')
     if not has_write_access(template):
         raise ValueError('you may not write the template')
     return template

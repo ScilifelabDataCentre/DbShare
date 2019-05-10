@@ -19,7 +19,7 @@
     {% for template in templates %}
     <tr>
       <th>
-        <a href="{{ url_for('template.view', templatename=template['name']) }}"
+        <a href="{{ url_for('template.display', templatename=template['name']) }}"
 	   role="button" 
 	   class="btn btn-sm btn-outline-info px-3 py-0 font-weight-bold">
           {{ template['name'] }}</a>
@@ -33,6 +33,13 @@
   </tbody>
 </table>
 {% endblock %} {# block main #}
+
+{% block meta %}
+<div>
+  <a href="{{ url_for('api_templates.owner', username=username) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block meta #}
 
 {% block actions %}
 <div class="mt-2">

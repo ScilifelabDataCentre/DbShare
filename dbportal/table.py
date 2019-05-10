@@ -20,7 +20,7 @@ def create(dbname):
     "Create a table with columns in the database."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -70,7 +70,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     "Display the rows in the table."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbportal.db.has_write_access(db)
@@ -142,7 +142,7 @@ def edit(dbname, tablename):
     "Edit the table metadata. Or delete the table."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -181,7 +181,7 @@ def empty(dbname, tablename):
     utils.check_csrf_token()
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -207,7 +207,7 @@ def schema(dbname, tablename):
     "Display the schema for a table."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -229,7 +229,7 @@ def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -284,7 +284,7 @@ def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     # Do not check for quota; a loop-hole, but let it slide...
@@ -355,7 +355,7 @@ def insert(dbname, tablename):
     "Insert data from a file into the table."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -376,7 +376,7 @@ def insert_csv(dbname, tablename):
     utils.check_csrf_token()
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -465,7 +465,7 @@ def update(dbname, tablename):
     "Update the table with data from a file."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -490,7 +490,7 @@ def update_csv(dbname, tablename):
     utils.check_csrf_token()
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     # Do not check quota; update should not be a problem...
@@ -565,7 +565,7 @@ def clone(dbname, tablename):
     "Create a clone of the table."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -613,7 +613,7 @@ def download(dbname, tablename):
     "Download the rows in the table to a file."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -628,7 +628,7 @@ def download_csv(dbname, tablename):
     "Output a CSV file of the rows in the table."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:

@@ -4,6 +4,9 @@ import flask
 
 import dbportal.db
 
+from dbportal import utils
+
+
 blueprint = flask.Blueprint('api_table', __name__)
 
 @blueprint.route('/<name:dbname>/<name:tablename>')
@@ -11,8 +14,10 @@ def table(dbname, tablename):
     "The schema for a table."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
-        flask.abort(404, message=str(error))
+    except ValueError:
+        flask.abort(401)
+    except KeyError:
+        flask.abort(404)
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -20,13 +25,13 @@ def table(dbname, tablename):
     result = schema.copy()
     result['indexes'] = [i for i in db['indexes'].values() 
                          if i['table'] == tablename]
-    result.update(get_api_table(db, schema, reduced=True))
+    result.update(get_api(db, schema, reduced=True))
     return flask.jsonify(utils.get_api(**result))
 
-def get_api_table(db, table, reduced=False):
+def get_api(db, table, reduced=False):
     "Return the API JSON for the table."
     if reduced:
-        result = {'database': {'href': utils.url_for('api_db.api_home',
+        result = {'database': {'href': utils.url_for('api_db.database',
                                                      dbname=db['name'])}
         }
     else:

@@ -14,8 +14,10 @@ def database(dbname):
     if utils.http_GET():
         try:
             db = dbportal.db.get_check_read(str(dbname), nrows=True)
-        except ValueError as error:
-            flask.abort(404, message=str(error))
+        except ValueError:
+            flask.abort(401)
+        except KeyError:
+            flask.abort(404)
         return flask.jsonify(utils.get_api(**get_api(db, complete=True)))
  
     elif utils.http_POST():
@@ -28,7 +30,7 @@ def get_api(db, complete=False):
     "Return the API for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
-              'owner': dbportal.user.get_api(db['owner']),
+              'owner': dbportal.api_user.get_api(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],
@@ -37,8 +39,7 @@ def get_api(db, complete=False):
     if complete:
         result['tables'] = {}
         for tablename, table in db['tables'].items():
-            result['tables'][tablename] = \
-                dbportal.api_table.get_api_table(db, table)
+            result['tables'][tablename] = dbportal.api_table.get_api(db, table)
         result['views'] = {}
         for viewname, view in db['views'].items():
             visuals = {}
@@ -61,5 +62,6 @@ def get_api(db, complete=False):
                 'display': {'href': url, 'format': 'html'},
                 'visualizations': visuals}
         result['display'] = {'href': utils.url_for('db.display',
-                                                   dbname=db['name'])}
+                                                   dbname=db['name']),
+                             'format': 'html'}
     return result

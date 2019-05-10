@@ -60,7 +60,7 @@ def display(dbname):
     "List the database tables, views and metadata."
     try:
         db = get_check_read(dbname, nrows=True)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
@@ -102,7 +102,7 @@ def edit(dbname):
     "Edit the database metadata. Or delete the database."
     try:
         db = get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.display', dbname=dbname))
 
@@ -129,7 +129,7 @@ def edit(dbname):
     elif utils.http_DELETE():
         try:
             db = get_check_write(dbname)
-        except ValueError as error:
+        except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         delete_database(dbname)
@@ -142,7 +142,7 @@ def logs(dbname):
     "Display the logs for a database."
     try:
         db = get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     cursor = dbportal.system.get_cursor()
@@ -164,7 +164,7 @@ def upload(dbname):
     try:
         check_quota()
         db = get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.display', dbname=dbname))
 
@@ -211,7 +211,7 @@ def clone(dbname):
     try:
         check_quota()
         db = get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 
@@ -239,7 +239,7 @@ def download(dbname):
     "Download the Sqlite3 database file."
     try:
         db = get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     return flask.send_file(utils.dbpath(dbname),
@@ -253,7 +253,7 @@ def vacuum(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False) # Allow even if read-only
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -271,7 +271,7 @@ def analyze(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False) # Allow even if read-only
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -289,7 +289,7 @@ def public(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -308,7 +308,7 @@ def private(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -327,7 +327,7 @@ def readwrite(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -346,7 +346,7 @@ def readonly(dbname):
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -1176,11 +1176,12 @@ def has_read_access(db):
 def get_check_read(dbname, nrows=False, complete=True):
     """Get the database and check that the current user has read access.
     Optionally add nrows for each table and view.
-    Raise ValueError if any problem.
+    Raise KeyError if no such database.
+    Raise ValueError if may not access.
     """
     db = get_db(dbname, complete=complete)
     if db is None:
-        raise ValueError('no such database')
+        raise KeyError('no such database')
     if not has_read_access(db):
         raise ValueError('may not read the database')
     set_nrows(db, targets=nrows)
@@ -1196,11 +1197,12 @@ def has_write_access(db, check_mode=True):
 def get_check_write(dbname, check_mode=True, nrows=False, complete=True):
     """Get the database and check that the current user has write access.
     Optionally add nrows for each table and view.
-    Raise ValueError if any problem.
+    Raise KeyError if no such database.
+    Raise ValueError if may not access.
     """
     db = get_db(dbname, complete=complete)
     if db is None:
-        raise ValueError('no such database')
+        raise KeyError('no such database')
     if not has_write_access(db, check_mode=check_mode):
         raise ValueError('may not write to the database')
     set_nrows(db, targets=nrows)

@@ -37,13 +37,13 @@ def upload():
 def public():
     "Display the list of public databases."
     return flask.render_template('dbs/public.html',
-                                 dbs=dbportal.db.get_dbs(public=True))
+                                 dbs=get_dbs(public=True))
 
 @blueprint.route('/all')
 @dbportal.user.admin_required
 def all():
     "Display the list of all databases."
-    dbs = dbportal.db.get_dbs()
+    dbs = get_dbs()
     return flask.render_template('dbs/all.html',
                                  dbs=dbs,
                                  total_size=sum([db['size'] for db in dbs]))
@@ -55,7 +55,7 @@ def owner(username):
     if not has_access(username):
         flask.flash("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
-    dbs = dbportal.db.get_dbs(owner=username)
+    dbs = get_dbs(owner=username)
     return flask.render_template('dbs/owner.html',
                                  dbs=dbs,
                                  total_size=sum([db['size'] for db in dbs]),

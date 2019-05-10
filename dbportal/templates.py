@@ -15,15 +15,15 @@ blueprint = flask.Blueprint('templates', __name__)
 @blueprint.route('/public')
 def public():
     "Display the list of public templates."
-    templates = dbportal.template.get_templates(public=True)
-    return flask.render_template('templates/public.html', templates=templates)
+    return flask.render_template('templates/public.html',
+                                 templates=get_templates(public=True))
 
 @blueprint.route('/all')
 @dbportal.user.admin_required
 def all():
     "Display the list of public templates."
     return flask.render_template('templates/all.html',
-                                 templates=dbportal.template.get_templates())
+                                 templates=get_templates())
 
 @blueprint.route('/owner/<name:username>')
 @dbportal.user.login_required
@@ -32,10 +32,9 @@ def owner(username):
     if not has_access(username):
         flask.flash("you may not access the list of the user's templates")
         return flask.redirect(flask.url_for('home'))
-    return flask.render_template(
-        'templates/owner.html',
-        templates=dbportal.template.get_templates(owner=username),
-        username=username)
+    return flask.render_template('templates/owner.html',
+                                 templates=get_templates(owner=username),
+                                 username=username)
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required

@@ -19,7 +19,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
     "Display the visualization."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -52,7 +52,7 @@ def edit(dbname, visualname):
     "Edit the visualization. Or delete it."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -119,7 +119,7 @@ def clone(dbname, visualname):
     "Clone the visualization."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:

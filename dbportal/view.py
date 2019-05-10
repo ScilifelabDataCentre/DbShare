@@ -20,7 +20,7 @@ def create(dbname):
     "Create a view of the data in the database."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     viewname = flask.request.values.get('name')
@@ -64,7 +64,7 @@ def edit(dbname, viewname):
     "Edit the view. Or delete the view."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
@@ -95,7 +95,7 @@ def edit(dbname, viewname):
     elif utils.http_DELETE():
         try:
             db = dbportal.db.get_check_write(dbname)
-        except ValueError as error:
+        except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
         try:
@@ -110,7 +110,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     "Display rows in the view."
     try:
         db = dbportal.db.get_check_read(dbname, nrows=[str(viewname)])
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbportal.db.has_write_access(db)
@@ -184,7 +184,7 @@ def schema(dbname, viewname):
     "Display the schema for a view."
     try:
         db = dbportal.db.get_check_read(dbname, nrows=[viewname])
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -221,7 +221,7 @@ def clone(dbname, viewname):
     "Create a clone of the view."
     try:
         db = dbportal.db.get_check_write(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -253,7 +253,7 @@ def download(dbname, viewname):
     "Download the rows in the view to a file."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
@@ -268,7 +268,7 @@ def download_csv(dbname, viewname):
     "Output a CSV file of the rows in the view."
     try:
         db = dbportal.db.get_check_read(dbname)
-    except ValueError as error:
+    except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
     try:
