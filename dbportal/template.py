@@ -489,22 +489,6 @@ class TemplateContext:
         for ordinal, field in enumerate(fields):
             field['ordinal'] = ordinal
 
-
-def get_templates(public=None, owner=None):
-    "Get the list of templates according to criteria."
-    sql = "SELECT name FROM templates"
-    criteria = {}
-    if public is not None:
-        criteria['public=?'] = public
-    if owner:
-        criteria['owner=?'] = owner
-    if criteria:
-        sql += ' WHERE ' + ' OR '.join(criteria.keys())
-    sql += ' ORDER BY name'
-    cursor = dbportal.system.get_cursor()
-    cursor.execute(sql, tuple(criteria.values()))
-    return [get_template(row[0]) for row in cursor]
-
 def get_template(templatename):
     """Return the template for the given name.
     Return None if no such template.

@@ -64,3 +64,17 @@ def owner(username):
 def has_access(username):
     "May the current user access the user's list of databases?"
     return flask.g.is_admin or flask.g.current_user['username'] == username
+
+def get_dbs(public=None, owner=None, complete=False):
+    "Get the list of databases according to criteria."
+    sql = "SELECT name FROM dbs"
+    criteria = {}
+    if public is not None:
+        criteria['public=?'] = public
+    if owner:
+        criteria['owner=?'] = owner
+    if criteria:
+        sql += ' WHERE ' + ' OR '.join(criteria.keys())
+    cursor = dbportal.system.get_cursor()
+    cursor.execute(sql, tuple(criteria.values()))
+    return [dbportal.db.get_db(row[0], complete=complete) for row in cursor]

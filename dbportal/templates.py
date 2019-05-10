@@ -1,4 +1,4 @@
-"Template lists endpoints."
+"Template lists HTML endpoints."
 
 import json
 
@@ -6,6 +6,7 @@ import flask
 
 import dbportal.template
 import dbportal.user
+
 from dbportal import utils
 
 
@@ -28,7 +29,7 @@ def all():
 @dbportal.user.login_required
 def owner(username):
     "Display the list of templates owned by the given user."
-    if not (flask.g.is_admin or flask.g.current_user['username'] == username):
+    if not has_access(username):
         flask.flash("you may not access the list of the user's templates")
         return flask.redirect(flask.url_for('home'))
     return flask.render_template(
@@ -59,3 +60,22 @@ def upload():
             return flask.redirect(flask.url_for('.upload'))
         return flask.redirect(flask.url_for('template.display',
                                             templatename=ctx.template['name']))
+
+def has_access(username):
+    "May the current user access the user's list of templates?"
+    return flask.g.is_admin or flask.g.current_user['username'] == username
+
+def get_templates(public=None, owner=None):
+    "Get the list of templates according to criteria."
+    sql = "SELECT name FROM templates"
+    criteria = {}
+    if public is not None:
+        criteria['public=?'] = public
+    if owner:
+        criteria['owner=?'] = owner
+    if criteria:
+        sql += ' WHERE ' + ' OR '.join(criteria.keys())
+    sql += ' ORDER BY name'
+    cursor = dbportal.system.get_cursor()
+    cursor.execute(sql, tuple(criteria.values()))
+    return [dbportal.template.get_template(row[0]) for row in cursor]

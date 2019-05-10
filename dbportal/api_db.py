@@ -28,7 +28,7 @@ def get_api(db, complete=False):
     "Return the API for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
-              'owner': dbportal.user.get_api_user(db['owner']),
+              'owner': dbportal.user.get_api(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],

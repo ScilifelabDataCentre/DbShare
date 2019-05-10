@@ -11,6 +11,7 @@ import flask_mail
 import werkzeug.security
 
 import dbportal.system
+
 from dbportal import constants
 from dbportal import utils
 
@@ -295,7 +296,8 @@ def edit(username):
 @admin_required
 def users():
     "Display list of all users."
-    import dbportal.template
+    import dbportal.dbs
+    import dbportal.templates
     cursor = dbportal.system.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
@@ -311,10 +313,10 @@ def users():
               'modified':   row[8],
               'ndbs':       0,
               'size':       0,
-              'ntemplates': len(dbportal.template.get_templates(owner=row[0]))}
+              'ntemplates': len(dbportal.templates.get_templates(owner=row[0]))}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
-    for db in dbportal.db.get_dbs():
+    for db in dbportal.dbs.get_dbs():
         lookup[db['owner']]['ndbs'] += 1
         lookup[db['owner']]['size'] += db['size']
     return flask.render_template('user/users.html', users=users)

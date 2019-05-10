@@ -12,10 +12,15 @@ blueprint = flask.Blueprint('api_template', __name__)
 
 @blueprint.route('/<name:templatename>')
 def template(templatename):
-    "Display the template definition."
+    "Return the API JSON for the template."
     try:
         template = dbportal.template.get_check_read(str(templatename))
     except ValueError as error:
         flask.abort(404)
-    template['owner'] = dbportal.api_user.get_api_user(template['owner'])
-    return flask.jsonify(utils.get_api(**template))
+    return flask.jsonify(utils.get_api(**get_api(template)))
+
+def get_api(template):
+    "Return the JSON for the template."
+    result = template.copy()
+    result['owner'] = dbportal.api_user.get_api(template['owner'])
+    return result

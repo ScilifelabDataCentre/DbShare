@@ -30,6 +30,7 @@ import dbportal.api_db
 import dbportal.api_dbs
 import dbportal.api_table
 import dbportal.api_template
+import dbportal.api_templates
 import dbportal.api_user
 
 from dbportal import constants
@@ -176,6 +177,8 @@ app.register_blueprint(dbportal.api_dbs.blueprint, url_prefix='/api/v1/dbs')
 app.register_blueprint(dbportal.api_table.blueprint, url_prefix='/api/v1/table')
 app.register_blueprint(dbportal.api_template.blueprint,
                        url_prefix='/api/v1/template')
+app.register_blueprint(dbportal.api_templates.blueprint,
+                       url_prefix='/api/v1/templates')
 app.register_blueprint(dbportal.api_user.blueprint, url_prefix='/api/v1/user')
 
 @app.context_processor
@@ -252,7 +255,7 @@ def finalize(response):
 def home():
     "Home page; display the list of public databases."
     return flask.render_template('home.html',
-                                 dbs=dbportal.db.get_dbs(public=True))
+                                 dbs=dbportal.dbs.get_dbs(public=True))
 
 @app.route('/api/v1')
 def api():
@@ -263,7 +266,7 @@ def api():
                  'public': {'href': utils.url_for('api_dbs.public')}
              },
              'templates': {
-                 'public': {'href': 'XXX'}
+                 'href': utils.url_for('api_templates.public')
              },
              'display': {'href': utils.url_for('home'), 'format': 'html'}
     }
@@ -273,14 +276,15 @@ def api():
                                   username=flask.g.current_user['username'])
         }
         items['templates']['owner'] = {
-            'href': 'XXX'
+            'href': utils.url_for('api_templates.owner',
+                                  username=flask.g.current_user['username'])
         }
     if flask.g.is_admin:
         items['databases']['all'] = {
             'href': utils.url_for('api_dbs.all')
         }
         items['templates']['all'] = {
-            'href': 'XXX'
+            'href': utils.url_for('api_templates.all')
         }
     return flask.jsonify(utils.get_api(**items))
 
