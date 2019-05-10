@@ -1,4 +1,4 @@
-"User profile and login/logout endpoints."
+"User profile and login/logout HTMl endpoints."
 
 import functools
 import json
@@ -38,7 +38,6 @@ def admin_required(f):
 
 
 blueprint = flask.Blueprint('user', __name__)
-api_blueprint = flask.Blueprint('api_user', __name__)
 
 @blueprint.route('/login', methods=['GET', 'POST'])
 def login():
@@ -204,27 +203,6 @@ def profile(username):
                                  usage=usage,
                                  ntemplates=ntemplates,
                                  deletable=deletable)
-
-@api_blueprint.route('/profile/<name:username>')
-@login_required
-def api_profile(username):
-    "Return the profile of the given user."
-    import dbportal.template
-    user = get_user(username=username)
-    if user is None:
-        abort(404)
-    if not is_admin_or_self(user):
-        abort(401)
-    user.pop('password')
-    user.pop('apikey', None)
-    ndbs, usage = dbportal.db.get_usage(username)
-    user['total_size'] = usage
-    user['databases'] = {'href': utils.url_for('api_dbs.api_owner',
-                                               username=user['username'])}
-    user['display'] = {'href': utils.url_for('user.profile',
-                                             username=user['username']),
-                       'format': 'html'}
-    return flask.jsonify(utils.get_api(**user))
 
 @blueprint.route('/profile/<name:username>/logs')
 @login_required
@@ -565,8 +543,3 @@ def get_current_user():
     else:
         flask.session.pop('username', None)
         return None
-
-def get_api_user(username):
-    "Get the API JSON entry for a user or owner."
-    return {'username': username,
-            'href': utils.url_for('api_user.api_profile', username=username)}

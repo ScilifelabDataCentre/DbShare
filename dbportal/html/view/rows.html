@@ -38,11 +38,11 @@
 <div class="py-1">
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) + '.csv' }}"
-       class="badge badge-pill badge-primary">Data CSV</a>
+       class="badge badge-pill badge-primary">CSV</a>
   </div>
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">Data JSON</a>
+       class="badge badge-pill badge-primary">JSON</a>
   </div>
 </div>
 {% endblock %} {# block meta #}
@@ -119,7 +119,7 @@
   </form>
 </div>
 <div class="mt-2">
-  <form action="{{ url_for('.schema', dbname=db['name'], viewname=schema['name']) }}"
+  <form action="{{ url_for('.edit', dbname=db['name'], viewname=schema['name']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

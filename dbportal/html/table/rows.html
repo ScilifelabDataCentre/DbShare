@@ -40,11 +40,11 @@
 <div class="py-1">
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.csv' }}"
-       class="badge badge-pill badge-primary">Data CSV</a>
+       class="badge badge-pill badge-primary">CSV</a>
   </div>
   <div>
     <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">Data JSON</a>
+       class="badge badge-pill badge-primary">JSON</a>
   </div>
   <div>
     <a href="{{ url_for('api_table.api_table', dbname=db['name'], tablename=schema['name']) }}"

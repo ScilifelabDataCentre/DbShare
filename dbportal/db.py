@@ -1,4 +1,4 @@
-"Database endpoints."
+"Database HTML endpoints."
 
 import copy
 import csv
@@ -54,7 +54,6 @@ VISUALS_INDEX = dict(
 
 
 blueprint = flask.Blueprint('db', __name__)
-api_blueprint = flask.Blueprint('api_db', __name__)
 
 @blueprint.route('/<name:dbname>')
 def display(dbname):
@@ -70,20 +69,6 @@ def display(dbname):
         title=db.get('title') or "Database {}".format(dbname),
         has_write_access=has_write_access(db),
         can_change_mode=has_write_access(db, check_mode=False))
-
-@api_blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
-def api_home(dbname):
-    "List the database tables, views and metadata. Delete the database."
-    if utils.http_GET():
-        try:
-            db = get_check_read(str(dbname), nrows=True)
-        except ValueError as error:
-            flask.abort(404, message=str(error))
-        return flask.jsonify(utils.get_api(**get_db_json(db, complete=True)))
-    elif utils.http_POST():
-        raise NotImplementedError
-    elif utils.http_DELETE():
-        raise NotImplementedError
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
@@ -143,11 +128,11 @@ def edit(dbname):
 
     elif utils.http_DELETE():
         try:
-            db = get_check_write(str(dbname))
+            db = get_check_write(dbname)
         except ValueError as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))
-        delete_database(str(dbname))
+        delete_database(dbname)
         return flask.redirect(
             flask.url_for('dbs.owner',
                           username=flask.g.current_user['username']))
@@ -1306,43 +1291,3 @@ def delete_database(dbname):
         os.remove(utils.dbpath(dbname))
     except FileNotFoundError:
         pass
-
-def get_db_json(db, complete=False):
-    "Return JSON-formatted data for the database."
-    result = {'name': db['name'],
-              'title': db.get('title'),
-              'owner': dbportal.user.get_api_user(db['owner']),
-              'public': db['public'],
-              'readonly': db['readonly'],
-              'size': db['size'],
-              'modified': db['modified'],
-              'created': db['created']}
-    if complete:
-        result['tables'] = {}
-        for tablename, table in db['tables'].items():
-            result['tables'][tablename] = dbportal.table.get_api_table(db,
-                                                                       table)
-        result['views'] = {}
-        for viewname, view in db['views'].items():
-            visuals = {}
-            for visual in db['visuals'].get(viewname, []):
-                url = utils.url_for('visual.display',
-                                    dbname=db['name'],
-                                    visualname=visual['name'])
-                visuals[visual['name']] = {
-                    'title': visual.get('title'),
-                    'spec': url + '.json',
-                    'display': {'href': url, 'format': 'html'}}
-            url = utils.url_for('view.rows',
-                                dbname=db['name'],
-                                viewname=viewname)
-            result['views'][viewname] = {
-                'title': view.get('title'),
-                'nrows': view['nrows'],
-                'rows': {'href': url + '.json'},
-                'data': {'href': url + '.csv', 'format': 'csv'},
-                'display': {'href': url, 'format': 'html'},
-                'visualizations': visuals}
-        result['display'] = {'href': utils.url_for('db.display',
-                                                   dbname=db['name'])}
-    return result

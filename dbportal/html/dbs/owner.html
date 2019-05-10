@@ -60,8 +60,8 @@ Databases owned by {{ username }}
 
 {% block meta %}
 <div>
-  <a href="{{ url_for('api_dbs.api_owner', username=username) }}"
-     class="badge badge-pill badge-dark">JSON</a>
+  <a href="{{ url_for('api_dbs.owner', username=username) }}"
+     class="badge badge-pill badge-dark">API</a>
 </div>
 {% endblock %} {# block meta #}
 

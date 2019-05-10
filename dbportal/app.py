@@ -25,6 +25,13 @@ import dbportal.vega
 import dbportal.vega_lite
 import dbportal.view
 import dbportal.visual
+
+import dbportal.api_db
+import dbportal.api_dbs
+import dbportal.api_table
+import dbportal.api_template
+import dbportal.api_user
+
 from dbportal import constants
 from dbportal import utils
 
@@ -164,12 +171,12 @@ app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
 app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbportal.about.blueprint, url_prefix='/about')
 
-app.register_blueprint(dbportal.db.api_blueprint, url_prefix='/api/v1/db')
-app.register_blueprint(dbportal.dbs.api_blueprint, url_prefix='/api/v1/dbs')
-app.register_blueprint(dbportal.table.api_blueprint, url_prefix='/api/v1/table')
-app.register_blueprint(dbportal.template.api_blueprint,
+app.register_blueprint(dbportal.api_db.blueprint, url_prefix='/api/v1/db')
+app.register_blueprint(dbportal.api_dbs.blueprint, url_prefix='/api/v1/dbs')
+app.register_blueprint(dbportal.api_table.blueprint, url_prefix='/api/v1/table')
+app.register_blueprint(dbportal.api_template.blueprint,
                        url_prefix='/api/v1/template')
-app.register_blueprint(dbportal.user.api_blueprint, url_prefix='/api/v1/user')
+app.register_blueprint(dbportal.api_user.blueprint, url_prefix='/api/v1/user')
 
 @app.context_processor
 def setup_template_context():
@@ -248,20 +255,21 @@ def home():
                                  dbs=dbportal.db.get_dbs(public=True))
 
 @app.route('/api/v1')
-def api_home():
+def api():
     "API home resource; links to other resources."
     items = {'title': 'DbPortal', 
              'version': CONFIG['VERSION'],
              'databases': {
-                 'public': {'href': utils.url_for('api_dbs.api_public')}
+                 'public': {'href': utils.url_for('api_dbs.public')}
              },
              'templates': {
                  'public': {'href': 'XXX'}
-             }
+             },
+             'display': {'href': utils.url_for('home'), 'format': 'html'}
     }
     if flask.g.current_user:
         items['databases']['owner'] = {
-            'href': utils.url_for('api_dbs.api_owner',
+            'href': utils.url_for('api_dbs.owner',
                                   username=flask.g.current_user['username'])
         }
         items['templates']['owner'] = {
@@ -269,14 +277,11 @@ def api_home():
         }
     if flask.g.is_admin:
         items['databases']['all'] = {
-            'href': utils.url_for('api_dbs.api_all')
+            'href': utils.url_for('api_dbs.all')
         }
         items['templates']['all'] = {
             'href': 'XXX'
         }
-    items['links'] = {'display': {'href': utils.url_for('home'),
-                                  'format': 'html'}
-    }
     return flask.jsonify(utils.get_api(**items))
 
 

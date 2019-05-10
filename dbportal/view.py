@@ -1,4 +1,4 @@
-"View endpoints."
+"View HTML endpoints."
 
 import copy
 import sqlite3
@@ -57,10 +57,11 @@ def create(dbname):
                                             dbname=dbname,
                                             viewname=viewname))
 
-@blueprint.route('/<name:dbname>/<name:viewname>/edit', methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/<name:viewname>/edit',
+                 methods=['GET', 'POST', 'DELETE'])
 @dbportal.user.login_required
 def edit(dbname, viewname):
-    "Edit the view."
+    "Edit the view. Or delete the view."
     try:
         db = dbportal.db.get_check_write(dbname)
     except ValueError as error:
@@ -91,117 +92,6 @@ def edit(dbname, viewname):
                                                 dbname=dbname,
                                                 viewname=viewname))
 
-@blueprint.route('/<name:dbname>/<nameext:viewname>')
-def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
-    "Display rows in the view."
-    if utils.http_GET():
-        try:
-            db = dbportal.db.get_check_read(dbname, nrows=[str(viewname)])
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        has_write_access = dbportal.db.has_write_access(db)
-        try:
-            schema = db['views'][str(viewname)]
-        except KeyError:
-            flask.flash('no such view', 'error')
-            return flask.redirect(flask.url_for('db.display', dbname=dbname))
-        try:
-            title = schema.get('title') or "View {}".format(viewname)
-            visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-            if schema['query']['select'] == '*':
-                colnames = '*'
-            else:
-                colnames = ['"%s"' % c for c in schema['query']['columns']]
-            dbcnx = dbportal.db.get_cnx(dbname)
-            sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
-
-            if viewname.ext in (None, 'html'):
-                limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-                if schema['nrows'] == '?' or schema['nrows'] > limit:
-                    sql += f" LIMIT {limit}"
-                    utils.flash_message_limit(limit)
-                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
-                query = schema['query']
-                sql = dbportal.query.get_sql_query(query) # No imposed LIMIT
-                return flask.render_template('view/rows.html', 
-                                             db=db,
-                                             schema=schema,
-                                             query=query,
-                                             sql=sql,
-                                             title=title,
-                                             rows=rows,
-                                             visuals=visuals,
-                                             has_write_access=has_write_access)
-
-            elif viewname.ext == 'csv':
-                columns = [c['name'] for c in schema['columns']]
-                writer = utils.CsvWriter(header=columns)
-                try:
-                    rows = utils.execute_timeout(dbcnx, sql)
-                except SystemError:
-                    flask.abort(504) # "Gateway timeout"; least bad status code
-                writer.write_rows(rows)
-                return flask.Response(writer.get(),
-                                      mimetype=constants.CSV_MIMETYPE)
-
-            elif viewname.ext == 'json':
-                columns = [c['name'] for c in schema['columns']]
-                try:
-                    rows = utils.execute_timeout(dbcnx, sql)
-                except SystemError:
-                    flask.abort(504) # "Gateway timeout"; least bad status code
-                return flask.jsonify(utils.get_api(
-                    name=viewname,
-                    title=title,
-                    schema={'href': 'XXX'},
-                    data=[dict(zip(columns, row)) for row in rows]))
-
-            else:
-                flask.abort(406)
-
-        except (SystemError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('.schema',
-                                                viewname=str(viewname)))
-
-@blueprint.route('/<name:dbname>/<name:viewname>/schema',
-                 methods=('GET', 'POST', 'DELETE'))
-def schema(dbname, viewname):
-    "Display the schema for a view. Or delete the view."
-    if utils.http_GET():
-        try:
-            db = dbportal.db.get_check_read(dbname, nrows=[viewname])
-        except ValueError as error:
-            flask.flash(str(error), 'error')
-            return flask.redirect(flask.url_for('home'))
-        try:
-            schema = db['views'][viewname]
-        except KeyError:
-            flask.flash('no such view', 'error')
-            return flask.redirect(flask.url_for('db.display', dbname=dbname))
-        has_write_access = dbportal.db.has_write_access(db)
-        sources = [dbportal.db.get_schema(db, name) for name in schema['sources']]
-        # Special case: Create HTML links for sources, handling "AS" parts.
-        html_from = schema['query']['from']
-        for source in sources:
-            if source['type'] == constants.TABLE:
-                url = flask.url_for('table.rows',
-                                    dbname=dbname,
-                                    tablename=source['name'])
-            else:
-                url = flask.url_for('view.rows',
-                                    dbname=dbname,
-                                    viewname=source['name'])
-            html = '<a href="%s">%s</a>' % (url, source['name'])
-            html_from = html_from.replace(source['name'], html)
-        return flask.render_template('view/schema.html',
-                                     db=db,
-                                     schema=schema,
-                                     has_write_access=has_write_access,
-                                     sources=sources,
-                                     html_from=html_from)
-
     elif utils.http_DELETE():
         try:
             db = dbportal.db.get_check_write(dbname)
@@ -214,6 +104,115 @@ def schema(dbname, viewname):
         except (ValueError, sqlite3.Error) as error:
             flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<nameext:viewname>')
+def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
+    "Display rows in the view."
+    try:
+        db = dbportal.db.get_check_read(dbname, nrows=[str(viewname)])
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    has_write_access = dbportal.db.has_write_access(db)
+    try:
+        schema = db['views'][str(viewname)]
+    except KeyError:
+        flask.flash('no such view', 'error')
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+    try:
+        title = schema.get('title') or "View {}".format(viewname)
+        visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
+        if schema['query']['select'] == '*':
+            colnames = '*'
+        else:
+            colnames = ['"%s"' % c for c in schema['query']['columns']]
+        dbcnx = dbportal.db.get_cnx(dbname)
+        sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
+
+        if viewname.ext in (None, 'html'):
+            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+            if schema['nrows'] == '?' or schema['nrows'] > limit:
+                sql += f" LIMIT {limit}"
+                utils.flash_message_limit(limit)
+            rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
+            query = schema['query']
+            sql = dbportal.query.get_sql_query(query) # No imposed LIMIT
+            return flask.render_template('view/rows.html', 
+                                         db=db,
+                                         schema=schema,
+                                         query=query,
+                                         sql=sql,
+                                         title=title,
+                                         rows=rows,
+                                         visuals=visuals,
+                                         has_write_access=has_write_access)
+
+        elif viewname.ext == 'csv':
+            columns = [c['name'] for c in schema['columns']]
+            writer = utils.CsvWriter(header=columns)
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(504) # "Gateway timeout"; least bad status code
+            writer.write_rows(rows)
+            return flask.Response(writer.get(),
+                                  mimetype=constants.CSV_MIMETYPE)
+
+        elif viewname.ext == 'json':
+            columns = [c['name'] for c in schema['columns']]
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(504) # "Gateway timeout"; least bad status code
+            return flask.jsonify(utils.get_api(
+                name=str(viewname),
+                title=title,
+                api={'href': 'XXX'},
+                nrows=schema['nrows'],
+                data=[dict(zip(columns, row)) for row in rows]))
+
+        else:
+            flask.abort(406)
+
+    except (SystemError, sqlite3.Error) as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('.schema',
+                                            viewname=str(viewname)))
+
+@blueprint.route('/<name:dbname>/<name:viewname>/schema')
+def schema(dbname, viewname):
+    "Display the schema for a view."
+    try:
+        db = dbportal.db.get_check_read(dbname, nrows=[viewname])
+    except ValueError as error:
+        flask.flash(str(error), 'error')
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['views'][viewname]
+    except KeyError:
+        flask.flash('no such view', 'error')
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+    has_write_access = dbportal.db.has_write_access(db)
+    sources = [dbportal.db.get_schema(db, name) for name in schema['sources']]
+    # Special case: Create HTML links for sources, handling "AS" parts.
+    html_from = schema['query']['from']
+    for source in sources:
+        if source['type'] == constants.TABLE:
+            url = flask.url_for('table.rows',
+                                dbname=dbname,
+                                tablename=source['name'])
+        else:
+            url = flask.url_for('view.rows',
+                                dbname=dbname,
+                                viewname=source['name'])
+        html = '<a href="%s">%s</a>' % (url, source['name'])
+        html_from = html_from.replace(source['name'], html)
+    return flask.render_template('view/schema.html',
+                                 db=db,
+                                 schema=schema,
+                                 has_write_access=has_write_access,
+                                 sources=sources,
+                                 html_from=html_from)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])

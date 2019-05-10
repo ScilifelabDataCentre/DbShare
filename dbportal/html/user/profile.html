@@ -65,8 +65,8 @@
 {% block meta %}
 <div class="py-1">
   <div>
-    <a href="{{ url_for('api_user.api_profile', username=user['username']) }}"
-       class="badge badge-pill badge-dark">JSON</a>
+    <a href="{{ url_for('api_user.profile', username=user['username']) }}"
+       class="badge badge-pill badge-dark">API</a>
   </div>
 </div>
 {% endblock %} {# block meta #}

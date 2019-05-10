@@ -1,4 +1,4 @@
-"Template endpoints."
+"Template HTMl endpoints."
 
 import copy
 import json
@@ -18,7 +18,6 @@ from dbportal import utils
 
 
 blueprint = flask.Blueprint('template', __name__)
-api_blueprint = flask.Blueprint('api_template', __name__)
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbportal.user.login_required
@@ -68,16 +67,6 @@ def display(templatename):
                                  template=template,
                                  fields=fields,
                                  has_write_access=write_access)
-
-@api_blueprint.route('/<name:templatename>')
-def api_display(templatename):
-    "Display the template definition."
-    try:
-        template = get_check_read(str(templatename))
-    except ValueError as error:
-        flask.abort(404)
-    template['owner'] = dbportal.user.get_api_user(template['owner'])
-    return flask.jsonify(utils.get_api(**template))
 
 @blueprint.route('/<name:templatename>/download')
 def download(templatename):
