@@ -172,14 +172,14 @@ app.register_blueprint(dbportal.vega_lite.blueprint, url_prefix='/vega-lite')
 app.register_blueprint(dbportal.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbportal.about.blueprint, url_prefix='/about')
 
-app.register_blueprint(dbportal.api_db.blueprint, url_prefix='/api/v1/db')
-app.register_blueprint(dbportal.api_dbs.blueprint, url_prefix='/api/v1/dbs')
-app.register_blueprint(dbportal.api_table.blueprint, url_prefix='/api/v1/table')
+app.register_blueprint(dbportal.api_db.blueprint, url_prefix='/api/db')
+app.register_blueprint(dbportal.api_dbs.blueprint, url_prefix='/api/dbs')
+app.register_blueprint(dbportal.api_table.blueprint, url_prefix='/api/table')
 app.register_blueprint(dbportal.api_template.blueprint,
-                       url_prefix='/api/v1/template')
+                       url_prefix='/api/template')
 app.register_blueprint(dbportal.api_templates.blueprint,
-                       url_prefix='/api/v1/templates')
-app.register_blueprint(dbportal.api_user.blueprint, url_prefix='/api/v1/user')
+                       url_prefix='/api/templates')
+app.register_blueprint(dbportal.api_user.blueprint, url_prefix='/api/user')
 
 @app.context_processor
 def setup_template_context():
@@ -257,7 +257,7 @@ def home():
     return flask.render_template('home.html',
                                  dbs=dbportal.dbs.get_dbs(public=True))
 
-@app.route('/api/v1')
+@app.route('/api')
 def api():
     "API home resource; links to other resources."
     items = {'title': 'DbPortal', 
