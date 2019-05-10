@@ -128,7 +128,7 @@ def edit(dbname):
 
     elif utils.http_DELETE():
         try:
-            db = get_check_write(dbname)
+            get_check_write(dbname)
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('home'))

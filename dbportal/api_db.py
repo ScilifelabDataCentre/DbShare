@@ -8,23 +8,37 @@ from dbportal import utils
 
 blueprint = flask.Blueprint('api_db', __name__)
 
-@blueprint.route('/<name:dbname>', methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/<name:dbname>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def database(dbname):
-    "List the database tables, views and metadata. Delete the database."
+    """GET: List the database tables, views and metadata.
+    PUT: Create a database.
+    POST: Edit a database.
+    DELETE: Delete the database.
+    """
     if utils.http_GET():
         try:
-            db = dbportal.db.get_check_read(str(dbname), nrows=True)
+            db = dbportal.db.get_check_read(dbname, nrows=True)
         except ValueError:
             flask.abort(401)
         except KeyError:
             flask.abort(404)
         return flask.jsonify(utils.get_api(**get_api(db, complete=True)))
  
+    elif utils.http_PUT():
+        raise NotImplementedError
+ 
     elif utils.http_POST():
         raise NotImplementedError
  
     elif utils.http_DELETE():
-        raise NotImplementedError
+        try:
+            dbportal.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(401)
+        except KeyError:
+            flask.abort(404)
+        dbportal.db.delete_database(dbname)
+        flask.abort(204)
 
 def get_api(db, complete=False):
     "Return the API for the database."
