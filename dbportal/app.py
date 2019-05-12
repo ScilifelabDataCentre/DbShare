@@ -257,6 +257,8 @@ def finalize(response):
 @app.route('/')
 def home():
     "Home page; display the list of public databases."
+    if utils.accept_json():
+        return flask.redirect(flask.url_for('api'))
     return flask.render_template('home.html',
                                  dbs=dbportal.dbs.get_dbs(public=True))
 
@@ -292,7 +294,7 @@ def api():
     if flask.g.current_user:
         data['user'] = dbportal.api_user.get_api(flask.g.current_user['username'])
     result = utils.get_api(**data)
-    result.pop('api') # Redundant
+    result.pop('api')           # Remove rdundant item
     return flask.jsonify(**result)
 
 

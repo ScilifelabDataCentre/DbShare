@@ -151,6 +151,13 @@ def url_for(endpoint, **values):
     "Same as 'flask.url_for', but with '_external' set to True."
     return flask.url_for(endpoint, _external=True, **values)
 
+def accept_json():
+    "Return True if the header Accept contains the JSON content type."
+    acc = flask.request.accept_mimetypes
+    best = acc.best_match([constants.JSON_MIMETYPE, constants.HTML_MIMETYPE])
+    return best == constants.JSON_MIMETYPE and \
+        acc[best] > acc[constants.HTML_MIMETYPE]
+
 def get_api(**items):
     "Return the standard JSON structure with additional items."
     result = {'$id': flask.request.url}

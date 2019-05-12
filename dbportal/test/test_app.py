@@ -9,9 +9,11 @@ import requests
 import dbportal.schema.root
 
 
+CONFIG = {"root": "http://127.0.0.1:5000/api"}
+
 # The config file must contain 'apikey' for an admin user.
 with open('config.json') as infile:
-    CONFIG = json.load(infile)
+    CONFIG.update(json.load(infile))
 
 
 class App(unittest.TestCase):
@@ -25,6 +27,13 @@ class App(unittest.TestCase):
         "Test access to the API root."
         response = self.session.get(CONFIG['root'])
         self.assertEqual(response.status_code, 200)
+
+    def test_redirect(self):
+        "Test redirect to the API root from HTML home page."
+        url = CONFIG['root'].strip('/api')
+        response = self.session.get(url, headers={'Accept': 'application/json'})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.url, CONFIG['root'])
 
     def test_schema(self):
         "Test validity of the API root JSON."

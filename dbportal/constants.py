@@ -42,6 +42,7 @@ BLOB    = 'BLOB'
 COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
 # MIME types
+HTML_MIMETYPE = 'text/html'
 CSV_MIMETYPE  = 'text/csv'
 JSON_MIMETYPE = 'application/json'
 SQLITE3_MIMETYPE = 'application/x-sqlite3'
