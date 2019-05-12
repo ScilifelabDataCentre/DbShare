@@ -53,9 +53,9 @@ def owner(username):
 
 def get_api(dbs):
     "Return API JSON for the databases."
-    result = {}
+    result = []
     for db in dbs:
         data = dbportal.api_db.get_api(db)
         data['href'] = utils.url_for('api_db.database', dbname=db['name'])
-        result[db['name']] = data
+        result.append(data)
     return result
