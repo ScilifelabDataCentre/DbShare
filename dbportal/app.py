@@ -28,6 +28,7 @@ import dbportal.visual
 
 import dbportal.api_db
 import dbportal.api_dbs
+import dbportal.api_schema
 import dbportal.api_table
 import dbportal.api_template
 import dbportal.api_templates
@@ -79,6 +80,7 @@ CONFIG = dict(
     FLASK_URL = 'http://flask.pocoo.org/',
     JINJA2_URL = 'http://jinja.pocoo.org/docs',
     SQLITE3_URL = 'https://www.sqlite.org/',
+    JSONSCHEMA_URL = 'http://json-schema.org/draft-07/schema#',
     # Bootstrap 4.3.1
     BOOTSTRAP_SITE_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
     BOOTSTRAP_VERSION = '4.3.1',
@@ -180,6 +182,7 @@ app.register_blueprint(dbportal.api_template.blueprint,
 app.register_blueprint(dbportal.api_templates.blueprint,
                        url_prefix='/api/templates')
 app.register_blueprint(dbportal.api_user.blueprint, url_prefix='/api/user')
+app.register_blueprint(dbportal.api_schema.blueprint, url_prefix='/api/schema')
 
 @app.context_processor
 def setup_template_context():
@@ -260,33 +263,37 @@ def home():
 @app.route('/api')
 def api():
     "API home resource; links to other resources."
-    items = {'title': 'DbPortal', 
+    data = {'title': 'DbPortal', 
              'version': CONFIG['VERSION'],
              'databases': {
                  'public': {'href': utils.url_for('api_dbs.public')}
              },
              'templates': {
-                 'href': utils.url_for('api_templates.public')
+                 'public': {'href': utils.url_for('api_templates.public')}
              },
              'display': {'href': utils.url_for('home'), 'format': 'html'}
     }
     if flask.g.current_user:
-        items['databases']['owner'] = {
+        data['databases']['owner'] = {
             'href': utils.url_for('api_dbs.owner',
                                   username=flask.g.current_user['username'])
         }
-        items['templates']['owner'] = {
+        data['templates']['owner'] = {
             'href': utils.url_for('api_templates.owner',
                                   username=flask.g.current_user['username'])
         }
     if flask.g.is_admin:
-        items['databases']['all'] = {
+        data['databases']['all'] = {
             'href': utils.url_for('api_dbs.all')
         }
-        items['templates']['all'] = {
+        data['templates']['all'] = {
             'href': utils.url_for('api_templates.all')
         }
-    return flask.jsonify(utils.get_api(**items))
+    if flask.g.current_user:
+        data['user'] = dbportal.api_user.get_api(flask.g.current_user['username'])
+    result = utils.get_api(**data)
+    result.pop('api') # Redundant
+    return flask.jsonify(**result)
 
 
 # This code is used only during testing.

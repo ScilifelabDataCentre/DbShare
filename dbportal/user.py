@@ -195,7 +195,7 @@ def profile(username):
         flask.flash('access not allowed', 'error')
         return flask.redirect(flask.url_for('home'))
     ndbs, usage = dbportal.db.get_usage(username)
-    ntemplates = len(dbportal.template.get_templates(owner=username))
+    ntemplates = len(dbportal.templates.get_templates(owner=username))
     deletable = ndbs == 0 and ntemplates == 0
     return flask.render_template('user/profile.html',
                                  user=user,
