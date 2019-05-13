@@ -1,6 +1,6 @@
-# DbPortal
+# DbShare
 
-Web service to share tabular data sets in
+Web service to share tabular data sets stored in
 [Sqlite3](https://www.sqlite.org/) databases.
 Visualize with
 [Vega](https://vega.github.io/vega/) or
@@ -18,8 +18,8 @@ Visualize with
 - Rename a database.
 - Clone a database.
 - Delete a database.
-- Download the Sqlite3 file containing one database and its DbPortal metadata.
-- Upload a Sqlite3 database file (plain, or containing DbPortal metadata).
+- Download the Sqlite3 file containing one database and its DbShare metadata.
+- Upload a Sqlite3 database file (plain, or containing DbShare metadata).
 
 ## Tables
 

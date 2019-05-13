@@ -1,0 +1,13 @@
+[Unit]
+Description=Python Flask app DbShare served via uwsgi and nginx
+After=network.target
+
+[Service]
+Type=simple
+Environment=PYTHONPATH=/var/www/apps/DbShare
+WorkingDirectory=/var/www/apps/DbShare
+ExecStart=/usr/bin/scl enable rh-python36 -- uwsgi --logto /var/log/uwsgi/dbshare.log --ini site/uwsgi.ini
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
