@@ -1,8 +1,8 @@
 # DbPortal
 
-Share tabular data sets in
-[Sqlite3](https://www.sqlite.org/) databases
-Query with SQL; visualize with
+Web service to share tabular data sets in
+[Sqlite3](https://www.sqlite.org/) databases.
+Visualize with
 [Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
