@@ -1,8 +1,8 @@
 # DbPortal
 
-Upload, publish and query tabular data sets in
+Share tabular data sets in
 [Sqlite3](https://www.sqlite.org/) databases
-and visualize with
+Query with SQL; visualize with
 [Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
@@ -11,6 +11,7 @@ and visualize with
 - A database may contain tables, views, indexes and visualizations.
 - A database is owned by the user account that created it.
 - A database may be private or public.
+- A database may be read/write or read-only.
 - Databases are isolated from one another.
 - Display the tables, views, indexes and visualizations in a database.
 - Create a database.
@@ -18,7 +19,7 @@ and visualize with
 - Clone a database.
 - Delete a database.
 - Download the Sqlite3 file containing one database and its DbPortal metadata.
-- Upload a Sqlite3 database file (plain or containing DbPortal metadata).
+- Upload a Sqlite3 database file (plain, or containing DbPortal metadata).
 
 ## Tables
 
@@ -42,18 +43,18 @@ and visualize with
 ## Queries
 
 - Query the tables in a database.
+- A query is written using the Sqlite3 SQL language.
 - A query can involve only one database; cross-database queries are
   currently not possible.
-- A query is written in Sqlite3 SQL.
 - Queries are performed with the database in read-only mode, hence are secure.
-- Edit the query.
+- Edit the query and re-run it.
 - Create a view out of the query.
 
 ## Views
 
-- A view is a predefined query which can be used like a table.
+- A view is a predefined query which can be used as if it were a table.
 - Display the rows of a view.
-- Display the schema of a view.
+- Display the definition of a view.
 - List the visualizations for a view.
 - Create a view from a query.
 - Delete a view.
