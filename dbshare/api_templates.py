@@ -1,5 +1,7 @@
 "Template lists API endpoints."
 
+import http.client
+
 import flask
 
 import dbshare.templates
@@ -39,7 +41,7 @@ def all():
 def owner(username):
     "Return the list of templates owned by the given user."
     if not dbshare.templates.has_access(username):
-        return flask.abort(401)
+        return flask.abort(http.client.UNAUTHORIZED)
     templates = dbshare.templates.get_templates(owner=username)
     result = utils.get_api(title=f"Templates owned by {username}",
                            user=dbshare.api_user.get_api(username),

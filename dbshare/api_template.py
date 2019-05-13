@@ -1,5 +1,7 @@
 "Template API endpoints."
 
+import http.client
+
 import flask
 
 import dbshare.template
@@ -16,9 +18,9 @@ def template(templatename):
     try:
         template = dbshare.template.get_check_read(str(templatename))
     except ValueError:
-        flask.abort(401)
+        flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
-        flask.abort(404)
+        flask.abort(http.client.NOT_FOUND)
     return flask.jsonify(utils.get_api(**get_api(template)))
 
 def get_api(template, complete=False):

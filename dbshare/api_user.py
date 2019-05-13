@@ -1,5 +1,7 @@
 "User profile API endpoints."
 
+import http.client
+
 import flask
 
 import dbshare.template
@@ -16,9 +18,9 @@ def profile(username):
     "Return the API JSON profile of the given user."
     user = get_user(username=username)
     if user is None:
-        abort(404)
+        abort(http.client.NOT_FOUND)
     if not is_admin_or_self(user):
-        abort(401)
+        abort(http.client.UNAUTHORIZED)
     user.pop('password')
     user.pop('apikey', None)
     ndbs, total_size = dbshare.db.get_usage(username)

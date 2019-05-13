@@ -5,6 +5,7 @@
       <th>Title</th>
       <th>Mode</th>
       <th>Owner</th>
+      <th>Size (bytes)</th>
       <th>Modified</th>
     </tr>
   </thead>
@@ -19,6 +20,9 @@
       <td>{{ db.get('title') or '-' }}</td>
       <td>{{ db['readonly'] | mode }}</td>
       <td>{{ db['owner'] }}</td>
+      <td class="text-right">
+	<span class="text-monospace mr-3">{{ db['size']|thousands }}</span>
+      </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>
     {% endfor %}

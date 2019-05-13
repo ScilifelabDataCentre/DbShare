@@ -463,7 +463,9 @@ class DbContext:
                                    utils.get_time()))
 
     def set_name(self, name):
-        "Set or change the database name."
+        """Set or change the database name.
+        Raise ValueError if name is invalid or already in use.
+        """
         assert not hasattr(self, '_dbcnx') # Must be done before any write ops.
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
@@ -1049,14 +1051,14 @@ def get_usage(username=None):
     return (len(rows),
             sum([os.path.getsize(utils.dbpath(row[0])) for row in rows]))
 
-def check_quota(user=None):
+def check_quota(user=None, size=0):
     "Raise ValueError if the current user has exceeded her size quota."
     if user is None:
         user = flask.g.current_user
     quota = user['quota']
-    if quota is not None and get_usage(user['username'])[1] > quota:
-        raise ValueError('you have exceeded your size quota;'
-                         ' no more data can be added')
+    total_size = get_usage(user['username'])[1] + size
+    if quota is not None and total_size > quota:
+        raise ValueError('size quota exceeded; cannot add data')
 
 def get_schema(db, sourcename):
     """Get the schema of the table or view. 
@@ -1227,17 +1229,18 @@ def _set_nrows(cnx, target):
     sql = 'SELECT COUNT(*) FROM "%s"' % target['name']
     target['nrows'] = cnx.execute(sql).fetchone()[0]
 
-def add_database(dbname, infile, modify_dbname=False):
+def add_database(dbname, infile, modify_dbname=False, size=0):
     """Add the database file present in the given open file object.
     If the database has the metadata of a DbShare Sqlite3 database, check it.
     Else if the database appears to be a plain Sqlite3 database,
     infer the DbShare metadata from it by inspection.
     If 'modify_name' is True, then attempt to fix a non-unique name.
+    'size' should be the size of the database file, if known.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
     try:
-        check_quota()
+        check_quota(additional=size)
         with DbContext() as ctx:
             try:
                 ctx.set_name(dbname)

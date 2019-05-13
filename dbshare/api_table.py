@@ -1,5 +1,7 @@
 "Table API endpoints."
 
+import http.client
+
 import flask
 
 import dbshare.db
@@ -15,13 +17,13 @@ def table(dbname, tablename):
     try:
         db = dbshare.db.get_check_read(dbname)
     except ValueError:
-        flask.abort(401)
+        flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
-        flask.abort(404)
+        flask.abort(http.client.NOT_FOUND)
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.abort(404)
+        flask.abort(http.client.NOT_FOUND)
     result = schema.copy()
     result['indexes'] = [i for i in db['indexes'].values() 
                          if i['table'] == tablename]

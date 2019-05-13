@@ -1,5 +1,8 @@
 "Database API endpoints."
 
+import http.client
+import io
+
 import flask
 
 import dbshare.db
@@ -12,21 +15,42 @@ blueprint = flask.Blueprint('api_db', __name__)
 def database(dbname):
     """GET: List the database tables, views and metadata.
     PUT: Create a database.
-    POST: Edit a database.
+    POST: Edit the database.
     DELETE: Delete the database.
     """
     if utils.http_GET():
         try:
             db = dbshare.db.get_check_read(dbname, nrows=True)
         except ValueError:
-            flask.abort(401)
+            flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
-            flask.abort(404)
+            flask.abort(http.client.NOT_FOUND)
         return flask.jsonify(utils.get_api(**get_api(db, complete=True)))
  
     elif utils.http_PUT():
-        raise NotImplementedError
- 
+        try:
+            dbshare.db.get_check_read(dbname)
+        except ValueError:
+            flask.abort(http.client.FORBIDDEN)
+        except KeyError:
+            pass
+        else:
+            flask.abort(http.client.FORBIDDEN)
+        try:
+            if flask.request.content_length:
+                db = dbshare.db.add_database(
+                    dbname,
+                    infile=io.BytesIO(flask.request.get_data()),
+                    size=flask.request.content_length)
+            else:
+                with dbshare.db.DbContext() as ctx:
+                    ctx.set_name(dbname)
+                    ctx.initialize()
+                db = ctx.db
+        except ValueError as error:
+            flask.abort(http.client.BAD_REQUEST, message=str(error))
+        return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+
     elif utils.http_POST():
         raise NotImplementedError
  
@@ -34,11 +58,11 @@ def database(dbname):
         try:
             dbshare.db.get_check_write(dbname)
         except ValueError:
-            flask.abort(401)
+            flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
-            flask.abort(404)
+            flask.abort(http.client.NOT_FOUND)
         dbshare.db.delete_database(dbname)
-        flask.abort(204)
+        return ('', http.client.NO_CONTENT)
 
 def get_api(db, complete=False):
     "Return the API for the database."

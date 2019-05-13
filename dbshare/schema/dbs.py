@@ -1,8 +1,8 @@
 "DbShare API dbs schema."
 
 schema = {
-    '$id': None,                # To be updated when accessed.
-    '$schema': None,            # To be updated when accessed.
+    '$id': 'http://dummy.org/', # To be updated when accessed.
+    '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
     'type': 'object',
     'definitions': {

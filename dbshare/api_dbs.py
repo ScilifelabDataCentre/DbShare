@@ -1,5 +1,7 @@
 "Database lists API endpoints."
 
+import http.client
+
 import flask
 
 import dbshare.dbs
@@ -40,7 +42,7 @@ def all():
 def owner(username):
     "Return the list of databases owned by the given user."
     if not dbshare.dbs.has_access(username):
-        return flask.abort(401)
+        return flask.abort(http.client.UNAUTHORIZED)
     dbs = dbshare.dbs.get_dbs(owner=username)
     result = utils.get_api(title=f"Databases owned by {username}",
                            user=dbshare.api_user.get_api(username),
