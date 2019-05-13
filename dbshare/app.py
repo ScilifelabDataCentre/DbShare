@@ -99,7 +99,7 @@ CONFIG = dict(
     # Vega and Vega-Lite
     VEGA_JS_URL = 'https://cdn.jsdelivr.net/npm/vega@5',
     VEGA_SCHEMA_URL = 'https://vega.github.io/schema/vega/v5.json',
-    VEGA_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-v5.json'),
+    VEGA_SCHEMA = os.path.join(ROOT_DIR, 'schema/vega-v5.json'),
     VEGA_VERSION = '5',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
@@ -108,7 +108,7 @@ CONFIG = dict(
     VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
     VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
-    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'static/vega-lite-v3.json'),
+    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'schema/vega-lite-v3.json'),
     VEGA_LITE_VERSION = '3',
     VEGA_LITE_DEFAULT_WIDTH = 400,
     VEGA_LITE_DEFAULT_HEIGHT = 400,

@@ -1,8 +1,8 @@
 "DbShare API dbs schema."
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/dbs.json',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
+    '$id': None,                # To be updated when accessed.
+    '$schema': None,            # To be updated when accessed.
     'title': __doc__,
     'type': 'object',
     'definitions': {

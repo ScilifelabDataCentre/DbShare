@@ -14,9 +14,15 @@ def schema():
 
 @blueprint.route('/root.json')
 def root():
-    return flask.jsonify(**dbshare.schema.root.schema)
+    schema = dbshare.schema.root.schema
+    schema['$id'] = flask.request.url
+    schema['$schema'] = flask.current_app.config['JSONSCHEMA_URL']
+    return flask.jsonify(**schema)
 
 
 @blueprint.route('/dbs.json')
 def dbs():
-    return flask.jsonify(**dbshare.schema.dbs.schema)
+    schema = dbshare.schema.dbs.schema
+    schema['$id'] = flask.request.url
+    schema['$schema'] = flask.current_app.config['JSONSCHEMA_URL']
+    return flask.jsonify(**schema)
