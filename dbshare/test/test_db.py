@@ -1,6 +1,8 @@
 "Test the DbShare API db endpoint."
 
 import http.client
+import os
+import sqlite3
 
 from dbshare.test.base import *
 
@@ -19,13 +21,22 @@ class Db(Base):
 
     def test_create_file(self):
         "Test creation of a database from file content, and its deletion."
-        # XXX create a Sqlite3 file and upload
+        filename = '/tmp/test.sqlite3'
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+        cnx = sqlite3.connect(filename)
+        cnx.execute("CREATE TABLE t1 (INT i PRIMARY KEY)")
+        cnx.close()
         dbname = 'test'
         url = f"{CONFIG['root']}/db/{dbname}"
-        response = self.session.put(url)
+        with open(filename, 'rb') as infile:
+            response = self.session.put(url, data=infile)
         self.assertEqual(response.status_code, http.client.OK)
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
+        os.remove(filename)
 
 
 if __name__ == '__main__':

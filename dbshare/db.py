@@ -1240,7 +1240,7 @@ def add_database(dbname, infile, modify_dbname=False, size=0):
     Raise ValueError if any problem.
     """
     try:
-        check_quota(additional=size)
+        check_quota(size=size)
         with DbContext() as ctx:
             try:
                 ctx.set_name(dbname)

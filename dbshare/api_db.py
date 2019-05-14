@@ -48,7 +48,8 @@ def database(dbname):
                     ctx.initialize()
                 db = ctx.db
         except ValueError as error:
-            flask.abort(http.client.BAD_REQUEST, message=str(error))
+            print(str(error))
+            flask.abort(http.client.BAD_REQUEST)
         return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
     elif utils.http_POST():
