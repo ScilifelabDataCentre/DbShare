@@ -1,28 +1,14 @@
 "DbShare API dbs schema."
 
+from . import definitions
+from . import database
+
 schema = {
     '$id': 'http://dummy.org/', # To be updated when accessed.
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
+    'definitions': definitions.schema,
     'type': 'object',
-    'definitions': {
-        'link': {
-            'type': 'object',
-            'properties': {
-                'href': {'type': 'string', 'format': 'uri'},
-                'format': {'type': 'string', 'default': ' json'}
-            },
-            'required': ['href']
-        },
-        'user': {
-            'type': 'object',
-            'properties':
-            {'username': {'type': 'string'},
-             'href': {'type': 'string', 'format': 'uri'}
-            },
-            'required': ['username', 'href']
-        }
-    },
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
         'title': {'type': 'string'},
@@ -30,34 +16,15 @@ schema = {
         'total_size': {'type': 'integer'},
         'databases': {
             'type': 'array',
-            'items': {
-                'type': 'object',
-                'properties': {'name': {'type': 'string'},
-                               'title': {'type': ['string', 'null']},
-                               'owner': {'$ref': '#/definitions/user'},
-                               'public': {'type': 'boolean'},
-                               'readonly': {'type': 'boolean'},
-                               'size': {'type': 'integer'},
-                               'modified': {'type': 'string',
-                                            'format': 'timestamp'},
-                               'created': {'type': 'string',
-                                           'format': 'timestamp'},
-                               'href': {'type': 'string', 'format': 'uri'}
-                },
-                'required': ['name',
-                             'title',
-                             'owner',
-                             'public',
-                             'readonly',
-                             'size',
-                             'modified',
-                             'created',
-                             'href']
-            }
+            'items': database.schema
         },
         'display': {'$ref': '#/definitions/link'},
-        'api': {'$ref': '#/definitions/link'},
+        'home': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['title', 'databases', 'display', 'api', 'timestamp']
+    'required': ['title',
+                 'databases',
+                 'display',
+                 'home',
+                 'timestamp']
 }

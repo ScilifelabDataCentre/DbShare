@@ -297,7 +297,7 @@ def api():
     if flask.g.current_user:
         data['user'] = dbshare.api_user.get_api(flask.g.current_user['username'])
     result = utils.get_api(**data)
-    result.pop('api')           # Remove rdundant item
+    result.pop('home')           # Remove redundant item.
     return flask.jsonify(**result)
 
 

@@ -1,32 +1,17 @@
 "DbShare API db schema."
 
+from . import definitions
+
 schema = {
     '$id': 'http://dummy.org/', # To be updated when accessed.
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
+    'definitions': definitions.schema,
     'type': 'object',
-    'definitions': {
-        'link': {
-            'type': 'object',
-            'properties': {
-                'href': {'type': 'string', 'format': 'uri'},
-                'format': {'type': 'string', 'default': ' json'}
-            },
-            'required': ['href']
-        },
-        'user': {
-            'type': 'object',
-            'properties':
-            {'username': {'type': 'string'},
-             'href': {'type': 'string', 'format': 'uri'}
-            },
-            'required': ['username', 'href']
-        }
-    },
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
         'name': {'type': 'string'},
-        'title': {'type': ['string', None]},
+        'title': {'type': ['string', 'null']},
         'owner': {'$ref': '#/definitions/user'},
         'public': {'type': 'boolean'},
         'readonly': {'type': 'boolean'},
@@ -37,13 +22,31 @@ schema = {
             'type': 'array',
             'items': {
                 'type': 'object',
-                'properties': {'name': {'type': 'string'},
-                               'title': {'type': ['string', 'null']},
-                               'href': {'type': 'string', 'format': 'uri'}
+                'properties': {
+                    'name': {'type': 'string'},
+                    'title': {'type': ['string', 'null']},
+                    'api': {'$ref': '#/definitions/link'},
+                    'database': {'$ref': '#/definitions/link'},
+                    'nrows': {'type': ['number', 'null']},
+                    'rows': {'$ref': '#/definitions/link'},
+                    'data': {'$ref': '#/definitions/link'},
+                    'display': {'$ref': '#/definitions/link'},
+                    'visualizations': {
+                        'type': 'array',
+                        'items': {
+                            'type': 'object'
+                        }
+                    }
                 },
                 'required': ['name', 
                              'title',
-                             'href']
+                             'api',
+                             'database',
+                             'nrows',
+                             'rows',
+                             'data',
+                             'display',
+                             'visualizations']
             }
         },
         'views': {
@@ -53,6 +56,7 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
+                    'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
                     'display': {'$ref': '#/definitions/link'},
@@ -69,7 +73,7 @@ schema = {
             }
         },
         'display': {'$ref': '#/definitions/link'},
-        'api': {'$ref': '#/definitions/link'},
+        'home': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': ['name', 
@@ -81,6 +85,6 @@ schema = {
                  'created',
                  'tables',
                  'display',
-                 'api',
+                 'home',
                  'timestamp']
 }

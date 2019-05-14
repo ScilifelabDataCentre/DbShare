@@ -78,7 +78,10 @@ def get_api(db, complete=False):
               'readonly': db['readonly'],
               'size': db['size'],
               'modified': db['modified'],
-              'created': db['created']}
+              'created': db['created'],
+              'api': {'href': utils.url_for('api_db.database',
+                                            dbname=db['name'])}
+    }
     if complete:
         result['tables'] = [dbshare.api_table.get_api(db, table)
                             for table in db['tables'].values()]

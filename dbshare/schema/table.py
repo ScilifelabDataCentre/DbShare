@@ -1,0 +1,2 @@
+"DbShare API table schema."
+

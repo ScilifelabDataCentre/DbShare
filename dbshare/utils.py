@@ -159,10 +159,10 @@ def accept_json():
         acc[best] > acc[constants.HTML_MIMETYPE]
 
 def get_api(**items):
-    "Return the standard JSON structure with additional items."
+    "Return the JSON structure with standard additional items."
     result = {'$id': flask.request.url}
     result.update(items)
-    result['api'] = {'href': url_for('api')}
+    result['home'] = {'href': url_for('api')}
     result['timestamp'] = get_time()
     return result
 
