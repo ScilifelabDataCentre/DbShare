@@ -64,8 +64,13 @@
 		<strong>{{ view['title'] or view['name'] }}</strong>
 	      </td>
               <td>
+                {% if view['nrows'] == none_value %}
+                ? rows
+                {% else %}
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
-		  {{ view['nrows']|thousands }} rows</a>
+		  {{ view['nrows']|thousands }} rows
+                </a>
+                {% endif %}
               </td>
               <td>
                 <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">

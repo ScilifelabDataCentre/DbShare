@@ -27,7 +27,9 @@ class Db(Base):
         except OSError:
             pass
         cnx = sqlite3.connect(filename)
-        cnx.execute("CREATE TABLE t1 (INT i PRIMARY KEY)")
+        cnx.execute("CREATE TABLE t1 (i INT PRIMARY KEY)")
+        cnx.execute("INSERT INTO t1 (i) VALUES (?)", (1,))
+        cnx.execute("INSERT INTO t1 (i) VALUES (?)", (2,))
         cnx.close()
         dbname = 'test'
         url = f"{CONFIG['root']}/db/{dbname}"

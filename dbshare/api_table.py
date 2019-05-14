@@ -13,7 +13,7 @@ blueprint = flask.Blueprint('api_table', __name__)
 
 @blueprint.route('/<name:dbname>/<name:tablename>')
 def table(dbname, tablename):
-    "The schema for a table."
+    "The schema for the table."
     try:
         db = dbshare.db.get_check_read(dbname)
     except ValueError:
@@ -28,7 +28,7 @@ def table(dbname, tablename):
     result['indexes'] = [i for i in db['indexes'].values() 
                          if i['table'] == tablename]
     result.update(get_api(db, schema, reduced=True))
-    return flask.jsonify(utils.get_api(**result))
+    return flask.jsonify(**result)
 
 def get_api(db, table, reduced=False):
     "Return the API JSON for the table."
@@ -43,15 +43,15 @@ def get_api(db, table, reduced=False):
                                                 dbname=db['name'],
                                                 tablename=table['name'])}
         }
-    visuals = {}
+    visuals = []
     for visual in db['visuals'].get(table['name'], []):
         url = utils.url_for('visual.display',
                             dbname=db['name'],
                             visualname=visual['name'])
-        visuals[visual['name']] = {
+        visuals.append({
             'title': visual.get('title'),
             'specification': {'href': url + '.json'},
-            'display': {'href': url, 'format': 'html'}}
+            'display': {'href': url, 'format': 'html'}})
     url = utils.url_for('table.rows',
                         dbname=db['name'],
                         tablename=table['name'])

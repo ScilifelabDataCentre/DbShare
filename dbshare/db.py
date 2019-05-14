@@ -1222,7 +1222,7 @@ def set_nrows(db, targets):
         try:
             utils.execute_timeout(cnx, _set_nrows, target=target)
         except SystemError:
-            target['nrows'] = '?'
+            target['nrows'] = None
 
 def _set_nrows(cnx, target):
     "Actually set the nrow values for the given target; executed with time-out."

@@ -33,6 +33,7 @@ import dbshare.api_table
 import dbshare.api_template
 import dbshare.api_templates
 import dbshare.api_user
+import dbshare.api_view
 
 from dbshare import constants
 from dbshare import utils
@@ -177,6 +178,7 @@ app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
 app.register_blueprint(dbshare.api_db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api_dbs.blueprint, url_prefix='/api/dbs')
 app.register_blueprint(dbshare.api_table.blueprint, url_prefix='/api/table')
+app.register_blueprint(dbshare.api_view.blueprint, url_prefix='/api/view')
 app.register_blueprint(dbshare.api_template.blueprint,
                        url_prefix='/api/template')
 app.register_blueprint(dbshare.api_templates.blueprint,
@@ -192,7 +194,8 @@ def setup_template_context():
                 utils=utils,
                 enumerate=enumerate,
                 len=len,
-                range=range)
+                range=range,
+                none_value=None)
 
 @app.template_filter('thousands')
 def thousands(value):

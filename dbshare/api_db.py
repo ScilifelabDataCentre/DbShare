@@ -7,6 +7,10 @@ import flask
 
 import dbshare.db
 
+import dbshare.api_table
+import dbshare.api_user
+import dbshare.api_view
+
 from dbshare import utils
 
 blueprint = flask.Blueprint('api_db', __name__)
@@ -76,30 +80,10 @@ def get_api(db, complete=False):
               'modified': db['modified'],
               'created': db['created']}
     if complete:
-        result['tables'] = {}
-        for tablename, table in db['tables'].items():
-            result['tables'][tablename] = dbshare.api_table.get_api(db, table)
-        result['views'] = {}
-        for viewname, view in db['views'].items():
-            visuals = {}
-            for visual in db['visuals'].get(viewname, []):
-                url = utils.url_for('visual.display',
-                                    dbname=db['name'],
-                                    visualname=visual['name'])
-                visuals[visual['name']] = {
-                    'title': visual.get('title'),
-                    'spec': url + '.json',
-                    'display': {'href': url, 'format': 'html'}}
-            url = utils.url_for('view.rows',
-                                dbname=db['name'],
-                                viewname=viewname)
-            result['views'][viewname] = {
-                'title': view.get('title'),
-                'nrows': view['nrows'],
-                'rows': {'href': url + '.json'},
-                'data': {'href': url + '.csv', 'format': 'csv'},
-                'display': {'href': url, 'format': 'html'},
-                'visualizations': visuals}
+        result['tables'] = [dbshare.api_table.get_api(db, table)
+                            for table in db['tables'].values()]
+        result['views'] = [dbshare.api_view.get_api(db, view)
+                           for view in db['views'].values()]
         result['display'] = {'href': utils.url_for('db.display',
                                                    dbname=db['name']),
                              'format': 'html'}
