@@ -122,9 +122,9 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             return flask.jsonify(utils.get_api(
                 name=str(tablename),
                 title=title,
-                api={'href': utils.url_for('api_table.table',
-                                           dbname=db['name'],
-                                           tablename=str(tablename))},
+                table={'href': utils.url_for('api_table.table',
+                                             dbname=db['name'],
+                                             tablename=str(tablename))},
                 nrows=schema['nrows'],
                 data=[dict(zip(columns, row[1:])) for row in rows]))
         else:

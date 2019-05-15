@@ -8,15 +8,16 @@ import dbshare.schema.db
 
 from dbshare.test.base import *
 
+DBNAME = 'test'
+TABLENAME = 't1'
+FILENAME = '/tmp/test.sqlite3'
 
 class Db(Base):
     "Test the DbShare API db endpoint."
 
-    DBNAME = 'test'
-
     def test_create_scratch(self):
         "Test creation of a database from scratch, schema, and deletion."
-        url = f"{CONFIG['root']}/db/{self.DBNAME}"
+        url = f"{CONFIG['root']}/db/{DBNAME}"
         # Ensure that no such database exists.
         self.session.delete(url)
         response = self.session.put(url)
@@ -28,17 +29,16 @@ class Db(Base):
 
     def test_create_file(self):
         "Test creation of a database from file content, schema, and deletion."
-        FILENAME = '/tmp/test.sqlite3'
         try:                    # Ensure that no such file exists.
             os.remove(FILENAME)
         except OSError:
             pass
         cnx = sqlite3.connect(FILENAME)
-        cnx.execute("CREATE TABLE t1 (i INT PRIMARY KEY)")
-        cnx.execute("INSERT INTO t1 (i) VALUES (?)", (1,))
-        cnx.execute("INSERT INTO t1 (i) VALUES (?)", (2,))
+        cnx.execute(f"CREATE TABLE {TABLENAME} (i INT PRIMARY KEY)")
+        cnx.execute(f"INSERT INTO {TABLENAME} (i) VALUES (?)", (1,))
+        cnx.execute(f"INSERT INTO {TABLENAME} (i) VALUES (?)", (2,))
         cnx.close()
-        url = f"{CONFIG['root']}/db/{self.DBNAME}"
+        url = f"{CONFIG['root']}/db/{DBNAME}"
         # Ensure that no such database exists.
         self.session.delete(url)
         with open(FILENAME, 'rb') as infile:

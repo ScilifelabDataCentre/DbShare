@@ -25,7 +25,7 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
-                    'api': {'$ref': '#/definitions/link'},
+                    'href': {'type': 'string', 'format': 'uri'},
                     'database': {'$ref': '#/definitions/link'},
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
@@ -39,12 +39,11 @@ schema = {
                 },
                 'required': ['name', 
                              'title',
-                             'api',
+                             'href',
                              'database',
                              'nrows',
                              'rows',
-                             'data',
-                             'visualizations']
+                             'data']
             }
         },
         'views': {
@@ -54,6 +53,8 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
+                    'href': {'type': 'string', 'format': 'uri'},
+                    'database': {'$ref': '#/definitions/link'},
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
@@ -66,6 +67,9 @@ schema = {
                 },
                 'required': ['name',
                              'title',
+                             'href',
+                             'database',
+                             'nrows',
                              'rows',
                              'data']
             }
