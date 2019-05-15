@@ -162,7 +162,6 @@ def get_api(**items):
     "Return the JSON structure with standard additional items."
     result = {'$id': flask.request.url}
     result.update(items)
-    result['home'] = {'href': url_for('api')}
     result['timestamp'] = get_time()
     return result
 

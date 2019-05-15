@@ -3,7 +3,7 @@
 from . import definitions
 
 schema = {
-    '$id': 'http://dummy.org/', # To be updated when accessed.
+    '$id': 'https://dbshare.scilifelab.se/api/schema/root',
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
     'definitions': definitions.schema,
@@ -27,7 +27,6 @@ schema = {
                           'public': {'$ref': '#/definitions/link'}},
                       'required': ['public']
         },
-        'display': {'$ref': '#/definitions/link'},
         'user': {'$ref': '#/definitions/user'},
         'timestamp': {'type': 'string', 'format': 'datetime'}
     },
@@ -36,6 +35,5 @@ schema = {
                  'version',
                  'databases',
                  'templates',
-                 'display',
                  'timestamp']
 }

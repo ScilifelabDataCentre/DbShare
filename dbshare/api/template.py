@@ -5,7 +5,7 @@ import http.client
 import flask
 
 import dbshare.template
-import dbshare.api_user
+import dbshare.api.user
 
 from dbshare import utils
 
@@ -34,7 +34,4 @@ def get_api(template, complete=False):
                   'public': template['public'],
                   'modified': template['modified'],
                   'created': template['created']}
-    result['display'] = {'href': utils.url_for('template.display',
-                                               templatename=template['name']),
-                         'format': 'html'}
     return result

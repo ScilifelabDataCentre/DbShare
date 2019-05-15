@@ -4,7 +4,7 @@ from . import definitions
 from . import database
 
 schema = {
-    '$id': 'http://dummy.org/', # To be updated when accessed.
+    '$id': 'https://dbshare.scilifelab.se/api/schema/dbs',
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
     'definitions': definitions.schema,
@@ -13,18 +13,18 @@ schema = {
         '$id': {'type': 'string', 'format': 'uri'},
         'title': {'type': 'string'},
         'owner': {'$ref': '#/definitions/user'},
-        'total_size': {'type': 'integer'},
+        'total_size': {'type': 'integer', 'minimum': 0},
         'databases': {
             'type': 'array',
-            'items': database.schema
+            'items': database.schema # Part only; completed below.
         },
-        'display': {'$ref': '#/definitions/link'},
-        'home': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': ['title',
                  'databases',
-                 'display',
-                 'home',
                  'timestamp']
 }
+
+items = schema['properties']['databases']['items']
+items['properties']['href'] = {'type': 'string', 'format': 'uri'}
+items['required'].append('href')

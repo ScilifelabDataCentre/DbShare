@@ -3,7 +3,7 @@
 from . import definitions
 
 schema = {
-    '$id': 'http://dummy.org/', # To be updated when accessed.
+    '$id': 'https://dbshare.scilifelab.se/api/schema/db',
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
     'definitions': definitions.schema,
@@ -15,7 +15,7 @@ schema = {
         'owner': {'$ref': '#/definitions/user'},
         'public': {'type': 'boolean'},
         'readonly': {'type': 'boolean'},
-        'size': {'type': 'integer'},
+        'size': {'type': 'integer', 'minimum': 0},
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'},
         'tables': {
@@ -30,7 +30,6 @@ schema = {
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
-                    'display': {'$ref': '#/definitions/link'},
                     'visualizations': {
                         'type': 'array',
                         'items': {
@@ -45,7 +44,6 @@ schema = {
                              'nrows',
                              'rows',
                              'data',
-                             'display',
                              'visualizations']
             }
         },
@@ -59,7 +57,6 @@ schema = {
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
-                    'display': {'$ref': '#/definitions/link'},
                     'visualizations': {
                         'type': 'array',
                         'items': {
@@ -67,16 +64,16 @@ schema = {
                         }
                     }
                 },
-                'required': [
-                    'name', 'title', 'rows', 'data', 'display',
-                ]
+                'required': ['name',
+                             'title',
+                             'rows',
+                             'data']
             }
         },
-        'display': {'$ref': '#/definitions/link'},
-        'home': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['name', 
+    'required': ['$id',
+                 'name', 
                  'owner', 
                  'public',
                  'readonly', 
@@ -84,7 +81,5 @@ schema = {
                  'modified',
                  'created',
                  'tables',
-                 'display',
-                 'home',
                  'timestamp']
 }

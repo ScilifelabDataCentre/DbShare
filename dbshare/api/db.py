@@ -7,9 +7,9 @@ import flask
 
 import dbshare.db
 
-import dbshare.api_table
-import dbshare.api_user
-import dbshare.api_view
+import dbshare.api.table
+import dbshare.api.user
+import dbshare.api.view
 
 from dbshare import utils
 
@@ -73,21 +73,16 @@ def get_api(db, complete=False):
     "Return the API for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
-              'owner': dbshare.api_user.get_api(db['owner']),
+              'owner': dbshare.api.user.get_api(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],
               'modified': db['modified'],
-              'created': db['created'],
-              'api': {'href': utils.url_for('api_db.database',
-                                            dbname=db['name'])}
+              'created': db['created']
     }
     if complete:
-        result['tables'] = [dbshare.api_table.get_api(db, table)
+        result['tables'] = [dbshare.api.table.get_api(db, table)
                             for table in db['tables'].values()]
-        result['views'] = [dbshare.api_view.get_api(db, view)
+        result['views'] = [dbshare.api.view.get_api(db, view)
                            for view in db['views'].values()]
-        result['display'] = {'href': utils.url_for('db.display',
-                                                   dbname=db['name']),
-                             'format': 'html'}
     return result

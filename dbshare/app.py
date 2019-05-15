@@ -26,14 +26,14 @@ import dbshare.vega_lite
 import dbshare.view
 import dbshare.visual
 
-import dbshare.api_db
-import dbshare.api_dbs
-import dbshare.api_schema
-import dbshare.api_table
-import dbshare.api_template
-import dbshare.api_templates
-import dbshare.api_user
-import dbshare.api_view
+import dbshare.api.db
+import dbshare.api.dbs
+import dbshare.api.schema
+import dbshare.api.table
+import dbshare.api.template
+import dbshare.api.templates
+import dbshare.api.user
+import dbshare.api.view
 
 from dbshare import constants
 from dbshare import utils
@@ -175,16 +175,16 @@ app.register_blueprint(dbshare.vega_lite.blueprint, url_prefix='/vega-lite')
 app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
 
-app.register_blueprint(dbshare.api_db.blueprint, url_prefix='/api/db')
-app.register_blueprint(dbshare.api_dbs.blueprint, url_prefix='/api/dbs')
-app.register_blueprint(dbshare.api_table.blueprint, url_prefix='/api/table')
-app.register_blueprint(dbshare.api_view.blueprint, url_prefix='/api/view')
-app.register_blueprint(dbshare.api_template.blueprint,
+app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
+app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
+app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
+app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
+app.register_blueprint(dbshare.api.template.blueprint,
                        url_prefix='/api/template')
-app.register_blueprint(dbshare.api_templates.blueprint,
+app.register_blueprint(dbshare.api.templates.blueprint,
                        url_prefix='/api/templates')
-app.register_blueprint(dbshare.api_user.blueprint, url_prefix='/api/user')
-app.register_blueprint(dbshare.api_schema.blueprint, url_prefix='/api/schema')
+app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
+app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
 @app.context_processor
 def setup_template_context():
@@ -275,8 +275,7 @@ def api():
              },
              'templates': {
                  'public': {'href': utils.url_for('api_templates.public')}
-             },
-             'display': {'href': utils.url_for('home'), 'format': 'html'}
+             }
     }
     if flask.g.current_user:
         data['databases']['owner'] = {
@@ -295,10 +294,8 @@ def api():
             'href': utils.url_for('api_templates.all')
         }
     if flask.g.current_user:
-        data['user'] = dbshare.api_user.get_api(flask.g.current_user['username'])
-    result = utils.get_api(**data)
-    result.pop('home')           # Remove redundant item.
-    return flask.jsonify(**result)
+        data['user'] = dbshare.api.user.get_api(flask.g.current_user['username'])
+    return flask.jsonify(utils.get_api(**data))
 
 
 # This code is used only during testing.

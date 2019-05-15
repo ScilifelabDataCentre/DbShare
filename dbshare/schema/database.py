@@ -10,8 +10,7 @@ schema = {
         'readonly': {'type': 'boolean'},
         'size': {'type': 'integer'},
         'modified': {'type': 'string', 'format': 'timestamp'},
-        'created': {'type': 'string', 'format': 'timestamp'},
-        'href': {'type': 'string', 'format': 'uri'}
+        'created': {'type': 'string', 'format': 'timestamp'}
     },
     'required': ['name',
                  'title',
@@ -20,6 +19,5 @@ schema = {
                  'readonly',
                  'size',
                  'modified',
-                 'created',
-                 'href']
+                 'created']
 }

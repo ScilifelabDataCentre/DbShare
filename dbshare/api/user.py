@@ -16,20 +16,19 @@ blueprint = flask.Blueprint('api_user', __name__)
 @dbshare.user.login_required
 def profile(username):
     "Return the API JSON profile of the given user."
-    user = get_user(username=username)
+    user = dbshare.user.get_user(username=username)
     if user is None:
         abort(http.client.NOT_FOUND)
-    if not is_admin_or_self(user):
+    if not dbshare.user.is_admin_or_self(user):
         abort(http.client.UNAUTHORIZED)
     user.pop('password')
     user.pop('apikey', None)
     ndbs, total_size = dbshare.db.get_usage(username)
     user['total_size'] = total_size
-    user['databases'] = {'href': utils.url_for('api_dbs.api_owner',
+    user['databases'] = {'href': utils.url_for('api_dbs.owner',
                                                username=user['username'])}
-    user['display'] = {'href': utils.url_for('user.profile',
-                                             username=user['username']),
-                       'format': 'html'}
+    user['templates'] = {'href': utils.url_for('api_templates.owner',
+                                               username=user['username'])}
     return flask.jsonify(utils.get_api(**user))
 
 def get_api(username):
