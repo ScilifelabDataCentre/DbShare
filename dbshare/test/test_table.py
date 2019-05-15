@@ -15,6 +15,7 @@ class Table(Base):
     "Test the DbShare API table endpoint."
 
     def setUp(self):
+        super().setUp()
         url = f"{CONFIG['root']}/db/{DBNAME}"
         # Ensure that no such database exists.
         self.session.delete(url)
@@ -27,3 +28,7 @@ class Table(Base):
 
     def test_table_create(self):
         pass
+
+
+if __name__ == '__main__':
+    unittest.main()
