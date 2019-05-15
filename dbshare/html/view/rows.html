@@ -44,6 +44,10 @@
     <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) + '.json' }}"
        class="badge badge-pill badge-primary">JSON</a>
   </div>
+  <div>
+    <a href="{{ url_for('api_view.view', dbname=db['name'], viewname=schema['name']) }}"
+       class="badge badge-pill badge-dark">API</a>
+  </div>
 </div>
 {% endblock %} {# block meta #}
 

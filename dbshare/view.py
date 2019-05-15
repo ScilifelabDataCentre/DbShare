@@ -167,7 +167,9 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             return flask.jsonify(utils.get_api(
                 name=str(viewname),
                 title=title,
-                view={'href': 'XXX'},
+                view={'href': utils.url_for('api_view.view',
+                                            dbname=db['name'],
+                                            viewname=schema['name'])},
                 nrows=schema['nrows'],
                 data=[dict(zip(columns, row)) for row in rows]))
 

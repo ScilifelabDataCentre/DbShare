@@ -12,8 +12,8 @@ from dbshare import utils
 blueprint = flask.Blueprint('api_view', __name__)
 
 @blueprint.route('/<name:dbname>/<name:viewname>')
-def view(dbname, tablename):
-    "The definition for the view."
+def view(dbname, viewname):
+    "The schema for the view."
     try:
         db = dbshare.db.get_check_read(dbname)
     except ValueError:
@@ -24,34 +24,36 @@ def view(dbname, tablename):
         schema = db['views'][viewname]
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    result = schema.copy()
-    result.update(get_api(db, schema))
+    result = get_api(db, schema, complete=True)
+    result.update(schema)
     return flask.jsonify(utils.get_api(**result))
 
-def get_api(db, view):
+def get_api(db, view, complete=False):
     "Return the API JSON for the view."
-    result = {'name': view['name'],
-              'title': view.get('title'),
-              'api': {'href': utils.url_for('api_view.view',
-                                            dbname=db['name'],
-                                            viewname=view['name'])}
-    }
-    visuals = []
-    for visual in db['visuals'].get(view['name'], []):
-        url = utils.url_for('visual.display',
-                            dbname=db['name'],
-                            visualname=visual['name'])
-        visuals.append({
-            'title': visual.get('title'),
-            'specification': {'href': url + '.json'},
-            'display': {'href': url, 'format': 'html'}})
     url = utils.url_for('view.rows',
                         dbname=db['name'],
                         viewname=view['name'])
-    result.update({
-        'nrows': view['nrows'],
-        'rows': {'href': url + '.json'},
-        'data': {'href': url + '.csv', 'format': 'csv'},
-        'display': {'href': url, 'format': 'html'},
-        'visualizations': visuals})
+    result = {'name': view['name'],
+              'title': view.get('title'),
+              'database': {'href': utils.url_for('api_db.database',
+                                                 dbname=db['name'])},
+              'nrows': view.get('nrows'),
+              'rows': {'href': url + '.json'},
+              'data': {'href': url + '.csv', 'format': 'csv'}
+    }
+    if complete:
+        visuals = []
+        for visual in db['visuals'].get(view['name'], []):
+            url = utils.url_for('visual.display',
+                                dbname=db['name'],
+                                visualname=visual['name'])
+            visuals.append({
+                'name': visual['name'],
+                'title': visual.get('title'),
+                'specification': {'href': url + '.json'}})
+        result['visualizations'] = visuals
+    else:
+        result['href'] = utils.url_for('api_view.view',
+                                       dbname=db['name'],
+                                       viewname=view['name'])
     return result
