@@ -18,29 +18,37 @@ class Db(Base):
     def delete_db(self):
         self.session.delete(self.db_url)
 
-    def test_create_scratch(self):
-        "Create an empty database from scratch, check it JSON, and delete it."
+    def test_create_empty(self):
+        "Create an empty database, check its JSON, and delete it."
+        # Create an empty database.
         response = self.session.put(self.db_url)
         self.assertEqual(response.status_code, http.client.OK)
+        # Check that API db JSON is valid.
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
+        # Check deletion of database.
         response = self.session.delete(self.db_url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
 
     def test_create_upload(self):
         "Create a database by file upload, check its JSON, and delete it."
+        # Create the database in a local file.
         cnx = sqlite3.connect(CONFIG['filename'])
         self.addCleanup(self.delete_file)
+        # Create a table in the database.
         cnx.execute(f"CREATE TABLE {CONFIG['tablename']} (i INTEGER PRIMARY KEY)")
         cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i) VALUES (?)", (1,))
         cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i) VALUES (?)", (2,))
         cnx.close()
+        # Upload the database file.
         with open(CONFIG['filename'], 'rb') as infile:
             response = self.session.put(self.db_url, data=infile)
         self.addCleanup(self.delete_db)
         self.assertEqual(response.status_code, http.client.OK)
+        # Check that API db JSON is valid.
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
+        # Check deletion of database.
         response = self.session.delete(self.db_url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
 
