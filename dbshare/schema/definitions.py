@@ -7,7 +7,9 @@ schema = {
             'href': {'type': 'string', 'format': 'uri'},
             'format': {'type': 'string', 'default': ' json'}
         },
-        'required': ['href']
+        'required': [
+            'href'
+        ]
     },
     'user': {
         'type': 'object',
@@ -15,6 +17,9 @@ schema = {
             'username': {'type': 'string'},
             'href': {'type': 'string', 'format': 'uri'}
         },
-        'required': ['username', 'href']
+        'required': [
+            'username',
+            'href'
+        ]
     }
 }

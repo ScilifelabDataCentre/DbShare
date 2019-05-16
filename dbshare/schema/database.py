@@ -12,12 +12,14 @@ schema = {
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['name',
-                 'title',
-                 'owner',
-                 'public',
-                 'readonly',
-                 'size',
-                 'modified',
-                 'created']
+    'required': [
+        'name',
+        'title',
+        'owner',
+        'public',
+        'readonly',
+        'size',
+        'modified',
+        'created'
+    ]
 }

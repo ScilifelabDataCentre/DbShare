@@ -21,15 +21,17 @@ schema = {
         'templates': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['$id',
-                 'username',
-                 'email',
-                 'role',
-                 'status',
-                 'total_size',
-                 'modified',
-                 'created',
-                 'databases',
-                 'templates',
-                 'timestamp']
+    'required': [
+        '$id',
+        'username',
+        'email',
+        'role',
+        'status',
+        'total_size',
+        'modified',
+        'created',
+        'databases',
+        'templates',
+        'timestamp'
+    ]
 }

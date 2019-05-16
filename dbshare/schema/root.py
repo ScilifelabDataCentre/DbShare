@@ -30,10 +30,12 @@ schema = {
         'user': {'$ref': '#/definitions/user'},
         'timestamp': {'type': 'string', 'format': 'datetime'}
     },
-    'required': ['$id',
-                 'title',
-                 'version',
-                 'databases',
-                 'templates',
-                 'timestamp']
+    'required': [
+        '$id',
+        'title',
+        'version',
+        'databases',
+        'templates',
+        'timestamp'
+    ]
 }

@@ -1,54 +1,48 @@
 "Test the DbShare API db endpoint."
 
 import http.client
-import os
 import sqlite3
 
 import dbshare.schema.db
 
 from dbshare.test.base import *
 
-DBNAME = 'test'
-TABLENAME = 't1'
-FILENAME = '/tmp/test.sqlite3'
 
 class Db(Base):
     "Test the DbShare API db endpoint."
 
+    def setUp(self):
+        super().setUp()
+        self.db_url = f"{CONFIG['root_url']}/db/{CONFIG['dbname']}"
+
+    def delete_db(self):
+        self.session.delete(self.db_url)
+
     def test_create_scratch(self):
-        "Test creation of a database from scratch, schema, and deletion."
-        url = f"{CONFIG['root']}/db/{DBNAME}"
-        # Ensure that no such database exists.
-        self.session.delete(url)
-        response = self.session.put(url)
+        "Create an empty database from scratch, check it JSON, and delete it."
+        response = self.session.put(self.db_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
-        response = self.session.delete(url)
+        response = self.session.delete(self.db_url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
 
-    def test_create_file(self):
-        "Test creation of a database from file content, schema, and deletion."
-        try:                    # Ensure that no such file exists.
-            os.remove(FILENAME)
-        except OSError:
-            pass
-        cnx = sqlite3.connect(FILENAME)
-        cnx.execute(f"CREATE TABLE {TABLENAME} (i INT PRIMARY KEY)")
-        cnx.execute(f"INSERT INTO {TABLENAME} (i) VALUES (?)", (1,))
-        cnx.execute(f"INSERT INTO {TABLENAME} (i) VALUES (?)", (2,))
+    def test_create_upload(self):
+        "Create a database by file upload, check its JSON, and delete it."
+        cnx = sqlite3.connect(CONFIG['filename'])
+        self.addCleanup(self.delete_file)
+        cnx.execute(f"CREATE TABLE {CONFIG['tablename']} (i INTEGER PRIMARY KEY)")
+        cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i) VALUES (?)", (1,))
+        cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i) VALUES (?)", (2,))
         cnx.close()
-        url = f"{CONFIG['root']}/db/{DBNAME}"
-        # Ensure that no such database exists.
-        self.session.delete(url)
-        with open(FILENAME, 'rb') as infile:
-            response = self.session.put(url, data=infile)
+        with open(CONFIG['filename'], 'rb') as infile:
+            response = self.session.put(self.db_url, data=infile)
+        self.addCleanup(self.delete_db)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
-        response = self.session.delete(url)
+        response = self.session.delete(self.db_url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
-        os.remove(FILENAME)
 
 
 if __name__ == '__main__':

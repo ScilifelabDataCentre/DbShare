@@ -205,42 +205,8 @@ def profile(username):
                                  ntemplates=ntemplates,
                                  deletable=deletable)
 
-@blueprint.route('/profile/<name:username>/logs')
-@login_required
-def logs(username):
-    "Display the log records of the given user."
-    user = get_user(username=username)
-    if user is None:
-        flask.flash('no such user', 'error')
-        return flask.redirect(flask.url_for('home'))
-    if not is_admin_or_self(user):
-        flask.flash('access not allowed', 'error')
-        return flask.redirect(flask.url_for('home'))
-    cursor = dbshare.system.get_cursor()
-    sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
-          " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
-    cursor.execute(sql, (user['username'],))
-    logs = [{'new': json.loads(row[0]),
-             'editor': row[1],
-             'remote_addr': row[2],
-             'user_agent': row[3],
-             'timestamp': row[4]}
-            for row in cursor]
-    return flask.render_template('user/logs.html', user=user, logs=logs)
-
-def is_admin_or_self(user):
-    "Is the current user admin, or the same as the given user?"
-    if not flask.g.current_user: return False
-    if flask.g.is_admin: return True
-    return flask.g.current_user['username'] == user['username']
-
-def is_admin_and_not_self(user):
-    "Is the current user admin, but not the same as the given user?"
-    if flask.g.is_admin:
-        return flask.g.current_user['username'] != user['username']
-    return False
-
-@blueprint.route('/edit/<name:username>', methods=['GET', 'POST', 'DELETE'])
+@blueprint.route('/profile/<name:username>/edit',
+                 methods=['GET', 'POST', 'DELETE'])
 @login_required
 def edit(username):
     "Edit the user profile. Or delete the user."
@@ -291,6 +257,29 @@ def edit(username):
             return flask.redirect(flask.url_for('.users'))
         else:
             return flask.redirect(flask.url_for('home'))
+
+@blueprint.route('/profile/<name:username>/logs')
+@login_required
+def logs(username):
+    "Display the log records of the given user."
+    user = get_user(username=username)
+    if user is None:
+        flask.flash('no such user', 'error')
+        return flask.redirect(flask.url_for('home'))
+    if not is_admin_or_self(user):
+        flask.flash('access not allowed', 'error')
+        return flask.redirect(flask.url_for('home'))
+    cursor = dbshare.system.get_cursor()
+    sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
+          " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
+    cursor.execute(sql, (user['username'],))
+    logs = [{'new': json.loads(row[0]),
+             'editor': row[1],
+             'remote_addr': row[2],
+             'user_agent': row[3],
+             'timestamp': row[4]}
+            for row in cursor]
+    return flask.render_template('user/logs.html', user=user, logs=logs)
 
 @blueprint.route('/users')
 @admin_required
@@ -545,3 +534,15 @@ def get_current_user():
     else:
         flask.session.pop('username', None)
         return None
+
+def is_admin_or_self(user):
+    "Is the current user admin, or the same as the given user?"
+    if not flask.g.current_user: return False
+    if flask.g.is_admin: return True
+    return flask.g.current_user['username'] == user['username']
+
+def is_admin_and_not_self(user):
+    "Is the current user admin, but not the same as the given user?"
+    if flask.g.is_admin:
+        return flask.g.current_user['username'] != user['username']
+    return False

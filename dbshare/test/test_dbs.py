@@ -12,7 +12,7 @@ class Dbs(Base):
 
     def setUp(self):
         super().setUp()
-        response = self.session.get(CONFIG['root'])
+        response = self.session.get(CONFIG['root_url'])
         self.assertEqual(response.status_code, http.client.OK)
         data = response.json()
         self.dbs_urls = {}

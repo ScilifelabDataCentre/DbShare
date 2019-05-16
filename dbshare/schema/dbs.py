@@ -20,9 +20,11 @@ schema = {
         },
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['title',
-                 'databases',
-                 'timestamp']
+    'required': [
+        'title',
+        'databases',
+        'timestamp'
+    ]
 }
 
 items = schema['properties']['databases']['items']

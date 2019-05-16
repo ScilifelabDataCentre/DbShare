@@ -76,14 +76,16 @@ schema = {
         },
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
-    'required': ['$id',
-                 'name', 
-                 'owner', 
-                 'public',
-                 'readonly', 
-                 'size',
-                 'modified',
-                 'created',
-                 'tables',
-                 'timestamp']
+    'required': [
+        '$id',
+        'name', 
+        'owner', 
+        'public',
+        'readonly', 
+        'size',
+        'modified',
+        'created',
+        'tables',
+        'timestamp'
+    ]
 }
