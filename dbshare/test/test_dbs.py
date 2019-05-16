@@ -1,4 +1,4 @@
-"Test the DbShare API dbs endpoint."
+"Test the dbs API endpoint."
 
 import http.client
 
@@ -8,7 +8,7 @@ import dbshare.schema.dbs
 
 
 class Dbs(Base):
-    "Test the DbShare API dbs endpoint."
+    "Test the dbs API endpoint."
 
     def setUp(self):
         super().setUp()
@@ -20,7 +20,7 @@ class Dbs(Base):
             self.dbs_urls[key] = data['databases'][key]['href']
 
     def test_schema(self):
-        "Test validity of the API dbs JSON."
+        "Test validity of the dbs API JSON."
         for key in ['public', 'owner', 'all']:
             response = self.session.get(self.dbs_urls[key])
             self.assertEqual(response.status_code, http.client.OK)

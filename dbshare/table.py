@@ -197,7 +197,7 @@ def empty(dbname, tablename):
             with ctx.dbcnx:
                 sql = 'DELETE FROM "%s"' % schema['name']
                 ctx.dbcnx.execute(sql)
-                ctx.update_table_nrows(schema['name'])
+                ctx.update_table_nrows(schema)
     except sqlite3.Error as error:
         flask.flash(str(error), 'error')
     return flask.redirect(flask.url_for('.rows',

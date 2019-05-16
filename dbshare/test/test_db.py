@@ -1,4 +1,4 @@
-"Test the DbShare API db endpoint."
+"Test the db API endpoint."
 
 import http.client
 import sqlite3
@@ -9,7 +9,7 @@ from dbshare.test.base import *
 
 
 class Db(Base):
-    "Test the DbShare API db endpoint."
+    "Test the db API endpoint."
 
     def setUp(self):
         super().setUp()

@@ -15,8 +15,8 @@ import dbshare.about
 import dbshare.db
 import dbshare.dbs
 import dbshare.index
-import dbshare.system
 import dbshare.query
+import dbshare.system
 import dbshare.table
 import dbshare.template
 import dbshare.templates
@@ -28,6 +28,7 @@ import dbshare.visual
 
 import dbshare.api.db
 import dbshare.api.dbs
+import dbshare.api.query
 import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.template
@@ -178,6 +179,7 @@ app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
 app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
 app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
+app.register_blueprint(dbshare.api.query.blueprint, url_prefix='/api/query')
 app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
 app.register_blueprint(dbshare.api.template.blueprint,
                        url_prefix='/api/template')

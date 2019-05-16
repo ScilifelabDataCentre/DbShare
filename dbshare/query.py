@@ -1,4 +1,4 @@
-"Query HTMl endpoint."
+"Query HTML endpoints."
 
 import sqlite3
 
@@ -40,10 +40,8 @@ def rows(dbname):
     query = {}
     try:
         query = get_query_from_request(check=True)
-        sql = get_sql_query(query)
-        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-        sql = get_sql_query(query)
         query_limited = query.copy()
+        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
         dbcnx = dbshare.db.get_cnx(dbname)
@@ -64,7 +62,7 @@ def rows(dbname):
                                  db=db,
                                  query=query,
                                  columns=columns,
-                                 sql=sql,
+                                 sql=get_sql_query(query),
                                  rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])

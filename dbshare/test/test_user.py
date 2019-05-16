@@ -1,4 +1,4 @@
-"Test the DbShare API user endpoint."
+"Test the user API endpoint."
 
 import http.client
 import os
@@ -9,14 +9,14 @@ from dbshare.test.base import *
 
 
 class User(Base):
-    "Test the DbShare API user endpoint."
+    "Test the user API endpoint."
 
     def setUp(self):
         super().setUp()
         self.user_url = f"{CONFIG['root_url']}/user/{CONFIG['username']}"
 
     def test_schema(self):
-        "Test schema for user JSON."
+        "Test schema for user API JSON."
         response = self.session.get(self.user_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),

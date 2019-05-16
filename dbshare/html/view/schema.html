@@ -37,7 +37,16 @@
     <td>{{ schema['query']['limit'] or ''}}</td>
   </tr>
 </table>
-{% endblock %}
+{% endblock %} {# block main #}
+
+{% block meta %}
+<div class="py-1">
+  <div>
+    <a href="{{ url_for('api_view.view', dbname=db['name'], viewname=schema['name']) }}"
+       class="badge badge-pill badge-dark">API</a>
+  </div>
+</div>
+{% endblock %} {# block meta #}
 
 {% block actions %}
 <div class="mt-2">
@@ -78,7 +87,7 @@
       Query</button>
   </form>
 </div>
-{% endblock %}
+{% endblock %} {# block actions #}
 
 {% block javascript %}
 <script>
@@ -86,4 +95,4 @@
     $('[data-toggle="tooltip"]').tooltip()
   })
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}
