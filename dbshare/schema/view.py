@@ -33,6 +33,12 @@ schema = {
     'required': [
         '$id',
         'name', 
+        'database',
+        'nrows',
+        'rows',
+        'data',
+        'visualizations',
+        'query',
         'timestamp'
     ]
 }

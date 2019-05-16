@@ -5,6 +5,7 @@ import flask
 import dbshare.schema.db
 import dbshare.schema.dbs
 import dbshare.schema.root
+import dbshare.schema.rows
 import dbshare.schema.table
 import dbshare.schema.view
 import dbshare.schema.user
@@ -41,6 +42,11 @@ def table():
 def view():
     "JSON schema for the API for view."
     return flask.jsonify(dbshare.schema.view.schema)
+
+@blueprint.route('/view')
+def rows():
+    "JSON schema for the API for rows."
+    return flask.jsonify(dbshare.schema.rows.schema)
 
 @blueprint.route('/user')
 def user():

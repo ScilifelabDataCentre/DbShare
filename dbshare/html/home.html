@@ -18,15 +18,6 @@
 </div>
 {% endblock %} {# block meta #}
 
-{% block actions %}
-{% if not g.current_user %}
-<div class="mt-2">
-  <a href="{{ url_for('user.login') }}" class="btn btn-block btn-secondary">
-    Login</a>
-</div>
-{% endif %}
-{% endblock %} {# block actions #}
-
 {% block javascript %}
 <script>
   $(function() {
@@ -36,4 +27,4 @@
     });
   });
 </script>
-{% endblock %}
+{% endblock %} {# block javascript #}

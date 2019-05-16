@@ -43,7 +43,12 @@
 <div class="mt-2">
   <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    {{ db['views'][schema['name']]['nrows'] }} rows</a>
+    {% if is_none(schema['nrows']) %}
+    ?
+    {% else %}
+    {{ schema['nrows']|thousands }}
+    {% endif %}
+    rows</a>
 </div>
 {% if has_write_access %}
 <div class="mt-2">

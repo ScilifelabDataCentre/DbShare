@@ -9,7 +9,13 @@
 
 <div class="mx-3 ml-4">
   <span class="monospace mr-4">{{ sql }};</span>
-  &rarr; {{ schema['nrows']|thousands }} rows
+  &rarr;
+  {% if is_none(schema['nrows']) %}
+  ?
+  {% else %}
+  {{ schema['nrows']|thousands }}
+  {% endif %}
+  rows
 </div>
 
 <div class="mt-4">

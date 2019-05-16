@@ -5,7 +5,6 @@ import http.client
 import json
 import re
 import sqlite3
-import urllib.parse
 
 import flask
 import flask_mail
@@ -56,14 +55,13 @@ def login():
             else:
                 raise ValueError
             try:
-                next = urllib.parse.urlsplit(flask.request.form['next'])
+                next = flask.request.form['next']
             except KeyError:
                 return flask.redirect(flask.url_for('home'))
             else:
-                next = urllib.parse.urljoin(flask.request.host_url, next.path)
                 return flask.redirect(next)
         except ValueError:
-            flask.flash('invalid user or password, or disabled', 'error')
+            flask.flash('invalid user/password, or account disabled', 'error')
             return flask.redirect(flask.url_for('.login'))
 
 def do_login(username, password):

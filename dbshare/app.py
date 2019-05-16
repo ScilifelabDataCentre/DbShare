@@ -58,7 +58,7 @@ CONFIG = dict(
     TABLE_INITIAL_COLUMNS = 8,
     MAX_NROWS_DISPLAY = 2000,
     QUERY_DEFAULT_LIMIT = 200,
-    # Suggested values for timeout, increment and backoff:
+    # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55
     #        i=0.022, b=1.55
@@ -68,9 +68,9 @@ CONFIG = dict(
     # t=4.0, i=0.010, b=1.45
     #        i=0.014, b=1.70
     #        i=0.020, b=1.75
-    EXECUTE_TIMEOUT = 2.0,
+    EXECUTE_TIMEOUT           = 2.0,
     EXECUTE_TIMEOUT_INCREMENT = 0.010,
-    EXECUTE_TIMEOUT_BACKOFF = 1.75,
+    EXECUTE_TIMEOUT_BACKOFF   = 1.75,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'semicolon': {'label': "semicolon ';'", 'char': ';'},
@@ -195,7 +195,7 @@ def setup_template_context():
                 enumerate=enumerate,
                 len=len,
                 range=range,
-                none_value=None)
+                is_none=lambda v: v is None)
 
 @app.template_filter('thousands')
 def thousands(value):

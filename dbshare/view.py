@@ -132,10 +132,15 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 
         if viewname.ext in (None, 'html'):
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-            if schema['nrows'] == '?' or schema['nrows'] > limit:
-                sql += f" LIMIT {limit}"
+            if schema['nrows'] is None:
+                flask.flash('too many rows to fetch; interrupted', 'error')
+                rows = []
+            elif schema['nrows'] > limit:
                 utils.flash_message_limit(limit)
-            rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
+                sql += f" LIMIT {limit}"
+                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
+            else:
+                rows = utils.execute_timeout(dbcnx, sql)
             query = schema['query']
             sql = dbshare.query.get_sql_query(query) # No imposed LIMIT
             return flask.render_template('view/rows.html', 
