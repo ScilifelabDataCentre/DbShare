@@ -1,4 +1,4 @@
-"DbShare API rows (from table or view) schema."
+"Rows API (from table or view) schema."
 
 from . import definitions
 

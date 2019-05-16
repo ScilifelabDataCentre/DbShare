@@ -1,4 +1,4 @@
-"DbShare API definitions part schema."
+"Definitions API schema component."
 
 schema = {
     'link': {

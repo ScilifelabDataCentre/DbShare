@@ -1,4 +1,4 @@
-"DbShare API databases part schema."
+"Database API schema component."
 
 schema = {
     'type': 'object',

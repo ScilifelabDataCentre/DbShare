@@ -4,7 +4,7 @@ import http.client
 
 import dbshare.schema.db
 import dbshare.schema.table
-import dbshare.schema.rows
+import dbshare.schema.query
 
 from dbshare.test.base import *
 
@@ -23,6 +23,8 @@ class Query(Base):
         response = self.session.get(url, json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
+        jsonschema.validate(instance=result,
+                            schema=dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
         # Get all columns, there are 3 in the test table.
@@ -32,6 +34,8 @@ class Query(Base):
         response = self.session.get(url, json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
+        jsonschema.validate(instance=result,
+                            schema=dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 3)
         # A bad query should give HTTP Bad Request

@@ -1,4 +1,4 @@
-"DbShare API user schema."
+"User API schema."
 
 from . import definitions
 

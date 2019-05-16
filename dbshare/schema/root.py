@@ -1,4 +1,4 @@
-"DbShare API root schema."
+"Root API schema."
 
 from . import definitions
 

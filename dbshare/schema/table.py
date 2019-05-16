@@ -1,4 +1,4 @@
-"DbShare API table schema."
+"Table API schema."
 
 from . import definitions
 from . import visualization
