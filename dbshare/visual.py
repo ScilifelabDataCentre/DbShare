@@ -3,6 +3,7 @@
 import json
 
 import flask
+import http.client
 import jsonschema
 import sqlite3
 
@@ -43,7 +44,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         return flask.jsonify(utils.get_api(**visual['spec']))
 
     else:
-        flask.abort(406)
+        flask.abort(http.client.NOT_ACCEPTABLE)
 
 @blueprint.route('/<name:dbname>/<name:visualname>/edit', 
                  methods=['GET', 'POST', 'DELETE'])

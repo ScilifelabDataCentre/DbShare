@@ -1,6 +1,7 @@
 "User profile and login/logout HTMl endpoints."
 
 import functools
+import http.client
 import json
 import re
 import sqlite3
@@ -28,12 +29,12 @@ def login_required(f):
 
 def admin_required(f):
     """Decorator for checking if logged in and 'admin' role.
-    Otherwise status 403 Forbidden.
+    Otherwise return status 401 Unauthorized.
     """
     @functools.wraps(f)
     def wrap(*args, **kwargs):
         if not flask.g.is_admin:
-            flask.abort(403)
+            flask.abort(http.client.UNAUTHORIZED)
         return f(*args, **kwargs)
     return wrap
 

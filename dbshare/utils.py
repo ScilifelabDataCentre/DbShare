@@ -2,6 +2,7 @@
 
 import csv
 import datetime
+import http.client
 import io
 import json
 import os.path
@@ -205,7 +206,7 @@ def check_csrf_token():
     # Do not use up the token; keep it for the session's lifetime.
     token = flask.session.get('_csrf_token', None)
     if not token or token != flask.request.form.get('_csrf_token'):
-        flask.abort(400)
+        flask.abort(http.client.BAD_REQUEST)
 
 def flash_message_limit(limit):
     "Flash message about limit on number of rows."

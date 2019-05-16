@@ -26,6 +26,11 @@ def endpoints():
     urls = sorted([(e['url'], e) for e in endpoints.values()])
     return flask.render_template('about/url_endpoints.html', urls=urls)
 
+@blueprint.route('/schema')
+def schema():
+    "Page with links to JSON schema."
+    return flask.render_template('about/schema.html')
+
 @blueprint.route('/software')
 def software():
     "Display software in system with links and version info."

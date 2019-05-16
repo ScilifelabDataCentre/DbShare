@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import http.client
 import sqlite3
 
 import flask
@@ -109,7 +110,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             try:
                 rows = utils.execute_timeout(dbcnx, sql)
             except SystemError:
-                flask.abort(504) # "Gateway timeout"; least bad status code
+                flask.abort(http.client.REQUEST_TIMEOUT)
             writer.write_rows(rows, skip_rowid=True)
             return flask.Response(writer.get(),
                                   mimetype=constants.CSV_MIMETYPE)
@@ -118,17 +119,18 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             try:
                 rows = utils.execute_timeout(dbcnx, sql)
             except SystemError:
-                flask.abort(504) # "Gateway timeout"; least bad status code
+                flask.abort(http.client.REQUEST_TIMEOUT)
             return flask.jsonify(utils.get_api(
                 name=str(tablename),
                 title=title,
-                table={'href': utils.url_for('api_table.table',
-                                             dbname=db['name'],
-                                             tablename=str(tablename))},
+                source={'type': 'table',
+                        'href': utils.url_for('api_table.table',
+                                              dbname=db['name'],
+                                              tablename=str(tablename))},
                 nrows=schema['nrows'],
                 data=[dict(zip(columns, row[1:])) for row in rows]))
         else:
-            flask.abort(406)
+            flask.abort(http.client.NOT_ACCEPTABLE)
 
     except (SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')

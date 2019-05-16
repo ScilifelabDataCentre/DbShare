@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block head_title %}JSON schema{% endblock %}
+
+{% block body_title %}JSON schema{% endblock %}
+
+{% block main %}
+<ul>
+  <li><a href="{{ url_for('api_schema.root') }}">API root</a></li>
+  <li><a href="{{ url_for('api_schema.dbs') }}">Databases list</a></li>
+  <li><a href="{{ url_for('api_schema.db') }}">Database</a></li>
+  <li><a href="{{ url_for('api_schema.table') }}">Table</a></li>
+  <li><a href="{{ url_for('api_schema.view') }}">View</a></li>
+  <li><a href="{{ url_for('api_schema.user') }}">User</a></li>
+</ul>
+{% endblock %}

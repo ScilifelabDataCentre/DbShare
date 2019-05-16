@@ -32,29 +32,3 @@ schema = {
         'timestamp'
     ]
 }
-
-rows_schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/table',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': __doc__,
-    'definitions': definitions.schema,
-    'type': 'object',
-    'properties': {
-        '$id': {'type': 'string', 'format': 'uri'},
-        'name': {'type': 'string'},
-        'title': {'type': ['string', 'null']},
-        'nrows': {'type': 'integer', 'minimum': 0},
-        'data': {
-            'type': 'array',
-            'items': {'type': 'object'}
-        },
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
-    },
-    'required': [
-        '$id',
-        'name',
-        'nrows',
-        'data',
-        'timestamp'
-    ]
-}

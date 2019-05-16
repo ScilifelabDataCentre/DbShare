@@ -1,6 +1,7 @@
 "View HTML endpoints."
 
 import copy
+import http.client
 import sqlite3
 
 import flask
@@ -153,7 +154,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             try:
                 rows = utils.execute_timeout(dbcnx, sql)
             except SystemError:
-                flask.abort(504) # "Gateway timeout"; least bad status code
+                flask.abort(http.client.REQUEST_TIMEOUT)
             writer.write_rows(rows)
             return flask.Response(writer.get(),
                                   mimetype=constants.CSV_MIMETYPE)
@@ -163,18 +164,19 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             try:
                 rows = utils.execute_timeout(dbcnx, sql)
             except SystemError:
-                flask.abort(504) # "Gateway timeout"; least bad status code
+                flask.abort(http.client.REQUEST_TIMEOUT)
             return flask.jsonify(utils.get_api(
                 name=str(viewname),
                 title=title,
-                view={'href': utils.url_for('api_view.view',
-                                            dbname=db['name'],
-                                            viewname=schema['name'])},
+                source={'type': 'view',
+                        'href': utils.url_for('api_view.view',
+                                              dbname=db['name'],
+                                              viewname=schema['name'])},
                 nrows=schema['nrows'],
                 data=[dict(zip(columns, row)) for row in rows]))
 
         else:
-            flask.abort(406)
+            flask.abort(http.client.NOT_ACCEPTABLE)
 
     except (SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
