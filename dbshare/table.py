@@ -88,7 +88,32 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         sql = 'SELECT rowid, %s FROM "%s"' % \
               (','.join([f'"{c}"' for c in columns]), tablename)
 
-        if tablename.ext in (None, 'html'):
+        if tablename.ext == 'json' or utils.accept_json():
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(http.client.REQUEST_TIMEOUT)
+            return flask.jsonify(utils.get_api(
+                name=str(tablename),
+                title=title,
+                source={'type': 'table',
+                        'href': utils.url_for('api_table.table',
+                                              dbname=db['name'],
+                                              tablename=str(tablename))},
+                nrows=schema['nrows'],
+                data=[dict(zip(columns, row[1:])) for row in rows]))
+
+        elif tablename.ext == 'csv':
+            writer = utils.CsvWriter(header=columns)
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(http.client.REQUEST_TIMEOUT)
+            writer.write_rows(rows, skip_rowid=True)
+            return flask.Response(writer.get(),
+                                  mimetype=constants.CSV_MIMETYPE)
+
+        elif tablename.ext in (None, 'html'):
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] > limit:
                 sql += f" LIMIT {limit}"
@@ -105,30 +130,6 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                          updateable=updateable,
                                          has_write_access=has_write_access)
 
-        elif tablename.ext == 'csv':
-            writer = utils.CsvWriter(header=columns)
-            try:
-                rows = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(rows, skip_rowid=True)
-            return flask.Response(writer.get(),
-                                  mimetype=constants.CSV_MIMETYPE)
-
-        elif tablename.ext == 'json':
-            try:
-                rows = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            return flask.jsonify(utils.get_api(
-                name=str(tablename),
-                title=title,
-                source={'type': 'table',
-                        'href': utils.url_for('api_table.table',
-                                              dbname=db['name'],
-                                              tablename=str(tablename))},
-                nrows=schema['nrows'],
-                data=[dict(zip(columns, row[1:])) for row in rows]))
         else:
             flask.abort(http.client.NOT_ACCEPTABLE)
 

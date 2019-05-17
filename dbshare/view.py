@@ -130,7 +130,34 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         dbcnx = dbshare.db.get_cnx(dbname)
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
 
-        if viewname.ext in (None, 'html'):
+        if viewname.ext == 'json' or utils.accept_json():
+            columns = [c['name'] for c in schema['columns']]
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(http.client.REQUEST_TIMEOUT)
+            return flask.jsonify(utils.get_api(
+                name=str(viewname),
+                title=title,
+                source={'type': 'view',
+                        'href': utils.url_for('api_view.view',
+                                              dbname=db['name'],
+                                              viewname=schema['name'])},
+                nrows=schema['nrows'],
+                data=[dict(zip(columns, row)) for row in rows]))
+
+        elif viewname.ext == 'csv':
+            columns = [c['name'] for c in schema['columns']]
+            writer = utils.CsvWriter(header=columns)
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                flask.abort(http.client.REQUEST_TIMEOUT)
+            writer.write_rows(rows)
+            return flask.Response(writer.get(),
+                                  mimetype=constants.CSV_MIMETYPE)
+
+        elif viewname.ext in (None, 'html'):
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] is None:
                 flask.flash('too many rows to fetch; interrupted', 'error')
@@ -152,33 +179,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                          rows=rows,
                                          visuals=visuals,
                                          has_write_access=has_write_access)
-
-        elif viewname.ext == 'csv':
-            columns = [c['name'] for c in schema['columns']]
-            writer = utils.CsvWriter(header=columns)
-            try:
-                rows = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(rows)
-            return flask.Response(writer.get(),
-                                  mimetype=constants.CSV_MIMETYPE)
-
-        elif viewname.ext == 'json':
-            columns = [c['name'] for c in schema['columns']]
-            try:
-                rows = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            return flask.jsonify(utils.get_api(
-                name=str(viewname),
-                title=title,
-                source={'type': 'view',
-                        'href': utils.url_for('api_view.view',
-                                              dbname=db['name'],
-                                              viewname=schema['name'])},
-                nrows=schema['nrows'],
-                data=[dict(zip(columns, row)) for row in rows]))
 
         else:
             flask.abort(http.client.NOT_ACCEPTABLE)

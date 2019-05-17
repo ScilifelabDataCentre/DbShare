@@ -10,6 +10,7 @@ import sqlite3
 
 import dbshare.db
 import dbshare.system
+import dbshare.templates
 import dbshare.user
 import dbshare.vega
 import dbshare.vega_lite
@@ -253,8 +254,8 @@ def select(dbname, sourcename):
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
-        templates = get_templates(owner=flask.g.current_user['username'],
-                                  public=True)
+        templates = db.templates.get_templates(
+            owner=flask.g.current_user['username'], public=True)
         return flask.render_template('template/select.html',
                                      db=db,
                                      schema=schema,

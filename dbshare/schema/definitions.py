@@ -5,7 +5,8 @@ schema = {
         'type': 'object',
         'properties': {
             'href': {'type': 'string', 'format': 'uri'},
-            'format': {'type': 'string', 'default': ' json'}
+            'content_type': {'type': 'string', 'default': 'application/json'},
+            'format': {'type': 'string', 'default': 'json'}
         },
         'required': [
             'href'

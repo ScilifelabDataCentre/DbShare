@@ -14,8 +14,11 @@ class Query(Base):
 
     def test_table_query(self):
         "Test a query on a table in a database."
+
+        # Upload a file containing a plain Sqlite3 database.
         response = self.upload_file()
         self.assertEqual(response.status_code, http.client.OK)
+
         # Get only one column from the test table.
         query = {'select': 't',
                  'from': CONFIG['tablename']}
@@ -27,6 +30,7 @@ class Query(Base):
                             schema=dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
+
         # Get all columns, there are 3 in the test table.
         query = {'select': '*',
                  'from': CONFIG['tablename']}
@@ -38,7 +42,8 @@ class Query(Base):
                             schema=dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 3)
-        # A bad query should give HTTP Bad Request
+
+        # A bad query should yield HTTP Bad Request
         query = {'select': None,
                  'from': CONFIG['tablename']}
         url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"

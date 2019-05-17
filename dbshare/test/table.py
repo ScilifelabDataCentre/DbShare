@@ -6,6 +6,7 @@ import dbshare.schema.db
 import dbshare.schema.table
 import dbshare.schema.rows
 
+from dbshare import constants
 from dbshare.test.base import *
 
 
@@ -14,20 +15,33 @@ class Table(Base):
 
     def test_db_upload(self):
         "Create a database with table by file upload, check the table JSON."
+
+        # Upload a file containing a plain Sqlite3 database.
         response = self.upload_file()
         self.assertEqual(response.status_code, http.client.OK)
-        # Check that the db API JSON is valid.
+
+        # The db API JSON is valid.
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
-        # Check that the table API JSON is valid.
+
+        # The table API JSON is valid.
         table_url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}"
         response = self.session.get(table_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.table.schema)
-        # Check that the table rows JSON is valid.
+
+        # The table rows JSON is valid.
         rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}.json"
         response = self.session.get(rows_url)
+        self.assertEqual(response.status_code, http.client.OK)
+        jsonschema.validate(instance=response.json(),
+                            schema=dbshare.schema.rows.schema)
+
+        # Content negotiation for rows. No '.json' extension.
+        rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}"
+        response = self.session.get(rows_url,
+                                    headers={'Accept': constants.JSON_MIMETYPE})
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.rows.schema)

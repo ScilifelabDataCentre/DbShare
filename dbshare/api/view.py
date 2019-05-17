@@ -5,7 +5,7 @@ import http.client
 import flask
 
 import dbshare.db
-
+from dbshare import constants
 from dbshare import utils
 
 
@@ -39,7 +39,9 @@ def get_api(db, view, complete=False):
                                                  dbname=db['name'])},
               'nrows': view.get('nrows'),
               'rows': {'href': url + '.json'},
-              'data': {'href': url + '.csv', 'format': 'csv'}
+              'data': {'href': url + '.csv', 
+                       'content_type': constants.CSV_MIMETYPE,
+                       'format': 'csv'}
     }
     if complete:
         visuals = []

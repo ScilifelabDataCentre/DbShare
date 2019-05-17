@@ -16,7 +16,7 @@ class User(Base):
         self.user_url = f"{CONFIG['root_url']}/user/{CONFIG['username']}"
 
     def test_schema(self):
-        "Test schema for user API JSON."
+        "Schema for user API JSON."
         response = self.session.get(self.user_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),

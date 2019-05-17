@@ -31,7 +31,10 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
-    if visualname.ext in (None, 'html'):
+    if visualname.ext == 'json' or utils.accept_json():
+        return flask.jsonify(utils.get_api(**visual['spec']))
+
+    elif visualname.ext in (None, 'html'):
         return flask.render_template(
             'visual/display.html',
             db=db,
@@ -39,9 +42,6 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
             visual=visual,
             title="Visualization {}".format(visualname),
             has_write_access = dbshare.db.has_write_access(db))
-
-    elif visualname.ext == 'json':
-        return flask.jsonify(utils.get_api(**visual['spec']))
 
     else:
         flask.abort(http.client.NOT_ACCEPTABLE)
