@@ -100,9 +100,9 @@
   </div>
   <div class="col-md">
     {% for table in utils.sorted_schema(db['tables'].values()) %}
-    <div class="card border-secondary mb-1">
+    <div class="card border-primary mb-1">
       <div class="card-header">
-        <button type="button" class="btn btn-outline-secondary" 
+        <button type="button" class="btn btn-outline-primary" 
                 data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
           Table <strong>{{ table['name'] }}</strong></button>

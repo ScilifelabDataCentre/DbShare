@@ -165,11 +165,11 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             elif schema['nrows'] > limit:
                 utils.flash_message_limit(limit)
                 sql += f" LIMIT {limit}"
-                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed
+                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed.
             else:
                 rows = utils.execute_timeout(dbcnx, sql)
             query = schema['query']
-            sql = dbshare.query.get_sql_query(query) # No imposed LIMIT
+            sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT.
             return flask.render_template('view/rows.html', 
                                          db=db,
                                          schema=schema,
@@ -203,7 +203,7 @@ def schema(dbname, viewname):
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     has_write_access = dbshare.db.has_write_access(db)
     sources = [dbshare.db.get_schema(db, name) for name in schema['sources']]
-    # Special case: Create HTML links for sources, handling "AS" parts.
+    # Special case: Create HTML links for sources, leave "AS" parts be.
     html_from = schema['query']['from']
     for source in sources:
         if source['type'] == constants.TABLE:

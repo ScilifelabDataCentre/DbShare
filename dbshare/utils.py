@@ -26,14 +26,14 @@ mail = flask_mail.Mail()
 
 # Global instance of SQL lexer.
 lexer = Lexer([
-    {'name': 'RESERVED',
-     'regexp': r"SELECT|DISTINCT|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT",
+    {'type': 'RESERVED',
+     'regexp': r"(?i)SELECT|DISTINCT|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT",
      'convert': 'upcase'},
-    {'name': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
-    {'name': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
-    {'name': 'WHITESPACE', 'regexp': r"\s+"},
-    {'name': 'IDENTIFIER', 'regexp': r"[a-z]\w*"},
-    {'name': 'IDENTIFIER',
+    {'type': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
+    {'type': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
+    {'type': 'WHITESPACE', 'regexp': r"\s+", 'skip': True},
+    {'type': 'IDENTIFIER', 'regexp': r"(?i)[a-z]\w*"},
+    {'type': 'IDENTIFIER',
      'regexp': r"(?P<quotechar>[\'|\"])\S+(?P=quotechar)",
      'convert': 'quotechar_strip'}
 ])
@@ -143,26 +143,6 @@ def name_cleaned(name):
         if char not in constants.NAME_CHARS:
             chars[pos] = '_'
     return ''.join(chars)
-
-def name_before_as(name):
-    "Extract the part before 'AS', removing blanks and double-quotes."
-    name = name.strip()
-    try:
-        pos = name.upper().index(' AS ')
-        name = name[:pos]
-    except ValueError:
-        pass
-    return name.strip().strip('"')
-
-def name_after_as(name):
-    "Extract the part after 'AS', removing blanks and double-quotes."
-    name = name.strip()
-    try:
-        pos = name.upper().index(' AS ')
-        name = name[pos+len(' AS '):]
-    except ValueError:
-        pass
-    return name.strip().strip('"')
 
 def url_for(endpoint, **values):
     "Same as 'flask.url_for', but with '_external' set to True."

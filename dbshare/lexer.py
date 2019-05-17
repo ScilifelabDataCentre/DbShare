@@ -8,7 +8,7 @@ class Lexer:
     def __init__(self, rules, text=''):
         self.rules = []
         for rule in rules:
-            self.add_rule(rule['name'],
+            self.add_rule(rule['type'],
                           rule['regexp'],
                           convert=rule.get('convert'),
                           case=rule.get('case', False))
@@ -29,14 +29,18 @@ class Lexer:
         if self.pos >= len(line):
             self.nline += 1
             self.pos = 0
+            try:
+                line = self.lines[self.nline]
+            except IndexError:
+                raise StopIteration
         for rule in self.rules:
             match = rule['rx'].match(line, self.pos)
-            if match is not None:
-                break
+            if match: break
         else:
-            raise ValueError(self.message())
-        raw = line[match.start() : match.end()]
-        token = {'name': rule['name'], 'raw': raw}
+            raise ValueError(self.location())
+        self.pos += match.end() - match.start()
+        token = {'type': rule['type'], 
+                 'raw': line[match.start() : match.end()]}
         token.update(match.groupdict())
         convert = rule['convert']
         if convert is None:
@@ -46,7 +50,6 @@ class Lexer:
                 convert(token)
             except Exception as error:
                 raise ValueError(f"invalid token at {self.location()}; {error}")
-        self.pos += len(raw)
         return token
 
     def set(self, text):
@@ -54,14 +57,14 @@ class Lexer:
         self.nline = 0
         self.pos = 0
 
-    def add_rule(self, name, regexp, convert=None, case=False):
+    def add_rule(self, type, regexp, convert=None, case=False):
         if case:
             rx = re.compile(regexp)
         else:
             rx = re.compile(regexp, re.IGNORECASE)
         if isinstance(convert, str):
             convert = getattr(self, convert)
-        self.rules.append({'name': name,
+        self.rules.append({'type': type,
                            'regexp': regexp,
                            'rx': rx,
                            'convert': convert})
@@ -85,3 +88,23 @@ class Lexer:
     def quotechar_strip(self, token):
         "Remove the quotechar from the start and end of the raw value."
         token['value'] = token['raw'].strip(token['quotechar'])
+
+
+if __name__ == '__main__':
+    lexer = Lexer([
+        {'type': 'RESERVED',
+         'regexp': r"SELECT|DISTINCT|FROM|AS|WHERE|ORDER|BY|AND|OR|NOT|LIMIT",
+         'case': False,
+         'convert': 'upcase'},
+        {'type': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
+        {'type': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
+        {'type': 'WHITESPACE', 'regexp': r"\s+"},
+        {'type': 'IDENTIFIER', 'regexp': r"[a-z]\w*", 'case': False},
+        {'type': 'IDENTIFIER',
+         'regexp': r"(?P<quotechar>[\'|\"])\S+(?P=quotechar)",
+         'case': False,
+         'convert': 'quotechar_strip'}
+    ])
+    sql = 'SELECT DISTINCT x, "abn.z" AS a FROM w, abn WHERE w.id>abn."x-e-w"'
+    for token in lexer(sql):
+        print(token)

@@ -104,11 +104,11 @@ def get_query_from_request(check=False):
     result['select'] = flask.request.values.get('select')
     if check and not result['select']:
         raise KeyError('lacking SELECT part')
-    # Column name must use the "AS" part if any
-    result['columns'] = []
+    # Get result column names considering quotes and AS part, if any.
     if result['select']:
-        for name in result['select'].split(','):
-            result['columns'].append(utils.name_after_as(name))
+        result['columns'] = get_select_columns(result['select'])
+    else:
+        result['columns'] = []
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
         raise KeyError('lacking FROM part')
@@ -134,14 +134,50 @@ def get_query_from_request(check=False):
         pass
     return result
 
-def parse_query(query):
-    "Parse out required information from the query."
-    # XXX
-    result['columns'] = []
-    if result['select']:
-        for name in result['select'].split(','):
-            result['columns'].append(utils.name_after_as(name))
-    # XXX sources from FROM part
+def get_select_columns(select):
+    """Parse out column names from the SELECT part of the query.
+    Consider quotes and AS.
+    """
+    result = []
+    parts = []
+    for token in utils.lexer(select):
+        if token['value'] == ',':
+            result.append(''.join(parts))
+            parts = []
+        elif token['type'] == 'RESERVED' and token['value'] == 'AS':
+            parts = []
+        elif token['type'] == 'WHITESPACE':
+            pass
+        else:
+            parts.append(token['value'])
+    if parts:
+        result.append(''.join(parts))
+    return result
+
+def get_from_sources(from_):
+    """Parse out table/view names from the FROM part of the query.
+    Consider quotes and AS (ignored, contrary to columns)."""
+    result = []
+    parts = []
+    before_as = True
+    for token in utils.lexer(from_):
+        if token['value'] == ',':
+            if parts:
+                result.append(''.join(parts))
+                parts = []
+            before_as = True
+        elif token['type'] == 'RESERVED' and token['value'] == 'AS':
+            if parts:
+                result.append(''.join(parts))
+                parts = []
+            before_as = False
+        elif token['type'] == 'WHITESPACE':
+            pass
+        elif before_as:
+            parts.append(token['value'])
+    if parts:
+        result.append(''.join(parts))
+    return result
 
 def get_sql_statement(query):
     "Create the SQL SELECT statement from the query parts."

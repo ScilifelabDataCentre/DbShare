@@ -32,9 +32,7 @@ def query(dbname):
                  'offset': data.get('offset') or None}
         if not query['select']: raise KeyError
         if not query['from']: raise KeyError
-        query['columns'] = []
-        for name in query['select'].split(','):
-            query['columns'].append(utils.name_after_as(name))
+        query['columns'] = dbshare.query.get_select_columns(query['select'])
         dbcnx = dbshare.db.get_cnx(dbname)
         rows = utils.execute_timeout(dbcnx,
                                      dbshare.query.get_sql_statement(query))

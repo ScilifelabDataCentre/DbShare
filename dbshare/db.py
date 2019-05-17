@@ -651,7 +651,7 @@ class DbContext:
         if schema['name'] in self.db['views']:
             raise ValueError('name is already in use for a view')
         if query:
-            sql = dbshare.query.get_sql_query(query)
+            sql = dbshare.query.get_sql_statement(query)
             sql = 'CREATE TABLE "%s" AS %s' % (schema['name'], sql)
             utils.execute_timeout(self.dbcnx, sql)
             if not schema.get('description'):
@@ -755,7 +755,7 @@ class DbContext:
         if create:
             sql = 'CREATE VIEW "%s" AS %s' % \
                   (schema['name'],
-                   dbshare.query.get_sql_query(schema['query']))
+                   dbshare.query.get_sql_statement(schema['query']))
             self.dbcnx.execute(sql)
         cursor = self.dbcnx.cursor()
         try:
@@ -765,10 +765,8 @@ class DbContext:
             sql = 'DROP VIEW "%s"' % schema['name']
             cursor.execute(sql)
             raise ValueError('invalid view; maybe non-existent column?')
-        # Sources must not include any "AS" part.
-        schema['sources'] = []
-        for source in schema['query']['from'].split(','):
-            schema['sources'].append(utils.name_before_as(source))
+        # Source names considering quotes and disregarding AS part, if any.
+        schema['sources'] = dbshare.query.get_from_sources(schema['query']['from'])
         schema['columns'] = [{'name': row[1], 'type': row[2]} for row in cursor]
         sql = "INSERT INTO %s (name, schema) VALUES (?,?)" % constants.VIEWS
         with self.dbcnx:
@@ -925,6 +923,7 @@ class DbContext:
                       'title': None,
                       'description': None}
             schema['query'] = query = {}
+            # XXX use lexer for this!
             parts = sql.split()
             parts.reverse()
             try:
@@ -939,9 +938,7 @@ class DbContext:
                     if item.upper() == 'FROM': break
                     select.append(item)
                 query['select'] = ' '.join(select)
-                query['columns'] = []
-                for name in query['select'].split(','):
-                    query['columns'].append(utils.name_after_as(name))
+                query['columns'] = dbshare.query.get_select_columns(query['select'])
                 from_ = []
                 while parts:
                     item = parts.pop()
