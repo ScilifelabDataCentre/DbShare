@@ -254,7 +254,7 @@ def select(dbname, sourcename):
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
-        templates = db.templates.get_templates(
+        templates = dbshare.templates.get_templates(
             owner=flask.g.current_user['username'], public=True)
         return flask.render_template('template/select.html',
                                      db=db,
