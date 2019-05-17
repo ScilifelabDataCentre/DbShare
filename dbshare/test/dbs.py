@@ -21,7 +21,7 @@ class Dbs(Base):
         for key in ['public', 'owner', 'all']:
             dbs_urls[key] = data['databases'][key]['href']
 
-        # Valid schema for dbs lists.
+        # Valid JSON for dbs lists.
         for key in ['public', 'owner', 'all']:
             response = self.session.get(dbs_urls[key])
             self.assertEqual(response.status_code, http.client.OK)

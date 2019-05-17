@@ -36,7 +36,8 @@ def query(dbname):
         for name in query['select'].split(','):
             query['columns'].append(utils.name_after_as(name))
         dbcnx = dbshare.db.get_cnx(dbname)
-        rows = utils.execute_timeout(dbcnx, dbshare.query.get_sql_query(query))
+        rows = utils.execute_timeout(dbcnx,
+                                     dbshare.query.get_sql_statement(query))
     except (KeyError, sqlite3.Error):
         flask.abort(http.client.BAD_REQUEST)
     except SystemError:

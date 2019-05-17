@@ -17,11 +17,26 @@ import flask_mail
 import jinja2.utils
 import werkzeug.routing
 
+from dbshare.lexer import Lexer
 from dbshare import constants
 
 
-# Global instance.
+# Global instance of mail interface.
 mail = flask_mail.Mail()
+
+# Global instance of SQL lexer.
+lexer = Lexer([
+    {'name': 'RESERVED',
+     'regexp': r"SELECT|DISTINCT|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT",
+     'convert': 'upcase'},
+    {'name': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
+    {'name': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
+    {'name': 'WHITESPACE', 'regexp': r"\s+"},
+    {'name': 'IDENTIFIER', 'regexp': r"[a-z]\w*"},
+    {'name': 'IDENTIFIER',
+     'regexp': r"(?P<quotechar>[\'|\"])\S+(?P=quotechar)",
+     'convert': 'quotechar_strip'}
+])
 
 class NameConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name."
@@ -284,65 +299,3 @@ class CsvWriter:
 
     def get(self):
         return self.outfile.getvalue()
-
-class Lexer:
-    "Low-level parsing of text according to given regexp-based rules."
-
-    def __init__(self, rules, text=''):
-        self.rules = []
-        for rule in rules:
-            self.add_rule(rule['name'], rule['regexp'], eval=rule.get('eval'))
-        self.set(text)
-
-    def __call__(self, text):
-        self.set(text)
-        return self
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        try:
-            if self.pos >= len(self.lines[self.line]):
-                self.line += 1
-                self.pos = 0
-            for rule in self.rules:
-                match = rule['rx'].match(self.lines[self.line], self.pos)
-                if match is not None:
-                    break
-            else:
-                raise ValueError(self.message())
-        except IndexError:
-            raise StopIteration
-        literal = self.lines[self.line][match.start():match.end()]
-        eval = rule['eval']
-        if eval is None:
-            value = literal
-        else:
-            try:
-                value = eval(literal)
-            except Exception as error:
-                raise ValueError(f"invalid token at {self.location()};"
-                                 f"evaluating literal '{literal}")
-        result = {'name': rule['name'],
-                  'literal': literal,
-                  'value': value,
-                  'start': self.pos,
-                  'end': self.pos + len(literal)}
-        self.pos += len(literal)
-        return result
-
-    def set(self, text):
-        self.lines = text.split('\n')
-        self.line = 0
-        self.pos = 0
-
-    def add_rule(self, name, regexp, eval=None):
-        self.rules.append({'name': name,
-                           'regexp': regexp,
-                           'rx': re.compile(regexp),
-                           'eval': eval})
-
-    def location(self):
-        "Return info on current location in text."
-        return f"line {self.line}, position {self.pos}"

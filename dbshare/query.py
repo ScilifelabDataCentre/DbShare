@@ -45,7 +45,7 @@ def rows(dbname):
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
         dbcnx = dbshare.db.get_cnx(dbname)
-        rows = utils.execute_timeout(dbcnx, get_sql_query(query_limited))
+        rows = utils.execute_timeout(dbcnx, get_sql_statement(query_limited))
         if len(rows) >= query_limited['limit']:
             utils.flash_message_limit(limit)
         if query['columns'][0] == '*':
@@ -62,7 +62,7 @@ def rows(dbname):
                                  db=db,
                                  query=query,
                                  columns=columns,
-                                 sql=get_sql_query(query),
+                                 sql=get_sql_statement(query),
                                  rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
@@ -98,13 +98,12 @@ def table(dbname):
 
 def get_query_from_request(check=False):
     """Get the query data from the current request values (=form or args) data.
-    Raise KeyError if a required part is missing.
+    Raise KeyError if a required part is missing if 'check' is True.
     """
     result = {}
     result['select'] = flask.request.values.get('select')
-    if not result['select']:
-        if check:
-            raise KeyError('no SELECT part')
+    if check and not result['select']:
+        raise KeyError('lacking SELECT part')
     # Column name must use the "AS" part if any
     result['columns'] = []
     if result['select']:
@@ -112,7 +111,7 @@ def get_query_from_request(check=False):
             result['columns'].append(utils.name_after_as(name))
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
-        raise KeyError('no FROM part')
+        raise KeyError('lacking FROM part')
     result['where'] = flask.request.values.get('where') or None
     result['orderby'] = flask.request.values.get('orderby') or None
     try:
@@ -120,7 +119,7 @@ def get_query_from_request(check=False):
         limit = limit.strip()
         if limit:
             result['limit'] = max(1, int(limit))
-        else:
+        else:                   # Empty string
             result['limit'] = None
     except (KeyError, ValueError, TypeError):
         result['limit'] = flask.current_app.config['QUERY_DEFAULT_LIMIT']
@@ -129,21 +128,30 @@ def get_query_from_request(check=False):
         offset = offset.strip()
         if offset:
             result['offset'] = max(1, int(offset))
-        else:
+        else:                   # Empty string
             result['offset'] = None
     except (KeyError, ValueError, TypeError):
         pass
     return result
 
-def get_sql_query(statement):
-    "Create the SQL SELECT statement from its parts."
-    parts = ["SELECT {select} FROM {from}".format(**statement)]
-    if statement.get('where'):
-        parts.append('WHERE ' + statement['where'])
-    if statement.get('orderby'):
-        parts.append('ORDER BY ' + statement['orderby'])
-    if statement.get('limit'):
-        parts.append("LIMIT %s" % statement['limit'])
-        if statement.get('offset'):
-            parts.append("OFFSET %s" % statement['offset'])
+def parse_query(query):
+    "Parse out required information from the query."
+    # XXX
+    result['columns'] = []
+    if result['select']:
+        for name in result['select'].split(','):
+            result['columns'].append(utils.name_after_as(name))
+    # XXX sources from FROM part
+
+def get_sql_statement(query):
+    "Create the SQL SELECT statement from the query parts."
+    parts = ["SELECT {select} FROM {from}".format(**query)]
+    if query.get('where'):
+        parts.append('WHERE ' + query['where'])
+    if query.get('orderby'):
+        parts.append('ORDER BY ' + query['orderby'])
+    if query.get('limit'):
+        parts.append("LIMIT %s" % query['limit'])
+        if query.get('offset'):
+            parts.append("OFFSET %s" % query['offset'])
     return ' '.join(parts)
