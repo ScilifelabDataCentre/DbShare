@@ -79,10 +79,14 @@
     {% for table in utils.sorted_schema(db['tables'].values()) %}
     <div class="card border-primary mb-1">
       <div class="card-header">
-        <button type="button" class="btn btn-outline-primary" 
+        <button type="button"
+		class="btn btn-outline-primary dropdown-toggle mx-2"
                 data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
-          Table <strong>{{ table['name'] }}</strong> &darr;</button>
+        </button>
+	Table <strong>{{ table['name'] }}</strong>
+	(<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
+	    target="_blank">{{ table['nrows']|thousands }} rows</a>)
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
@@ -97,14 +101,6 @@
               </td>
             </tr>
             {% endfor %}
-	    <tr>
-	      <th></th>
-	      <td>
-		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
-		   target="_blank">
-		  {{ table['nrows']|thousands }} rows &#8599;</a>
-	      </td>
-	    </tr>
           </table>
         </div>
       </div>
@@ -113,10 +109,15 @@
     {% for view in utils.sorted_schema(db['views'].values()) %}
     <div class="card border-primary mb-1">
       <div class="card-header">
-        <button type="button" class="btn btn-outline-primary" 
+        <button type="button"
+		class="btn btn-outline-primary dropdown-toggle mx-2" 
                 data-toggle="collapse" data-target="#{{ view['name'] }}"
                 aria-expanded="false" aria-controls="{{ view['name'] }}">
-          View <strong>{{ view['name'] }}</strong> &darr;</button>
+        </button>
+	View <strong>{{ view['name'] }}</strong>
+	(<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
+	    target="_blank">
+	  {{ view['nrows']|thousands }} rows</a>)
       </div>
       <div id="{{ view['name'] }}" class="collapse">
         <div class="card-body">
@@ -127,14 +128,6 @@
               <td>{{ column['type'] }}</td>
             </tr>
             {% endfor %}
-	    <tr>
-	      <th></th>
-	      <td>
-		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
-		   target="_blank">
-		  {{ view['nrows']|thousands }} rows &#8599;</a>
-	      </td>
-	    </tr>
           </table>
         </div>
       </div>
