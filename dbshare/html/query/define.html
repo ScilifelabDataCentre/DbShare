@@ -83,10 +83,6 @@
                 data-toggle="collapse" data-target="#{{ table['name'] }}"
                 aria-expanded="false" aria-controls="{{ table['name'] }}">
           Table <strong>{{ table['name'] }}</strong> &darr;</button>
-        <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
-           class="btn btn-sm btn-outline-primary my-1" 
-           role="button" target="_blank">
-          {{ table['nrows']|thousands }} rows &#8599;</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
@@ -101,6 +97,14 @@
               </td>
             </tr>
             {% endfor %}
+	    <tr>
+	      <th></th>
+	      <td>
+		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
+		   target="_blank">
+		  {{ table['nrows']|thousands }} rows &#8599;</a>
+	      </td>
+	    </tr>
           </table>
         </div>
       </div>
@@ -113,10 +117,6 @@
                 data-toggle="collapse" data-target="#{{ view['name'] }}"
                 aria-expanded="false" aria-controls="{{ view['name'] }}">
           View <strong>{{ view['name'] }}</strong> &darr;</button>
-        <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
-           class="btn btn-sm btn-outline-primary my-1"
-           role="button" target="_blank">
-          {{ view['nrows']|thousands }} rows &#8599;</a>
       </div>
       <div id="{{ view['name'] }}" class="collapse">
         <div class="card-body">
@@ -127,6 +127,14 @@
               <td>{{ column['type'] }}</td>
             </tr>
             {% endfor %}
+	    <tr>
+	      <th></th>
+	      <td>
+		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
+		   target="_blank">
+		  {{ view['nrows']|thousands }} rows &#8599;</a>
+	      </td>
+	    </tr>
           </table>
         </div>
       </div>
