@@ -28,8 +28,7 @@ All databases
     <tr>
       <td>
         <a href="{{ url_for('db.display', dbname=db['name']) }}" role="button" 
-	   class="btn btn-sm btn-outline-primary px-3 py-0 font-weight-bold">
-          {{ db['name'] }}</a>
+	   class="font-weight-bold">{{ db['name'] }}</a>
       </td>
       <td>{{ db.get('title') or '-' }}</td>
       <td>{{ db['public'] | access }}</td>

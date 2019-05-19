@@ -19,9 +19,7 @@
     <tr>
       <th>
         <a href="{{ url_for('template.display', templatename=template['name']) }}"
-	   role="button"
-	   class="btn btn-sm px-3 py-0 btn-outline-info font-weight-bold">
-          {{ template['name'] }}</a>
+	   class="font-weight-bold">{{ template['name'] }}</a>
       </th>
       <td>{{ template.get('title') or '-' }}</td>
       <td>{{ template['owner'] }}</td>
