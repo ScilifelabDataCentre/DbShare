@@ -70,6 +70,21 @@ class Query(Base):
         self.assertEqual(len(result['data'][0]), 1)
         self.assertEqual(list(result['data'][0].keys()), [name])
 
+    def test_table_query_limit(self):
+        "Limit to 2 rows."
+        query = {'select': 't',
+                 'from': 't1',
+                 'limit': 2}
+        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
+        response = self.session.get(url, json=query)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        jsonschema.validate(instance=result,
+                            schema=dbshare.schema.query.schema)
+        self.assertEqual(result['nrows'], len(result['data']))
+        self.assertEqual(result['nrows'], 2)
+        self.assertEqual(len(result['data'][0]), 1)
+
+
 if __name__ == '__main__':
     unittest.main()
-                 
