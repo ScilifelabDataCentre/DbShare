@@ -119,6 +119,10 @@ def edit(dbname):
                     ctx.set_title(flask.request.form['title'])
                 except KeyError:
                     pass
+                try:
+                    ctx.set_description(flask.request.form['description'])
+                except KeyError:
+                    pass
                 # Recompute number or rows in tables, while we are at it...
                 for schema in ctx.db['tables'].values():
                     ctx.update_table_nrows(schema)
@@ -224,6 +228,7 @@ def clone(dbname):
                 name = flask.request.form['name']
                 ctx.set_name(name)
                 ctx.set_title(flask.request.form.get('title'))
+                ctx.set_description(flask.request.form.get('description'))
                 ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
@@ -407,11 +412,13 @@ class DbContext:
                 # Switch off enforcing foreign key until updating done.
                 sql = 'PRAGMA foreign_keys=OFF'
                 self.cnx.execute(sql)
-                sql = "UPDATE dbs SET name=?, owner=?, title=?, public=?," \
-                      " readonly=?, modified=? WHERE name=?"
+                sql = "UPDATE dbs SET name=?, owner=?, title=?," \
+                    "description=?, public=?, readonly=?, modified=?" \
+                    " WHERE name=?"
                 self.cnx.execute(sql, (self.db['name'],
                                        self.db['owner'],
                                        self.db.get('title'),
+                                       self.db.get('description'),
                                        bool(self.db['public']),
                                        bool(self.db['readonly']),
                                        self.db['modified'],
@@ -427,11 +434,12 @@ class DbContext:
             # The db file itself has already been created in 'initialize'.
             else:
                 sql = "INSERT INTO dbs" \
-                      " (name, owner, title, public, readonly," \
-                      "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?)"
+                      " (name, owner, title, description, public, readonly," \
+                      "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.db['name'],
                                        self.db['owner'],
                                        self.db.get('title'),
+                                       self.db.get('description'),
                                        bool(self.db['public']),
                                        bool(self.db['readonly']),
                                        self.db['created'], 
@@ -636,6 +644,10 @@ class DbContext:
     def set_title(self, title):
         "Set the database title."
         self.db['title'] = title or None
+
+    def set_description(self, description):
+        "Set the database description."
+        self.db['description'] = description or None
 
     def add_table(self, schema, query=None, create=True):
         """Create the table in the database and add to the database definition.
