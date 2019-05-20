@@ -1,4 +1,4 @@
-# DbShare
+# ![DbShare logo](https://github.com/pekrau/DbShare/dbshare/static/dbshare-32.png) DbShare
 
 Web service to share tabular data sets stored in
 [Sqlite3](https://www.sqlite.org/) databases.
