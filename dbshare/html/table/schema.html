@@ -64,7 +64,9 @@
 	          method="POST">
               {{ csrf_token() }}
               <input type="hidden" name="_http_method" value="DELETE">
-              <button type="submit" class="btn btn-danger">Delete</button>
+              <button type="submit" class="btn btn-danger"
+                      onclick="return confirm('Really delete the index?')">
+                Delete</button>
             </form>
           </td>
           {% endif %}
