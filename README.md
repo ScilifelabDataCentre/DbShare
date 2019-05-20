@@ -6,8 +6,6 @@ Visualize with
 [Vega](https://vega.github.io/vega/) or
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
-Python 3.6 and higher.
-
 ## Databases
 
 - A database may contain tables, views, indexes and visualizations.
@@ -85,6 +83,7 @@ Python 3.6 and higher.
 
 ## Software used
 
+- [Python 3.6+](https://www.python.org/)
 - [Sqlite3](https://www.sqlite.org/)
 - [Flask](http://flask.pocoo.org/)
 - [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
