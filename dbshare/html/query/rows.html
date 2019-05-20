@@ -43,26 +43,12 @@
     <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
     <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
     <input type="hidden" name="sql" value="{{ sql or ''}}">
-    <button type="submit" class="btn btn-success btn-block">Edit</button>
-  </form>
-</div>
-<div class="mt-2">
-  <form action="{{ url_for('.rows', dbname=db['name']) }}"
-        method="POST">
-    {{ csrf_token() }}
-    <input type="hidden" name="select" value="{{ query.get('select') or ''}}">
-    <input type="hidden" name="from" value="{{ query.get('from') or ''}}">
-    <input type="hidden" name="where" value="{{ query.get('where') or ''}}">
-    <input type="hidden" name="orderby" value="{{ query.get('orderby') or ''}}">
-    <input type="hidden" name="limit" value="{{ query.get('limit') or ''}}">
-    <input type="hidden" name="offset" value="{{ query.get('offset') or ''}}">
-    <input type="hidden" name="sql" value="{{ sql or ''}}">
-    <button type="submit" class="btn btn-success btn-block">Execute</button>
+    <button type="submit" class="btn btn-success btn-block">Edit query</button>
   </form>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.define', dbname=db['name']) }}"
-     role="button" class="btn btn-success btn-block">New</a>
+     role="button" class="btn btn-success btn-block">New query</a>
 </div>
 <div class="mt-2">
   <form action="{{ url_for('view.create', dbname=db['name']) }}"

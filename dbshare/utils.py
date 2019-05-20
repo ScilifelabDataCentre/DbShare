@@ -229,7 +229,7 @@ def execute_timeout(cnx, command, **kwargs):
     produced by it are returned.
     If the command is a callable, call it with the cnx and any given
     keyword arguments.
-    Raises SystemError if interrupted by time-out.
+    Raises SystemError if interrupted by timeout.
     """
     config = flask.current_app.config
     event = threading.Event()
@@ -244,13 +244,20 @@ def execute_timeout(cnx, command, **kwargs):
     event.set()
     try:
         if isinstance(command, str): # SQL
-            cursor = cnx.cursor()
-            cursor.execute(command)
-            result = cursor.fetchall()
+            result = cnx.execute(command).fetchall()
         elif callable(command):
             result = command(cnx, **kwargs)
-    except sqlite3.OperationalError:
-        raise SystemError(f"execution time exceeded {timeout} s; interrupted")
+    except sqlite3.ProgrammingError:
+        raise
+    except sqlite3.OperationalError as error:
+        # This looks like a bug in the sqlite3 module:
+        # SQL syntax error should raise sqlite3.ProgrammingError,
+        # not sqlite3.OperationalError, which is what it does.
+        # That's why the error message has to be checked.
+        if str(error) == 'interrupted':
+            raise SystemError(f"execution exceeded {timeout} seconds; interrupted")
+        else:
+            raise
     event.clear()
     thread.join()
     return result

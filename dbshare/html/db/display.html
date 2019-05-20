@@ -22,7 +22,7 @@
 	      </td>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
-		  {{ table['nrows']|thousands }} rows</a>
+		  {{ table['nrows']|none_as_question_mark|thousands }} rows</a>
               </td>
               <td>
                 <a href="{{ url_for('table.schema', dbname=db['name'], tablename=table['name']) }}">
@@ -64,12 +64,7 @@
 	      </td>
               <td>
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
-                {% if is_none(view['nrows']) %}
-                ?
-                {% else %}
-		{{ view['nrows']|thousands }}
-                {% endif %}
-                rows</a>
+		{{ view['nrows']|none_as_question_mark|thousands }} rows</a>
               </td>
               <td>
                 <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">

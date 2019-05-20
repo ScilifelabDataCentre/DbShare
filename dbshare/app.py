@@ -69,7 +69,7 @@ CONFIG = dict(
     # t=4.0, i=0.010, b=1.45
     #        i=0.014, b=1.70
     #        i=0.020, b=1.75
-    EXECUTE_TIMEOUT           = 2.0,
+    EXECUTE_TIMEOUT           = 0.5, #2.0,
     EXECUTE_TIMEOUT_INCREMENT = 0.010,
     EXECUTE_TIMEOUT_BACKOFF   = 1.75,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
@@ -207,6 +207,14 @@ def thousands(value):
     else:
         return value
 
+@app.template_filter('none_as_question_mark')
+def none_as_question_mark(value):
+    "Output None as '?'."
+    if value is None:
+        return '?'
+    else:
+        return value
+
 @app.template_filter('none_as_literal_null')
 def none_as_literal_null(value):
     "Output None as HTML '<NULL>' in safe mode."
@@ -246,18 +254,6 @@ def prepare():
     flask.g.current_user = dbshare.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
-
-@app.after_request
-def finalize(response):
-    try:
-        flask.g.cnx.close()
-    except AttributeError:
-        pass
-    try:
-        flask.g.dbcnx.close()
-    except AttributeError:
-        pass
-    return response
 
 @app.route('/')
 def home():
