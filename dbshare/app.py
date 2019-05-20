@@ -4,6 +4,7 @@ import json
 import os
 import os.path
 import sqlite3
+import time
 
 import flask
 import flask_mail
@@ -254,6 +255,7 @@ def prepare():
     flask.g.current_user = dbshare.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
+    flask.g.timer = utils.Timer()
 
 @app.route('/')
 def home():

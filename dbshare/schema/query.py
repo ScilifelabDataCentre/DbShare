@@ -32,9 +32,16 @@ schema = {
             ]
         },
         'nrows': {'type': 'integer', 'mimimum': 0},
+        'cpu_time': {'type': 'number', 'mimimum': 0.0},
         'data': {
             'type': 'array',
             'items': {'type': 'object'}
-        }
-    }
+        },
+    },
+    'required': [
+        'query',
+        'nrows',
+        'cpu_time',
+        'data'
+    ]
 }

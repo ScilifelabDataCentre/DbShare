@@ -83,6 +83,12 @@
 </div>
 {% endblock %} {# block actions #}
 
+{% block info %}
+<div class="small mt-4">
+  {{ g.timer }}
+</div>
+{% endblock %} {# block info #}
+
 {% block javascript %}
 <script>
   $(function() {

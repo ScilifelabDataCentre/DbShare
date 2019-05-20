@@ -22,6 +22,7 @@ def query(dbname):
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
+    timer = utils.Timer()
     try:
         data = flask.request.get_json()
         query = {'select': data['select'],
@@ -50,4 +51,5 @@ def query(dbname):
     return flask.jsonify(utils.get_api(
         query=query,
         nrows=len(rows),
+        cpu_time=timer(),
         data=[dict(zip(columns, row)) for row in rows]))

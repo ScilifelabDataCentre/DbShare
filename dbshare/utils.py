@@ -70,6 +70,19 @@ class NameExtConverter(werkzeug.routing.BaseConverter):
                 return "%s.%s" % (value, value.ext)
         return str(value)
 
+class Timer:
+    "CPU timer."
+
+    def __init__(self):
+        self.start = time.process_time()
+
+    def __call__(self):
+        return time.process_time() - self.start
+
+    def __str__(self):
+        return f"CPU time: {1000*self():.1f} ms"
+
+
 def get_cnx(path, write=False):
     "Return a new connection to the database at the given path."
     if write:
