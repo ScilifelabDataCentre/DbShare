@@ -14,9 +14,7 @@ CONFIG = {
     'username': None,           # Needs to be set! Must have admin privileges.
     'apikey': None,             # Needs to be set! For the above user.
     'filename': '/tmp/test.sqlite3', # Sqlite3 file
-    'dbname': 'test',
-    'tablename': 't1',
-    'viewname': 'v1'
+    'dbname': 'test'
 }
 
 with open('config.json') as infile:
@@ -40,20 +38,20 @@ class Base(unittest.TestCase):
         cnx = sqlite3.connect(CONFIG['filename'])
         self.addCleanup(self.delete_file)
         # Create a table in the database.
-        cnx.execute(f"CREATE TABLE {CONFIG['tablename']} ("
+        cnx.execute("CREATE TABLE t1 ("
                     "i INTEGER PRIMARY KEY,"
                     "r REAL,"
                     "t TEXT NOT NULL)")
         with cnx:
-            cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i,r,t)"
+            cnx.execute("INSERT INTO t1 (i,r,t)"
                         " VALUES (?,?,?)", (1, 2.1, 'a'))
-            cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i,r,t)"
+            cnx.execute("INSERT INTO t1 (i,r,t)"
                         " VALUES (?,?,?)", (2, 0.5, 'b'))
-            cnx.execute(f"INSERT INTO {CONFIG['tablename']} (i,r,t)"
+            cnx.execute("INSERT INTO t1 (i,r,t)"
                         " VALUES (?,?,?)", (3, -1.5, 'c'))
         if view:
-            cnx.execute(f"CREATE VIEW {CONFIG['viewname']}"
-                        f" AS SELECT r, t FROM {CONFIG['tablename']}"
+            cnx.execute(f"CREATE VIEW v1"
+                        f" AS SELECT r, t FROM t1"
                         " WHERE i>=2")
         cnx.close()
         # Upload the database file.

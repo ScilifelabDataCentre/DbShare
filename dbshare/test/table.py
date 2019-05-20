@@ -25,21 +25,21 @@ class Table(Base):
                             schema=dbshare.schema.db.schema)
 
         # The table API JSON is valid.
-        table_url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}"
+        table_url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/t1"
         response = self.session.get(table_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.table.schema)
 
         # The table rows JSON is valid.
-        rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}.json"
+        rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/t1.json"
         response = self.session.get(rows_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.rows.schema)
 
         # Content negotiation for rows. No '.json' extension.
-        rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/{CONFIG['tablename']}"
+        rows_url = f"{CONFIG['base_url']}/table/{CONFIG['dbname']}/t1"
         response = self.session.get(rows_url,
                                     headers={'Accept': constants.JSON_MIMETYPE})
         self.assertEqual(response.status_code, http.client.OK)

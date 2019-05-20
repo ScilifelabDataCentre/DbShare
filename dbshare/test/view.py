@@ -23,14 +23,14 @@ class View(Base):
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
         # Valid API view JSON.
-        view_url = f"{CONFIG['root_url']}/view/{CONFIG['dbname']}/{CONFIG['viewname']}"
+        view_url = f"{CONFIG['root_url']}/view/{CONFIG['dbname']}/v1"
         response = self.session.get(view_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.view.schema)
 
         # Valid API view rows JSON.
-        rows_url = f"{CONFIG['base_url']}/view/{CONFIG['dbname']}/{CONFIG['viewname']}.json"
+        rows_url = f"{CONFIG['base_url']}/view/{CONFIG['dbname']}/v1.json"
         response = self.session.get(rows_url)
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
