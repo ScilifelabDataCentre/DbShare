@@ -165,7 +165,24 @@
       {% block footer %}
       <hr>
       <div class="row">
-        <div class="col-md-4 offset-md-8 text-right">
+        <div class="col-md-4">
+          {% if config['HOST_URL'] %}
+          <a href="{{ config['HOST_URL'] }}" target="_blank">
+            {% if config['HOST_LOGO'] %}
+            <img src="{{ url_for('site.static', filename=config['HOST_LOGO']) }}">
+            {% else %}
+            {{ config['HOST_NAME'] or '' }}
+            {% endif %}
+          </a>
+          {% else %}
+          {% if config['HOST_LOGO'] %}
+          <img src="{{ url_for('site_file', filename=config['HOST_LOGO']) }}">
+          {% else %}
+          {{ config['HOST_NAME'] or '' }}
+          {% endif %}
+          {% endif %}
+        </div>
+        <div class="col-md-4 offset-md-4 text-right">
           <a href="{{ config['DBSHARE_URL'] }}" target="_blank">DbShare</a>
 	  {{ config['VERSION'] }}
         </div>

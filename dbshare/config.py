@@ -1,19 +1,24 @@
 "Configuration."
 
+import http.client
 import os
 import os.path
 import sqlite3
 
 import dbshare
 
-ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
+ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Default configurable values; read JSON file to change these.
 CONFIG = dict(
     VERSION = dbshare.__version__,
     SERVER_NAME = '127.0.0.1:5000',
-    SITE_NAME = 'DbShare',
     DATABASES_DIRPATH = 'data',
+    SITE_NAME = 'DbShare',
+    SITE_STATIC_DIRPATH = None,
+    HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
+    HOST_NAME = None,
+    HOST_URL = None,
     SECRET_KEY = None,
     SALT_LENGTH = 12,
     JSONIFY_AS_ASCII = False,
@@ -70,7 +75,7 @@ CONFIG = dict(
     # Vega and Vega-Lite
     VEGA_JS_URL = 'https://cdn.jsdelivr.net/npm/vega@5',
     VEGA_SCHEMA_URL = 'https://vega.github.io/schema/vega/v5.json',
-    VEGA_SCHEMA = os.path.join(ROOT_DIR, 'schema/vega-v5.json'),
+    VEGA_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-v5.json'),
     VEGA_VERSION = '5',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
@@ -79,7 +84,7 @@ CONFIG = dict(
     VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
     VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
-    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIR, 'schema/vega-lite-v3.json'),
+    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-lite-v3.json'),
     VEGA_LITE_VERSION = '3',
     VEGA_LITE_DEFAULT_WIDTH = 400,
     VEGA_LITE_DEFAULT_HEIGHT = 400,
@@ -97,7 +102,7 @@ def init(app):
         # Raises an error if filepath variable defined, but no such file.
     except KeyError:
         for filepath in ['config.json', '../site/config.json']:
-            filepath = os.path.normpath(os.path.join(ROOT_DIR, filepath))
+            filepath = os.path.normpath(os.path.join(ROOT_DIRPATH, filepath))
             try:
                 app.config.from_json(filepath)
             except FileNotFoundError:

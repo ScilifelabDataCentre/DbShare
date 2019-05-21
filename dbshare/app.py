@@ -16,6 +16,7 @@ import dbshare.db
 import dbshare.dbs
 import dbshare.index
 import dbshare.query
+import dbshare.site
 import dbshare.system
 import dbshare.table
 import dbshare.template
@@ -80,6 +81,7 @@ app.register_blueprint(dbshare.vega.blueprint, url_prefix='/vega')
 app.register_blueprint(dbshare.vega_lite.blueprint, url_prefix='/vega-lite')
 app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
+app.register_blueprint(dbshare.site.blueprint, url_prefix='/site')
 
 app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
@@ -180,7 +182,7 @@ def home():
 def api():
     "API home resource; links to other resources."
     data = {'title': 'DbShare', 
-             'version': CONFIG['VERSION'],
+             'version': flask.current_app.config['VERSION'],
              'databases': {
                  'public': {'href': utils.url_for('api_dbs.public')}
              },
