@@ -77,10 +77,13 @@ class Timer:
         self.start = time.process_time()
 
     def __call__(self):
+        "Return CPU time (in seconds) since start of this timer."
         return time.process_time() - self.start
 
-    def __str__(self):
-        return f"CPU time: {1000*self():.1f} ms"
+    @property
+    def milliseconds(self):
+        "Return CPU time (in milliseconds) since start of this timer."
+        return round(1000 * self())
 
 
 def get_cnx(path, write=False):

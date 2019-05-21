@@ -85,7 +85,7 @@
 
 {% block info %}
 <div class="small mt-4">
-  {{ g.timer }}
+  CPU time: {{ g.timer.milliseconds|thousands }} ms
 </div>
 {% endblock %} {# block info #}
 

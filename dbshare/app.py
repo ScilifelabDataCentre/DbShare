@@ -102,6 +102,7 @@ def setup_template_context():
                 enumerate=enumerate,
                 len=len,
                 range=range,
+                round=round,
                 is_none=lambda v: v is None)
 
 @app.template_filter('thousands')

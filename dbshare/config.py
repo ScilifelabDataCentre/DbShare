@@ -36,7 +36,7 @@ CONFIG = dict(
     # t=4.0, i=0.010, b=1.45
     #        i=0.014, b=1.70
     #        i=0.020, b=1.75
-    EXECUTE_TIMEOUT           = 0.5, #2.0,
+    EXECUTE_TIMEOUT           = 2.0,
     EXECUTE_TIMEOUT_INCREMENT = 0.010,
     EXECUTE_TIMEOUT_BACKOFF   = 1.75,
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
@@ -51,6 +51,7 @@ CONFIG = dict(
     SQLITE3_URL = 'https://www.sqlite.org/',
     SQLITE_VERSION = sqlite3.sqlite_version,
     JSONSCHEMA_URL = 'http://json-schema.org/draft-07/schema#',
+    MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
     # Bootstrap 4.3.1
     BOOTSTRAP_SITE_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
     BOOTSTRAP_VERSION = '4.3.1',
