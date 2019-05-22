@@ -101,8 +101,8 @@
 {% block meta %}
 <div class="py-1">
   <div>
-    <a href="{{ url_for('.display', dbname=db['name']) + '.tar' }}"
-       class="badge badge-pill badge-primary">TAR of CSV</a>
+    <a href="{{ url_for('.display', dbname=db['name']) + '.tar.gz' }}"
+       class="badge badge-pill badge-primary">CSV tar.gz</a>
   </div>
   <div>
     <a href="{{ url_for('api_db.database', dbname=db['name']) }}"

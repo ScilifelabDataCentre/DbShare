@@ -65,11 +65,16 @@ def display(dbname):
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
 
-    if dbname.ext == 'tar':
+    if dbname.ext in ('tar', 'tar.gz', 'tar.bz2'):
+        try:
+            mode = 'w:' + dbname.ext.split('.')[1]
+        except IndexError:
+            mode = 'w'
         dbcnx = get_cnx(db['name'])
         outfile = io.BytesIO()
-        tar = tarfile.open(fileobj=outfile, mode='w:gz')
-        for schema in db['tables'].values():
+        tar = tarfile.open(fileobj=outfile, mode=mode)
+        schemas = list(db['tables'].values()) + list(db['views'].values())
+        for schema in schemas:
             columns = [c['name'] for c in schema['columns']]
             sql = 'SELECT %s FROM "%s"' % \
                   (','.join([f'"{c}"' for c in columns]), schema['name'])
@@ -80,15 +85,15 @@ def display(dbname):
                 pass
             else:
                 writer.write_rows(rows)
-                tar.addfile(tarfile.TarInfo(name=f"{schema['name']}.csv"),
-                            writer.get())
-        # for view in db['views']:
-        #     print(view)
+                data = writer.getvalue().encode('utf-8')
+                tarinfo = tarfile.TarInfo(name=f"{dbname}/{schema['name']}.csv")
+                tarinfo.size = len(data)
+                tar.addfile(tarinfo, io.BytesIO(data))
         tar.close()
-        response = flask.make_response(outfile.get())
+        response = flask.make_response(outfile.getvalue())
         response.headers.set('Content-Type', constants.TAR_MIMETYPE)
         response.headers.set('Content-Disposition', 'attachment', 
-                             filename=f"{tablename}.tar.gz")
+                             filename=f"{dbname}.{dbname.ext}")
         return response
 
     elif dbname.ext in (None, 'html'):
@@ -98,6 +103,9 @@ def display(dbname):
             title=db.get('title') or "Database {}".format(dbname),
             has_write_access=has_write_access(db),
             can_change_mode=has_write_access(db, check_mode=False))
+
+    else:
+        flask.abort(http.client.NOT_ACCEPTABLE)
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbshare.user.login_required

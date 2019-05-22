@@ -52,7 +52,7 @@ class NameExt:
             raise werkzeug.routing.ValidationError
         self.name = match.group(1).lower() # Case-insensitive
         if match.group(2):
-            self.ext = match.group(2).lstrip('.').lower() # Case-insensitive
+            self.ext = match.group(2).strip('.').lower() # Case-insensitive
         else:
             self.ext = None
     def __str__(self):
@@ -298,5 +298,6 @@ class CsvWriter:
         else:
             self.writer.writerows(rows)
 
-    def get(self):
+    def getvalue(self):
+        "Return the written data."
         return self.outfile.getvalue()

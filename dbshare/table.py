@@ -110,7 +110,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
             writer.write_rows(rows, skip_first_column=True)
-            return flask.Response(writer.get(),
+            return flask.Response(writer.getvalue(),
                                   mimetype=constants.CSV_MIMETYPE)
 
         elif tablename.ext in (None, 'html'):
@@ -664,7 +664,7 @@ def download_csv(dbname, tablename):
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
                                             tablename=tablename))
-    response = flask.make_response(writer.get())
+    response = flask.make_response(writer.getvalue())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
                          filename=f"{tablename}.csv")
