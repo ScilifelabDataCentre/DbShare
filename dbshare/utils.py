@@ -290,11 +290,9 @@ class CsvWriter:
         if header:
             self.writer.writerow(header)
 
-    def write_rows(self, rows, skip_rowid=False):
-        """Write the given rows.
-        If 'skip_rowid' is True, then skip the first item of each row.
-        """
-        if skip_rowid:
+    def write_rows(self, rows, skip_first_column=False):
+        "Write the given rows."
+        if skip_first_column:
             for row in rows:
                 self.writer.writerow(row[1:])
         else:

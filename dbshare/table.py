@@ -109,7 +109,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 rows = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(rows, skip_rowid=True)
+            writer.write_rows(rows, skip_first_column=True)
             return flask.Response(writer.get(),
                                   mimetype=constants.CSV_MIMETYPE)
 

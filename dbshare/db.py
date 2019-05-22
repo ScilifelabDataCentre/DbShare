@@ -10,6 +10,7 @@ import os.path
 import re
 import shutil
 import sqlite3
+import tarfile
 import urllib.parse
 
 import dpath
@@ -55,20 +56,48 @@ VISUALS_INDEX = dict(
 
 blueprint = flask.Blueprint('db', __name__)
 
-@blueprint.route('/<name:dbname>')
+@blueprint.route('/<nameext:dbname>')
 def display(dbname):
     "List the database tables, views and metadata."
     try:
-        db = get_check_read(dbname, nrows=True)
+        db = get_check_read(str(dbname), nrows=True)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    return flask.render_template(
-        'db/display.html', 
-        db=db,
-        title=db.get('title') or "Database {}".format(dbname),
-        has_write_access=has_write_access(db),
-        can_change_mode=has_write_access(db, check_mode=False))
+
+    if dbname.ext == 'tar':
+        dbcnx = get_cnx(db['name'])
+        outfile = io.BytesIO()
+        tar = tarfile.open(fileobj=outfile, mode='w:gz')
+        for schema in db['tables'].values():
+            columns = [c['name'] for c in schema['columns']]
+            sql = 'SELECT %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), schema['name'])
+            writer = utils.CsvWriter(header=columns)
+            try:
+                rows = utils.execute_timeout(dbcnx, sql)
+            except SystemError:
+                pass
+            else:
+                writer.write_rows(rows)
+                tar.addfile(tarfile.TarInfo(name=f"{schema['name']}.csv"),
+                            writer.get())
+        # for view in db['views']:
+        #     print(view)
+        tar.close()
+        response = flask.make_response(outfile.get())
+        response.headers.set('Content-Type', constants.TAR_MIMETYPE)
+        response.headers.set('Content-Disposition', 'attachment', 
+                             filename=f"{tablename}.tar.gz")
+        return response
+
+    elif dbname.ext in (None, 'html'):
+        return flask.render_template(
+            'db/display.html', 
+            db=db,
+            title=db.get('title') or "Database {}".format(dbname),
+            has_write_access=has_write_access(db),
+            can_change_mode=has_write_access(db, check_mode=False))
 
 @blueprint.route('/', methods=['GET', 'POST'])
 @dbshare.user.login_required
