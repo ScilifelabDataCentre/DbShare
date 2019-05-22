@@ -12,6 +12,7 @@ schema = {
         '$id': {'type': 'string', 'format': 'uri'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
         'owner': {'$ref': '#/definitions/user'},
         'public': {'type': 'boolean'},
         'readonly': {'type': 'boolean'},
@@ -79,7 +80,9 @@ schema = {
     'required': [
         '$id',
         'name', 
-        'owner', 
+        'title',
+        'description',
+        'owner',
         'public',
         'readonly', 
         'size',

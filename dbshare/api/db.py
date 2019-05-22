@@ -52,14 +52,39 @@ def database(dbname):
                     ctx.initialize()
                 db = ctx.db
         except ValueError as error:
-            print(str(error))
             flask.abort(http.client.BAD_REQUEST)
         return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
-    elif utils.http_POST():
-        raise NotImplementedError
- 
-    elif utils.http_DELETE():
+    elif utils.http_POST(csrf=False):
+        try:
+            db = dbshare.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            data = flask.request.get_json()
+            print(data)
+            if data is None: raise ValueError
+            with dbshare.db.DbContext(db) as ctx:
+                try:
+                    ctx.set_name(data['name'])
+                except KeyError:
+                    pass
+                try:
+                    ctx.set_title(data['title'])
+                except KeyError:
+                    pass
+                try:
+                    ctx.set_description(data['description'])
+                except KeyError:
+                    pass
+        except ValueError:
+            flask.abort(http.client.BAD_REQUEST)
+        return flask.redirect(
+            flask.url_for('api_db.database', dbname=db['name']))
+
+    elif utils.http_DELETE(csrf=False):
         try:
             dbshare.db.get_check_write(dbname)
         except ValueError:
@@ -73,6 +98,7 @@ def get_api(db, complete=False):
     "Return the API for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
+              'description': db.get('description'),
               'owner': dbshare.api.user.get_api(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
