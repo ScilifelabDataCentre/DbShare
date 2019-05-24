@@ -34,22 +34,18 @@ def query(dbname):
         if not query['select']: raise KeyError
         if not query['from']: raise KeyError
         query['columns'] = dbshare.query.get_select_columns(query['select'])
+        sql = dbshare.query.get_sql_statement(query)
         dbcnx = dbshare.db.get_cnx(dbname)
-        rows = utils.execute_timeout(dbcnx,
-                                     dbshare.query.get_sql_statement(query))
+        cursor = utils.execute_timeout(dbcnx, sql)
     except (KeyError, sqlite3.Error):
         flask.abort(http.client.BAD_REQUEST)
     except SystemError:
         flask.abort(http.client.REQUEST_TIMEOUT)
-    if query['columns'][0] == '*':
-        try:
-            columns = [f"column{i+1}" for i in range(len(rows[0]))]
-        except IndexError:
-            columns = ['columns']
-    else:
-        columns = query['columns']
+    columns = [d[0] for d in cursor.description]
+    rows = cursor.fetchall()
     return flask.jsonify(utils.get_api(
         query=query,
+        sql=sql,
         nrows=len(rows),
         cpu_time=timer(),
         data=[dict(zip(columns, row)) for row in rows]))

@@ -85,12 +85,12 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
         columns = [c['name'] for c in schema['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
-        sql = 'SELECT rowid, %s FROM "%s"' % \
-              (','.join([f'"{c}"' for c in columns]), tablename)
 
         if tablename.ext == 'json' or utils.accept_json():
+            sql = 'SELECT %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), tablename)
             try:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
             return flask.jsonify(utils.get_api(
@@ -101,31 +101,35 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                               dbname=db['name'],
                                               tablename=str(tablename))},
                 nrows=schema['nrows'],
-                data=[dict(zip(columns, row[1:])) for row in rows]))
+                data=[dict(zip(columns, row)) for row in cursor]))
 
         elif tablename.ext == 'csv':
+            sql = 'SELECT %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), tablename)
             writer = utils.CsvWriter(header=columns)
             try:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(rows, skip_first_column=True)
+            writer.write_rows(cursor)
             return flask.Response(writer.getvalue(),
                                   mimetype=constants.CSV_MIMETYPE)
 
         elif tablename.ext in (None, 'html'):
+            sql = 'SELECT rowid, %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), tablename)
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] > limit:
                 sql += f" LIMIT {limit}"
                 utils.flash_message_limit(limit)
-            rows = utils.execute_timeout(dbcnx, sql)
+            cursor = utils.execute_timeout(dbcnx, sql)
             updateable = bool([c for c in schema['columns']
                                if c.get('primarykey')])
             return flask.render_template('table/rows.html', 
                                          db=db,
                                          schema=schema,
                                          title=title,
-                                         rows=rows,
+                                         rows=cursor,
                                          visuals=visuals,
                                          updateable=updateable,
                                          has_write_access=has_write_access)

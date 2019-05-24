@@ -16,11 +16,11 @@ DEFAULT_CONFIG = {
     'filename': '/tmp/test.sqlite3', # Sqlite3 file
     'dbname': 'test'
 }
+CONFIG = {}
 
 def read_config(filepath='config.json'):
     "Reset the configuration and read the given configuration file."
-    global CONFIG
-    CONFIG = DEFAULT_CONFIG.copy()
+    CONFIG.update(DEFAULT_CONFIG)
     with open(filepath) as infile:
         CONFIG.update(json.load(infile))
     # Add API root url

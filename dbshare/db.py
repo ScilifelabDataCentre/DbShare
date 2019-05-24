@@ -80,11 +80,11 @@ def display(dbname):
                   (','.join([f'"{c}"' for c in columns]), schema['name'])
             writer = utils.CsvWriter(header=columns)
             try:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 pass
             else:
-                writer.write_rows(rows)
+                writer.write_rows(cursor)
                 data = writer.getvalue().encode('utf-8')
                 tarinfo = tarfile.TarInfo(name=f"{dbname}/{schema['name']}.csv")
                 tarinfo.size = len(data)
@@ -891,10 +891,9 @@ class DbContext:
         if self.dbcnx.execute(sql).fetchone()[0] == 0:
             return False # No metadata; skip.
         sql = f"SELECT name FROM {constants.TABLES}"
-        tables1 = [r[0].lower() for r in self.dbcnx.execute(sql).fetchall()]
+        tables1 = [r[0].lower() for r in self.dbcnx.execute(sql)]
         sql = "SELECT name FROM sqlite_master WHERE type=?"
-        tables2 = [r[0].lower() 
-                   for r in self.dbcnx.execute(sql, ('table',)).fetchall()]
+        tables2 = [r[0].lower() for r in self.dbcnx.execute(sql, ('table',))]
         # Do not consider metadata tables and sqlite statistics tables, if any.
         tables2 = [n for n in tables2 if not n.startswith('_')]
         tables2 = [n for n in tables2 if not n.startswith('sqlite_')]
@@ -1023,7 +1022,7 @@ class DbContext:
         # Delete all indexes; currently not parsed and may interfere.
         sql = "SELECT name FROM sqlite_master WHERE type=?"
         cursor.execute(sql, ('index',))
-        indexnames = [row[0] for row in cursor.fetchall()]
+        indexnames = [row[0] for row in cursor]
         # Do not attempt to delete Sqlite3 indexes, or visuals index.
         indexnames = [n for n in indexnames 
                       if not n.startswith('sqlite_autoindex')]

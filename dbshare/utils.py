@@ -240,9 +240,8 @@ def _timeout_interrupt(cnx, event, timeout, increment, backoff):
     cnx.interrupt()
 
 def execute_timeout(cnx, command, **kwargs):
-    """Perform Sqlite3 command(s) to be interrupted if running too long.
-    If the given command is a string, it is executed as SQL and all rows
-    produced by it are returned.
+    """Perform Sqlite3 command to be interrupted if running too long.
+    If the given command is a string, it is executed as SQL.
     If the command is a callable, call it with the cnx and any given
     keyword arguments.
     Raises SystemError if interrupted by timeout.
@@ -260,7 +259,7 @@ def execute_timeout(cnx, command, **kwargs):
     event.set()
     try:
         if isinstance(command, str): # SQL
-            result = cnx.execute(command).fetchall()
+            result = cnx.execute(command)
         elif callable(command):
             result = command(cnx, **kwargs)
     except sqlite3.ProgrammingError:
@@ -290,13 +289,9 @@ class CsvWriter:
         if header:
             self.writer.writerow(header)
 
-    def write_rows(self, rows, skip_first_column=False):
+    def write_rows(self, rows):
         "Write the given rows."
-        if skip_first_column:
-            for row in rows:
-                self.writer.writerow(row[1:])
-        else:
-            self.writer.writerows(rows)
+        self.writer.writerows(rows)
 
     def getvalue(self):
         "Return the written data."

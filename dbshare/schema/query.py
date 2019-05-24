@@ -31,6 +31,7 @@ schema = {
                 'from'
             ]
         },
+        'sql': {'type': 'string'},
         'nrows': {'type': 'integer', 'mimimum': 0},
         'cpu_time': {'type': 'number', 'mimimum': 0.0},
         'data': {
@@ -40,6 +41,7 @@ schema = {
     },
     'required': [
         'query',
+        'sql',
         'nrows',
         'cpu_time',
         'data'

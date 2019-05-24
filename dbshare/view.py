@@ -27,7 +27,7 @@ def create(dbname):
     viewname = flask.request.values.get('name')
     title = flask.request.values.get('title')
     description = flask.request.values.get('description')
-    # Do not check here.
+    # Do not check validity here.
     query = dbshare.query.get_query_from_request()
 
     if utils.http_GET():
@@ -133,7 +133,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         if viewname.ext == 'json' or utils.accept_json():
             columns = [c['name'] for c in schema['columns']]
             try:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
             return flask.jsonify(utils.get_api(
@@ -144,16 +144,16 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                               dbname=db['name'],
                                               viewname=schema['name'])},
                 nrows=schema['nrows'],
-                data=[dict(zip(columns, row)) for row in rows]))
+                data=[dict(zip(columns, row)) for row in cursor]))
 
         elif viewname.ext == 'csv':
             columns = [c['name'] for c in schema['columns']]
             writer = utils.CsvWriter(header=columns)
             try:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(rows)
+            writer.write_rows(cursor)
             return flask.Response(writer.getvalue(),
                                   mimetype=constants.CSV_MIMETYPE)
 
@@ -165,18 +165,18 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             elif schema['nrows'] > limit:
                 utils.flash_message_limit(limit)
                 sql += f" LIMIT {limit}"
-                rows = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT imposed.
+                cursor = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT
             else:
-                rows = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(dbcnx, sql)
             query = schema['query']
-            sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT.
+            sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT
             return flask.render_template('view/rows.html', 
                                          db=db,
                                          schema=schema,
                                          query=query,
                                          sql=sql,
                                          title=title,
-                                         rows=rows,
+                                         rows=cursor,
                                          visuals=visuals,
                                          has_write_access=has_write_access)
 

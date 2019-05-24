@@ -45,16 +45,11 @@ def rows(dbname):
         if query['limit'] is None or query['limit'] > limit:
             query_limited['limit'] = limit
         dbcnx = dbshare.db.get_cnx(dbname)
-        rows = utils.execute_timeout(dbcnx, get_sql_statement(query_limited))
+        cursor = utils.execute_timeout(dbcnx, get_sql_statement(query_limited))
+        rows = cursor.fetchall()
         if len(rows) >= query_limited['limit']:
             utils.flash_message_limit(limit)
-        if query['columns'][0] == '*':
-            try:
-                columns = [f"column{i+1}" for i in range(len(rows[0]))]
-            except IndexError:
-                columns = ['columns']
-        else:
-            columns = query['columns']
+        columns = [d[0] for d in cursor.description]
     except (KeyError, SystemError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.define', dbname=dbname, **query))
