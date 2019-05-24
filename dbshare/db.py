@@ -758,6 +758,8 @@ class DbContext:
             self.dbcnx.execute(sql, (tablename,))
         sql = 'DROP TABLE "%s"' % tablename
         self.dbcnx.execute(sql)
+        sql = 'VACUUM'
+        self.dbcnx.execute(sql)
 
     def add_index(self, schema):
         "Create an index in the database and add to the database definition."
