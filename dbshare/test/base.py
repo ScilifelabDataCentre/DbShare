@@ -9,7 +9,7 @@ import unittest
 import jsonschema
 import requests
 
-CONFIG = {
+DEFAULT_CONFIG = {
     'base_url': 'http://127.0.0.1:5000', # DbShare server base url
     'username': None,           # Needs to be set! Must have admin privileges.
     'apikey': None,             # Needs to be set! For the above user.
@@ -17,11 +17,14 @@ CONFIG = {
     'dbname': 'test'
 }
 
-with open('config.json') as infile:
-    CONFIG.update(json.load(infile))
-
-# Add API root url
-CONFIG['root_url'] = CONFIG['base_url'] + '/api'
+def read_config(filepath='config.json'):
+    "Reset the configuration and read the given configuration file."
+    global CONFIG
+    CONFIG = DEFAULT_CONFIG.copy()
+    with open(filepath) as infile:
+        CONFIG.update(json.load(infile))
+    # Add API root url
+    CONFIG['root_url'] = CONFIG['base_url'] + '/api'
 
 
 class Base(unittest.TestCase):

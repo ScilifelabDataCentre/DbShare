@@ -1,14 +1,15 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Select a template{% endblock %}
+{% block head_title %}
+Select a template for {{ schema['type'] }} {{ schema['name'] }}
+{% endblock %}
 
-{% block body_title %}Select a template{% endblock %}
+{% block body_title %}
+Select a template for {{ schema['type'] }} {{ schema['name'] }}
+{% endblock %}
 
 {% block main %}
 <div class="card border-info">
-  <div class="card-header">
-    <h4 class="card-title">For {{ schema['type'] }} {{ schema['name'] }}</h4>
-  </div>
   <div class="card-body">
     <form action="{{ url_for('.select', dbname=db['name'], sourcename=schema['name']) }}"
           method="POST">

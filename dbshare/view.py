@@ -246,6 +246,8 @@ def clone(dbname, viewname):
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
+            if schema.get('title'):
+                schema['title'] = 'Clone of ' + schema['title']
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:

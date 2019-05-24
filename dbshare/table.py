@@ -591,6 +591,8 @@ def clone(dbname, tablename):
         try:
             schema = copy.deepcopy(schema)
             schema['name'] = flask.request.form['name']
+            if schema.get('title'):
+                schema['title'] = 'Clone of ' + schema['title']
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
                 colnames = ','.join(['"%(name)s"' % c 
