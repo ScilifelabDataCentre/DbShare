@@ -1,9 +1,11 @@
 "Base class for tests."
 
+import argparse
 import http.client
 import json
 import os
 import sqlite3
+import sys
 import unittest
 
 import jsonschema
@@ -18,20 +20,43 @@ DEFAULT_CONFIG = {
 }
 CONFIG = {}
 
-def read_config(filepath='config.json'):
-    "Reset the configuration and read the given configuration file."
+def process_args(filepath=None):
+    """Process command-line arguments for this test suite.
+    Reset the configuration and read the given configuration file.
+    Return the unused arguments.
+    """
+    if filepath is None:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-C', '--config', dest='config',
+                            metavar='FILE', default='config.json',
+                            help='Configuration file')
+        parser.add_argument('unittest_args', nargs='*')
+        options, args = parser.parse_known_args()
+        filepath = options.config
+        args = [sys.argv[0]] + args
+    else:
+        args = sys.argv
     CONFIG.update(DEFAULT_CONFIG)
     with open(filepath) as infile:
         CONFIG.update(json.load(infile))
     # Add API root url
     CONFIG['root_url'] = CONFIG['base_url'] + '/api'
+    return args
+
+def run():
+    unittest.main(argv=process_args())
 
 
 class Base(unittest.TestCase):
+    "Base class for DbShare test cases."
 
     def setUp(self):
         self.session = requests.Session()
         self.session.headers.update({'x-apikey': CONFIG['apikey']})
+        self.addCleanup(self.close_session)
+
+    def close_session(self):
+        self.session.close()
 
     def upload_file(self, view=False):
         "Create a local Sqlite3 file and upload it."

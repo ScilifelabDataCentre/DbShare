@@ -1,8 +1,5 @@
 "Run all tests."
 
-import unittest
-
-import dbshare.test.base
 from dbshare.test.root import Root
 from dbshare.test.user import User
 from dbshare.test.dbs import Dbs
@@ -13,5 +10,5 @@ from dbshare.test.view import View
 
 
 if __name__ == '__main__':
-    dbshare.test.base.read_config()
-    unittest.main()
+    import dbshare.test.base
+    dbshare.test.base.run()

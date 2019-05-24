@@ -31,4 +31,4 @@ class Root(Base):
 
 
 if __name__ == '__main__':
-    unittest.main()
+    run()
