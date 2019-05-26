@@ -1,9 +1,8 @@
 # ![DbShare logo](https://raw.githubusercontent.com/pekrau/DbShare/master/dbshare/static/dbshare-32.png) DbShare
 
-Web service to share tabular data sets stored in
-[Sqlite3](https://www.sqlite.org/) databases.
-Visualize with
-[Vega](https://vega.github.io/vega/) or
+Web service to share and query tabular data sets and allow visualizations.
+Uses [Sqlite3](https://www.sqlite.org/), 
+[Vega](https://vega.github.io/vega/) and
 [Vega-Lite](https://vega.github.io/vega-lite/).
 
 ## Databases
