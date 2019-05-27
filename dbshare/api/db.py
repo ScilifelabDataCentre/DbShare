@@ -64,7 +64,6 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         try:
             data = flask.request.get_json()
-            print(data)
             if data is None: raise ValueError
             with dbshare.db.DbContext(db) as ctx:
                 try:
@@ -77,6 +76,14 @@ def database(dbname):
                     pass
                 try:
                     ctx.set_description(data['description'])
+                except KeyError:
+                    pass
+                try:
+                    ctx.set_readonly(data['readonly'])
+                except KeyError:
+                    pass
+                try:
+                    ctx.set_public(data['public'])
                 except KeyError:
                     pass
         except ValueError:
@@ -104,7 +111,8 @@ def get_api(db, complete=False):
               'readonly': db['readonly'],
               'size': db['size'],
               'modified': db['modified'],
-              'created': db['created']
+              'created': db['created'],
+              'hashes': db['hashes']
     }
     if complete:
         result['tables'] = [dbshare.api.table.get_api(db, table)

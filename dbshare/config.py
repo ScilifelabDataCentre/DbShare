@@ -30,6 +30,7 @@ CONFIG = dict(
     USER_DEFAULT_QUOTA = 2**22,       # 4 megabyte
     TABLE_INITIAL_COLUMNS = 8,
     MAX_NROWS_DISPLAY = 2000,
+    CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75

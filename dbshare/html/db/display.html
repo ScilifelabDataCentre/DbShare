@@ -262,6 +262,11 @@
   <div class="pt-1">
     Created <span class="localtime">{{ db['created'] }}</span>
   </div>
+  {% for hashname in db['hashes'] %}
+  <div class="pt-1">
+    {{ hashname }} {{ db['hashes'][hashname] }}
+  </div>
+  {% endfor %}
 </div>
 {% endblock %} {# block info #}
 

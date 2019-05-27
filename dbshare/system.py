@@ -50,6 +50,11 @@ SYSTEM_TABLES = [
                   dict(name='created', type=constants.TEXT, notnull=True),
                   dict(name='modified', type=constants.TEXT, notnull=True)
          ]),
+    dict(name='dbs_hashes',
+         columns=[dict(name='name', type=constants.TEXT, notnull=True),
+                  dict(name='hashname', type=constants.TEXT, notnull=True),
+                  dict(name='hashvalue', type=constants.TEXT, primarykey=True)
+         ]),
     dict(name='dbs_logs',
          columns=[dict(name='name', type=constants.TEXT, notnull=True),
                   dict(name='new', type=constants.TEXT, notnull=True),

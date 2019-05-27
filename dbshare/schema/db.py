@@ -19,6 +19,7 @@ schema = {
         'size': {'type': 'integer', 'minimum': 0},
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'},
+        'hashes': {'type': 'object'},
         'tables': {
             'type': 'array',
             'items': {

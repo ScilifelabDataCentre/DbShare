@@ -1,6 +1,6 @@
 """DbShare
-Web service to share tabular data sets in Sqlite3 databases.
-Visualize with Vega or Vega-Lite.
+Web service to share and query tabular data sets and allow visualizations.
+Uses Sqlite3, Vega and Vega-Lite.
 """
 
-__version__ = '1.3.15'
+__version__ = '1.3.16'

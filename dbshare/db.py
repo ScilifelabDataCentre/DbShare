@@ -2,6 +2,7 @@
 
 import copy
 import csv
+import hashlib
 import io
 import itertools
 import json
@@ -294,7 +295,7 @@ def vacuum(dbname):
     "Run VACUUM on the database."
     utils.check_csrf_token()
     try:
-        db = get_check_write(dbname, check_mode=False) # Allow even if read-only
+        db = get_check_write(dbname) # Do NOT allow if read-only (for hashes)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -312,7 +313,7 @@ def analyze(dbname):
     "Run ANALYZE on the database."
     utils.check_csrf_token()
     try:
-        db = get_check_write(dbname, check_mode=False) # Allow even if read-only
+        db = get_check_write(dbname) # Do NOT allow if read-only (for hashes)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
@@ -336,7 +337,7 @@ def public(dbname):
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
-            ctx.db['public'] = True
+            ctx.set_public(True)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
@@ -355,7 +356,7 @@ def private(dbname):
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
-            ctx.db['public'] = False
+            ctx.set_public(False)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
@@ -374,7 +375,7 @@ def readwrite(dbname):
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
-            ctx.db['readonly'] = False
+            ctx.set_readonly(False)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
@@ -384,7 +385,7 @@ def readwrite(dbname):
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 @dbshare.user.login_required
 def readonly(dbname):
-    "Set the database to read-only mode."
+    "Set the database to read-only mode. Compute content hashes."
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname, check_mode=False)
@@ -393,7 +394,7 @@ def readonly(dbname):
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
-            ctx.db['readonly'] = True
+            ctx.set_readonly(True)
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
     else:
@@ -406,10 +407,11 @@ class DbContext:
 
     def __init__(self, db=None):
         if db is None:
-            self.db = {'owner':   flask.g.current_user['username'],
-                       'public':  False,
+            self.db = {'owner':    flask.g.current_user['username'],
+                       'public':   False,
                        'readonly': False,
-                       'created': utils.get_time()}
+                       'hashes':   {},
+                       'created':  utils.get_time()}
             self.old = {}
         else:
             self.db = db
@@ -460,11 +462,25 @@ class DbContext:
                                        bool(self.db['readonly']),
                                        self.db['modified'],
                                        self.old['name']))
-                # Database renamed; fix entries in log records.
                 # The Sqlite3 database file was renamed in 'set_name'.
                 if self.old.get('name') != self.db['name']:
+                    # Fix entries in log records.
                     sql = "UPDATE dbs_logs SET name=? WHERE name=?"
                     self.cnx.execute(sql, (self.db['name'], self.old['name']))
+                    # No need to fix hash values: is (or at least, was)
+                    # in read/write mode, so db has no hash values.
+                # Insert hash values if newly computed.
+                if not self.old['hashes'] and self.db['hashes']:
+                    sql = "INSERT INTO dbs_hashes (name, hashname, hashvalue)" \
+                          " VALUES (?, ?, ?)"
+                    for hashname in self.db['hashes']:
+                        self.cnx.execute(sql, (self.db['name'],
+                                               hashname,
+                                               self.db['hashes'][hashname]))
+                # Delete hash values if removed.
+                elif self.old['hashes'] and not self.db['hashes']:
+                    sql = "DELETE FROM dbs_hashes WHERE name=?"
+                    self.cnx.execute(sql, (self.db['name'],))
                 sql = 'PRAGMA foreign_keys=ON'
                 self.cnx.execute(sql)
             # Create database entry in system.
@@ -526,6 +542,36 @@ class DbContext:
         # Update of spec data URLs must be done *after* db rename.
         if old_dbname:
             self.update_spec_data_urls(old_dbname)
+
+    def set_title(self, title):
+        "Set the database title."
+        self.db['title'] = title or None
+
+    def set_description(self, description):
+        "Set the database description."
+        self.db['description'] = description or None
+
+    def set_public(self, access):
+        "Set to public (True) or private (False) access."
+        self.db['public'] = access
+
+    def set_readonly(self, mode):
+        """Set to 'readonly' (True) or 'readwrite' (False).
+        If 'readonly', then compute the hash values, else remove them.
+        """
+        if self.db['readonly'] == mode: return
+        self.db['readonly'] = mode
+        if mode:
+            with open(utils.dbpath(self.db['name']), 'rb') as infile:
+                data = infile.read()
+            hashes = {}
+            for hashname in flask.current_app.config['CONTENT_HASHES']:
+                h = hashlib.new(hashname)
+                h.update(data)
+                hashes[hashname] = h.hexdigest()
+            self.db['hashes'] = hashes
+        else:
+            self.db['hashes'] = {}
 
     def initialize(self):
         "Create the DbShare metadata tables and indexes if they do not exist."
@@ -677,14 +723,6 @@ class DbContext:
                 href = href.replace(old_view_url, new_view_url)
                 dpath.util.set(spec, path, href)
             self.update_visual(visual['name'], spec)
-
-    def set_title(self, title):
-        "Set the database title."
-        self.db['title'] = title or None
-
-    def set_description(self, description):
-        "Set the database description."
-        self.db['description'] = description or None
 
     def add_table(self, schema, query=None, create=True):
         """Create the table in the database and add to the database definition.
@@ -1051,6 +1089,11 @@ def get_db(name, complete=False):
           'created':    row[5],
           'modified':   row[6],
           'size':       os.path.getsize(utils.dbpath(name))}
+    db['hashes'] = {}
+    sql = "SELECT hashname, hashvalue FROM dbs_hashes WHERE name=?"
+    cursor.execute(sql, (name,))
+    for row in cursor:
+        db['hashes'][row[0]] = row[1]
     if complete:
         cursor = get_cnx(name).cursor()
         sql = "SELECT name, schema FROM %s" % constants.TABLES
