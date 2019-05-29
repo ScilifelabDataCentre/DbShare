@@ -374,13 +374,14 @@ def readwrite(dbname):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    try:
-        with DbContext(db) as ctx:
-            ctx.set_readonly(False)
-    except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
-    else:
-        flask.flash('Database set to read-write mode.', 'message')
+    if db['readonly']:
+        try:
+            with DbContext(db) as ctx:
+                ctx.set_readonly(False)
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+        else:
+            flask.flash('Database set to read-write mode.', 'message')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
@@ -393,13 +394,14 @@ def readonly(dbname):
     except (KeyError, ValueError) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('home'))
-    try:
-        with DbContext(db) as ctx:
-            ctx.set_readonly(True)
-    except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
-    else:
-        flask.flash('Database set to read-only mode.', 'message')
+    if not db['readonly']:
+        try:
+            with DbContext(db) as ctx:
+                ctx.set_readonly(True)
+        except (KeyError, ValueError) as error:
+            flask.flash(str(error), 'error')
+        else:
+            flask.flash('Database set to read-only mode.', 'message')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 

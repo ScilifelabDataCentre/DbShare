@@ -79,10 +79,6 @@ def database(dbname):
                 except KeyError:
                     pass
                 try:
-                    ctx.set_readonly(data['readonly'])
-                except KeyError:
-                    pass
-                try:
                     ctx.set_public(data['public'])
                 except KeyError:
                     pass
@@ -100,6 +96,34 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         dbshare.db.delete_database(dbname)
         return ('', http.client.NO_CONTENT)
+
+@blueprint.route('/<name:dbname>/readonly', methods=['PUT'])
+def readonly(dbname):
+    "PUT: Set the database to read-only."
+    try:
+        db = dbshare.db.get_check_write(dbname, check_mode=False)
+        if not db['readonly']:
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.set_readonly(True)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/readwrite', methods=['PUT'])
+def readwrite(dbname):
+    "PUT: Set the database to read-write."
+    try:
+        db = dbshare.db.get_check_write(dbname, check_mode=False)
+        if db['readonly']:
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.set_readonly(False)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
 def get_api(db, complete=False):
     "Return the API for the database."
