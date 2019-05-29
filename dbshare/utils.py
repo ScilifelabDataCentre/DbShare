@@ -5,6 +5,7 @@ import datetime
 import http.client
 import io
 import json
+import os
 import os.path
 import re
 import sqlite3
@@ -87,7 +88,10 @@ class Timer:
 
 
 def get_cnx(path, write=False):
-    "Return a new connection to the database at the given path."
+    """Return a new connection to the database at the given path.
+    If the database file does not exist, it will be created.
+    The OS-level file permissions are set in DbContext.
+    """
     if write:
         cnx = sqlite3.connect(path)
         cnx.execute('PRAGMA foreign_keys=ON')

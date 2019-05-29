@@ -14,6 +14,7 @@ CONFIG = dict(
     VERSION = dbshare.__version__,
     SERVER_NAME = '127.0.0.1:5000',
     DATABASES_DIRPATH = 'data',
+    DATABASE_FILE_MODE = 0o600,
     SITE_NAME = 'DbShare',
     SITE_STATIC_DIRPATH = None,
     HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'

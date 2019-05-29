@@ -267,13 +267,13 @@ def clone(dbname):
                 ctx.set_name(name)
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.set_description(flask.request.form.get('description'))
-                ctx.db['origin']  = dbname # Will show up in logs
         except (KeyError, ValueError) as error:
             flask.flash(str(error), 'error')
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
-        shutil.copy(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
+        shutil.copyfile(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
         db = get_db(name, complete=True)
         with DbContext(db) as ctx:
+            ctx.db['cloned']  = dbname # Will show up in logs
             ctx.update_spec_data_urls(dbname)
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
@@ -445,7 +445,7 @@ class DbContext:
                 raise ValueError(f"invalid db: {key} not set")
         self.db['modified'] = utils.get_time()
         with self.cnx:
-            # Update existing database entry in system
+            # Update the existing database entry in system.
             if self.old:
                 # The foreign key from dbs_log to dbs will temporarily be wrong.
                 # Switch off enforcing foreign key until updating done.
@@ -483,9 +483,15 @@ class DbContext:
                     self.cnx.execute(sql, (self.db['name'],))
                 sql = 'PRAGMA foreign_keys=ON'
                 self.cnx.execute(sql)
-            # Create database entry in system.
-            # The db file itself has already been created in 'initialize'.
+
+            # New database.
             else:
+                # This actually creates the database file.
+                self.dbcnx
+                # Set the OS-level file permissions.
+                os.chmod(utils.dbpath(self.db['name']),
+                         flask.current_app.config['DATABASE_FILE_MODE'])
+                # Create the database entry in system.
                 sql = "INSERT INTO dbs" \
                       " (name, owner, title, description, public, readonly," \
                       "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
@@ -1251,7 +1257,7 @@ def get_cnx(dbname, write=False):
             flask.g.dbcnx.close()
         except AttributeError:
             pass
-        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname), write=True)
+        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname), write=write)
     try:
         return flask.g.dbcnx
     except AttributeError:
