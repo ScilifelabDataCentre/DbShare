@@ -5,7 +5,6 @@ import datetime
 import http.client
 import io
 import json
-import os
 import os.path
 import re
 import sqlite3

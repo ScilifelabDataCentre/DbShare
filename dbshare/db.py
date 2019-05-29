@@ -11,6 +11,7 @@ import os.path
 import re
 import shutil
 import sqlite3
+import stat
 import tarfile
 import urllib.parse
 
@@ -488,9 +489,6 @@ class DbContext:
             else:
                 # This actually creates the database file.
                 self.dbcnx
-                # Set the OS-level file permissions.
-                os.chmod(utils.dbpath(self.db['name']),
-                         flask.current_app.config['DATABASE_FILE_MODE'])
                 # Create the database entry in system.
                 sql = "INSERT INTO dbs" \
                       " (name, owner, title, description, public, readonly," \
@@ -528,6 +526,11 @@ class DbContext:
                                    remote_addr,
                                    user_agent,
                                    utils.get_time()))
+        # Set the OS-level file permissions.
+        if self.db['readonly']:
+            os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD)
+        else:
+            os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD|stat.S_IWRITE)
 
     def set_name(self, name):
         """Set or change the database name.
@@ -566,7 +569,7 @@ class DbContext:
         If 'readonly', then compute the hash values, else remove them.
         """
         if self.db['readonly'] == mode: return
-        self.db['readonly'] = mode
+        self.db['readonly'] = self.readonly = mode
         if mode:
             with open(utils.dbpath(self.db['name']), 'rb') as infile:
                 data = infile.read()
