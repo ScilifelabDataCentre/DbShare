@@ -89,6 +89,45 @@ class Lexer:
         "Remove the quotechar from the start and end of the raw value."
         token['value'] = token['raw'].strip(token['quotechar'])
 
+    def get_expected(self, type, value=None):
+        """Return the next token; if it does not match the given type
+        or the value (if given), then raise ValueError.
+        Tokens of type WHITESPACE are skipped.
+        """
+        while True:
+            token = next(self)
+            if token['type'] == 'WHITESPACE': continue
+            if token['type'] != type:
+                raise ValueError(f"got {token['type']}; expected {type}")
+            if value is not None and token['value'] != value:
+                raise ValueError(f"got {token['value']}; expected {value}")
+            return token
+
+    def get_until(self, type, value=None):
+        """Return the list of tokens until one is reached that matches
+        the given type and value (if given, possibly as tuple).
+        Tokens of type WHITESPACE are skipped.
+        The token that stopped the search is available in 'self.until_token'.
+        """
+        result = []
+        self.until_token = None
+        try:
+            while True:
+                token = next(self)
+                if token['type'] == 'WHITESPACE': continue
+                if token['type'] == type:
+                    if value is None: break
+                    if token['value'] == value: break
+                    if isinstance(value, (tuple, list)) and \
+                       token['value'] in value: break
+                result.append(token)
+        except StopIteration:
+            self.until_token = None
+            return result
+        else:
+            self.until_token = token
+            return result
+
 
 if __name__ == '__main__':
     lexer = Lexer([
@@ -106,5 +145,26 @@ if __name__ == '__main__':
          'convert': 'quotechar_strip'}
     ])
     sql = 'SELECT DISTINCT x, "abn.z" AS a FROM w, abn WHERE w.id>abn."x-e-w"'
-    for token in lexer(sql):
+    lexer(sql)
+    for token in lexer:
         print(token)
+    print()
+    sql = 'SELECT DISTINCT x, "abn.z" AS a FROM w, abn WHERE w.id>abn."x-e-w" LIMIT 100'
+    lexer(sql)
+    lexer.get_expected('RESERVED')
+    lexer.get_expected('RESERVED')
+    print(lexer.get_expected('IDENTIFIER'))
+    try:
+        lexer.get_expected('IDENTIFIER')
+    except ValueError:
+        pass
+    else:
+        raise ValueError('should not reach this')
+    for token in lexer.get_until('RESERVED', ('OFFSET', 'LIMIT')):
+        print(token)
+    print(next(lexer))
+    print(next(lexer))
+    token = lexer.get_until('OFFSET')        
+    print(token, type(token))
+    print(lexer.until_token)
+    

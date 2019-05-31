@@ -1022,47 +1022,35 @@ class DbContext:
                       'title': None,
                       'description': None}
             schema['query'] = query = {}
-            # XXX use lexer for this!
-            parts = sql.split()
-            parts.reverse()
             try:
-                if parts.pop().upper() != 'CREATE': raise ValueError
-                if parts.pop().upper() != 'VIEW': raise ValueError
-                if parts.pop().strip('"') != viewname: raise ValueError
-                if parts.pop().upper() != 'AS': raise ValueError
-                if parts.pop().upper() != 'SELECT': raise ValueError
-                select = []
-                while parts:
-                    item = parts.pop()
-                    if item.upper() == 'FROM': break
-                    select.append(item)
+                utils.lexer(sql)
+                utils.lexer.get_expected('RESERVED', value='CREATE')
+                utils.lexer.get_expected('RESERVED', value='VIEW')
+                utils.lexer.get_expected('IDENTIFIER')
+                utils.lexer.get_expected('RESERVED', value='AS')
+                utils.lexer.get_expected('RESERVED', value='SELECT')
+
+                select = utils.lexer.get_until('RESERVED', value='FROM')
                 query['select'] = ' '.join(select)
                 query['columns'] = dbshare.query.get_select_columns(query['select'])
-                from_ = []
-                while parts:
-                    item = parts.pop()
-                    if item.upper() == 'WHERE': break
-                    from_.append(item)
+                from_ = utils.lexer.get_until('RESERVED', value='WHERE')
                 query['from'] = ' '.join(from_)
-                where_ = []
-                while parts:
-                    item = parts.pop()
-                    if item.upper() == 'ORDER': break
-                    if item.upper() == 'LIMIT': break
-                    where_.append(item)
+                where_ = utils.lexer.get_until('RESERVED',
+                                               value=('ORDER', 'LIMIT'))
                 query['where'] = ' '.join(where_)
-                if item.upper() == 'ORDER':
-                    orderby = []
-                    if parts.pop() != 'BY': raise ValueError
-                    while parts:
-                        item = parts.pop()
-                        if item.upper() == 'LIMIT': break
-                        orderby.append(item)
+                if utils.lexer.until_token and \
+                   utils.lexer.until_token['value'] == 'ORDER':
+                    utils.lexer.get_expected('RESERVED', value='BY')
+                    orderby = utils.lexer.get_until('RESERVED', value='LIMIT')
                     query['orderby'] = ' '.join(orderby)
-                if item.upper() == 'LIMIT':
-                    query['limit'] = int(parts.pop())
-                    if parts and parts.pop().upper() == 'OFFSET':
-                        query['offset'] = int(parts.pop())
+                if utils.lexer.until_token and \
+                   utils.lexer.until_token['value'] == 'LIMIT':
+                    query['limit'] = utils.lexer.get_expected('INTEGER')['value']
+                try:
+                    utils.lexer.get_expected('RESERVED', value='OFFSET')
+                    query['offset'] = utils.lexer.get_expected('INTEGER')['value']
+                except ValueError:
+                    pass
                 self.add_view(schema, create=False)
             except (ValueError, IndexError, TypeError):
                 # Get rid of uninterpretable view.

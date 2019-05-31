@@ -139,6 +139,9 @@ def get_select_columns(select):
         if token['value'] == ',':
             result.append(''.join(parts))
             parts = []
+        elif token['type'] == 'RESERVED' and \
+             token['value'] in ('DISTINCT', 'ALL'):
+            pass
         elif token['type'] == 'RESERVED' and token['value'] == 'AS':
             parts = []
         elif token['type'] == 'WHITESPACE':

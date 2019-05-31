@@ -27,7 +27,7 @@ mail = flask_mail.Mail()
 # Global instance of SQL lexer.
 lexer = Lexer([
     {'type': 'RESERVED',
-     'regexp': r"(?i)SELECT|DISTINCT|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT",
+     'regexp': r"(?i)SELECT|DISTINCT|ALL|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT|CREATE|VIEW",
      'convert': 'upcase'},
     {'type': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
     {'type': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
