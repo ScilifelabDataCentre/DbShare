@@ -573,13 +573,17 @@ class DbContext:
         if self.db['readonly'] == mode: return
         self.db['readonly'] = self.readonly = mode
         if mode:
-            with open(utils.dbpath(self.db['name']), 'rb') as infile:
-                data = infile.read()
             hashes = {}
             for hashname in flask.current_app.config['CONTENT_HASHES']:
-                h = hashlib.new(hashname)
-                h.update(data)
-                hashes[hashname] = h.hexdigest()
+                hashes[hashname] = hashlib.new(hashname)
+            with open(utils.dbpath(self.db['name']), 'rb') as infile:
+                data = infile.read(8192)
+                while data:
+                    for hash in hashes.values():
+                        hash.update(data)
+                    data = infile.read(8192)
+            for hashname in hashes:
+                hashes[hashname] = hashes[hashname].hexdigest()
             self.db['hashes'] = hashes
         else:
             self.db['hashes'] = {}
