@@ -1,9 +1,11 @@
 "Root API schema."
 
 from . import definitions
+from dbshare import constants
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/root',
+    '$id': constants.SCHEMA_BASE_URL + 'root',
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': __doc__,
     'definitions': definitions.schema,
@@ -28,6 +30,7 @@ schema = {
                       'required': ['public']
         },
         'user': {'$ref': '#/definitions/user'},
+        'schema': {'$ref': '#/definitions/link'},
         'timestamp': {'type': 'string', 'format': 'datetime'}
     },
     'required': [
@@ -36,6 +39,7 @@ schema = {
         'version',
         'databases',
         'templates',
+        'schema',
         'timestamp'
     ]
 }

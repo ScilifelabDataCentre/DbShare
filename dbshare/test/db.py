@@ -26,6 +26,12 @@ class Db(Base):
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.db.schema)
 
+        # Attempt at creating database again should fail.
+        response = self.session.put(self.db_url)
+        self.assertEqual(response.status_code, http.client.FORBIDDEN)
+        data = response.json()
+        self.assertEqual(data.get('error'), 'database exists')
+
         # Delete the database.
         response = self.session.delete(self.db_url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)

@@ -14,6 +14,7 @@ schema = {
         '$id': {'type': 'string', 'format': 'uri'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
         'database': {'$ref': '#/definitions/link'},
         'nrows': {'type': 'integer', 'minimum': 0},
         'rows': {'$ref': '#/definitions/link'},
@@ -36,5 +37,24 @@ schema = {
         'visualizations',
         'columns',
         'timestamp'
+    ]
+}
+
+create_schema = {
+    '$id': 'https://dbshare.scilifelab.se/api/schema/table_create',
+    '$schema': 'http://json-schema.org/draft-07/schema#',
+    'title': 'Table creation API schema.',
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
+        'columns': {
+            'type': 'array',
+            'items': column.schema}
+    },
+    'required': [
+        'name', 
+        'columns'
     ]
 }

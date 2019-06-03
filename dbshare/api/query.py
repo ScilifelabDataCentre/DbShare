@@ -37,8 +37,8 @@ def query(dbname):
         sql = dbshare.query.get_sql_statement(query)
         dbcnx = dbshare.db.get_cnx(dbname)
         cursor = utils.execute_timeout(dbcnx, sql)
-    except (KeyError, sqlite3.Error):
-        flask.abort(http.client.BAD_REQUEST)
+    except (KeyError, sqlite3.Error) as error:
+        utils.abort_json(http.client.BAD_REQUEST, error)
     except SystemError:
         flask.abort(http.client.REQUEST_TIMEOUT)
     columns = [d[0] for d in cursor.description]

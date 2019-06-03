@@ -2,6 +2,7 @@
 
 import http.client
 import io
+import json
 
 import flask
 
@@ -18,7 +19,7 @@ blueprint = flask.Blueprint('api_db', __name__)
 @blueprint.route('/<name:dbname>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def database(dbname):
     """GET: List the database tables, views and metadata.
-    PUT: Create a database.
+    PUT: Create the database.
     POST: Edit the database.
     DELETE: Delete the database.
     """
@@ -32,14 +33,9 @@ def database(dbname):
         return flask.jsonify(utils.get_api(**get_api(db, complete=True)))
  
     elif utils.http_PUT():
-        try:
-            dbshare.db.get_check_read(dbname)
-        except ValueError:
-            flask.abort(http.client.FORBIDDEN)
-        except KeyError:
-            pass
-        else:
-            flask.abort(http.client.FORBIDDEN)
+        db = dbshare.db.get_db(dbname)
+        if db is not None:
+            utils.abort_json(http.client.FORBIDDEN, 'database exists')
         try:
             if flask.request.content_length:
                 db = dbshare.db.add_database(
@@ -52,7 +48,7 @@ def database(dbname):
                     ctx.initialize()
                 db = ctx.db
         except ValueError as error:
-            flask.abort(http.client.BAD_REQUEST)
+            utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
     elif utils.http_POST(csrf=False):
@@ -82,8 +78,8 @@ def database(dbname):
                     ctx.set_public(data['public'])
                 except KeyError:
                     pass
-        except ValueError:
-            flask.abort(http.client.BAD_REQUEST)
+        except ValueError as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for('api_db.database', dbname=db['name']))
 

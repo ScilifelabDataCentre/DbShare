@@ -1,6 +1,5 @@
 "Configuration."
 
-import http.client
 import os
 import os.path
 import sqlite3
@@ -9,7 +8,7 @@ import dbshare
 
 ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
-# Default configurable values; read JSON file to change these.
+# Default configurable values; modified by reading JSON file in 'init'.
 CONFIG = dict(
     VERSION = dbshare.__version__,
     SERVER_NAME = '127.0.0.1:5000',

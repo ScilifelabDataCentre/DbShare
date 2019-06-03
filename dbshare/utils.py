@@ -27,7 +27,8 @@ mail = flask_mail.Mail()
 # Global instance of SQL lexer.
 lexer = Lexer([
     {'type': 'RESERVED',
-     'regexp': r"(?i)SELECT|DISTINCT|ALL|FROM|AS|ORDER|BY|AND|OR|NOT|LIMIT|CREATE|VIEW",
+     'regexp': r"(?i)SELECT|DISTINCT|ALL|FROM|AS|WHERE|ORDER|BY|AND|OR|NOT|"
+               r"LIMIT|CREATE|VIEW",
      'convert': 'upcase'},
     {'type': 'INTEGER', 'regexp': r"-?\d+", 'convert': 'integer'},
     {'type': 'DELIMITER', 'regexp': r"!=|>=|<=|[-+/*<>=\?\.,;\(\)]"},
@@ -227,6 +228,12 @@ def flash_message_limit(limit):
     "Flash message about limit on number of rows."
     msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
     flask.flash(msg, 'message')
+
+def abort_json(status_code, error):
+    "Raise abort with given status code and error message."
+    response = flask.Response(status=status_code)
+    response.set_data(json.dumps({'error': str(error)}))
+    flask.abort(response)
 
 def _timeout_interrupt(cnx, event, timeout, increment, backoff):
     "Background thread to interrupt the Sqlite3 query when timeout."

@@ -19,7 +19,6 @@ def endpoints():
         endpoints[rule.endpoint] = {
             'url': rule.rule,
             'methods': sorted(rule.methods.difference(trivial_methods))}
-        # print(rule.rule, rule.methods, rule.endpoint)
     for name, func in flask.current_app.view_functions.items():
         endpoints[name]['doc'] = func.__doc__
     endpoints['static']['doc'] = 'Static web page support files.'

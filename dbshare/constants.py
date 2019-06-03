@@ -49,3 +49,6 @@ CSV_MIMETYPE     = 'text/csv'
 JSON_MIMETYPE    = 'application/json'
 SQLITE3_MIMETYPE = 'application/x-sqlite3'
 TAR_MIMETYPE     = 'application/x-tar'
+
+# JSON schema
+SCHEMA_BASE_URL = 'https://dbshare.scilifelab.se/api/schema/'

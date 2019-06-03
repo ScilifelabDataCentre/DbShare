@@ -91,7 +91,8 @@ class Base(unittest.TestCase):
 
     def delete_file(self):
         try:
-            os.remove(CONFIG['filename'])
+            pass
+            # os.remove(CONFIG['filename'])
         except OSError:
             pass
 

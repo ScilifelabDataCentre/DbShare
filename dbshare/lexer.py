@@ -95,13 +95,36 @@ class Lexer:
         Tokens of type WHITESPACE are skipped.
         """
         while True:
-            token = next(self)
+            try:
+                token = next(self)
+            except StopIteration:
+                raise ValueError
             if token['type'] == 'WHITESPACE': continue
             if token['type'] != type:
                 raise ValueError(f"got {token['type']}; expected {type}")
             if value is not None and token['value'] != value:
                 raise ValueError(f"got {token['value']}; expected {value}")
             return token
+
+    def split_reserved(self, words):
+        """Split all tokens at reserved words in the order given.
+        Return map of reserved words to lists of subsequent tokens.
+        """
+        words = set(words)
+        tokens = list(self)
+        for token in tokens:
+            if token['type'] == 'RESERVED' and token['value'] in words:
+                token['split'] = True
+            else:
+                token['split'] = False
+        result = {}
+        word = None
+        for token in tokens:
+            if token['split']:
+                word = token['value']
+            elif word:
+                result.setdefault(word, []).append(token)
+        return result
 
     def get_until(self, type, value=None):
         """Return the list of tokens until one is reached that matches
@@ -111,9 +134,11 @@ class Lexer:
         """
         result = []
         self.until_token = None
+        print('until', value)
         try:
             while True:
                 token = next(self)
+                print(token)
                 if token['type'] == 'WHITESPACE': continue
                 if token['type'] == type:
                     if value is None: break
@@ -123,9 +148,11 @@ class Lexer:
                 result.append(token)
         except StopIteration:
             self.until_token = None
+            print('Stop', result)
             return result
         else:
             self.until_token = token
+            print(result)
             return result
 
 
@@ -160,11 +187,6 @@ if __name__ == '__main__':
         pass
     else:
         raise ValueError('should not reach this')
-    for token in lexer.get_until('RESERVED', ('OFFSET', 'LIMIT')):
-        print(token)
-    print(next(lexer))
-    print(next(lexer))
-    token = lexer.get_until('OFFSET')        
-    print(token, type(token))
-    print(lexer.until_token)
-    
+    words = lexer.split_reserved(['FROM', 'WHERE', 'LIMIT', 'OFFSET'])
+    for word, tokens in words.items():
+        print(word, tokens)

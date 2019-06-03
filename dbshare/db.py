@@ -1032,31 +1032,28 @@ class DbContext:
                 utils.lexer.get_expected('RESERVED', value='VIEW')
                 utils.lexer.get_expected('IDENTIFIER')
                 utils.lexer.get_expected('RESERVED', value='AS')
-                utils.lexer.get_expected('RESERVED', value='SELECT')
 
-                select = utils.lexer.get_until('RESERVED', value='FROM')
-                query['select'] = ' '.join(select)
+                parts = utils.lexer.split_reserved(['SELECT', 'FROM', 'WHERE',
+                                                    'ORDER', 'BY', 'LIMIT',
+                                                    'OFFSET'])
+
+                query['select'] = ''.join([t['raw'] for t in parts['SELECT']]).strip()
                 query['columns'] = dbshare.query.get_select_columns(query['select'])
-                from_ = utils.lexer.get_until('RESERVED', value='WHERE')
-                query['from'] = ' '.join(from_)
-                where_ = utils.lexer.get_until('RESERVED',
-                                               value=('ORDER', 'LIMIT'))
-                query['where'] = ' '.join(where_)
-                if utils.lexer.until_token and \
-                   utils.lexer.until_token['value'] == 'ORDER':
-                    utils.lexer.get_expected('RESERVED', value='BY')
-                    orderby = utils.lexer.get_until('RESERVED', value='LIMIT')
-                    query['orderby'] = ' '.join(orderby)
-                if utils.lexer.until_token and \
-                   utils.lexer.until_token['value'] == 'LIMIT':
-                    query['limit'] = utils.lexer.get_expected('INTEGER')['value']
+                query['from'] = ''.join([t['raw'] for t in parts['FROM']]).strip()
+                query['where'] = ''.join([t['raw'] for t in parts['WHERE']]).strip()
                 try:
-                    utils.lexer.get_expected('RESERVED', value='OFFSET')
-                    query['offset'] = utils.lexer.get_expected('INTEGER')['value']
-                except ValueError:
+                    query['orderby'] = ''.join([t['raw'] for t in parts['BY']]).strip()
+                except KeyError:
                     pass
+                try:
+                    query['limit'] = parts['LIMIT'][0]
+                    query['offset'] = parts['OFFSET'][0]
+                except KeyError:
+                    query['limit'] = None
+                    query['offset'] = None
                 self.add_view(schema, create=False)
-            except (ValueError, IndexError, TypeError):
+            except (KeyError, ValueError, IndexError, TypeError) as error:
+                print(error)
                 # Get rid of uninterpretable view.
                 sql = f"DROP VIEW {viewname}"
                 cursor.execute(sql)

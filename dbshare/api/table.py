@@ -11,24 +11,46 @@ from dbshare import utils
 
 blueprint = flask.Blueprint('api_table', __name__)
 
-@blueprint.route('/<name:dbname>/<name:tablename>')
+@blueprint.route('/<name:dbname>/<name:tablename>',
+                 methods=['GET', 'PUT', 'DELETE'])
 def table(dbname, tablename):
-    "The schema for the table."
-    try:
-        db = dbshare.db.get_check_read(dbname)
-    except ValueError:
-        flask.abort(http.client.UNAUTHORIZED)
-    except KeyError:
-        flask.abort(http.client.NOT_FOUND)
-    try:
-        schema = db['tables'][tablename]
-    except KeyError:
-        flask.abort(http.client.NOT_FOUND)
-    result = get_api(db, schema, complete=True)
-    result.update(schema)
-    result['indexes'] = [i for i in db['indexes'].values() 
-                         if i['table'] == tablename]
-    return flask.jsonify(utils.get_api(**result))
+    """GET: Return the schema for the table.
+    PUT: Create the table.
+    DELETE: Delete the table.
+    """
+    if utils.http_GET():
+        try:
+            db = dbshare.db.get_check_read(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            schema = db['tables'][tablename]
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        result = get_api(db, schema, complete=True)
+        result.update(schema)
+        result['indexes'] = [i for i in db['indexes'].values() 
+                             if i['table'] == tablename]
+        return flask.jsonify(utils.get_api(**result))
+
+    elif utils.http_PUT():
+        try:
+            db = dbshare.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            data = flask.request.get_json()
+            if data is None: raise ValueError
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.add_table(data)
+        except ValueError as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
+        return flask.redirect(
+            flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
 
 def get_api(db, table, complete=False):
     "Return the API JSON for the table."
