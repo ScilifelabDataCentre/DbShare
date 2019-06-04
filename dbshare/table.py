@@ -199,10 +199,7 @@ def empty(dbname, tablename):
 
     try:
         with dbshare.db.DbContext(db) as ctx:
-            with ctx.dbcnx:
-                sql = 'DELETE FROM "%s"' % schema['name']
-                ctx.dbcnx.execute(sql)
-                ctx.update_table_nrows(schema)
+            ctx.empty_table(schema)
     except sqlite3.Error as error:
         flask.flash(str(error), 'error')
     return flask.redirect(flask.url_for('.rows',

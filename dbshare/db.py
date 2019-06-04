@@ -766,23 +766,30 @@ class DbContext:
             sql = get_sql_create_table(schema)
             self.dbcnx.execute(sql)
         with self.dbcnx:
-            sql = "INSERT INTO %s (name,schema) VALUES (?,?)" % constants.TABLES
+            sql = f"INSERT INTO {constants.TABLES} (name,schema) VALUES (?,?)"
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
         self.update_table_nrows(schema)
         self.db['tables'][schema['name']] = schema
 
     def update_table(self, schema):
         "Update the table with the new schema."
-        sql = "UPDATE %s SET schema=? WHERE name=?" % constants.TABLES
+        sql = f"UPDATE {constants.TABLES} SET schema=? WHERE name=?"
         with self.dbcnx:
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['tables'][schema['name']] = schema
 
     def update_table_nrows(self, schema):
         "Update the number of rows in the table."
-        sql = 'SELECT COUNT(*) FROM "%s"' % schema['name']
+        sql = f'''SELECT COUNT(*) FROM "{schema['name']}"'''
         schema['nrows'] = self.dbcnx.execute(sql).fetchone()[0]
         self.update_table(schema)
+
+    def empty_table(self, schema):
+        "Empty the table; delete all rows."
+        with self.dbcnx:
+            sql = f'''DELETE FROM "{schema['name']}"'''
+            self.dbcnx.execute(sql)
+            self.update_table_nrows(schema)
 
     def delete_table(self, tablename):
         "Delete the table from the database and from the database definition."

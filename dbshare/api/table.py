@@ -71,8 +71,7 @@ def table(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert', methods=['POST'])
 def insert(dbname, tablename):
-    """POST: Insert table rows from JSON data into the table.
-    """
+    "POST: Insert table rows from JSON data into the table."
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError:
@@ -133,6 +132,27 @@ def insert(dbname, tablename):
                 ctx.dbcnx.executemany(sql, rows)
                 ctx.update_table_nrows(schema)
         except sqlite3.Error as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
+    return flask.redirect(
+        flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
+def empty(dbname, tablename):
+    "POST: Empty the table; delete all rows."
+    try:
+        db = dbshare.db.get_check_write(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        with dbshare.db.DbContext(db) as ctx:
+            ctx.empty_table(schema)
+    except sqlite3.Error as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
     return flask.redirect(
         flask.url_for('api_table.table', dbname=dbname,tablename=tablename))

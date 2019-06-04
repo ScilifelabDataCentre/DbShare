@@ -167,5 +167,13 @@ class Table(Base):
         self.assertEqual(len(result['data']), result['nrows'])
         self.assertEqual(result['data'][3], row_3)
 
+        # Empty the table.
+        response = self.session.post(url + '/empty')
+        self.assertEqual(response.status_code, http.client.OK)
+        response = self.session.get(url)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 0)
+
 if __name__ == '__main__':
     run()
