@@ -6,7 +6,6 @@ import time
 import flask
 import flask_mail
 import jinja2.utils
-import jsonschema
 import markdown
 
 import dbshare

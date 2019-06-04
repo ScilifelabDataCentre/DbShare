@@ -2,7 +2,6 @@
 
 import http.client
 import io
-import json
 
 import flask
 

@@ -25,8 +25,8 @@ class Db(Base):
         # Attempt at creating database again should fail.
         response = self.session.put(self.db_url)
         self.assertEqual(response.status_code, http.client.FORBIDDEN)
-        data = response.json()
-        self.assertEqual(data.get('message'), 'database exists')
+        result = response.json()
+        self.assertEqual(result.get('message'), 'database exists')
 
         # Delete the database.
         response = self.session.delete(self.db_url)
@@ -57,34 +57,34 @@ class Db(Base):
         title = 'New title'
         response = self.session.post(self.db_url, json={'title': title})
         self.assertEqual(response.status_code, http.client.OK)
-        data = response.json()
-        jsonschema.validate(instance=response.json(),
+        result = response.json()
+        jsonschema.validate(instance=result,
                             schema=dbshare.schema.db.schema)
-        self.assertEqual(data.get('title'), title)
+        self.assertEqual(result.get('title'), title)
 
         # Edit the description.
         description = 'A description'
         response = self.session.post(self.db_url,
                                      json={'description': description})
         self.assertEqual(response.status_code, http.client.OK)
-        data = response.json()
-        jsonschema.validate(instance=response.json(),
+        result = response.json()
+        jsonschema.validate(instance=result,
                             schema=dbshare.schema.db.schema)
-        self.assertEqual(data.get('description'), description)
+        self.assertEqual(result.get('description'), description)
         # Same title as before.
-        self.assertEqual(data.get('title'), title)
+        self.assertEqual(result.get('title'), title)
 
         # Rename the database; record its new url.
         name = 'test2'
         response = self.session.post(self.db_url, json={'name': name})
         self.assertEqual(response.status_code, http.client.OK)
-        data = response.json()
-        jsonschema.validate(instance=response.json(),
+        result = response.json()
+        jsonschema.validate(instance=result,
                             schema=dbshare.schema.db.schema)
-        self.assertTrue(data['$id'].endswith(name))
+        self.assertTrue(result['$id'].endswith(name))
 
         # So that the database is deleted at cleanup.
-        self.db_url = data['$id']
+        self.db_url = result['$id']
         self.addCleanup(self.delete_db)
 
     def test_readonly(self):
@@ -97,11 +97,11 @@ class Db(Base):
         # Set to read-only.
         response = self.session.put(f"{self.db_url}/readonly")
         self.assertEqual(response.status_code, http.client.OK)
-        data = response.json()
-        jsonschema.validate(instance=response.json(),
+        result = response.json()
+        jsonschema.validate(instance=result,
                             schema=dbshare.schema.db.schema)
-        self.assertTrue(data['readonly'])
-        self.assertTrue(len(data['hashes']))
+        self.assertTrue(result['readonly'])
+        self.assertTrue(len(result['hashes']))
 
         # Try editing the database; should fail.
         title = 'New title'
@@ -111,11 +111,11 @@ class Db(Base):
         # Set to read-write.
         response = self.session.put(f"{self.db_url}/readwrite")
         self.assertEqual(response.status_code, http.client.OK)
-        data = response.json()
-        jsonschema.validate(instance=response.json(),
+        result = response.json()
+        jsonschema.validate(instance=result,
                             schema=dbshare.schema.db.schema)
-        self.assertFalse(data['readonly'])
-        self.assertFalse(len(data['hashes']))
+        self.assertFalse(result['readonly'])
+        self.assertFalse(len(result['hashes']))
 
         # Delete the database.
         response = self.session.delete(self.db_url)

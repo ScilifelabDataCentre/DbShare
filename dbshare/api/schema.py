@@ -24,8 +24,8 @@ def schema():
         'title': 'Available schemas.',
         'schemas': {}
     }
-    for key in ['root', 'dbs', 'db', 'table', 'table_spec', 'view'
-                 'rows', 'query', 'user', 'visualization']:
+    for key in ['root', 'dbs', 'db', 'table', 'table_spec', 'table_data',
+                'view' 'rows', 'query', 'user', 'visualization']:
         data['schemas'][key] = {'href': constants.SCHEMA_BASE_URL + key}
     return flask.jsonify(data)
 
@@ -53,6 +53,11 @@ def table():
 def table_spec():
     "JSON schema for the specification for the table creation API."
     return flask.jsonify(dbshare.schema.table.schema_spec)
+
+@blueprint.route('/table_data')
+def table_data():
+    "JSON schema for the specification for th table row data API."
+    return flask.jsonify(dbshare.schema.table.schema_data)
 
 @blueprint.route('/view')
 def view():

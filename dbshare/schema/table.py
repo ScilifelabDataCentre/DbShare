@@ -59,3 +59,20 @@ schema_spec = {
         'columns'
     ]
 }
+
+# Specification of rows data for the table.
+schema_data = {
+    '$id': 'https://dbshare.scilifelab.se/api/schema/table_data',
+    '$schema': 'http://json-schema.org/draft-07/schema#',
+    'title': 'Table data API schema.',
+    'type': 'object',
+    'properties': {
+        'data': {
+            'type': 'array',
+            'items': {'type': 'object'}
+        }
+    },
+    'required': [
+        'data'
+    ]
+}
