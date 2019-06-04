@@ -40,7 +40,8 @@ schema = {
     ]
 }
 
-create_schema = {
+# Table specification for creation.
+schema_spec = {
     '$id': 'https://dbshare.scilifelab.se/api/schema/table_create',
     '$schema': 'http://json-schema.org/draft-07/schema#',
     'title': 'Table creation API schema.',

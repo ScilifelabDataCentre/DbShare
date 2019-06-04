@@ -58,6 +58,13 @@ class Base(unittest.TestCase):
     def close_session(self):
         self.session.close()
 
+    def create_database(self):
+        "Create an empty database."
+        self.db_url = f"{CONFIG['root_url']}/db/{CONFIG['dbname']}"
+        response = self.session.put(self.db_url)
+        self.addCleanup(self.delete_db)
+        return response
+
     def upload_file(self, view=False):
         "Create a local Sqlite3 file and upload it."
         # Define the URL for the database.
@@ -91,8 +98,7 @@ class Base(unittest.TestCase):
 
     def delete_file(self):
         try:
-            pass
-            # os.remove(CONFIG['filename'])
+            os.remove(CONFIG['filename'])
         except OSError:
             pass
 

@@ -232,7 +232,7 @@ def flash_message_limit(limit):
 def abort_json(status_code, error):
     "Raise abort with given status code and error message."
     response = flask.Response(status=status_code)
-    response.set_data(json.dumps({'error': str(error)}))
+    response.set_data(json.dumps({'message': str(error)}))
     flask.abort(response)
 
 def _timeout_interrupt(cnx, event, timeout, increment, backoff):

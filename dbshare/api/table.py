@@ -52,6 +52,20 @@ def table(dbname, tablename):
         return flask.redirect(
             flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
 
+    elif utils.http_DELETE():
+        try:
+            db = dbshare.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.add_table(data)
+        except ValueError as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
+        return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+
 def get_api(db, table, complete=False):
     "Return the API JSON for the table."
     url = utils.url_for('table.rows',

@@ -13,6 +13,21 @@ from dbshare.test.base import *
 class Table(Base):
     "Test the DbShare API table endpoint."
 
+    table_spec = {'name': 't1',
+                  'title': 'Test table',
+                  'columns': [
+                      {'name': 'i',
+                       'type': 'INTEGER',
+                       'primarykey': True},
+                      {'name': 't',
+                       'type': 'TEXT',
+                       'notnull': False},
+                      {'name': 'r',
+                       'type': 'REAL',
+                       'notnull': True}
+                  ]
+    }
+
     def test_db_upload(self):
         "Create a database with table by file upload, check the table JSON."
 
@@ -45,6 +60,34 @@ class Table(Base):
         self.assertEqual(response.status_code, http.client.OK)
         jsonschema.validate(instance=response.json(),
                             schema=dbshare.schema.rows.schema)
+
+    def test_create(self):
+        "Create a database and a table in it. Check its definition."
+
+        # Create an empty database.
+        response = self.create_database()
+        self.assertEqual(response.status_code, http.client.OK)
+
+        # Create a table in the database.
+        url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/{self.table_spec['name']}"
+        response = self.session.put(url, json=self.table_spec)
+        self.assertEqual(response.status_code, http.client.OK)
+
+        # Check the created table against the spec.
+        data = response.json()
+        jsonschema.validate(instance=data,
+                            schema=dbshare.schema.table.schema)
+        self.assertEqual(len(data['columns']), len(self.table_spec['columns']))
+        self.assertEqual(data['title'], self.table_spec['title'])
+        lookup = dict([(c['name'], c) for c in self.table_spec['columns']])
+        for column in data['columns']:
+            self.assertTrue(column['name'] in lookup)
+            self.assertEqual(column['type'], lookup[column['name']]['type'])
+
+        # PRIMAY KEY implies NOT NULL.
+        lookup = dict([(c['name'], c) for c in data['columns']])
+        self.assertTrue(lookup['i']['primarykey'])
+        self.assertTrue(lookup['i']['notnull'])
 
 
 if __name__ == '__main__':

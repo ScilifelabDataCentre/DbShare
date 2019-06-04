@@ -11,15 +11,11 @@ from dbshare.test.base import *
 class Db(Base):
     "Test the db API endpoint."
 
-    def setUp(self):
-        super().setUp()
-        self.db_url = f"{CONFIG['root_url']}/db/{CONFIG['dbname']}"
-
     def test_create(self):
         "Create an empty database, check its JSON, and delete it."
 
-        # Create an empty database.
-        response = self.session.put(self.db_url)
+        # Create empty database.
+        response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
         # Valid API db JSON.
@@ -30,7 +26,7 @@ class Db(Base):
         response = self.session.put(self.db_url)
         self.assertEqual(response.status_code, http.client.FORBIDDEN)
         data = response.json()
-        self.assertEqual(data.get('error'), 'database exists')
+        self.assertEqual(data.get('message'), 'database exists')
 
         # Delete the database.
         response = self.session.delete(self.db_url)
@@ -38,6 +34,8 @@ class Db(Base):
 
     def test_upload(self):
         "Create a database by file upload, check its JSON."
+
+        # Upload a Sqlite3 database file.
         response = self.upload_file()
 
         # Valid API db JSON.
@@ -47,8 +45,8 @@ class Db(Base):
     def test_edit(self):
         "Create an empty database, edit it, check its JSON."
 
-        # Create an empty database.
-        response = self.session.put(self.db_url)
+        # Create empty database.
+        response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
         # Valid API db JSON.
@@ -92,8 +90,8 @@ class Db(Base):
     def test_readonly(self):
         "Create an empty database, set to read-only, then read-write."
 
-        # Create an empty database.
-        response = self.session.put(self.db_url)
+        # Create empty database.
+        response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
         # Set to read-only.

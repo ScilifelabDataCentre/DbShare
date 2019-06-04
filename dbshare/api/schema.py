@@ -22,19 +22,11 @@ def schema():
     data = {
         '$id': constants.SCHEMA_BASE_URL.rstrip('/'),
         'title': 'Available schemas.',
-        'schemas': {
-            'root': constants.SCHEMA_BASE_URL + 'root',
-            'dbs': constants.SCHEMA_BASE_URL + 'dbs',
-            'db': constants.SCHEMA_BASE_URL + 'db',
-            'table': constants.SCHEMA_BASE_URL + 'table',
-            'table_create': constants.SCHEMA_BASE_URL + 'table/create',
-            'view': constants.SCHEMA_BASE_URL + 'view',
-            'rows': constants.SCHEMA_BASE_URL + 'rows',
-            'query': constants.SCHEMA_BASE_URL + 'query',
-            'user': constants.SCHEMA_BASE_URL + 'user',
-            'visualization': constants.SCHEMA_BASE_URL + 'visualization',
-        }
+        'schemas': {}
     }
+    for key in ['root', 'dbs', 'db', 'table', 'table_spec', 'view'
+                 'rows', 'query', 'user', 'visualization']:
+        data['schemas'][key] = {'href': constants.SCHEMA_BASE_URL + key}
     return flask.jsonify(data)
 
 @blueprint.route('/root')
@@ -57,10 +49,10 @@ def table():
     "JSON schema for the API for table."
     return flask.jsonify(dbshare.schema.table.schema)
 
-@blueprint.route('/table/create')
-def table_create():
-    "JSON schema for the data for the API for creating a table."
-    return flask.jsonify(dbshare.schema.table.create_schema)
+@blueprint.route('/table_spec')
+def table_spec():
+    "JSON schema for the specification for the table creation API."
+    return flask.jsonify(dbshare.schema.table.schema_spec)
 
 @blueprint.route('/view')
 def view():
