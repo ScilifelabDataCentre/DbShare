@@ -263,14 +263,7 @@ def row_insert(dbname, tablename):
                                          schema=schema,
                                          values=values)
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                      (tablename,
-                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                       ','.join('?' * len(schema['columns'])))
-                with ctx.dbcnx:
-                    ctx.dbcnx.execute(sql, values)
-                ctx.update_table_nrows(schema)
+            insert_records(db, schema, [values])
         except sqlite3.Error as error:
             flask.flash(str(error), 'error')
             return flask.render_template('table/row_insert.html', 
@@ -400,62 +393,10 @@ def insert_csv(dbname, tablename):
         except KeyError:
             raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
-        lines = csvfile.read().decode('utf-8').split('\n')
-        records = list(csv.reader(lines, delimiter=delimiter))
-        # Eliminate empty records
-        records = [r for r in records if r]
-        if not records:
-            raise ValueError('empty CSV file')
         header = utils.to_bool(flask.request.form.get('header'))
-        if header:
-            header = [h.strip() for h in records.pop(0)]
-            for n, column in enumerate(schema['columns']):
-                if header[n] != column['name']:
-                    raise ValueError('header/column name mismatch')
-        try:
-            for i, column in enumerate(schema['columns']):
-                type = column['type']
-                notnull = column['notnull']
-                if type == constants.INTEGER:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value:
-                            record[i] = int(value)
-                        elif notnull:
-                            raise ValueError('NULL disallowed')
-                        else:
-                            record[i] = None
-                elif type == constants.REAL:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value:
-                            record[i] = float(value)
-                        elif notnull:
-                            raise ValueError('NULL disallowed')
-                        else:
-                            record[i] = None
-                else:
-                    for n, record in enumerate(records):
-                        value = record[i]
-                        if value:
-                            record[i] = value
-                        elif notnull:
-                            raise ValueError('NULL disallowed')
-                        else:
-                            record[i] = None
-        except (ValueError, TypeError, IndexError) as error:
-            raise ValueError("line %s, column %s (%s): %s" %
-                             (n+1, i+1, column['name'], str(error)))
-        with dbshare.db.DbContext(db) as ctx:
-            with ctx.dbcnx:
-                sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                      (tablename,
-                       ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                       ','.join('?' * len(schema['columns'])))
-                ctx.dbcnx.executemany(sql, records)
-                ctx.update_table_nrows(schema)
-        flask.flash(f"Inserted {len(records)} rows.", 'message')
-    except (ValueError, IndexError, sqlite3.Error) as error:
+        count = do_insert_csv(db, schema, csvfile, delimiter, header)
+        flask.flash(f"Inserted {count} rows.", 'message')
+    except (ValueError, sqlite3.Error) as error:
         flask.flash(str(error), 'error')
         return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
@@ -692,3 +633,67 @@ def get_row_values_errors(columns):
             errors[column['name']] = str(error)
         values.append(value)
     return tuple(values), errors
+
+def do_insert_csv(db, schema, csvfile, delimiter, header):
+    """Insert data from the CSV input file into the given database and table.
+    Return the number of rows inserted.
+    Raises ValueError if any problem.
+    """
+    lines = csvfile.read().decode('utf-8').split('\n')
+    records = list(csv.reader(lines, delimiter=delimiter))
+    # Eliminate empty records
+    records = [r for r in records if r]
+    if not records:
+        raise ValueError('empty CSV file')
+    if header:
+        header = [h.strip() for h in records.pop(0)]
+        for n, column in enumerate(schema['columns']):
+            if header[n] != column['name']:
+                raise ValueError('header/column name mismatch')
+    try:
+        for i, column in enumerate(schema['columns']):
+            type = column['type']
+            notnull = column['notnull']
+            if type == constants.INTEGER:
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value:
+                        record[i] = int(value)
+                    elif notnull:
+                        raise ValueError('NULL disallowed')
+                    else:
+                        record[i] = None
+            elif type == constants.REAL:
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value:
+                        record[i] = float(value)
+                    elif notnull:
+                        raise ValueError('NULL disallowed')
+                    else:
+                        record[i] = None
+            else:
+                for n, record in enumerate(records):
+                    value = record[i]
+                    if value:
+                        record[i] = value
+                    elif notnull:
+                        raise ValueError('NULL disallowed')
+                    else:
+                        record[i] = None
+    except (ValueError, TypeError, IndexError) as error:
+        raise ValueError("line %s, column %s (%s): %s" %
+                         (n+1, i+1, column['name'], str(error)))
+    insert_records(db, schema, records)
+    return len(records)
+
+def insert_records(db, schema, records):
+    "Insert the given records into the given table."
+    with dbshare.db.DbContext(db) as ctx:
+        with ctx.dbcnx:
+            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
+                  (schema['name'],
+                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
+                   ','.join('?' * len(schema['columns'])))
+            ctx.dbcnx.executemany(sql, records)
+            ctx.update_table_nrows(schema)

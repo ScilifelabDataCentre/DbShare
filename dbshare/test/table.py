@@ -1,5 +1,7 @@
 "Test the table API endpoint."
 
+import csv
+import io
 import http.client
 
 import dbshare.schema.db
@@ -27,6 +29,14 @@ class Table(Base):
                        'notnull': True}
                   ]
     }
+
+    def get_csvfile_data(self, rows):
+        csvfile = io.StringIO()
+        writer = csv.writer(csvfile, delimiter=',')
+        writer.writerow([c['name'] for c in self.table_spec['columns']])
+        writer.writerows(rows)
+        return csvfile.getvalue()
+        
 
     def test_db_upload(self):
         "Create a database with table by file upload, check the table JSON."
@@ -174,6 +184,41 @@ class Table(Base):
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(result['nrows'], 0)
+
+    def test_csv(self):
+        "Create database and table; insert CSV operations."
+
+        # Create an empty database.
+        response = self.create_database()
+        self.assertEqual(response.status_code, http.client.OK)
+
+        # Create a table in the database.
+        url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/{self.table_spec['name']}"
+        response = self.session.put(url, json=self.table_spec)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 0)
+
+        headers = {'Content-Type': 'text/csv'}
+
+        # Insert CSV data.
+        data = self.get_csvfile_data([(1, 'test', 0.2),
+                                      (2, 'another test', 4.123e5),
+                                      (3, 'third', -13)])
+        response = self.session.post(url + '/insert', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 3)
+
+        # Row with None for a pkey item.
+        data = self.get_csvfile_data([(None, 'missing pkey', 0.2)])
+        response = self.session.post(url + '/insert', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.BAD_REQUEST)
+
+        # Row with too many items.
+        data = self.get_csvfile_data([(1, 'test', 2.1, 'superfluous')])
+        response = self.session.post(url + '/insert', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
 if __name__ == '__main__':
     run()
