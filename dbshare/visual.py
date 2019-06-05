@@ -21,14 +21,14 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         visual = dbshare.db.get_visual(db, str(visualname))
         schema = dbshare.db.get_schema(db, visual['sourcename'])
         dbshare.db.set_nrows(db, targets=[schema['name']])
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if visualname.ext == 'json' or utils.accept_json():
@@ -54,13 +54,13 @@ def edit(dbname, visualname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         visual = dbshare.db.get_visual(db, visualname)
         schema = dbshare.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -95,7 +95,7 @@ def edit(dbname, visualname):
                 ctx.update_visual(visualname, spec, newname)
         except (ValueError, TypeError,
                 sqlite3.Error, jsonschema.ValidationError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.render_template('visual/edit.html', 
                                          db=db,
                                          visual=visual,
@@ -110,7 +110,7 @@ def edit(dbname, visualname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.delete_visual(str(visualname))
         except sqlite3.Error as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:visualname>/clone',
@@ -121,13 +121,13 @@ def clone(dbname, visualname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         visual = dbshare.db.get_visual(db, visualname)
         schema = dbshare.db.get_schema(db, visual['sourcename'])
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -150,7 +150,7 @@ def clone(dbname, visualname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], visual['spec'])
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('db.display', dbname=dbname))
         return flask.redirect(flask.url_for('.display',
                                             dbname=dbname,

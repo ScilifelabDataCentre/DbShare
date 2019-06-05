@@ -18,7 +18,7 @@ def define(dbname):
     try:
         db = dbshare.db.get_check_read(dbname, nrows=True)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbshare.db.has_write_access(db)
     query = get_query_from_request(check=False)
@@ -35,7 +35,7 @@ def rows(dbname):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     query = {}
     try:
@@ -51,7 +51,7 @@ def rows(dbname):
             utils.flash_message_limit(limit)
         columns = [d[0] for d in cursor.description]
     except (KeyError, SystemError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.define', dbname=dbname, **query))
     return flask.render_template('query/rows.html',
                                  db=db,
@@ -67,7 +67,7 @@ def table(dbname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
 
     if utils.http_GET():
@@ -83,7 +83,7 @@ def table(dbname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_table(schema, query=query)
         except (KeyError, SystemError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.define',
                                                 dbname=dbname,
                                                 **query))

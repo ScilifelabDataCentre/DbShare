@@ -48,7 +48,7 @@ def create():
                     initial['height']  = config['VEGA_LITE_DEFAULT_HEIGHT']
                     ctx.set_code(json.dumps(initial, indent=2))
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.create'))
         return flask.redirect(
             flask.url_for('.display', templatename=ctx.template['name']))
@@ -59,7 +59,7 @@ def display(templatename):
     try:
         template = get_check_read(str(templatename))
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
     write_access = has_write_access(template)
     fields = list(template['fields'].values())
@@ -75,7 +75,7 @@ def download(templatename):
     try:
         template = get_check_read(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
     data = {'$id': flask.request.url}
     data.update(template)
@@ -92,7 +92,7 @@ def edit(templatename):
     try:
         template = get_check_write(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
@@ -121,7 +121,7 @@ def clone(templatename):
     try:
         template = get_check_read(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
@@ -136,7 +136,7 @@ def clone(templatename):
                 ctx.set_type(template['type'])
                 ctx.set_code(template['code'])
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone', name=templatename))
         return flask.redirect(
             flask.url_for('.display', templatename=ctx.template['name']))
@@ -149,15 +149,15 @@ def public(templatename):
     try:
         template = get_check_write(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = True
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     else:
-        flask.flash('Template set to public access.', 'message')
+        utils.flash_message('Template set to public access.')
     return flask.redirect(
         flask.url_for('.display', templatename=template['name']))
 
@@ -169,15 +169,15 @@ def private(templatename):
     try:
         template = get_check_write(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
     try:
         with TemplateContext(template) as ctx:
             ctx.template['public'] = False
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     else:
-        flask.flash('Template public access revoked.', 'message')
+        utils.flash_message('Template access set to private.')
     return flask.redirect(
         flask.url_for('.display', templatename=template['name']))
 
@@ -188,7 +188,7 @@ def field(templatename):
     try:
         template = get_check_write(templatename)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
@@ -200,7 +200,7 @@ def field(templatename):
             with TemplateContext(template) as ctx:
                 ctx.add_field_from_form()
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.display', templatename=template['name']))
 
@@ -214,7 +214,7 @@ def field_edit(templatename, fieldname):
         if fieldname not in template['fields']:
             raise ValueError('no such field in template')
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('templates.public'))
 
     if utils.http_GET():
@@ -227,7 +227,7 @@ def field_edit(templatename, fieldname):
             with TemplateContext(template) as ctx:
                 ctx.edit_field_from_form(fieldname)
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.display', templatename=template['name']))
 
@@ -245,12 +245,12 @@ def select(dbname, sourcename):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = dbshare.db.get_schema(db, sourcename)
     except KeyError:
-        flask.flash('no such table or view', 'error')
+        utils.flash_error('no such table or view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -265,7 +265,7 @@ def select(dbname, sourcename):
         try:
             template = get_check_read(flask.request.form.get('template'))
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             url = utils.url_for_rows(db, schema)
         else:
             url = flask.url_for('.render',
@@ -283,12 +283,12 @@ def render(templatename, dbname, sourcename):
         template = get_check_read(templatename)
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = dbshare.db.get_schema(db, sourcename)
     except KeyError:
-        flask.flash('no such table or view', 'error')
+        utils.flash_error('no such table or view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -340,7 +340,7 @@ def render(templatename, dbname, sourcename):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], spec)
         except (ValueError, TypeError, jinja2.TemplateError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.render',
                                                 templatename=templatename,
                                                 dbname=dbname,

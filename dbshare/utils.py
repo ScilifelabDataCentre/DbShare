@@ -224,10 +224,17 @@ def check_csrf_token():
     if not token or token != flask.request.form.get('_csrf_token'):
         flask.abort(http.client.BAD_REQUEST)
 
+def flash_error(msg):
+    "Flash error message."
+    flask.flash(str(msg), 'error')
+
+def flash_message(msg):
+    "Flash information message."
+    flask.flash(str(msg), 'message')
+
 def flash_message_limit(limit):
     "Flash message about limit on number of rows."
-    msg = f"NOTE: The number of rows displayed is limited to {limit:,}."
-    flask.flash(msg, 'message')
+    flash_message(f"NOTE: The number of rows displayed is limited to {limit:,}.")
 
 def abort_json(status_code, error):
     "Raise abort with given status code and error message."

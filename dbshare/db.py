@@ -64,7 +64,7 @@ def display(dbname):
     try:
         db = get_check_read(str(dbname), nrows=True)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
 
     if dbname.ext in ('tar', 'tar.gz', 'tar.bz2'):
@@ -116,7 +116,7 @@ def create():
     try:
         check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(
             flask.url_for('dbs.owner', 
                           username=flask.g.current_user['username']))
@@ -131,7 +131,7 @@ def create():
                 ctx.initialize()
                 ctx.set_title(flask.request.form.get('title'))
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.create'))
         return flask.redirect(flask.url_for('.display', dbname=ctx.db['name']))
 
@@ -142,7 +142,7 @@ def edit(dbname):
     try:
         db = get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.display', dbname=dbname))
 
     if utils.http_GET():
@@ -166,14 +166,14 @@ def edit(dbname):
                 for schema in ctx.db['tables'].values():
                     ctx.update_table_nrows(schema)
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
     elif utils.http_DELETE():
         try:
             get_check_write(dbname)
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('home'))
         delete_database(dbname)
         return flask.redirect(
@@ -186,7 +186,7 @@ def logs(dbname):
     try:
         db = get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     cursor = dbshare.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
@@ -208,7 +208,7 @@ def upload(dbname):
         check_quota()
         db = get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.display', dbname=dbname))
 
     if utils.http_GET():
@@ -237,9 +237,9 @@ def upload(dbname):
                                                 delimiter=delimiter,
                                                 nullrepr=nullrepr,
                                                 header=header)
-            flask.flash(f"Loaded {n} records.", 'message')
+            utils.flash_message(f"Loaded {n} records.")
         except (ValueError, IndexError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.upload',
                                                 dbname=dbname,
                                                 tablename=tablename))
@@ -255,7 +255,7 @@ def clone(dbname):
         check_quota()
         db = get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
 
     if utils.http_GET():
@@ -269,7 +269,7 @@ def clone(dbname):
                 ctx.set_title(flask.request.form.get('title'))
                 ctx.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
         shutil.copyfile(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
         db = get_db(name, complete=True)
@@ -284,7 +284,7 @@ def download(dbname):
     try:
         db = get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     return flask.send_file(utils.dbpath(dbname),
                            mimetype=constants.SQLITE3_MIMETYPE,
@@ -298,14 +298,14 @@ def vacuum(dbname):
     try:
         db = get_check_write(dbname) # Do NOT allow if read-only (for hashes)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbcnx = get_cnx(db['name'], write=True)
         sql = 'VACUUM'
         dbcnx.execute(sql)
     except sqlite3.Error as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/analyze', methods=['POST'])
@@ -316,14 +316,14 @@ def analyze(dbname):
     try:
         db = get_check_write(dbname) # Do NOT allow if read-only (for hashes)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbcnx = get_cnx(db['name'], write=True)
         sql = 'ANALYZE'
         dbcnx.execute(sql)
     except sqlite3.Error as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
@@ -334,15 +334,15 @@ def public(dbname):
     try:
         db = get_check_write(dbname, check_mode=False)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
             ctx.set_public(True)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     else:
-        flask.flash('Database set to public access.', 'message')
+        utils.flash_message('Database set to public access.')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/private', methods=['POST'])
@@ -353,15 +353,15 @@ def private(dbname):
     try:
         db = get_check_write(dbname, check_mode=False)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         with DbContext(db) as ctx:
             ctx.set_public(False)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     else:
-        flask.flash('Database public access revoked.', 'message')
+        utils.flash_message('Database access set to private.')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
@@ -372,16 +372,16 @@ def readwrite(dbname):
     try:
         db = get_check_write(dbname, check_mode=False)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     if db['readonly']:
         try:
             with DbContext(db) as ctx:
                 ctx.set_readonly(False)
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         else:
-            flask.flash('Database set to read-write mode.', 'message')
+            utils.flash_message('Database set to read-write mode.')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
@@ -392,16 +392,16 @@ def readonly(dbname):
     try:
         db = get_check_write(dbname, check_mode=False)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     if not db['readonly']:
         try:
             with DbContext(db) as ctx:
                 ctx.set_readonly(True)
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         else:
-            flask.flash('Database set to read-only mode.', 'message')
+            utils.flash_message('Database set to read-only mode.')
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 

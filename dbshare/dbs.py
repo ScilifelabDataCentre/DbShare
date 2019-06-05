@@ -29,7 +29,7 @@ def upload():
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
             db = dbshare.db.add_database(dbname, infile, modify_dbname=True)
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.upload'))
         return flask.redirect(flask.url_for('db.display', dbname=db['name']))
 
@@ -53,7 +53,7 @@ def all():
 def owner(username):
     "Display the list of databases owned by the given user."
     if not has_access(username):
-        flask.flash("you may not access the list of the user's databases")
+        utils.flash_error("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
     dbs = get_dbs(owner=username)
     return flask.render_template('dbs/owner.html',
@@ -61,11 +61,22 @@ def owner(username):
                                  total_size=sum([db['size'] for db in dbs]),
                                  username=username)
 
+@blueprint.route('/lookup/<hashcode>')
+def lookup(hashcode):
+    "Lookup and redirect to the database with the given hash."
+    for db in get_dbs(readonly=True):
+        for hashvalue in db['hashes'].values():
+            if hashvalue == hashcode:
+                return flask.redirect(
+                    flask.url_for('db.display', dbname=db['name']))
+    utils.flash_error('no such database')
+    return flask.redirect(flask.url_for('home'))
+
 def has_access(username):
     "May the current user access the user's list of databases?"
     return flask.g.is_admin or flask.g.current_user['username'] == username
 
-def get_dbs(public=None, owner=None, complete=False):
+def get_dbs(public=None, owner=None, complete=False, readonly=None):
     "Get the list of databases according to criteria."
     sql = "SELECT name FROM dbs"
     criteria = {}
@@ -73,6 +84,8 @@ def get_dbs(public=None, owner=None, complete=False):
         criteria['public=?'] = public
     if owner:
         criteria['owner=?'] = owner
+    if readonly is not None:
+        criteria['readonly=?'] = readonly
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
     cursor = dbshare.system.get_cursor()

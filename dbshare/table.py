@@ -22,12 +22,12 @@ def create(dbname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -61,7 +61,7 @@ def create(dbname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
             return flask.redirect(flask.url_for('db.display', dbname=dbname))
@@ -72,13 +72,13 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbshare.db.has_write_access(db)
     try:
         schema = db['tables'][str(tablename)]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "Table {}".format(tablename)
@@ -138,7 +138,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             flask.abort(http.client.NOT_ACCEPTABLE)
 
     except (SystemError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.schema',
                                             tablename=str(tablename)))
 
@@ -150,12 +150,12 @@ def edit(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -168,7 +168,7 @@ def edit(dbname, tablename):
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(flask.url_for('.schema',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -178,7 +178,7 @@ def edit(dbname, tablename):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
@@ -189,19 +189,19 @@ def empty(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     try:
         with dbshare.db.DbContext(db) as ctx:
             ctx.empty_table(schema)
     except sqlite3.Error as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
     return flask.redirect(flask.url_for('.rows',
                                         dbname=dbname,
                                         tablename=tablename))
@@ -212,12 +212,12 @@ def schema(dbname, tablename):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     indexes = [i for i in db['indexes'].values() if i['table'] == tablename]
     return flask.render_template(
@@ -234,17 +234,17 @@ def row_insert(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -257,7 +257,7 @@ def row_insert(dbname, tablename):
         values, errors = get_row_values_errors(schema['columns'])
         if errors:
             for item in errors.items():
-                flask.flash("%s: %s" % item, 'error')
+                utils.flash_error("%s: %s" % item)
             return flask.render_template('table/row_insert.html', 
                                          db=db,
                                          schema=schema,
@@ -265,12 +265,12 @@ def row_insert(dbname, tablename):
         try:
             insert_records(db, schema, [values])
         except sqlite3.Error as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.render_template('table/row_insert.html', 
                                          db=db,
                                          schema=schema,
                                          values=values)
-        flask.flash('Row inserted.')
+        utils.flash_message('Row inserted.')
         return flask.redirect(flask.url_for('.row_insert',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -282,14 +282,14 @@ def row_edit(dbname, tablename, rowid):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     # Do not check for quota; a loop-hole, but let it slide...
     dbcnx = dbshare.db.get_cnx(dbname)
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -300,7 +300,7 @@ def row_edit(dbname, tablename, rowid):
         cursor.execute(sql, (rowid,))
         rows = cursor.fetchall()
         if len(rows) != 1:
-            flask.flash('no such row in table', 'error')
+            utils.flash_error('no such row in table')
             return flask.redirect(flask.url_for('.rows',
                                                 dbname=dbname,
                                                 tablename=tablename))
@@ -314,7 +314,7 @@ def row_edit(dbname, tablename, rowid):
         values, errors = get_row_values_errors(schema['columns'])
         if errors:
             for item in errors.items():
-                flask.flash("%s: %s" % item, 'error')
+                utils.flash_error("%s: %s" % item)
             return flask.render_template('table/row_edit.html', 
                                          db=db,
                                          schema=schema,
@@ -329,9 +329,9 @@ def row_edit(dbname, tablename, rowid):
                     values = values + (rowid,)
                     ctx.dbcnx.execute(sql, values)
         except sqlite3.Error as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         else:
-            flask.flash('Row updated.')
+            utils.flash_message('Row updated.')
         return flask.redirect(flask.url_for('.rows',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -353,17 +353,17 @@ def insert(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/insert.html', db=db, schema=schema)
 
@@ -374,17 +374,17 @@ def insert_csv(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
@@ -394,10 +394,10 @@ def insert_csv(dbname, tablename):
             raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
         header = utils.to_bool(flask.request.form.get('header'))
-        count = do_insert_csv(db, schema, csvfile, delimiter, header)
-        flask.flash(f"Inserted {count} rows.", 'message')
+        n = do_insert_csv(db, schema, csvfile, delimiter, header)
+        utils.flash_message(f"Inserted {n} rows.")
     except (ValueError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -411,12 +411,12 @@ def update(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'].get(tablename)
@@ -425,7 +425,7 @@ def update(dbname, tablename):
         if not primarykeys:
             raise ValueError('table has no primary key')
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/update.html', db=db, schema=schema)
 
@@ -436,13 +436,13 @@ def update_csv(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     # Do not check quota; update should not be a problem...
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         recpos = None
@@ -490,12 +490,12 @@ def update_csv(dbname, tablename):
                     pkeys = [record[i] for i in pkpos]
                     cursor = ctx.dbcnx.execute(sql, values+pkeys)
                     count += cursor.rowcount
-        flask.flash(f"{len(records)} records; {count} rows updated.", 'message')
+        utils.flash_message(f"{len(records)} records; {count} rows updated.")
     except (ValueError, IndexError, sqlite3.Error) as error:
         if recpos is None:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         else:
-            flask.flash("record number %s; %s" (recpos+1, str(error)), 'error')
+            utils.flash_error("record number %s; %s" (recpos+1, str(error)))
         return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
                                             tablename=tablename))
@@ -511,17 +511,17 @@ def clone(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         dbshare.db.check_quota()
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -547,7 +547,7 @@ def clone(dbname, tablename):
                 ctx.dbcnx.execute(sql)
                 ctx.update_table_nrows(schema)
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone',
                                                 dbname=dbname,
                                                 tablename=tablename))
@@ -561,12 +561,12 @@ def download(dbname, tablename):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('table/download.html', db=db,schema=schema)
 
@@ -576,12 +576,12 @@ def download_csv(dbname, tablename):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError:
-        flask.flash('no such table', 'error')
+        utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
@@ -604,7 +604,7 @@ def download_csv(dbname, tablename):
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), tablename)
         writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
                                             tablename=tablename))

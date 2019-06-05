@@ -29,12 +29,12 @@ def create(dbname, sourcename):
     try:
         db = dbshare.db.get_check_write(dbname, nrows=[sourcename])
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = dbshare.db.get_schema(db, sourcename)
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -79,7 +79,7 @@ def create(dbname, sourcename):
                 ctx.add_visual(visualname, schema['name'], spec)
         except (ValueError, TypeError,
                 sqlite3.Error, jsonschema.ValidationError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.create',
                                                 dbname=dbname,
                                                 sourcename=sourcename,

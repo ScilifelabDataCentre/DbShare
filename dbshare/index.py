@@ -19,12 +19,12 @@ def create(dbname, tablename):
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][tablename]
     except KeyError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     positions = list(range(len(schema['columns'])))
 
@@ -58,7 +58,7 @@ def create(dbname, tablename):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_index(index)
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(
                 flask.url_for('.create', dbname=dbname, tablename=tablename))
         else:
@@ -76,7 +76,7 @@ def delete(dbname, indexname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         for index in db['indexes'].values():
@@ -88,7 +88,7 @@ def delete(dbname, indexname):
         with dbshare.db.DbContext(db) as ctx:
             ctx.delete_index(indexname)
     except (ValueError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.redirect(
         flask.url_for('table.schema', dbname=dbname, tablename=tablename))

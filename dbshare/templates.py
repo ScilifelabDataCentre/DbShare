@@ -30,7 +30,7 @@ def all():
 def owner(username):
     "Display the list of templates owned by the given user."
     if not has_access(username):
-        flask.flash("you may not access the list of the user's templates")
+        utils.flash_message("you may not access the list of the user's templates")
         return flask.redirect(flask.url_for('home'))
     return flask.render_template('templates/owner.html',
                                  templates=get_templates(owner=username),
@@ -55,7 +55,7 @@ def upload():
                 ctx.template['fields'].update(data['fields'])
                 ctx.set_code(data['code'])
         except (TypeError, ValueError, KeyError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.upload'))
         return flask.redirect(flask.url_for('template.display',
                                             templatename=ctx.template['name']))

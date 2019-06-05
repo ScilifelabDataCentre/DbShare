@@ -61,7 +61,7 @@ def login():
             else:
                 return flask.redirect(next)
         except ValueError:
-            flask.flash('invalid user/password, or account disabled', 'error')
+            utils.flash_error('invalid user/password, or account disabled')
             return flask.redirect(flask.url_for('.login'))
 
 def do_login(username, password):
@@ -98,12 +98,12 @@ def register():
                 ctx.set_password()
             user = ctx.user
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.register'))
         # Directly enabled; send code to the user.
         if user['status'] == constants.ENABLED:
             send_password_code(user, 'registration')
-            flask.flash('User account created; check your email.')
+            utils.flash_message('User account created; check your email.')
         # Was set to 'pending'; send email to admins.
         else:
             cnx = dbshare.system.get_cnx()
@@ -116,8 +116,8 @@ def register():
             url = utils.url_for('.profile', username=user['username'])
             message.body = f"To enable the user account, go to {url}"
             utils.mail.send(message)
-            flask.flash('User account created; an email will be sent when'
-                        ' it has been enabled by the admin.')
+            utils.flash_message('User account created; an email will be sent'
+                                ' when it has been enabled by the admin.')
         return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/reset', methods=['GET', 'POST'])
@@ -137,7 +137,7 @@ def reset():
             with UserContext(user) as ctx:
                 ctx.set_password()
             send_password_code(user, 'password reset')
-        flask.flash('An email has been sent if the user account exists.')
+        utils.flash_message('An email has been sent if the user account exists.')
         return flask.redirect(flask.url_for('home'))
 
 def send_password_code(user, action):
@@ -172,9 +172,9 @@ def password():
             if len(password) < flask.current_app.config['MIN_PASSWORD_LENGTH']:
                 raise ValueError
         except KeyError:
-            flask.flash('no such user or wrong code', 'error')
+            utils.flash_error('no such user or wrong code')
         except ValueError:
-            flask.flash('too short password', 'error')
+            utils.flash_error('too short password')
         else:
             with UserContext(user) as ctx:
                 ctx.set_password(password)
@@ -188,10 +188,10 @@ def profile(username):
     import dbshare.template
     user = get_user(username=username)
     if user is None:
-        flask.flash('no such user', 'error')
+        utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
-        flask.flash('access not allowed', 'error')
+        utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
     ndbs, usage = dbshare.db.get_usage(username)
     ntemplates = len(dbshare.templates.get_templates(owner=username))
@@ -211,10 +211,10 @@ def edit(username):
     "Edit the user profile. Or delete the user."
     user = get_user(username=username)
     if user is None:
-        flask.flash('no such user', 'error')
+        utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
-        flask.flash('access not allowed', 'error')
+        utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
 
     if utils.http_GET():
@@ -243,7 +243,7 @@ def edit(username):
 
     elif utils.http_DELETE():
         if not (ndbs == 0 and ntemplates == 0):
-            flash.flash('cannot delete non-empty user account', 'error')
+            utils.flash_error('cannot delete non-empty user account')
             return flask.redirect(flask.url_for('.profile', username=username))
         cnx = dbshare.system.get_cnx(write=True)
         with cnx:
@@ -251,7 +251,7 @@ def edit(username):
             cnx.execute(sql, (username,))
             sql = "DELETE FROM users WHERE username=?"
             cnx.execute(sql, (username,))
-        flask.flash(f"Deleted user {username}.", 'message')
+        utils.flash_message(f"Deleted user {username}.")
         if flask.g.is_admin:
             return flask.redirect(flask.url_for('.users'))
         else:
@@ -263,10 +263,10 @@ def logs(username):
     "Display the log records of the given user."
     user = get_user(username=username)
     if user is None:
-        flask.flash('no such user', 'error')
+        utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
     if not is_admin_or_self(user):
-        flask.flash('access not allowed', 'error')
+        utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
     cursor = dbshare.system.get_cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
@@ -315,7 +315,7 @@ def enable(username):
     "Enable the given user account."
     user = get_user(username=username)
     if user is None:
-        flask.flash('no such user', 'error')
+        utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.ENABLED)
@@ -329,7 +329,7 @@ def disable(username):
     "Disable the given user account."
     user = get_user(username=username)
     if user is None:
-        flask.flash('no such user', 'error')
+        utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.DISABLED)

@@ -22,7 +22,7 @@ def create(dbname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     viewname = flask.request.values.get('name')
     title = flask.request.values.get('title')
@@ -48,7 +48,7 @@ def create(dbname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.create',
                                                 dbname=dbname,
                                                 name=viewname,
@@ -66,12 +66,12 @@ def edit(dbname, viewname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         schema = db['views'][viewname]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -84,7 +84,7 @@ def edit(dbname, viewname):
                 schema['description'] = flask.request.form.get('description') or None
                 ctx.update_view(schema)
         except ValueError as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.edit',
                                                 dbname=dbname,
                                                 viewname=viewname))
@@ -97,13 +97,13 @@ def edit(dbname, viewname):
         try:
             db = dbshare.db.get_check_write(dbname)
         except (KeyError, ValueError) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('home'))
         try:
             with dbshare.db.DbContext(db) as ctx:
                 ctx.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/<nameext:viewname>')
@@ -112,13 +112,13 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     try:
         db = dbshare.db.get_check_read(dbname, nrows=[str(viewname)])
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbshare.db.has_write_access(db)
     try:
         schema = db['views'][str(viewname)]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "View {}".format(viewname)
@@ -160,7 +160,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         elif viewname.ext in (None, 'html'):
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] is None:
-                flask.flash('too many rows to fetch; interrupted', 'error')
+                utils.flask_error('too many rows to fetch; interrupted')
                 rows = []
             elif schema['nrows'] > limit:
                 utils.flash_message_limit(limit)
@@ -184,7 +184,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             flask.abort(http.client.NOT_ACCEPTABLE)
 
     except (SystemError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.schema',
                                             viewname=str(viewname)))
 
@@ -194,12 +194,12 @@ def schema(dbname, viewname):
     try:
         db = dbshare.db.get_check_read(dbname, nrows=[viewname])
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     has_write_access = dbshare.db.has_write_access(db)
     sources = [dbshare.db.get_schema(db, name) for name in schema['sources']]
@@ -231,12 +231,12 @@ def clone(dbname, viewname):
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -251,7 +251,7 @@ def clone(dbname, viewname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
-            flask.flash(str(error), 'error')
+            utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone',
                                                 dbname=dbname,
                                                 viewname=viewname))
@@ -265,12 +265,12 @@ def download(dbname, viewname):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
@@ -280,12 +280,12 @@ def download_csv(dbname, viewname):
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['views'][viewname]
     except KeyError:
-        flask.flash('no such view', 'error')
+        utils.flask_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
@@ -303,7 +303,7 @@ def download_csv(dbname, viewname):
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
         writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
-        flask.flash(str(error), 'error')
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.download',
                                             dbname=dbname,
                                             viewname=viewname))
