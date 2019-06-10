@@ -887,7 +887,7 @@ class DbContext:
     def update_view(self, schema):
         "Update the view with the new schema."
         with self.dbcnx:
-            sql = "UPDATE %s SET schema=? WHERE name=?" % constants.VIEWS
+            sql = f"UPDATE {constants.VIEWS} SET schema=? WHERE name=?"
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['views'][schema['name']] = schema
 
@@ -930,7 +930,7 @@ class DbContext:
         if new_visualname is None:
             new_visualname = visualname
         with self.dbcnx:
-            sql = "UPDATE %s SET name=?,spec=? WHERE name=?" % constants.VISUALS
+            sql = f"UPDATE {constants.VISUALS} SET name=?,spec=? WHERE name=?"
             self.dbcnx.execute(sql,(new_visualname.lower(),
                                     json.dumps(spec),
                                     visualname.lower()))

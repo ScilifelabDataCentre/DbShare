@@ -95,7 +95,7 @@ def insert(dbname, tablename):
             except jsonschema.ValidationError as error:
                 utils.abort_json(http.client.BAD_REQUEST, error)
             columns = schema['columns']
-            records = []
+            rows = []
             for pos, item in enumerate(data['data']):
                 values = []
                 for column in columns:
@@ -121,18 +121,46 @@ def insert(dbname, tablename):
                             raise ValueError(f"'{column['name']}'invalid type"
                                              f" in item # {pos}")
                     values.append(value)
-                records.append(values)
-            dbshare.table.insert_records(db, schema, records)
+                rows.append(values)
 
         # CSV input data
         elif flask.request.content_type == constants.CSV_MIMETYPE:
             csvfile = io.BytesIO(flask.request.data)
-            dbshare.table.do_insert_csv(db, schema, csvfile, ',', True)
+            rows = dbshare.table.get_csv_rows(schema, csvfile, ',', True)
 
-        # Unknown input data
+        # Unrecognized input data type
         else:
             flask.abort(http.client.UNSUPPORTED_MEDIA_TYPE)
 
+        dbshare.table.insert_rows(db, schema, rows)
+    except (ValueError, sqlite3.Error) as error:
+        utils.abort_json(http.client.BAD_REQUEST, error)
+    return flask.redirect(
+        flask.url_for('api_table.table', dbname=dbname, tablename=tablename))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/update', methods=['POST'])
+def update(dbname, tablename):
+    "POST: Update table rows in the table from CSV data; JSON not implemented."
+    try:
+        db = dbshare.db.get_check_write(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+
+    try:
+        # CSV input data
+        if flask.request.content_type == constants.CSV_MIMETYPE:
+            csvfile = io.BytesIO(flask.request.data)
+            dbshare.table.update_csv_rows(db, schema, csvfile, ',')
+
+        # Unrecognized input data type
+        else:
+            flask.abort(http.client.UNSUPPORTED_MEDIA_TYPE)
     except (ValueError, sqlite3.Error) as error:
         utils.abort_json(http.client.BAD_REQUEST, error)
     return flask.redirect(

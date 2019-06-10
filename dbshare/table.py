@@ -263,7 +263,7 @@ def row_insert(dbname, tablename):
                                          schema=schema,
                                          values=values)
         try:
-            insert_records(db, schema, [values])
+            insert_rows(db, schema, [values])
         except sqlite3.Error as error:
             utils.flash_error(error)
             return flask.render_template('table/row_insert.html', 
@@ -294,9 +294,8 @@ def row_edit(dbname, tablename, rowid):
 
     if utils.http_GET():
         cursor = dbcnx.cursor()
-        sql = 'SELECT %s FROM "%s" WHERE rowid=?' % \
-              (','.join(['"%(name)s"' % c for c in schema['columns']]),
-               schema['name'])
+        names = ','.join(['"%(name)s"=?' % c for c in schema['columns']])
+        sql = f'''SELECT {names} FROM "{schema['name']}" WHERE rowid=?'''
         cursor.execute(sql, (rowid,))
         rows = cursor.fetchall()
         if len(rows) != 1:
@@ -323,9 +322,9 @@ def row_edit(dbname, tablename, rowid):
         try:
             with dbshare.db.DbContext(db) as ctx:
                 with ctx.dbcnx:
-                    names = ','.join(['"%(name)s"=?' %c 
+                    names = ','.join(['"%(name)s"=?' % c
                                       for c in schema['columns']])
-                    sql = 'UPDATE "%s" SET %s WHERE rowid=?' % (tablename,names)
+                    sql = f'UPDATE "{tablename}" SET {names} WHERE rowid=?'
                     values = values + (rowid,)
                     ctx.dbcnx.execute(sql, values)
         except sqlite3.Error as error:
@@ -339,7 +338,7 @@ def row_edit(dbname, tablename, rowid):
     elif utils.http_DELETE():
         with dbshare.db.DbContext(db) as ctx:
             with ctx.dbcnx:
-                sql = 'DELETE FROM "%s" WHERE rowid=?' % schema['name']
+                sql = f'''DELETE FROM "{schema['name']}" WHERE rowid=?'''
                 ctx.dbcnx.execute(sql, (rowid,))
                 ctx.update_table_nrows(schema)
         return flask.redirect(flask.url_for('.rows',
@@ -394,8 +393,9 @@ def insert_csv(dbname, tablename):
             raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
         header = utils.to_bool(flask.request.form.get('header'))
-        n = do_insert_csv(db, schema, csvfile, delimiter, header)
-        utils.flash_message(f"Inserted {n} rows.")
+        rows = get_csv_rows(schema, csvfile, delimiter, header)
+        insert_rows(db, schema, rows)
+        utils.flash_message(f"Inserted {len(rows)} rows.")
     except (ValueError, sqlite3.Error) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('.insert',
@@ -421,9 +421,6 @@ def update(dbname, tablename):
     try:
         schema = db['tables'].get(tablename)
         if not schema: raise ValueError('no such table')
-        primarykeys = [c for c in schema['columns'] if c.get('primarykey')]
-        if not primarykeys:
-            raise ValueError('table has no primary key')
     except ValueError as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
@@ -445,60 +442,22 @@ def update_csv(dbname, tablename):
         utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
-        recpos = None
-        delimiter = flask.request.form.get('delimiter') or 'comma'
-        try:
-            delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
-        except KeyError:
-            raise ValueError('invalid delimiter')
         csvfile = flask.request.files['csvfile']
-        lines = csvfile.read().decode('utf-8').split('\n')
-        records = list(csv.reader(lines, delimiter=delimiter))
-        # Eliminate empty records.
-        records = [r for r in records if r]
-        if not records:
-            raise ValueError('empty CSV file')
-        # Figure out mapping of CSV record columns to table columns.
-        header = [h.strip() for h in records.pop(0)]
-        primarykeys = set([c['name'] for c in schema['columns']
-                           if c.get('primarykey')])
-        columns = set([c['name'] for c in schema['columns']])
-        pkpos = {}
-        for pos, name in enumerate(header):
-            if name in primarykeys:
-                pkpos[name] = pos
-        if len(primarykeys) != len(pkpos):
-            raise ValueError('missing primary key column(s) in CSV file')
-        colpos = {}
-        for pos, name in enumerate(header):
-            if name in primarykeys: continue
-            if name not in columns: continue
-            colpos[name] = pos
-        if not colpos:
-            raise ValueError('no columns in CSV file for update')
-        sql = 'UPDATE "%s" SET %s WHERE %s' % \
-              (tablename,
-               ','.join(['"%s"=?' % pk for pk in colpos.keys()]),
-               ' AND '.join(['"%s"=?' % pk for pk in pkpos.keys()]))
-        colpos = colpos.values()
-        pkpos = pkpos.values()
-        count = 0
-        with dbshare.db.DbContext(db) as ctx:
-            with ctx.dbcnx:
-                for recpos, record in enumerate(records):
-                    values = [record[i] for i in colpos]
-                    pkeys = [record[i] for i in pkpos]
-                    cursor = ctx.dbcnx.execute(sql, values+pkeys)
-                    count += cursor.rowcount
-        utils.flash_message(f"{len(records)} records; {count} rows updated.")
-    except (ValueError, IndexError, sqlite3.Error) as error:
-        if recpos is None:
-            utils.flash_error(error)
-        else:
-            utils.flash_error("record number %s; %s" (recpos+1, str(error)))
+    except KeyError:
+        raise ValueError('no CSV file provided')
+    try:
+        delimiter = flask.request.form.get('delimiter') or 'comma'
+        delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
+    except KeyError:
+            raise ValueError('invalid delimiter')
+    try:
+        nrows, count = update_csv_rows(db, schema, csvfile, delimiter)
+    except ValueError as error:
+        utils.flash_error(error)
         return flask.redirect(flask.url_for('.insert',
                                             dbname=dbname,
                                             tablename=tablename))
+    utils.flash_message(f"{nrows} rows in file; {count} table rows updated.")
     return flask.redirect(flask.url_for('.rows',
                                         dbname=dbname,
                                         tablename=tablename))
@@ -634,19 +593,19 @@ def get_row_values_errors(columns):
         values.append(value)
     return tuple(values), errors
 
-def do_insert_csv(db, schema, csvfile, delimiter, header):
-    """Insert data from the CSV input file into the given database and table.
-    Return the number of rows inserted.
+def get_csv_rows(schema, csvfile, delimiter, header):
+    """Get rows from the CSV input file to insert into the given table.
+    The order of the items in the rows must match the order of the columns.
     Raises ValueError if any problem.
     """
     lines = csvfile.read().decode('utf-8').split('\n')
-    records = list(csv.reader(lines, delimiter=delimiter))
-    # Eliminate empty records
-    records = [r for r in records if r]
-    if not records:
+    rows = list(csv.reader(lines, delimiter=delimiter))
+    # Eliminate empty rows
+    rows = [r for r in rows if r]
+    if not rows:
         raise ValueError('empty CSV file')
     if header:
-        header = [h.strip() for h in records.pop(0)]
+        header = [h.strip() for h in rows.pop(0)]
         for n, column in enumerate(schema['columns']):
             if header[n] != column['name']:
                 raise ValueError('header/column name mismatch')
@@ -655,45 +614,93 @@ def do_insert_csv(db, schema, csvfile, delimiter, header):
             type = column['type']
             notnull = column['notnull']
             if type == constants.INTEGER:
-                for n, record in enumerate(records):
-                    value = record[i]
+                for n, row in enumerate(rows):
+                    value = row[i]
                     if value:
-                        record[i] = int(value)
+                        row[i] = int(value)
                     elif notnull:
                         raise ValueError('NULL disallowed')
                     else:
-                        record[i] = None
+                        row[i] = None
             elif type == constants.REAL:
-                for n, record in enumerate(records):
-                    value = record[i]
+                for n, row in enumerate(rows):
+                    value = row[i]
                     if value:
-                        record[i] = float(value)
+                        row[i] = float(value)
                     elif notnull:
                         raise ValueError('NULL disallowed')
                     else:
-                        record[i] = None
+                        row[i] = None
             else:
-                for n, record in enumerate(records):
-                    value = record[i]
+                for n, row in enumerate(rows):
+                    value = row[i]
                     if value:
-                        record[i] = value
+                        row[i] = value
                     elif notnull:
                         raise ValueError('NULL disallowed')
                     else:
-                        record[i] = None
+                        row[i] = None
     except (ValueError, TypeError, IndexError) as error:
         raise ValueError("line %s, column %s (%s): %s" %
                          (n+1, i+1, column['name'], str(error)))
-    insert_records(db, schema, records)
-    return len(records)
+    return rows
 
-def insert_records(db, schema, records):
-    "Insert the given records into the given table."
+def insert_rows(db, schema, rows):
+    "Insert the given rows into the given table."
     with dbshare.db.DbContext(db) as ctx:
         with ctx.dbcnx:
-            sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
-                  (schema['name'],
-                   ','.join(['"%(name)s"' % c for c in schema['columns']]),
-                   ','.join('?' * len(schema['columns'])))
-            ctx.dbcnx.executemany(sql, records)
+            names = ','.join(['"%(name)s"' % c for c in schema['columns']])
+            values = ','.join('?' * len(schema['columns']))
+            sql = f'''INSERT INTO "{schema['name']}" ({names}) VALUES ({values})'''
+            ctx.dbcnx.executemany(sql, rows)
             ctx.update_table_nrows(schema)
+
+def update_csv_rows(db, schema, csvfile, delimiter):
+    """Update the given table with the given CSV file.
+    The CSV file must contain a header row. The primary key column(s) 
+    must be present. Only given column values will be updated.
+    Raises ValueError if any problem.
+    """
+    lines = csvfile.read().decode('utf-8').split('\n')
+    rows = list(csv.reader(lines, delimiter=delimiter))
+    # Eliminate empty rows.
+    rows = [r for r in rows if r]
+    if len(rows) <= 1:
+        raise ValueError('empty CSV file')
+    # Figure out mapping of CSV row columns to table columns.
+    header = [h.strip() for h in rows.pop(0)]
+    primarykeys = set([c['name'] for c in schema['columns']
+                       if c.get('primarykey')])
+    columns = set([c['name'] for c in schema['columns']])
+    pkpos = {}
+    for pos, name in enumerate(header):
+        if name in primarykeys:
+            pkpos[name] = pos
+    if not pkpos:
+        raise ValueError('no primary key in table')
+    if len(primarykeys) != len(pkpos):
+        raise ValueError('missing primary key column(s) in CSV file')
+    colpos = {}
+    for pos, name in enumerate(header):
+        if name in primarykeys: continue
+        if name not in columns: continue
+        colpos[name] = pos
+    if not colpos:
+        raise ValueError('no columns in CSV file for update')
+    setexpr = ','.join(['"%s"=?' % pk for pk in colpos.keys()])
+    criteria = ' AND '.join(['"%s"=?' % pk for pk in pkpos.keys()])
+    sql = f'''UPDATE "{schema['name']}" SET {setexpr} WHERE {criteria}'''
+    colpos = colpos.values()
+    pkpos = pkpos.values()
+    count = 0
+    try:
+        with dbshare.db.DbContext(db) as ctx:
+            with ctx.dbcnx:
+                for rowpos, row in enumerate(rows):
+                    values = [row[i] for i in colpos]
+                    pkeys = [row[i] for i in pkpos]
+                    cursor = ctx.dbcnx.execute(sql, values+pkeys)
+                    count += cursor.rowcount
+    except sqlite3.Error as error:
+        raise ValueError("row number %s; %s" (rowpos+1, str(error)))
+    return (len(rows), count)
