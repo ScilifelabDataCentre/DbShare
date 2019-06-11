@@ -19,7 +19,7 @@ blueprint = flask.Blueprint('api_db', __name__)
 def database(dbname):
     """GET: List the database tables, views and metadata.
     PUT: Create the database.
-    POST: Edit the database.
+    POST: Edit the database metadata.
     DELETE: Delete the database.
     """
     if utils.http_GET():
@@ -92,9 +92,9 @@ def database(dbname):
         dbshare.db.delete_database(dbname)
         return ('', http.client.NO_CONTENT)
 
-@blueprint.route('/<name:dbname>/readonly', methods=['PUT'])
+@blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 def readonly(dbname):
-    "PUT: Set the database to read-only."
+    "POST: Set the database to read-only."
     try:
         db = dbshare.db.get_check_write(dbname, check_mode=False)
         if not db['readonly']:
@@ -106,9 +106,9 @@ def readonly(dbname):
         flask.abort(http.client.NOT_FOUND)
     return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
-@blueprint.route('/<name:dbname>/readwrite', methods=['PUT'])
+@blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
 def readwrite(dbname):
-    "PUT: Set the database to read-write."
+    "POST: Set the database to read-write."
     try:
         db = dbshare.db.get_check_write(dbname, check_mode=False)
         if db['readonly']:

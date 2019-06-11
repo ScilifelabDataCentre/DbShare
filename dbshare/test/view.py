@@ -1,4 +1,4 @@
-"Test the DbShare API view endpoint."
+"Test the view API endpoint."
 
 import http.client
 
@@ -10,31 +10,27 @@ from dbshare.test.base import *
 
 
 class View(Base):
-    "Test the DbShare API view endpoint."
+    "Test the view API endpoint."
+
+    def setUp(self):
+        "Upload a file containing a plain Sqlite3 database."
+        super().setUp()
+        self.upload_file()
 
     def test_db_upload(self):
         "Create a database with view by file upload, check the view JSON."
 
-        # Upload a file containing a plain Sqlite3 database.
-        response = self.upload_file(view=True)
-        self.assertEqual(response.status_code, http.client.OK)
-
-        # Valid API db JSON.
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.db.schema)
         # Valid API view JSON.
-        view_url = f"{CONFIG['root_url']}/view/{CONFIG['dbname']}/v1"
-        response = self.session.get(view_url)
+        response = self.session.get(URL('view', CONFIG['dbname'], 'v1'))
         self.assertEqual(response.status_code, http.client.OK)
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.view.schema)
+        result = response.json()
+        json_validate(result, dbshare.schema.view.schema)
+        rows_url = result['rows']['href']
 
         # Valid API view rows JSON.
-        rows_url = f"{CONFIG['base_url']}/view/{CONFIG['dbname']}/v1.json"
         response = self.session.get(rows_url)
         self.assertEqual(response.status_code, http.client.OK)
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.rows.schema)
+        json_validate(response.json(), dbshare.schema.rows.schema)
 
 
 if __name__ == '__main__':

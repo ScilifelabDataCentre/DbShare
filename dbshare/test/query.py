@@ -10,27 +10,24 @@ from dbshare.test.base import *
 
 
 class Query(Base):
-    "Test the DbShare API table endpoint."
+    "Test the query API endpoint."
 
     def setUp(self):
+        "Upload a file containing a plain Sqlite3 database."
         super().setUp()
-        # Upload a file containing a plain Sqlite3 database.
         self.upload_file()
 
-    def tearDown(self):
-        self.session.delete(f"{CONFIG['root_url']}/db/{CONFIG['dbname']}")
-        super().tearDown()
+    def get_url(self):
+        return URL('query', CONFIG['dbname'])
 
     def test_table_query_one_column(self):
         "Get only one column from the test table."
         query = {'select': 't',
                  'from': 't1'}
-        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
-        response = self.session.get(url, json=query)
+        response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.query.schema)
+        json_validate(result, dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
 
@@ -38,12 +35,10 @@ class Query(Base):
         "Get all columns, there are 3 in the test table."
         query = {'select': '*',
                  'from': 't1'}
-        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
-        response = self.session.get(url, json=query)
+        response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.query.schema)
+        json_validate(result, dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 3)
 
@@ -51,8 +46,7 @@ class Query(Base):
         "A bad query should yield HTTP Bad Request."
         query = {'select': None,
                  'from': 't1'}
-        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
-        response = self.session.get(url, json=query)
+        response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
     def test_table_query_rename_column(self):
@@ -60,12 +54,10 @@ class Query(Base):
         name = 'weird-column:name'
         query = {'select': f't as "{name}"',
                  'from': 't1'}
-        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
-        response = self.session.get(url, json=query)
+        response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.query.schema)
+        json_validate(result, dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
         self.assertEqual(list(result['data'][0].keys()), [name])
@@ -75,12 +67,10 @@ class Query(Base):
         query = {'select': 't',
                  'from': 't1',
                  'limit': 2}
-        url = f"{CONFIG['root_url']}/query/{CONFIG['dbname']}"
-        response = self.session.get(url, json=query)
+        response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.query.schema)
+        json_validate(result, dbshare.schema.query.schema)
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(result['nrows'], 2)
         self.assertEqual(len(result['data'][0]), 1)

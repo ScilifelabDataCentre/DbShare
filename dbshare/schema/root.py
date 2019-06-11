@@ -1,4 +1,4 @@
-"Root API schema."
+"JSON schema for the root of the API."
 
 from . import definitions
 from dbshare import constants

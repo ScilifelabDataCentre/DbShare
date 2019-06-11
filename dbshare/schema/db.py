@@ -1,4 +1,4 @@
-"Db API schema."
+"JSON schema for a database specification."
 
 from . import definitions
 

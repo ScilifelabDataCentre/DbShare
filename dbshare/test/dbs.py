@@ -11,10 +11,10 @@ class Dbs(Base):
     "Test the dbs API endpoint."
 
     def test_schema(self):
-        "Valid dbs API JSON."
+        "Valid databases map JSON."
 
         # Get the URLs for the different lists of databases.
-        response = self.session.get(CONFIG['root_url'])
+        response = self.session.get(URL())
         self.assertEqual(response.status_code, http.client.OK)
         data = response.json()
         dbs_urls = {}
@@ -25,8 +25,7 @@ class Dbs(Base):
         for key in ['public', 'owner', 'all']:
             response = self.session.get(dbs_urls[key])
             self.assertEqual(response.status_code, http.client.OK)
-            jsonschema.validate(instance=response.json(),
-                                schema=dbshare.schema.dbs.schema)
+            json_validate(response.json(), dbshare.schema.dbs.schema)
 
 
 if __name__ == '__main__':

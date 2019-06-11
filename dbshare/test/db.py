@@ -18,11 +18,10 @@ class Db(Base):
         response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
-        # Valid API db JSON.
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.db.schema)
+        # Valid database JSON.
+        json_validate(response.json(), dbshare.schema.db.schema)
 
-        # Attempt at creating database again should fail.
+        # Attempt at creating the database again should fail.
         response = self.session.put(self.db_url)
         self.assertEqual(response.status_code, http.client.FORBIDDEN)
         result = response.json()
@@ -37,10 +36,7 @@ class Db(Base):
 
         # Upload a Sqlite3 database file.
         response = self.upload_file()
-
-        # Valid API db JSON.
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.db.schema)
+        json_validate(response.json(), dbshare.schema.db.schema)
 
     def test_edit(self):
         "Create an empty database, edit it, check its JSON."
@@ -49,17 +45,15 @@ class Db(Base):
         response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
-        # Valid API db JSON.
-        jsonschema.validate(instance=response.json(),
-                            schema=dbshare.schema.db.schema)
+        # Valid db JSON.
+        json_validate(response.json(), dbshare.schema.db.schema)
 
         # Edit the title.
         title = 'New title'
         response = self.session.post(self.db_url, json={'title': title})
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.db.schema)
+        json_validate(result, dbshare.schema.db.schema)
         self.assertEqual(result.get('title'), title)
 
         # Edit the description.
@@ -68,8 +62,7 @@ class Db(Base):
                                      json={'description': description})
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.db.schema)
+        json_validate(result, dbshare.schema.db.schema)
         self.assertEqual(result.get('description'), description)
         # Same title as before.
         self.assertEqual(result.get('title'), title)
@@ -79,8 +72,7 @@ class Db(Base):
         response = self.session.post(self.db_url, json={'name': name})
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.db.schema)
+        json_validate(result, dbshare.schema.db.schema)
         self.assertTrue(result['$id'].endswith(name))
 
         # So that the database is deleted at cleanup.
@@ -95,11 +87,10 @@ class Db(Base):
         self.assertEqual(response.status_code, http.client.OK)
 
         # Set to read-only.
-        response = self.session.put(f"{self.db_url}/readonly")
+        response = self.session.post(f"{self.db_url}/readonly")
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.db.schema)
+        json_validate(result, dbshare.schema.db.schema)
         self.assertTrue(result['readonly'])
         self.assertTrue(len(result['hashes']))
 
@@ -109,11 +100,10 @@ class Db(Base):
         self.assertEqual(response.status_code, http.client.UNAUTHORIZED)
 
         # Set to read-write.
-        response = self.session.put(f"{self.db_url}/readwrite")
+        response = self.session.post(f"{self.db_url}/readwrite")
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        jsonschema.validate(instance=result,
-                            schema=dbshare.schema.db.schema)
+        json_validate(result, dbshare.schema.db.schema)
         self.assertFalse(result['readonly'])
         self.assertFalse(len(result['hashes']))
 

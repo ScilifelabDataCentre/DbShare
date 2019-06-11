@@ -1,7 +1,6 @@
-"Dbs API schema."
+"JSON schema for the map of databases."
 
 from . import definitions
-from . import database
 
 schema = {
     '$id': 'https://dbshare.scilifelab.se/api/schema/dbs',
@@ -16,7 +15,31 @@ schema = {
         'total_size': {'type': 'integer', 'minimum': 0},
         'databases': {
             'type': 'array',
-            'items': database.schema # Part only; completed below.
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'title': {'type': ['string', 'null']},
+                    'owner': {'$ref': '#/definitions/user'},
+                    'public': {'type': 'boolean'},
+                    'readonly': {'type': 'boolean'},
+                    'size': {'type': 'integer'},
+                    'modified': {'type': 'string', 'format': 'timestamp'},
+                    'created': {'type': 'string', 'format': 'timestamp'},
+                    'href': {'type': 'string', 'format': 'uri'}
+                },
+                'required': [
+                    'name',
+                    'title',
+                    'owner',
+                    'public',
+                    'readonly',
+                    'size',
+                    'modified',
+                    'created',
+                    'href'
+                ]
+            }
         },
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
@@ -26,7 +49,3 @@ schema = {
         'timestamp'
     ]
 }
-
-items = schema['properties']['databases']['items']
-items['properties']['href'] = {'type': 'string', 'format': 'uri'}
-items['required'].append('href')

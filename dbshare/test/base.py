@@ -43,6 +43,16 @@ def process_args(filepath=None):
     CONFIG['root_url'] = CONFIG['base_url'] + '/api'
     return args
 
+def URL(*segments):
+    "Return the URL composed of the root URL and the given path segments."
+    return '/'.join([CONFIG['root_url']] + list(segments))
+
+def json_validate(instance, schema):
+    "Validate the JSON instance versus the given JSON schema."
+    jsonschema.validate(instance=instance,
+                        schema=schema,
+                        format_checker=jsonschema.draft7_format_checker)
+
 def run():
     unittest.main(argv=process_args())
 
@@ -60,15 +70,15 @@ class Base(unittest.TestCase):
 
     def create_database(self):
         "Create an empty database."
-        self.db_url = f"{CONFIG['root_url']}/db/{CONFIG['dbname']}"
+        self.db_url = URL('db', CONFIG['dbname'])
         response = self.session.put(self.db_url)
         self.addCleanup(self.delete_db)
         return response
 
-    def upload_file(self, view=False):
+    def upload_file(self):
         "Create a local Sqlite3 file and upload it."
         # Define the URL for the database.
-        self.db_url = f"{CONFIG['root_url']}/db/{CONFIG['dbname']}"
+        self.db_url = URL('db', CONFIG['dbname'])
         # Create the database in a local file.
         cnx = sqlite3.connect(CONFIG['filename'])
         self.addCleanup(self.delete_file)
@@ -77,6 +87,9 @@ class Base(unittest.TestCase):
                     "i INTEGER PRIMARY KEY,"
                     "r REAL,"
                     "t TEXT NOT NULL)")
+        cnx.execute(f"CREATE VIEW v1"
+                    f" AS SELECT r, t FROM t1"
+                    " WHERE i>=2")
         with cnx:
             cnx.execute("INSERT INTO t1 (i,r,t)"
                         " VALUES (?,?,?)", (1, 2.1, 'a'))
@@ -84,10 +97,6 @@ class Base(unittest.TestCase):
                         " VALUES (?,?,?)", (2, 0.5, 'b'))
             cnx.execute("INSERT INTO t1 (i,r,t)"
                         " VALUES (?,?,?)", (3, -1.5, 'c'))
-        if view:
-            cnx.execute(f"CREATE VIEW v1"
-                        f" AS SELECT r, t FROM t1"
-                        " WHERE i>=2")
         cnx.close()
         # Upload the database file.
         with open(CONFIG['filename'], 'rb') as infile:
