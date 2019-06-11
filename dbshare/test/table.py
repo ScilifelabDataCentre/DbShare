@@ -220,5 +220,58 @@ class Table(Base):
         response = self.session.post(url + '/insert', data=data,headers=headers)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
+    def test_update(self):
+        "Create database and table; insert and update using CSV."
+
+        # Create an empty database.
+        response = self.create_database()
+        self.assertEqual(response.status_code, http.client.OK)
+
+        # Create a table in the database.
+        url = f"{CONFIG['root_url']}/table/{CONFIG['dbname']}/{self.table_spec['name']}"
+        response = self.session.put(url, json=self.table_spec)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 0)
+
+        headers = {'Content-Type': 'text/csv'}
+
+        # Insert CSV data.
+        data = self.get_csvfile_data([(1, 'test', 0.2),
+                                      (2, 'another test', 4.123e5),
+                                      (3, 'third', -13)])
+        response = self.session.post(url + '/insert', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 3)
+
+        # Update CSV data; check that it actually changed anything.
+        data = self.get_csvfile_data([(1, 'changed', -1.0)])
+        response = self.session.post(url + '/update', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 3)
+
+        response = self.session.get(result['rows']['href'])
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        rows = result['data']
+        self.assertEqual(rows[0]['i'], 1)
+        self.assertEqual(rows[0]['t'], 'changed')
+        self.assertEqual(rows[2]['i'], 3)
+        self.assertEqual(rows[2]['t'], 'third')
+
+        # Update non-existent row; should not change anything.
+        data = self.get_csvfile_data([(4, 'this row does not exist', 1.0)])
+        response = self.session.post(url + '/update', data=data,headers=headers)
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(result['nrows'], 3)
+        response = self.session.get(result['rows']['href'])
+        self.assertEqual(response.status_code, http.client.OK)
+        result = response.json()
+        self.assertEqual(rows, result['data'])
+
+
 if __name__ == '__main__':
     run()
