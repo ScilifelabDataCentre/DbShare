@@ -177,9 +177,9 @@ def accept_json():
 
 def get_api(**items):
     "Return the JSON structure with standard additional items."
-    result = {'$id': flask.request.url}
+    result = {'$id': flask.request.url,
+              'timestamp': get_time()}
     result.update(items)
-    result['timestamp'] = get_time()
     return result
 
 def http_GET():

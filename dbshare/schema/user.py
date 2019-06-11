@@ -1,10 +1,12 @@
-"User API schema."
+"JSON schema for the User API."
 
 from . import definitions
+from .. import constants
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/user',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
+    '$id': constants.SCHEMA_BASE_URL + 'user',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': __doc__,
     'definitions': definitions.schema,
     'type': 'object',

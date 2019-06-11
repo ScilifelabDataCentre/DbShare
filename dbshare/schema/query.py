@@ -1,8 +1,11 @@
-"Query result API schema."
+"JSON schema query result API."
+
+from .. import constants
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/table',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
+    '$id': constants.SCHEMA_BASE_URL + 'query',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': __doc__,
     'type': 'object',
     'properties': {

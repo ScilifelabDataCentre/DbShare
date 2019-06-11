@@ -1,4 +1,4 @@
-"Definitions API schema component."
+"JSON schema definitions component."
 
 schema = {
     'link': {

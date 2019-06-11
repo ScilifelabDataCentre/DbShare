@@ -1,4 +1,4 @@
-"Visualization API schema component."
+"JSON schema component for the visualization specification."
 
 schema = {
     'type': 'object',

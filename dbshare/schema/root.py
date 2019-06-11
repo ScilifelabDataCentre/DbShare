@@ -1,12 +1,13 @@
 "JSON schema for the root of the API."
 
 from . import definitions
-from dbshare import constants
+from .. import constants
 
 
 schema = {
     '$id': constants.SCHEMA_BASE_URL + 'root',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'timestamp': {'type': 'string', 'format': 'datetime'},
     'title': __doc__,
     'definitions': definitions.schema,
     'type': 'object',
@@ -30,16 +31,15 @@ schema = {
                       'required': ['public']
         },
         'user': {'$ref': '#/definitions/user'},
-        'schema': {'$ref': '#/definitions/link'},
-        'timestamp': {'type': 'string', 'format': 'datetime'}
+        'schema': {'$ref': '#/definitions/link'}
     },
     'required': [
         '$id',
+        'timestamp',
         'title',
         'version',
         'databases',
         'templates',
-        'schema',
-        'timestamp'
+        'schema'
     ]
 }

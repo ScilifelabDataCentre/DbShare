@@ -1,4 +1,4 @@
-"JSON schema component for a database specification."
+"JSON schema component for the database specification."
 
 schema = {
     'type': 'object',

@@ -52,3 +52,4 @@ TAR_MIMETYPE     = 'application/x-tar'
 
 # JSON schema
 SCHEMA_BASE_URL = 'https://dbshare.scilifelab.se/api/schema/'
+SCHEMA_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'

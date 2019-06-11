@@ -1,10 +1,11 @@
-"JSON schema for a database specification."
+"JSON schema for the database API."
 
 from . import definitions
+from dbshare import constants
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/db',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
+    '$id': constants.SCHEMA_BASE_URL + 'db',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': __doc__,
     'definitions': definitions.schema,
     'type': 'object',

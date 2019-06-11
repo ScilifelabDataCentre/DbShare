@@ -1,4 +1,4 @@
-"Column API schema component."
+"JSON schema component for the column specification."
 
 schema = {
     'type': 'object',
