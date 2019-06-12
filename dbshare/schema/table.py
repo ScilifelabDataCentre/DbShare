@@ -5,10 +5,11 @@ from . import visualization
 from . import column
 from .. import constants
 
-schema = {
+
+output = {
     '$id': constants.SCHEMA_BASE_URL + 'table',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'JSON schema for the table API output.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {
@@ -25,7 +26,7 @@ schema = {
             'items': visualization.schema},
         'columns': {
             'type': 'array',
-            'items': column.schema},
+            'items': column.spec},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': [
@@ -41,11 +42,10 @@ schema = {
     ]
 }
 
-# Table specification for creation.
-schema_spec = {
+create = {
     '$id': 'https://dbshare.scilifelab.se/api/schema/table_create',
     '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': 'Table creation API schema.',
+    'title': 'JSON schema for table creation API.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},
@@ -53,7 +53,7 @@ schema_spec = {
         'description': {'type': ['string', 'null']},
         'columns': {
             'type': 'array',
-            'items': column.schema}
+            'items': column.spec}
     },
     'required': [
         'name', 
@@ -61,11 +61,10 @@ schema_spec = {
     ]
 }
 
-# Specification of rows data for the table.
-schema_data = {
+input = {
     '$id': 'https://dbshare.scilifelab.se/api/schema/table_data',
     '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': 'Table data API schema.',
+    'title': 'JSON schema for the table API output.',
     'type': 'object',
     'properties': {
         'data': {

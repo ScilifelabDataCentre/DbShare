@@ -15,6 +15,7 @@ import uuid
 import flask
 import flask_mail
 import jinja2.utils
+import jsonschema
 import werkzeug.routing
 
 from dbshare.lexer import Lexer
@@ -235,6 +236,12 @@ def flash_message(msg):
 def flash_message_limit(limit):
     "Flash message about limit on number of rows."
     flash_message(f"NOTE: The number of rows displayed is limited to {limit:,}.")
+
+def json_validate(instance, schema):
+    "Validate the JSON instance versus the given JSON schema."
+    jsonschema.validate(instance=instance,
+                        schema=schema,
+                        format_checker=jsonschema.draft7_format_checker)
 
 def abort_json(status_code, error):
     "Raise abort with given status code and error message."

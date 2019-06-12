@@ -19,6 +19,7 @@ import dpath
 import flask
 
 import dbshare.system
+import dbshare.schema.table
 import dbshare.table
 import dbshare.query
 import dbshare.user
@@ -743,8 +744,11 @@ class DbContext:
         """Create the table in the database and add to the database definition.
         If 'query' is given, do 'CREATE TABLE AS', and fix up the schema.
         If 'create' is True, then actually create the table.
+        Raises jsonschema.ValidationError if the schema is invalid.
+        Raises ValueError if there is a problem with the input schema data.
         Raises SystemError if the query is interrupted by time-out.
         """
+        utils.json_validate(schema, dbshare.schema.table.create)
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
         schema['name'] = schema['name'].lower()

@@ -1,12 +1,25 @@
 "JSON schema for the database API."
 
 from . import definitions
-from dbshare import constants
+from .. import constants
 
-schema = {
+input = {
     '$id': constants.SCHEMA_BASE_URL + 'db',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'JSON schema for the database API input.',
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
+        'public': {'type': 'boolean'}
+    }
+}
+
+output = {
+    '$id': constants.SCHEMA_BASE_URL + 'db',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'JSON schema for the database API output.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {

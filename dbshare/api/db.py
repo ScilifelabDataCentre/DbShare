@@ -4,6 +4,7 @@ import http.client
 import io
 
 import flask
+import jsonschema
 
 import dbshare.db
 
@@ -59,7 +60,7 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         try:
             data = flask.request.get_json()
-            if data is None: raise ValueError
+            utils.json_validate(data, dbshare.schema.db.input)
             with dbshare.db.DbContext(db) as ctx:
                 try:
                     ctx.set_name(data['name'])
@@ -77,7 +78,7 @@ def database(dbname):
                     ctx.set_public(data['public'])
                 except KeyError:
                     pass
-        except ValueError as error:
+        except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for('api_db.database', dbname=db['name']))
@@ -121,7 +122,7 @@ def readwrite(dbname):
     return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
 def get_api(db, complete=False):
-    "Return the API for the database."
+    "Return the JSON for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
               'description': db.get('description'),

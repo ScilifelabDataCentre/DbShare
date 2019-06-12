@@ -48,11 +48,9 @@ def table(dbname, tablename):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            data = flask.request.get_json()
-            if data is None: raise ValueError
             with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table(data)
-        except ValueError as error:
+                ctx.add_table(flask.request.get_json())
+        except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
@@ -88,13 +86,13 @@ def insert(dbname, tablename):
     try:
         # JSON input data
         if flask.request.is_json:
-            data = flask.request.get_json()
             try:
-                jsonschema.validate(instance=data,
-                                    schema=dbshare.schema.table.schema_data)
+                data = flask.request.get_json()
+                utils.json_validate(data, dbshare.schema.table.input)
             except jsonschema.ValidationError as error:
                 utils.abort_json(http.client.BAD_REQUEST, error)
             columns = schema['columns']
+            # Check validity of values in input data.
             rows = []
             for pos, item in enumerate(data['data']):
                 values = []

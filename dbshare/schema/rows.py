@@ -7,7 +7,7 @@ from .. import constants
 schema = {
     '$id': constants.SCHEMA_BASE_URL + 'rows',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'JSON schema for the rows (table or view) API.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {

@@ -3,7 +3,8 @@
 from . import definitions
 from .. import constants
 
-schema = {
+
+output = {
     '$id': constants.SCHEMA_BASE_URL + 'dbs',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': __doc__,

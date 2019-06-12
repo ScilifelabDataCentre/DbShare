@@ -24,8 +24,9 @@ def schema():
         'title': schema.__doc__,
         'schemas': {}
     }
-    for key in ['root', 'dbs', 'db', 'table', 'table_spec', 'table_data',
-                'view', 'rows', 'query', 'user', 'visualization']:
+    for key in ['root', 'dbs', 'db', 'table', 'table_create', 'table_data',
+                'view', 'rows', 'query_input', 'query_output',
+                'user', 'visualization']:
         data['schemas'][key] = {'href': constants.SCHEMA_BASE_URL + key}
     return flask.jsonify(data)
 
@@ -45,13 +46,13 @@ def db():
 def table():
     return flask.jsonify(dbshare.schema.table.schema)
 
-@blueprint.route('/table_spec')
-def table_spec():
-    return flask.jsonify(dbshare.schema.table.schema_spec)
+@blueprint.route('/table_create')
+def table_create():
+    return flask.jsonify(dbshare.schema.table.create)
 
 @blueprint.route('/table_data')
 def table_data():
-    return flask.jsonify(dbshare.schema.table.schema_data)
+    return flask.jsonify(dbshare.schema.table.data)
 
 @blueprint.route('/view')
 def view():
@@ -61,9 +62,13 @@ def view():
 def rows():
     return flask.jsonify(dbshare.schema.rows.schema)
 
-@blueprint.route('/query')
-def query():
-    return flask.jsonify(dbshare.schema.query.schema)
+@blueprint.route('/query_input')
+def query_input():
+    return flask.jsonify(dbshare.schema.query.input)
+
+@blueprint.route('/query_output')
+def query_output():
+    return flask.jsonify(dbshare.schema.query.output)
 
 @blueprint.route('/user')
 def user():
