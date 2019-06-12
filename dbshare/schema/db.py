@@ -3,6 +3,7 @@
 from . import definitions
 from .. import constants
 
+# XXX edit?
 input = {
     '$id': constants.SCHEMA_BASE_URL + 'db',
     '$schema': constants.SCHEMA_SCHEMA_URL,
@@ -16,6 +17,7 @@ input = {
     }
 }
 
+# XXX schema?
 output = {
     '$id': constants.SCHEMA_BASE_URL + 'db',
     '$schema': constants.SCHEMA_SCHEMA_URL,

@@ -36,11 +36,11 @@ def root():
 
 @blueprint.route('/dbs')
 def dbs():
-    return flask.jsonify(dbshare.schema.dbs.schema)
+    return flask.jsonify(dbshare.schema.dbs.output)
 
 @blueprint.route('/db')
 def db():
-    return flask.jsonify(dbshare.schema.db.schema)
+    return flask.jsonify(dbshare.schema.db.output)
 
 @blueprint.route('/table')
 def table():
