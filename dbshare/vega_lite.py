@@ -9,8 +9,9 @@ import jsonschema
 
 import dbshare.db
 import dbshare.user
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 INITIAL = {'$schema': None,     # To be set on template creation.
@@ -72,9 +73,8 @@ def create(dbname, sourcename):
             else:
                 raise ValueError('visualization name already in use')
             spec = json.loads(strspec)
-            jsonschema.validate(
-                instance=spec,
-                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+            utils.json_validate(spec,
+                                flask.current_app.config['VEGA_LITE_SCHEMA'])
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], spec)
         except (ValueError, TypeError,

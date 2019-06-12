@@ -7,8 +7,9 @@ import flask
 import dbshare.db
 import dbshare.table
 import dbshare.schema.query
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('query', __name__)

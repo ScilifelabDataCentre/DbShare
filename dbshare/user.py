@@ -12,8 +12,8 @@ import werkzeug.security
 
 import dbshare.system
 
-from dbshare import constants
-from dbshare import utils
+from . import constants
+from . import utils
 
 
 def login_required(f):

@@ -5,9 +5,11 @@ import sqlite3
 import flask
 
 import dbshare
-from dbshare import constants
-from dbshare import utils
 import dbshare.db
+
+from . import constants
+from . import utils
+
 
 SYSTEM_TABLES = [
     dict(name='meta',

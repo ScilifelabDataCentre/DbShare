@@ -14,8 +14,9 @@ import dbshare.templates
 import dbshare.user
 import dbshare.vega
 import dbshare.vega_lite
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('template', __name__)
@@ -330,16 +331,15 @@ def render(templatename, dbname, sourcename):
             strspec = jinja2.Template(template['code']).render(**context)
             spec = json.loads(strspec)
             if template['type'] == constants.VEGA:
-                jsonschema.validate(
-                    instance=spec,
-                    schema=flask.current_app.config['VEGA_SCHEMA'])
+                utils.json_validate(
+                    spec, flask.current_app.config['VEGA_SCHEMA'])
             elif template['type'] == constants.VEGA_LITE:
-                jsonschema.validate(
-                    instance=spec,
-                    schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+                utils.json_validate(
+                    spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_visual(visualname, schema['name'], spec)
-        except (ValueError, TypeError, jinja2.TemplateError) as error:
+        except (ValueError, TypeError,
+                jinja2.TemplateError, jsonschema.ValidationError) as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.render',
                                                 templatename=templatename,

@@ -10,8 +10,9 @@ import jsonschema
 import dbshare.db
 import dbshare.table
 import dbshare.schema.table
-from dbshare import constants
-from dbshare import utils
+
+from .. import constants
+from .. import utils
 
 
 blueprint = flask.Blueprint('api_table', __name__)
@@ -34,11 +35,11 @@ def table(dbname, tablename):
             schema = db['tables'][tablename]
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        result = get_api(db, schema, complete=True)
+        result = get_json(db, schema, complete=True)
         result.update(schema)
         result['indexes'] = [i for i in db['indexes'].values() 
                              if i['table'] == tablename]
-        return flask.jsonify(utils.get_api(**result))
+        return flask.jsonify(utils.get_json(**result))
 
     elif utils.http_PUT():
         try:
@@ -185,8 +186,8 @@ def empty(dbname, tablename):
     return flask.redirect(
         flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
 
-def get_api(db, table, complete=False):
-    "Return the API JSON for the table."
+def get_json(db, table, complete=False):
+    "Return JSON for the table."
     url = utils.url_for('table.rows',
                         dbname=db['name'],
                         tablename=table['name'])

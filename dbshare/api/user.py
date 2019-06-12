@@ -6,7 +6,7 @@ import flask
 
 import dbshare.user
 
-from dbshare import utils
+from .. import utils
 
 
 blueprint = flask.Blueprint('api_user', __name__)
@@ -27,9 +27,9 @@ def user(username):
                                                username=user['username'])}
     user['templates'] = {'href': utils.url_for('api_templates.owner',
                                                username=user['username'])}
-    return flask.jsonify(utils.get_api(**user))
+    return flask.jsonify(utils.get_json(**user))
 
-def get_api(username):
-    "Get the API JSON for a user or owner."
+def get_json(username):
+    "Get the JSON for a user or owner."
     return {'username': username,
             'href': utils.url_for('api_user.user', username=username)}

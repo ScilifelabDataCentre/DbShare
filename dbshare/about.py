@@ -8,6 +8,7 @@ import flask_mail
 import jinja2
 import jsonschema
 
+
 blueprint = flask.Blueprint('about', __name__)
 
 @blueprint.route('/endpoints')

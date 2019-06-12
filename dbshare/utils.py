@@ -18,8 +18,8 @@ import jinja2.utils
 import jsonschema
 import werkzeug.routing
 
-from dbshare.lexer import Lexer
-from dbshare import constants
+from .lexer import Lexer
+from . import constants
 
 
 # Global instance of mail interface.
@@ -176,8 +176,8 @@ def accept_json():
     return best == constants.JSON_MIMETYPE and \
         acc[best] > acc[constants.HTML_MIMETYPE]
 
-def get_api(**items):
-    "Return the JSON structure with standard additional items."
+def get_json(**items):
+    "Return the JSON structure adding standard entries."
     result = {'$id': flask.request.url,
               'timestamp': get_time()}
     result.update(items)

@@ -6,6 +6,7 @@ import sqlite3
 
 import dbshare
 
+
 ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Default configurable values; modified by reading JSON file in 'init'.

@@ -206,9 +206,10 @@ def api():
             'href': utils.url_for('api_templates.all')
         }
     if flask.g.current_user:
-        data['user'] = dbshare.api.user.get_api(flask.g.current_user['username'])
+        data['user'] = dbshare.api.user.get_json(
+            flask.g.current_user['username'])
     data['schema'] = {'href': constants.SCHEMA_BASE_URL.rstrip('/')}
-    return flask.jsonify(utils.get_api(**data))
+    return flask.jsonify(utils.get_json(**data))
 
 
 # This code is used only during testing.

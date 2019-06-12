@@ -7,7 +7,7 @@ import flask
 import dbshare.db
 import dbshare.user
 
-from dbshare import utils
+from . import utils
 
 
 blueprint = flask.Blueprint('dbs', __name__)

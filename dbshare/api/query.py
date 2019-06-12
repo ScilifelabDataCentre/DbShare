@@ -8,7 +8,8 @@ import jsonschema
 
 import dbshare.db
 import dbshare.query
-from dbshare import utils
+
+from .. import utils
 
 
 blueprint = flask.Blueprint('api_query', __name__)
@@ -35,7 +36,7 @@ def query(dbname):
     columns = [d[0] for d in cursor.description]
     query['columns'] = columns
     rows = cursor.fetchall()
-    return flask.jsonify(utils.get_api(
+    return flask.jsonify(utils.get_json(
         query=query,
         sql=sql,
         nrows=len(rows),

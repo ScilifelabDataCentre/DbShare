@@ -12,7 +12,7 @@ import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.view
 
-from dbshare import utils
+from .. import utils
 
 blueprint = flask.Blueprint('api_db', __name__)
 
@@ -30,7 +30,7 @@ def database(dbname):
             flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        return flask.jsonify(utils.get_api(**get_api(db, complete=True)))
+        return flask.jsonify(utils.get_json(**get_json(db, complete=True)))
  
     elif utils.http_PUT():
         db = dbshare.db.get_db(dbname)
@@ -121,12 +121,12 @@ def readwrite(dbname):
         flask.abort(http.client.NOT_FOUND)
     return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
 
-def get_api(db, complete=False):
+def get_json(db, complete=False):
     "Return the JSON for the database."
     result = {'name': db['name'],
               'title': db.get('title'),
               'description': db.get('description'),
-              'owner': dbshare.api.user.get_api(db['owner']),
+              'owner': dbshare.api.user.get_json(db['owner']),
               'public': db['public'],
               'readonly': db['readonly'],
               'size': db['size'],
@@ -135,8 +135,8 @@ def get_api(db, complete=False):
               'hashes': db['hashes']
     }
     if complete:
-        result['tables'] = [dbshare.api.table.get_api(db, table)
+        result['tables'] = [dbshare.api.table.get_json(db, table)
                             for table in db['tables'].values()]
-        result['views'] = [dbshare.api.view.get_api(db, view)
+        result['views'] = [dbshare.api.view.get_json(db, view)
                            for view in db['views'].values()]
     return result

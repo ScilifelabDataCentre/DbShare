@@ -5,8 +5,9 @@ import http.client
 import flask
 
 import dbshare.db
-from dbshare import constants
-from dbshare import utils
+
+from .. import constants
+from .. import utils
 
 
 blueprint = flask.Blueprint('api_view', __name__)
@@ -24,12 +25,12 @@ def view(dbname, viewname):
         schema = db['views'][viewname]
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    result = get_api(db, schema, complete=True)
+    result = get_json(db, schema, complete=True)
     result.update(schema)
-    return flask.jsonify(utils.get_api(**result))
+    return flask.jsonify(utils.get_json(**result))
 
-def get_api(db, view, complete=False):
-    "Return the API JSON for the view."
+def get_json(db, view, complete=False):
+    "Return the JSON for the view."
     url = utils.url_for('view.rows',
                         dbname=db['name'],
                         viewname=view['name'])

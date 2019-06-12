@@ -6,8 +6,9 @@ import flask
 
 import dbshare.db
 import dbshare.table
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('index', __name__)

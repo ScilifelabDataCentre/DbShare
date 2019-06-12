@@ -9,8 +9,9 @@ import sqlite3
 
 import dbshare.db
 import dbshare.user
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('visual', __name__)
@@ -32,7 +33,7 @@ def display(dbname, visualname): # NOTE: visualname is a NameExt instance!
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if visualname.ext == 'json' or utils.accept_json():
-        return flask.jsonify(utils.get_api(**visual['spec']))
+        return flask.jsonify(utils.get_json(**visual['spec']))
 
     elif visualname.ext in (None, 'html'):
         return flask.render_template(
@@ -88,9 +89,8 @@ def edit(dbname, visualname):
             if not strspec:
                 raise ValueError('no spec given')
             spec = json.loads(strspec)
-            jsonschema.validate(
-                instance=spec,
-                schema=flask.current_app.config['VEGA_LITE_SCHEMA'])
+            utils.json_validate(spec,
+                                flask.current_app.config['VEGA_LITE_SCHEMA'])
             with dbshare.db.DbContext(db) as ctx:
                 ctx.update_visual(visualname, spec, newname)
         except (ValueError, TypeError,

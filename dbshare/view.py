@@ -9,8 +9,9 @@ import flask
 import dbshare.db
 import dbshare.table
 import dbshare.user
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('view', __name__)
@@ -136,7 +137,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            return flask.jsonify(utils.get_api(
+            return flask.jsonify(utils.get_json(
                 name=str(viewname),
                 title=title,
                 source={'type': 'view',

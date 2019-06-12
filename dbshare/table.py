@@ -9,8 +9,9 @@ import flask
 
 import dbshare.db
 import dbshare.user
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('table', __name__)
@@ -93,7 +94,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            return flask.jsonify(utils.get_api(
+            return flask.jsonify(utils.get_json(
                 name=str(tablename),
                 title=title,
                 source={'type': 'table',

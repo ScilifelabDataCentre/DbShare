@@ -7,7 +7,7 @@ import flask
 import dbshare.template
 import dbshare.api.user
 
-from dbshare import utils
+from .. import utils
 
 
 blueprint = flask.Blueprint('api_template', __name__)
@@ -21,16 +21,16 @@ def template(templatename):
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    return flask.jsonify(utils.get_api(**get_api(template)))
+    return flask.jsonify(utils.get_json(**get_json(template)))
 
-def get_api(template, complete=False):
-    "Return the JSON for the template."
+def get_json(template, complete=False):
+    "Return JSON for the template."
     if complete:
         result = template.copy()
-        result['owner'] = dbshare.api_user.get_api(template['owner'])
+        result['owner'] = dbshare.api_user.get_json(template['owner'])
     else:
         result = {'name': template['name'],
-                  'owner': dbshare.api_user.get_api(template['owner']),
+                  'owner': dbshare.api_user.get_json(template['owner']),
                   'public': template['public'],
                   'modified': template['modified'],
                   'created': template['created']}
