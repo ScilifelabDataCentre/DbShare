@@ -60,7 +60,7 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         try:
             data = flask.request.get_json()
-            utils.json_validate(data, dbshare.schema.db.input)
+            utils.json_validate(data, dbshare.schema.db.edit)
             with dbshare.db.DbContext(db) as ctx:
                 try:
                     ctx.set_name(data['name'])

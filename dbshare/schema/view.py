@@ -1,4 +1,4 @@
-"JSON schema for the view API."
+"View API JSON schema."
 
 from . import definitions
 from . import visualization
@@ -7,7 +7,7 @@ from .. import constants
 schema = {
     '$id': constants.SCHEMA_BASE_URL + 'view',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'View API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {
@@ -25,7 +25,7 @@ schema = {
         'data': {'$ref': '#/definitions/link'},
         'visualizations': {
             'type': 'array',
-            'items': visualization.schema},
+            'items': visualization.spec},
         'query': {
             'type': 'object'
         },

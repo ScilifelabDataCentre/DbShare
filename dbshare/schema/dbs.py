@@ -1,13 +1,13 @@
-"JSON schema for the databases map API."
+"Databases map API JSON schema."
 
 from . import definitions
 from .. import constants
 
 
-output = {
+schema = {
     '$id': constants.SCHEMA_BASE_URL + 'dbs',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'Databases map API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {

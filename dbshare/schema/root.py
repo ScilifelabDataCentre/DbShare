@@ -1,4 +1,4 @@
-"JSON schema for the API root."
+"API root JSON schema."
 
 from . import definitions
 from .. import constants
@@ -8,7 +8,7 @@ schema = {
     '$id': constants.SCHEMA_BASE_URL + 'root',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'timestamp': {'type': 'string', 'format': 'datetime'},
-    'title': 'JSON schema for the API root.',
+    'title': 'API root JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {

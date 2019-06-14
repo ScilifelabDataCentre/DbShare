@@ -1,27 +1,13 @@
-"JSON schema for the database API."
+"Database API JSON schema."
 
 from . import definitions
 from .. import constants
 
-# XXX edit?
-input = {
-    '$id': constants.SCHEMA_BASE_URL + 'db',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'JSON schema for the database API input.',
-    'type': 'object',
-    'properties': {
-        'name': {'type': 'string'},
-        'title': {'type': ['string', 'null']},
-        'description': {'type': ['string', 'null']},
-        'public': {'type': 'boolean'}
-    }
-}
 
-# XXX schema?
-output = {
+schema = {
     '$id': constants.SCHEMA_BASE_URL + 'db',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'JSON schema for the database API output.',
+    'title': 'Database API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {
@@ -108,4 +94,17 @@ output = {
         'tables',
         'timestamp'
     ]
+}
+
+edit = {
+    '$id': constants.SCHEMA_BASE_URL + 'db/edit',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'Database edit API JSON schema.',
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
+        'public': {'type': 'boolean'}
+    }
 }

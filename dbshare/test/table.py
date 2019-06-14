@@ -47,13 +47,13 @@ class Table(Base):
         # Upload a file containing a plain Sqlite3 database.
         response = self.upload_file()
         self.assertEqual(response.status_code, http.client.OK)
-        json_validate(response.json(), dbshare.schema.db.output)
+        json_validate(response.json(), dbshare.schema.db.schema)
 
         # The table API JSON is valid.
         response = self.session.get(self.get_url())
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.table.output)
+        json_validate(result, dbshare.schema.table.schema)
         rows_url = result['rows']['href']
 
         # The table rows JSON is valid.
@@ -80,7 +80,7 @@ class Table(Base):
 
         # Check the created table.
         result = response.json()
-        json_validate(result, dbshare.schema.table.output)
+        json_validate(result, dbshare.schema.table.schema)
         self.assertEqual(len(result['columns']),
                          len(self.table_spec['columns']))
         self.assertEqual(result['title'], self.table_spec['title'])

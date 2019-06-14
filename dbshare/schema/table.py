@@ -1,15 +1,30 @@
-"JSON schema for the table API."
+"Table API JSON schema."
 
 from . import definitions
 from . import visualization
-from . import column
 from .. import constants
 
 
-output = {
+columns = {
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'primarykey': {'type': 'boolean'},
+        'notnull': {'type': 'boolean'},
+        'unique': {'type': 'boolean'},
+        'type': {'type': 'string',
+                 'enum': ['INTEGER', 'REAL', 'TEXT', 'BLOB']},
+    },
+    'required': [
+        'name',
+        'type'
+    ]
+}
+
+schema = {
     '$id': constants.SCHEMA_BASE_URL + 'table',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'JSON schema for the table API output.',
+    'title': 'Table API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {
@@ -23,10 +38,10 @@ output = {
         'data': {'$ref': '#/definitions/link'},
         'visualizations': {
             'type': 'array',
-            'items': visualization.schema},
+            'items': visualization.spec},
         'columns': {
             'type': 'array',
-            'items': column.spec},
+            'items': columns},
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': [
@@ -43,9 +58,9 @@ output = {
 }
 
 create = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/table_create',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': 'JSON schema for table creation API.',
+    '$id': constants.SCHEMA_BASE_URL + 'table/create',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'Table create API JSON schema.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},
@@ -53,7 +68,7 @@ create = {
         'description': {'type': ['string', 'null']},
         'columns': {
             'type': 'array',
-            'items': column.spec}
+            'items': columns}
     },
     'required': [
         'name', 
@@ -62,9 +77,9 @@ create = {
 }
 
 input = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/table_data',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': 'JSON schema for the table API output.',
+    '$id': constants.SCHEMA_BASE_URL + 'table/input',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'Table data input JSON schema.',
     'type': 'object',
     'properties': {
         'data': {

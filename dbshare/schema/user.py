@@ -1,4 +1,4 @@
-"JSON schema for the User API."
+"User API JSON schema."
 
 from . import definitions
 from .. import constants
@@ -7,7 +7,7 @@ from .. import constants
 schema = {
     '$id': constants.SCHEMA_BASE_URL + 'user',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': __doc__,
+    'title': 'User API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {

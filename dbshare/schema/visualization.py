@@ -1,6 +1,6 @@
-"JSON schema component for the visualization specification."
+"Visualization specification JSON schema component."
 
-schema = {
+spec = {
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},

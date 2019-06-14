@@ -8,6 +8,7 @@ import flask_mail
 import jinja2
 import jsonschema
 
+import dbshare.api.schema
 
 blueprint = flask.Blueprint('about', __name__)
 
@@ -28,8 +29,9 @@ def endpoints():
 
 @blueprint.route('/schema')
 def schema():
-    "Page with links to JSON schema."
-    return flask.render_template('about/schema.html')
+    "Page with links to all JSON schema for the API."
+    return flask.render_template('about/schema.html',
+                                 schemas=dbshare.api.schema.schemas)
 
 @blueprint.route('/software')
 def software():

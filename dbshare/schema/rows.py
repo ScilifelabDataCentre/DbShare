@@ -1,4 +1,4 @@
-"JSON schema for the rows (table or view) API."
+"Rows data (table or view) API JSON schema."
 
 from . import definitions
 from .. import constants
@@ -7,7 +7,7 @@ from .. import constants
 schema = {
     '$id': constants.SCHEMA_BASE_URL + 'rows',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'JSON schema for the rows (table or view) API.',
+    'title': 'Rows data (table or view) API JSON schema.',
     'definitions': definitions.schema,
     'type': 'object',
     'properties': {
