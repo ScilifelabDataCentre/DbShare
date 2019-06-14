@@ -39,11 +39,20 @@ def owner(username):
     if not dbshare.dbs.has_access(username):
         return flask.abort(http.client.UNAUTHORIZED)
     dbs = dbshare.dbs.get_dbs(owner=username)
-    return flask.jsonify(
-        utils.get_json(title=f"Databases owned by {username}",
-                       user=dbshare.api.user.get_json(username),
-                       total_size=sum([db['size'] for db in dbs]),
-                       databases=get_json(dbs)))
+    result = {
+        'title': f"Databases owned by {username}",
+        'user': dbshare.api.user.get_json(username),
+        'total_size': sum([db['size'] for db in dbs]),
+        'databases': get_json(dbs),
+        'operations': {
+            'create': {
+                'title': 'Create a new database.',
+                'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
+                'method': 'PUT'
+            }
+        }
+    }
+    return flask.jsonify(utils.get_json(**result))
 
 def get_json(dbs):
     "Return JSON for the databases."

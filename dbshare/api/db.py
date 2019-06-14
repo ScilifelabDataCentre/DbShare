@@ -7,11 +7,12 @@ import flask
 import jsonschema
 
 import dbshare.db
-
+import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.view
 
+from .. import constants
 from .. import utils
 
 blueprint = flask.Blueprint('api_db', __name__)
@@ -139,4 +140,31 @@ def get_json(db, complete=False):
                             for table in db['tables'].values()]
         result['views'] = [dbshare.api.view.get_json(db, view)
                            for view in db['views'].values()]
+        result['operations'] = {}
+        if dbshare.db.has_write_access(db):
+            result['operations']['edit'] = {
+                'title': 'Edit the metadata of the database.',
+                'method': 'POST',
+                'input': {
+                    'content-type': constants.JSON_MIMETYPE,
+                    'schema': dbshare.api.schema.schemas['db/edit']['href']
+                }
+            }
+            result['operations']['delete'] = {
+                'title': 'Delete the database.',
+                'method': 'DELETE'
+            }
+        if dbshare.db.has_write_access(db, check_mode=False):
+            if db['readonly']:
+                result['operations']['readwrite'] = {
+                    'title': 'Set the database to read-write.',
+                    'href': utils.url_for('api_db.readwrite', dbname=db['name']),
+                    'method': 'POST'
+                }
+            else:
+                result['operations']['readonly'] = {
+                    'title': 'Set the database to read-only.',
+                    'href': utils.url_for('api_db.readonly', dbname=db['name']),
+                    'method': 'POST'
+                }
     return result

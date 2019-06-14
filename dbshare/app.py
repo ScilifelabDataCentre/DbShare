@@ -180,36 +180,36 @@ def home():
 @app.route('/api')
 def api():
     "API home resource; links to other resources."
-    data = {'title': 'DbShare', 
-             'version': flask.current_app.config['VERSION'],
-             'databases': {
-                 'public': {'href': utils.url_for('api_dbs.public')}
-             },
-             'templates': {
-                 'public': {'href': utils.url_for('api_templates.public')}
-             }
+    result = {'title': 'DbShare', 
+              'version': flask.current_app.config['VERSION'],
+              'databases': {
+                  'public': {'href': utils.url_for('api_dbs.public')}
+              },
+              'templates': {
+                  'public': {'href': utils.url_for('api_templates.public')}
+              }
     }
     if flask.g.current_user:
-        data['databases']['owner'] = {
+        result['databases']['owner'] = {
             'href': utils.url_for('api_dbs.owner',
                                   username=flask.g.current_user['username'])
         }
-        data['templates']['owner'] = {
+        result['templates']['owner'] = {
             'href': utils.url_for('api_templates.owner',
                                   username=flask.g.current_user['username'])
         }
     if flask.g.is_admin:
-        data['databases']['all'] = {
+        result['databases']['all'] = {
             'href': utils.url_for('api_dbs.all')
         }
-        data['templates']['all'] = {
+        result['templates']['all'] = {
             'href': utils.url_for('api_templates.all')
         }
     if flask.g.current_user:
-        data['user'] = dbshare.api.user.get_json(
+        result['user'] = dbshare.api.user.get_json(
             flask.g.current_user['username'])
-    data['schema'] = {'href': constants.SCHEMA_BASE_URL.rstrip('/')}
-    return flask.jsonify(utils.get_json(**data))
+    result['schema'] = {'href': constants.SCHEMA_BASE_URL.rstrip('/')}
+    return flask.jsonify(utils.get_json(**result))
 
 
 # This code is used only during testing.

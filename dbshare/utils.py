@@ -10,6 +10,7 @@ import re
 import sqlite3
 import threading
 import time
+import urllib.parse
 import uuid
 
 import flask
@@ -168,6 +169,12 @@ def name_cleaned(name):
 def url_for(endpoint, **values):
     "Same as 'flask.url_for', but with '_external' set to True."
     return flask.url_for(endpoint, _external=True, **values)
+
+def url_for_unq(endpoint, **values):
+    """Same as 'flask.url_for', but with '_external' set to True,
+    and %XX escapes replaced by their single-character equivalents.
+    """
+    return urllib.parse.unquote(url_for(endpoint, **values))
 
 def accept_json():
     "Return True if the header Accept contains the JSON content type."

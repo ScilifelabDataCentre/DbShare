@@ -2,6 +2,7 @@
 
 schema = {
     'link': {
+        'title': 'A link to an object.',
         'type': 'object',
         'properties': {
             'href': {'type': 'string', 'format': 'uri'},
@@ -13,6 +14,7 @@ schema = {
         ]
     },
     'user': {
+        'title': 'The owner of the current object.',
         'type': 'object',
         'properties': {
             'username': {'type': 'string'},

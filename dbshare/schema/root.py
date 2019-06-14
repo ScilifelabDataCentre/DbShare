@@ -16,22 +16,34 @@ schema = {
         'title': {'type': 'string'},
         'version': {'type': 'string',
                     'pattern': '^1\.[0-9]+\.[0-9]+$'},
-        'databases': {'type': 'object',
-                      'properties': {
-                          'all': {'$ref': '#/definitions/link'},
-                          'owner': {'$ref': '#/definitions/link'},
-                          'public': {'$ref': '#/definitions/link'}},
-                      'required': ['public']
+        'databases': {
+            'title': 'Links to collections of databases.',
+            'type': 'object',
+            'properties': {
+                'all': {'title': 'Link to all databases.',
+                        '$ref': '#/definitions/link'},
+                'owner': {'title': 'Link to databases owned by the current user.',
+                          '$ref': '#/definitions/link'},
+                'public': {'title': 'Link to public databases.',
+                           '$ref': '#/definitions/link'}},
+            'required': ['public']
         },
-        'templates': {'type': 'object',
-                      'properties': {
-                          'all': {'$ref': '#/definitions/link'},
-                          'owner': {'$ref': '#/definitions/link'},
-                          'public': {'$ref': '#/definitions/link'}},
-                      'required': ['public']
+        'templates': {
+            'title': 'Links to collections of visualization templates.',
+            'type': 'object',
+            'properties': {
+                'all': {'title': 'Link to all templates.',
+                        '$ref': '#/definitions/link'},
+                'owner': {'title': 'Link to templates owned by the current user.',
+                          '$ref': '#/definitions/link'},
+                'public': {'title': 'Link to public templates.',
+                           '$ref': '#/definitions/link'}},
+            'required': ['public']
         },
-        'user': {'$ref': '#/definitions/user'},
-        'schema': {'$ref': '#/definitions/link'}
+        'user': {'title': 'Link to the current user.',
+                 '$ref': '#/definitions/user'},
+        'schema': {'title': 'Link to the schema documents.',
+                   '$ref': '#/definitions/link'}
     },
     'required': [
         '$id',
