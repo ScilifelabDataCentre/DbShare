@@ -18,19 +18,23 @@ blueprint = flask.Blueprint('api_dbs', __name__)
 @blueprint.route('/public')
 def public():
     "Return the list of public databases."
-    return flask.jsonify(
-        utils.get_json(title='Public databases',
-                       databases=get_json(dbshare.dbs.get_dbs(public=True))))
+    result = {
+        'title': 'Public databases',
+        'databases': get_json(dbshare.dbs.get_dbs(public=True))
+    }
+    return utils.jsonify(utils.get_json(**result), schema='/dbs')
 
 @blueprint.route('/all')
 @dbshare.user.admin_required
 def all():
     "Return the list of all databases."
     dbs = dbshare.dbs.get_dbs()
-    return flask.jsonify(
-        utils.get_json(title='All databases',
-                       total_size=sum([db['size'] for db in dbs]),
-                       databases=get_json(dbs)))
+    result = {
+        'title': 'All databases',
+        'total_size': sum([db['size'] for db in dbs]),
+        'databases': get_json(dbs)
+    }
+    return utils.jsonify(utils.get_json(**result), schema='/dbs')
 
 @blueprint.route('/owner/<name:username>')
 @dbshare.user.login_required
@@ -48,11 +52,16 @@ def owner(username):
             'create': {
                 'title': 'Create a new database.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
+                'variables': {
+                    'dbname': {'title': 'Name of the database.',
+                               'type': 'string'
+                    }
+                },
                 'method': 'PUT'
             }
         }
     }
-    return flask.jsonify(utils.get_json(**result))
+    return utils.jsonify(utils.get_json(**result), schema='/dbs')
 
 def get_json(dbs):
     "Return JSON for the databases."

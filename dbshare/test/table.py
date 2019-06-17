@@ -4,15 +4,10 @@ import csv
 import io
 import http.client
 
-import dbshare.schema.db
-import dbshare.schema.table
-import dbshare.schema.rows
-
-from dbshare import constants
-from dbshare.test.base import *
+import base
 
 
-class Table(Base):
+class Table(base.Base):
     "Test the table API endpoint."
 
     table_spec = {'name': 't1',
@@ -39,7 +34,10 @@ class Table(Base):
         
 
     def get_url(self, *segments):
-        return URL('table', CONFIG['dbname'], self.table_spec['name'],*segments)
+        return base.url('table',
+                        base.CONFIG['dbname'],
+                        self.table_spec['name'],
+                        *segments)
 
     def test_db_upload(self):
         "Create a database with table by file upload, check the table JSON."
@@ -47,25 +45,33 @@ class Table(Base):
         # Upload a file containing a plain Sqlite3 database.
         response = self.upload_file()
         self.assertEqual(response.status_code, http.client.OK)
-        json_validate(response.json(), dbshare.schema.db.schema)
+
+        # Valid database JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(response.json(), schema)
 
         # The table API JSON is valid.
         response = self.session.get(self.get_url())
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.table.schema)
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
         rows_url = result['rows']['href']
 
         # The table rows JSON is valid.
         response = self.session.get(rows_url)
         self.assertEqual(response.status_code, http.client.OK)
-        json_validate(response.json(), dbshare.schema.rows.schema)
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(response.json(), schema)
 
         # Content negotiation for rows using URL without '.json' extension.
         response = self.session.get(rows_url.rstrip('.json'),
-                                    headers={'Accept': constants.JSON_MIMETYPE})
+                                    headers={'Accept': base.JSON_MIMETYPE})
         self.assertEqual(response.status_code, http.client.OK)
-        json_validate(response.json(), dbshare.schema.rows.schema)
+        base.json_validate(response.json(), schema)
 
     def test_create(self):
         "Create a database and a table in it. Check the table definition."
@@ -80,7 +86,9 @@ class Table(Base):
 
         # Check the created table.
         result = response.json()
-        json_validate(result, dbshare.schema.table.schema)
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
         self.assertEqual(len(result['columns']),
                          len(self.table_spec['columns']))
         self.assertEqual(result['title'], self.table_spec['title'])
@@ -271,4 +279,4 @@ class Table(Base):
 
 
 if __name__ == '__main__':
-    run()
+    base.run()

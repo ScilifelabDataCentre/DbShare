@@ -39,7 +39,7 @@ def table(dbname, tablename):
         result.update(schema)
         result['indexes'] = [i for i in db['indexes'].values() 
                              if i['table'] == tablename]
-        return flask.jsonify(utils.get_json(**result))
+        return utils.jsonify(utils.get_json(**result), schema='/table')
 
     elif utils.http_PUT():
         try:

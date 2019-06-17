@@ -5,10 +5,13 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + 'db',
+    '$id': constants.SCHEMA_BASE_URL + '/db',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Database API JSON schema.',
-    'definitions': definitions.schema,
+    'definitions': {
+        'user': definitions.user_def,
+        'link': definitions.link_def
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
@@ -97,7 +100,7 @@ schema = {
 }
 
 edit = {
-    '$id': constants.SCHEMA_BASE_URL + 'db/edit',
+    '$id': constants.SCHEMA_BASE_URL + '/db/edit',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Database edit API JSON schema.',
     'type': 'object',

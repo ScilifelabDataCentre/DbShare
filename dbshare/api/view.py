@@ -27,7 +27,7 @@ def view(dbname, viewname):
         flask.abort(http.client.NOT_FOUND)
     result = get_json(db, schema, complete=True)
     result.update(schema)
-    return flask.jsonify(utils.get_json(**result))
+    return utils.jsonify(utils.get_json(**result), schema='/view')
 
 def get_json(db, view, complete=False):
     "Return the JSON for the view."

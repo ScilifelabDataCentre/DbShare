@@ -5,11 +5,14 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + 'root',
+    '$id': constants.SCHEMA_BASE_URL + '/root',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'timestamp': {'type': 'string', 'format': 'datetime'},
     'title': 'API root JSON schema.',
-    'definitions': definitions.schema,
+    'definitions': {
+        'user': definitions.user_def,
+        'link': definitions.link_def
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},

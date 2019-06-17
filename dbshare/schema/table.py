@@ -22,10 +22,12 @@ columns = {
 }
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + 'table',
+    '$id': constants.SCHEMA_BASE_URL + '/table',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Table API JSON schema.',
-    'definitions': definitions.schema,
+    'definitions': {
+        'link': definitions.link_def
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
@@ -58,7 +60,7 @@ schema = {
 }
 
 create = {
-    '$id': constants.SCHEMA_BASE_URL + 'table/create',
+    '$id': constants.SCHEMA_BASE_URL + '/table/create',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Table create API JSON schema.',
     'type': 'object',
@@ -77,7 +79,7 @@ create = {
 }
 
 input = {
-    '$id': constants.SCHEMA_BASE_URL + 'table/input',
+    '$id': constants.SCHEMA_BASE_URL + '/table/input',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Table data input JSON schema.',
     'type': 'object',

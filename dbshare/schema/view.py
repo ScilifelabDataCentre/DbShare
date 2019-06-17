@@ -5,10 +5,12 @@ from . import visualization
 from .. import constants
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + 'view',
+    '$id': constants.SCHEMA_BASE_URL + '/view',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'View API JSON schema.',
-    'definitions': definitions.schema,
+    'definitions': {
+        'link': definitions.link_def
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},

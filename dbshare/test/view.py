@@ -2,14 +2,10 @@
 
 import http.client
 
-import dbshare.schema.db
-import dbshare.schema.view
-import dbshare.schema.rows
-
-from dbshare.test.base import *
+import base
 
 
-class View(Base):
+class View(base.Base):
     "Test the view API endpoint."
 
     def setUp(self):
@@ -20,18 +16,25 @@ class View(Base):
     def test_db_upload(self):
         "Create a database with view by file upload, check the view JSON."
 
-        # Valid API view JSON.
-        response = self.session.get(URL('view', CONFIG['dbname'], 'v1'))
+        # Valid view JSON.
+        response = self.session.get(base.url('view', 
+                                             base.CONFIG['dbname'], 
+                                             'v1'))
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.view.schema)
-        rows_url = result['rows']['href']
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
 
-        # Valid API view rows JSON.
+        # Valid view rows JSON.
+        rows_url = result['rows']['href']
         response = self.session.get(rows_url)
         self.assertEqual(response.status_code, http.client.OK)
-        json_validate(response.json(), dbshare.schema.rows.schema)
+        result = response.json()
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
 
 
 if __name__ == '__main__':
-    run()
+    base.run()

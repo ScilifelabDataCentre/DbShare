@@ -20,6 +20,7 @@ def user(username):
         flask.abort(http.client.NOT_FOUND)
     if not dbshare.user.is_admin_or_self(user):
         flask.abort(http.client.UNAUTHORIZED)
+    # Remove sensitive information.
     user.pop('password')
     user.pop('apikey', None)
     user['total_size'] = dbshare.db.get_usage(username)[1]
@@ -27,7 +28,7 @@ def user(username):
                                                username=user['username'])}
     user['templates'] = {'href': utils.url_for('api_templates.owner',
                                                username=user['username'])}
-    return flask.jsonify(utils.get_json(**user))
+    return utils.jsonify(utils.get_json(**user), schema='/user')
 
 def get_json(username):
     "Get the JSON for a user or owner."

@@ -208,8 +208,8 @@ def api():
     if flask.g.current_user:
         result['user'] = dbshare.api.user.get_json(
             flask.g.current_user['username'])
-    result['schema'] = {'href': constants.SCHEMA_BASE_URL.rstrip('/')}
-    return flask.jsonify(utils.get_json(**result))
+    result['schema'] = {'href': constants.SCHEMA_BASE_URL}
+    return utils.jsonify(utils.get_json(**result), schema='/root')
 
 
 # This code is used only during testing.

@@ -31,7 +31,8 @@ def database(dbname):
             flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        return flask.jsonify(utils.get_json(**get_json(db, complete=True)))
+        return utils.jsonify(utils.get_json(**get_json(db, complete=True)),
+                             schema='/db')
  
     elif utils.http_PUT():
         db = dbshare.db.get_db(dbname)
@@ -146,7 +147,7 @@ def get_json(db, complete=False):
                 'title': 'Edit the metadata of the database.',
                 'method': 'POST',
                 'input': {
-                    'content-type': constants.JSON_MIMETYPE,
+                    'contentType': constants.JSON_MIMETYPE,
                     'schema': dbshare.api.schema.schemas['db/edit']['href']
                 }
             }

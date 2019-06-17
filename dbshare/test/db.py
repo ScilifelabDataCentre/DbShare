@@ -3,12 +3,10 @@
 import http.client
 import sqlite3
 
-import dbshare.schema.db
-
-from dbshare.test.base import *
+import base
 
 
-class Db(Base):
+class Db(base.Base):
     "Test the db API endpoint."
 
     def test_create(self):
@@ -19,7 +17,9 @@ class Db(Base):
         self.assertEqual(response.status_code, http.client.OK)
 
         # Valid database JSON.
-        json_validate(response.json(), dbshare.schema.db.schema)
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(response.json(), schema)
 
         # Attempt at creating the database again should fail.
         response = self.session.put(self.db_url)
@@ -36,7 +36,12 @@ class Db(Base):
 
         # Upload a Sqlite3 database file.
         response = self.upload_file()
-        json_validate(response.json(), dbshare.schema.db.schema)
+        self.assertEqual(response.status_code, http.client.OK)
+
+        # Valid database JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(response.json(), schema)
 
     def test_edit(self):
         "Create an empty database, edit it, check its JSON."
@@ -45,15 +50,19 @@ class Db(Base):
         response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
 
-        # Valid db JSON.
-        json_validate(response.json(), dbshare.schema.db.schema)
+        # Valid database JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(response.json(), schema)
 
         # Edit the title.
         title = 'New title'
         response = self.session.post(self.db_url, json={'title': title})
         self.assertEqual(response.status_code, http.client.OK)
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
         result = response.json()
-        json_validate(result, dbshare.schema.db.schema)
+        base.json_validate(result, schema)
         self.assertEqual(result.get('title'), title)
 
         # Edit the description.
@@ -62,7 +71,7 @@ class Db(Base):
                                      json={'description': description})
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.db.schema)
+        base.json_validate(result, schema)
         self.assertEqual(result.get('description'), description)
         # Same title as before.
         self.assertEqual(result.get('title'), title)
@@ -72,7 +81,7 @@ class Db(Base):
         response = self.session.post(self.db_url, json={'name': name})
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.db.schema)
+        base.json_validate(result, schema)
         self.assertTrue(result['$id'].endswith(name))
 
         # So that the database is deleted at cleanup.
@@ -90,7 +99,13 @@ class Db(Base):
         response = self.session.post(f"{self.db_url}/readonly")
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.db.schema)
+
+        # Valid database JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
+
+        # Check items that must exist.
         self.assertTrue(result['readonly'])
         self.assertTrue(len(result['hashes']))
 
@@ -103,7 +118,9 @@ class Db(Base):
         response = self.session.post(f"{self.db_url}/readwrite")
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.db.schema)
+        base.json_validate(result, schema)
+
+        # Check items must no longer exist.
         self.assertFalse(result['readonly'])
         self.assertFalse(len(result['hashes']))
 
@@ -113,4 +130,4 @@ class Db(Base):
 
 
 if __name__ == '__main__':
-    run()
+    base.run()

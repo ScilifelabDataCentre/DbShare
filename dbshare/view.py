@@ -137,15 +137,17 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
                 flask.abort(http.client.REQUEST_TIMEOUT)
-            return flask.jsonify(utils.get_json(
-                name=str(viewname),
-                title=title,
-                source={'type': 'view',
-                        'href': utils.url_for('api_view.view',
-                                              dbname=db['name'],
-                                              viewname=schema['name'])},
-                nrows=schema['nrows'],
-                data=[dict(zip(columns, row)) for row in cursor]))
+            result = {
+                'name': str(viewname),
+                'title': title,
+                'source': {'type': 'view',
+                           'href': utils.url_for('api_view.view',
+                                                 dbname=db['name'],
+                                                 viewname=schema['name'])},
+                'nrows': schema['nrows'],
+                'data': [dict(zip(columns, row)) for row in cursor]
+            }
+            return utils.jsonify(utils.get_json(**result), schema='/rows')
 
         elif viewname.ext == 'csv':
             columns = [c['name'] for c in schema['columns']]

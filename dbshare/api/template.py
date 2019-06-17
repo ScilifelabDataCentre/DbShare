@@ -21,7 +21,7 @@ def template(templatename):
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    return flask.jsonify(utils.get_json(**get_json(template)))
+    return utils.jsonify(utils.get_json(**get_json(template)))
 
 def get_json(template, complete=False):
     "Return JSON for the template."

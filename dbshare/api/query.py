@@ -36,9 +36,11 @@ def query(dbname):
     columns = [d[0] for d in cursor.description]
     query['columns'] = columns
     rows = cursor.fetchall()
-    return flask.jsonify(utils.get_json(
-        query=query,
-        sql=sql,
-        nrows=len(rows),
-        cpu_time=timer(),
-        data=[dict(zip(columns, row)) for row in rows]))
+    result = {
+        'query': query,
+        'sql': sql,
+        'nrows': len(rows),
+        'cpu_time': timer(),
+        'data': [dict(zip(columns, row)) for row in rows]
+    }
+    return utils.jsonify(utils.get_json(**result), schema='/query/output')

@@ -2,14 +2,10 @@
 
 import http.client
 
-import dbshare.schema.db
-import dbshare.schema.table
-import dbshare.schema.query
-
-from dbshare.test.base import *
+import base
 
 
-class Query(Base):
+class Query(base.Base):
     "Test the query API endpoint."
 
     def setUp(self):
@@ -18,7 +14,7 @@ class Query(Base):
         self.upload_file()
 
     def get_url(self):
-        return URL('query', CONFIG['dbname'])
+        return base.url('query', base.CONFIG['dbname'])
 
     def test_table_query_one_column(self):
         "Get only one column from the test table."
@@ -27,7 +23,13 @@ class Query(Base):
         response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.query.output)
+
+        # Valid query output JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
+
+        # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
 
@@ -38,7 +40,13 @@ class Query(Base):
         response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.query.output)
+
+        # Valid query output JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
+
+        # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 3)
 
@@ -57,7 +65,13 @@ class Query(Base):
         response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.query.output)
+
+        # Valid query output JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
+
+        # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(len(result['data'][0]), 1)
         self.assertEqual(list(result['data'][0].keys()), [name])
@@ -70,11 +84,17 @@ class Query(Base):
         response = self.session.get(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
-        json_validate(result, dbshare.schema.query.output)
+
+        # Valid query output JSON.
+        schema = self.get_schema(response)
+        self.assertTrue(schema is not None)
+        base.json_validate(result, schema)
+
+        # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
         self.assertEqual(result['nrows'], 2)
         self.assertEqual(len(result['data'][0]), 1)
 
 
 if __name__ == '__main__':
-    run()
+    base.run()

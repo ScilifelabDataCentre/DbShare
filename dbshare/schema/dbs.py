@@ -5,10 +5,13 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + 'dbs',
+    '$id': constants.SCHEMA_BASE_URL + '/dbs',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Databases map API JSON schema.',
-    'definitions': definitions.schema,
+    'definitions': {
+        'user': definitions.user_def,
+        'operation': definitions.operation_def
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
@@ -28,7 +31,10 @@ schema = {
                     'size': {'type': 'integer'},
                     'modified': {'type': 'string', 'format': 'timestamp'},
                     'created': {'type': 'string', 'format': 'timestamp'},
-                    'href': {'type': 'string', 'format': 'uri'}
+                    'href': {'type': 'string', 'format': 'uri'},
+                    'operations': {
+                        'create': {'$ref': '#/definitions/operation'}
+                    }
                 },
                 'required': [
                     'name',

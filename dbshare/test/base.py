@@ -4,20 +4,29 @@ import argparse
 import http.client
 import json
 import os
+import re
 import sqlite3
 import sys
 import unittest
+import urllib
 
 import jsonschema
 import requests
 
+SCHEMA_LINK_RX = re.compile(r'<([^>])+>; rel="([^"]+)')
+
+JSON_MIMETYPE    = 'application/json'
+
 DEFAULT_CONFIG = {
-    'base_url': 'http://127.0.0.1:5000', # DbShare server base url
+    'base_url': 'http://127.0.0.1:5000', # DbShare server base url.
+    'base_schema': False,       # Use schema from server at base url.
     'username': None,           # Needs to be set! Must have admin privileges.
     'apikey': None,             # Needs to be set! For the above user.
     'filename': '/tmp/test.sqlite3', # Sqlite3 file
     'dbname': 'test'
 }
+
+# The actual configuration values to use.
 CONFIG = {}
 
 def process_args(filepath=None):
@@ -43,7 +52,7 @@ def process_args(filepath=None):
     CONFIG['root_url'] = CONFIG['base_url'] + '/api'
     return args
 
-def URL(*segments):
+def url(*segments):
     "Return the URL composed of the root URL and the given path segments."
     return '/'.join([CONFIG['root_url']] + list(segments))
 
@@ -68,17 +77,33 @@ class Base(unittest.TestCase):
     def close_session(self):
         self.session.close()
 
+    def get_schema(self, response):
+        "If a schema Link, then fetch and return the schema."
+        try:
+            url = response.links['schema']['url']
+        except KeyError:
+            return None
+        else:
+            if CONFIG['base_schema']:
+                base = urllib.parse.urlparse(CONFIG['base_url'])
+                schema = urllib.parse.urlparse(url)
+                schema = schema._replace(scheme=base.scheme, netloc=base.netloc)
+                url = schema.geturl()
+            response = self.session.get(url)
+            self.assertTrue(response.status_code, http.client.OK)
+            return response.json()
+
     def create_database(self):
         "Create an empty database."
-        self.db_url = URL('db', CONFIG['dbname'])
+        self.db_url = url('db', CONFIG['dbname'])
         response = self.session.put(self.db_url)
         self.addCleanup(self.delete_db)
         return response
 
     def upload_file(self):
         "Create a local Sqlite3 file and upload it."
-        # Define the URL for the database.
-        self.db_url = URL('db', CONFIG['dbname'])
+        # Define the url for the database.
+        self.db_url = url('db', CONFIG['dbname'])
         # Create the database in a local file.
         cnx = sqlite3.connect(CONFIG['filename'])
         self.addCleanup(self.delete_file)

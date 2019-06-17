@@ -2,19 +2,25 @@
 
 import http.client
 
-from dbshare.test.base import *
-
-import dbshare.schema.dbs
+import base
 
 
-class Dbs(Base):
+class Dbs(base.Base):
     "Test the dbs API endpoint."
+
+    def test_access(self):
+        "Are all database collection links available?"
+        response = self.session.get(base.url())
+        self.assertEqual(response.status_code, http.client.OK)
+        data = response.json()
+        for key in ['public', 'owner', 'all']:
+            self.assertTrue(key in data['databases'])
 
     def test_schema(self):
         "Valid databases map JSON."
 
         # Get the URLs for the different lists of databases.
-        response = self.session.get(URL())
+        response = self.session.get(base.url())
         self.assertEqual(response.status_code, http.client.OK)
         data = response.json()
         dbs_urls = {}
@@ -25,8 +31,10 @@ class Dbs(Base):
         for key in ['public', 'owner', 'all']:
             response = self.session.get(dbs_urls[key])
             self.assertEqual(response.status_code, http.client.OK)
-            json_validate(response.json(), dbshare.schema.dbs.schema)
+            schema = self.get_schema(response)
+            self.assertTrue(schema is not None)
+            base.json_validate(response.json(), schema)
 
 
 if __name__ == '__main__':
-    run()
+    base.run()
