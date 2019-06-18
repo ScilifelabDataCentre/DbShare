@@ -26,6 +26,7 @@ import dbshare.vega_lite
 import dbshare.view
 import dbshare.visual
 
+import dbshare.api.root
 import dbshare.api.db
 import dbshare.api.dbs
 import dbshare.api.query
@@ -66,7 +67,7 @@ dbshare.system.init(app)
 # Init the mail handler.
 utils.mail.init_app(app)
 
-# Set the URL map.
+# Set up the URL map.
 app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
 app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
@@ -82,6 +83,7 @@ app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
 app.register_blueprint(dbshare.site.blueprint, url_prefix='/site')
 
+app.register_blueprint(dbshare.api.root.blueprint, url_prefix='/api')
 app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
 app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
@@ -173,43 +175,9 @@ def prepare():
 def home():
     "Home page; display the list of public databases."
     if utils.accept_json():
-        return flask.redirect(flask.url_for('api'))
+        return flask.redirect(flask.url_for('api.root'))
     return flask.render_template('home.html',
                                  dbs=dbshare.dbs.get_dbs(public=True))
-
-@app.route('/api')
-def api():
-    "API home resource; links to other resources."
-    result = {'title': 'DbShare', 
-              'version': flask.current_app.config['VERSION'],
-              'databases': {
-                  'public': {'href': utils.url_for('api_dbs.public')}
-              },
-              'templates': {
-                  'public': {'href': utils.url_for('api_templates.public')}
-              }
-    }
-    if flask.g.current_user:
-        result['databases']['owner'] = {
-            'href': utils.url_for('api_dbs.owner',
-                                  username=flask.g.current_user['username'])
-        }
-        result['templates']['owner'] = {
-            'href': utils.url_for('api_templates.owner',
-                                  username=flask.g.current_user['username'])
-        }
-    if flask.g.is_admin:
-        result['databases']['all'] = {
-            'href': utils.url_for('api_dbs.all')
-        }
-        result['templates']['all'] = {
-            'href': utils.url_for('api_templates.all')
-        }
-    if flask.g.current_user:
-        result['user'] = dbshare.api.user.get_json(
-            flask.g.current_user['username'])
-    result['schema'] = {'href': constants.SCHEMA_BASE_URL}
-    return utils.jsonify(utils.get_json(**result), schema='/root')
 
 
 # This code is used only during testing.
