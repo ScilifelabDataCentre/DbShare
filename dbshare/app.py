@@ -5,8 +5,6 @@ import time
 
 import flask
 import flask_mail
-import jinja2.utils
-import markdown
 
 import dbshare
 import dbshare.about
@@ -40,7 +38,7 @@ import dbshare.api.view
 from dbshare import constants
 from dbshare import utils
 
-app = flask.Flask(__name__, template_folder='html')
+app = flask.Flask('dbshare', template_folder='html')
 app.url_map.converters['name'] = utils.NameConverter
 app.url_map.converters['nameext'] = utils.NameExtConverter
 app.jinja_env.trim_blocks = True
@@ -96,9 +94,18 @@ app.register_blueprint(dbshare.api.templates.blueprint,
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
+# Add template filters.
+app.add_template_filter(utils.thousands)
+app.add_template_filter(utils.none_as_question_mark)
+app.add_template_filter(utils.none_as_literal_null)
+app.add_template_filter(utils.none_as_empty_string)
+app.add_template_filter(utils.do_markdown, name='markdown')
+app.add_template_filter(utils.access)
+app.add_template_filter(utils.mode)
+
 @app.context_processor
 def setup_template_context():
-    "Add useful stuff to the global context for Jinja2 templates."
+    "Add useful stuff to the global context of Jinja2 templates."
     return dict(constants=constants,
                 csrf_token=utils.csrf_token,
                 utils=utils,
@@ -107,60 +114,6 @@ def setup_template_context():
                 range=range,
                 round=round,
                 is_none=lambda v: v is None)
-
-@app.template_filter('thousands')
-def thousands(value):
-    "Output integer with thousands delimiters."
-    if isinstance(value, int):
-        return '{:,}'.format(value)
-    else:
-        return value
-
-@app.template_filter('none_as_question_mark')
-def none_as_question_mark(value):
-    "Output None as '?'."
-    if value is None:
-        return '?'
-    else:
-        return value
-
-@app.template_filter('none_as_literal_null')
-def none_as_literal_null(value):
-    "Output None as HTML '<NULL>' in safe mode."
-    if value is None:
-        return jinja2.utils.Markup('<i>&lt;NULL&gt;</i>')
-    else:
-        return value
-
-@app.template_filter('none_as_empty_string')
-def none_as_empty_string(value):
-    "Output the value if not None, else an empty string."
-    if value is None:
-        return ''
-    else:
-        return value
-
-@app.template_filter('markdown')
-def markdown_process(value):
-    "Use Markdown to process the value."
-    value = value or ''
-    return jinja2.utils.Markup(markdown.markdown(value, output_format='html5'))
-
-@app.template_filter('access')
-def access(value):
-    "Output public or private according to the value."
-    if value:
-        return jinja2.utils.Markup('<span class="badge badge-info">public</span>')
-    else:
-        return jinja2.utils.Markup('<span class="badge badge-secondary">private</span>')
-
-@app.template_filter('mode')
-def mode(value):
-    "Output readonly or read-write according to the value."
-    if value:
-        return jinja2.utils.Markup('<span class="badge badge-success">read-only</span>')
-    else:
-        return jinja2.utils.Markup('<span class="badge badge-warning">read/write</span>')
 
 @app.before_request
 def prepare():

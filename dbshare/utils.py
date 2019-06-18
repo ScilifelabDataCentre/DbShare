@@ -17,6 +17,7 @@ import flask
 import flask_mail
 import jinja2.utils
 import jsonschema
+import markdown
 import werkzeug.routing
 
 from .lexer import Lexer
@@ -253,6 +254,53 @@ def flash_message(msg):
 def flash_message_limit(limit):
     "Flash message about limit on number of rows."
     flash_message(f"NOTE: The number of rows displayed is limited to {limit:,}.")
+
+def thousands(value):
+    "Template filter: Output integer with thousands delimiters."
+    if isinstance(value, int):
+        return '{:,}'.format(value)
+    else:
+        return value
+
+def none_as_question_mark(value):
+    "Output None as '?'."
+    if value is None:
+        return '?'
+    else:
+        return value
+
+def none_as_literal_null(value):
+    "Template filter: Output None as HTML '<NULL>' in safe mode."
+    if value is None:
+        return jinja2.utils.Markup('<i>&lt;NULL&gt;</i>')
+    else:
+        return value
+
+def none_as_empty_string(value):
+    "Template filter: Output the value if not None, else an empty string."
+    if value is None:
+        return ''
+    else:
+        return value
+
+def do_markdown(value):
+    "Template filter: Use Markdown to process the value."
+    value = value or ''
+    return jinja2.utils.Markup(markdown.markdown(value, output_format='html5'))
+
+def access(value):
+    "Template filter: Output public or private according to the value."
+    if value:
+        return jinja2.utils.Markup('<span class="badge badge-info">public</span>')
+    else:
+        return jinja2.utils.Markup('<span class="badge badge-secondary">private</span>')
+
+def mode(value):
+    "Template filter: Output readonly or read-write according to the value."
+    if value:
+        return jinja2.utils.Markup('<span class="badge badge-success">read-only</span>')
+    else:
+        return jinja2.utils.Markup('<span class="badge badge-warning">read/write</span>')
 
 def json_validate(instance, schema):
     "Validate the JSON instance versus the given JSON schema."
