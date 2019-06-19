@@ -26,6 +26,8 @@ user_def = {
     ]
 }
 
+property_names = {'pattern': '^[a-zA-Z][a-zA-Z0-9_-]*$'}
+
 operation_def = {
     'title': 'An operation to modify the content of the DbShare server.',
     'type': 'object',
@@ -34,9 +36,7 @@ operation_def = {
         'href': {'type': 'string', 'format': 'uri-template'},
         'variables': {
             'type': 'object',
-            'propertyNames': {
-                'pattern': '^[a-zA-Z][a-zA-Z0-9_-]*$'
-            },
+            'propertyNames': property_names,
             'additionalProperties': {
                 'type': 'object',
                 'properties': {

@@ -13,7 +13,7 @@ blueprint = flask.Blueprint('api', __name__)
 @blueprint.route('')
 def root():
     "API root resource; links to other API resources."
-    result = {'title': 'DbShare', 
+    result = {'title': 'DbShare API', 
               'version': flask.current_app.config['VERSION'],
               'databases': {
                   'public': {'href': utils.url_for('api_dbs.public')}
@@ -40,7 +40,7 @@ def root():
             'href': utils.url_for('api_templates.all')
         }
         result['users'] = {
-            'all': utils.url_for('api_users.all')
+            'all': {'href': utils.url_for('api_users.all')}
         }
     if flask.g.current_user:
         result['user'] = dbshare.api.user.get_json(
@@ -48,12 +48,10 @@ def root():
     result['operations'] = {
         'database': {
             'query': {
-                'title': 'Perform a query of the data in the database.',
+                'title': 'Perform a database query.',
                 'href': utils.url_for_unq('api_db.query', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'POST',
                 'input' : {
@@ -77,9 +75,7 @@ def root():
                 'title': 'Create a new database.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'PUT'
             },
@@ -87,9 +83,7 @@ def root():
                 'title': 'Edit the database metadata.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'POST',
                 'input' : {
@@ -103,9 +97,7 @@ def root():
                 'title': 'Delete the database.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'DELETE'
             },
@@ -113,9 +105,7 @@ def root():
                 'title': 'Set the database to read-only.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'POST'
             },
@@ -123,9 +113,7 @@ def root():
                 'title': 'Set the database to read-write.',
                 'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'}
                 },
                 'method': 'POST'
             }
@@ -135,12 +123,8 @@ def root():
                 'title': 'Create a new table in the database.',
                 'href': utils.url_for_unq('api_table.table', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    },
-                    'tablename': {'title': 'Name of the table.',
-                                  'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'},
+                    'tablename': {'title': 'Name of the table.'}
                 },
                 'method': 'PUT',
                 'input' : {
@@ -154,12 +138,8 @@ def root():
                 'title': 'Delete the table from the database.',
                 'href': utils.url_for_unq('api_table.table', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    },
-                    'tablename': {'title': 'Name of the table.',
-                                  'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'},
+                    'tablename': {'title': 'Name of the table.'}
                 },
                 'method': 'DELETE'
             },
@@ -167,12 +147,8 @@ def root():
                 'title': 'Insert rows from JSON or CSV data into the table.',
                 'href': utils.url_for_unq('api_table.insert', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    },
-                    'tablename': {'title': 'Name of the table.',
-                                  'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'},
+                    'tablename': {'title': 'Name of the table.'}
                 },
                 'method': 'POST',
                 'input' : [
@@ -188,12 +164,8 @@ def root():
                 'title': 'Update rows in the table from CSV data.',
                 'href': utils.url_for_unq('api_table.insert', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    },
-                    'tablename': {'title': 'Name of the table.',
-                                  'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'},
+                    'tablename': {'title': 'Name of the table.'}
                 },
                 'method': 'POST',
                 'input' : {'content-type': constants.CSV_MIMETYPE}
@@ -202,12 +174,8 @@ def root():
                 'title': 'Empty the table; remove all rows.',
                 'href': utils.url_for_unq('api_table.empty', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    },
-                    'tablename': {'title': 'Name of the table.',
-                                  'type': 'string'
-                    }
+                    'dbname': {'title': 'Name of the database.'},
+                    'tablename': {'title': 'Name of the table.'}
                 },
                 'method': 'POST'
             }

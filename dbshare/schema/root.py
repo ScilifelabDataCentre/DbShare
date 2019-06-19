@@ -4,6 +4,22 @@ from . import definitions
 from .. import constants
 
 
+input_output = {
+    'type': 'object',
+    'properties': {
+        'content-type': {'type': 'string'},
+        'schema': {
+            'type': 'object',
+            'properties': {
+                'href': {'type': 'string',
+                         'format': 'uri'}
+            },
+            'required': ['href']
+        }
+    },
+    'required': ['content-type']
+}
+
 schema = {
     '$id': constants.SCHEMA_BASE_URL + '/root',
     '$schema': constants.SCHEMA_SCHEMA_URL,
@@ -43,10 +59,42 @@ schema = {
                            '$ref': '#/definitions/link'}},
             'required': ['public']
         },
+        'schema': {'title': 'Link to the schema documents.',
+                   '$ref': '#/definitions/link'},
         'user': {'title': 'Link to the current user.',
                  '$ref': '#/definitions/user'},
-        'schema': {'title': 'Link to the schema documents.',
-                   '$ref': '#/definitions/link'}
+        'operations': {
+            'title': 'All URLs with non-GET methods specified by URI templates.',
+            'type': 'object',
+            'propertyNames': definitions.property_names,
+            'properties': {
+                'additionalProperties': {
+                    'title': 'The property name is the type of entity the operation pertains to.',
+                    'type': 'object',
+                    'propertyNames': definitions.property_names,
+                    'properties': {
+                        'additionalProperties': {
+                            'title': 'The property name is the operation.',
+                            'type': 'object',
+                            'properties': {
+                                'title': {'type': 'string'},
+                                'href': {'type': 'string', 'format': 'uri'},
+                                'variables': {
+                                    'type': 'object'
+                                },
+                                'method': {
+                                    'type': 'string',
+                                    'enum': ['POST', 'PUT', 'DELETE']
+                                },
+                                'input': input_output,
+                                'output': input_output
+                            },
+                            'required': ['href', 'method']
+                        }
+                    }
+                }
+            }
+        }
     },
     'required': [
         '$id',
