@@ -72,7 +72,7 @@ def table(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert', methods=['POST'])
 def insert(dbname, tablename):
-    "POST: Insert table rows from JSON or CSV data into the table."
+    "POST: Insert rows from JSON or CSV data into the table."
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError:
@@ -139,7 +139,7 @@ def insert(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update', methods=['POST'])
 def update(dbname, tablename):
-    "POST: Update table rows in the table from CSV data; JSON not implemented."
+    "POST: Update table rows from CSV data (JSON not implemented)."
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError:

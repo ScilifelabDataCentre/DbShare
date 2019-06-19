@@ -14,13 +14,13 @@ class Query(base.Base):
         self.upload_file()
 
     def get_url(self):
-        return base.url('query', base.CONFIG['dbname'])
+        return base.url('db', base.CONFIG['dbname'], 'query')
 
     def test_table_query_one_column(self):
         "Get only one column from the test table."
         query = {'select': 't',
                  'from': 't1'}
-        response = self.session.get(self.get_url(), json=query)
+        response = self.session.post(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
 
@@ -37,7 +37,7 @@ class Query(base.Base):
         "Get all columns, there are 3 in the test table."
         query = {'select': '*',
                  'from': 't1'}
-        response = self.session.get(self.get_url(), json=query)
+        response = self.session.post(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
 
@@ -54,7 +54,7 @@ class Query(base.Base):
         "A bad query should yield HTTP Bad Request."
         query = {'select': None,
                  'from': 't1'}
-        response = self.session.get(self.get_url(), json=query)
+        response = self.session.post(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
     def test_table_query_rename_column(self):
@@ -62,7 +62,7 @@ class Query(base.Base):
         name = 'weird-column:name'
         query = {'select': f't as "{name}"',
                  'from': 't1'}
-        response = self.session.get(self.get_url(), json=query)
+        response = self.session.post(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
 
@@ -81,7 +81,7 @@ class Query(base.Base):
         query = {'select': 't',
                  'from': 't1',
                  'limit': 2}
-        response = self.session.get(self.get_url(), json=query)
+        response = self.session.post(self.get_url(), json=query)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
 

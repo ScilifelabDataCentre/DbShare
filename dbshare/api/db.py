@@ -2,11 +2,13 @@
 
 import http.client
 import io
+import sqlite3
 
 import flask
 import jsonschema
 
 import dbshare.db
+import dbshare.query
 import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.user
@@ -94,6 +96,37 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         dbshare.db.delete_database(dbname)
         return ('', http.client.NO_CONTENT)
+
+@blueprint.route('/<name:dbname>/query', methods=['POST'])
+def query(dbname):
+    "Perform a query of the database; return rows."
+    try:
+        db = dbshare.db.get_check_read(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    timer = utils.Timer()
+    try:
+        query = flask.request.get_json()
+        sql = dbshare.query.get_sql_statement(query)
+        dbcnx = dbshare.db.get_cnx(dbname)
+        cursor = utils.execute_timeout(dbcnx, sql)
+    except (jsonschema.ValidationError, sqlite3.Error) as error:
+        utils.abort_json(http.client.BAD_REQUEST, error)
+    except SystemError:
+        flask.abort(http.client.REQUEST_TIMEOUT)
+    columns = [d[0] for d in cursor.description]
+    query['columns'] = columns
+    rows = cursor.fetchall()
+    result = {
+        'query': query,
+        'sql': sql,
+        'nrows': len(rows),
+        'cpu_time': timer(),
+        'data': [dict(zip(columns, row)) for row in rows]
+    }
+    return utils.jsonify(utils.get_json(**result), schema='/query/output')
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 def readonly(dbname):

@@ -47,19 +47,7 @@ def owner(username):
         'title': f"Databases owned by {username}",
         'user': dbshare.api.user.get_json(username),
         'total_size': sum([db['size'] for db in dbs]),
-        'databases': get_json(dbs),
-        'operations': {
-            'create': {
-                'title': 'Create a new database.',
-                'href': utils.url_for_unq('api_db.database', dbname='{dbname}'),
-                'variables': {
-                    'dbname': {'title': 'Name of the database.',
-                               'type': 'string'
-                    }
-                },
-                'method': 'PUT'
-            }
-        }
+        'databases': get_json(dbs)
     }
     return utils.jsonify(utils.get_json(**result), schema='/dbs')
 

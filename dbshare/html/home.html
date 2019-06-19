@@ -2,10 +2,9 @@
 
 {% block main %}
 <p class="lead ml-4 mb-5">
-  Share tabular data sets in
-  <a href="{{ config['SQLITE3_URL'] }}" target="_blank">Sqlite3</a>
-  databases. Visualize with
-  <a href="{{ config['VEGA_SITE_URL'] }}" target="_blank">Vega</a> or
+  Share and query tabular data and allow visualizations. Uses
+  <a href="{{ config['SQLITE3_URL'] }}" target="_blank">Sqlite3</a>,
+  <a href="{{ config['VEGA_SITE_URL'] }}" target="_blank">Vega</a> and
   <a href="{{ config['VEGA_LITE_SITE_URL'] }}" target="_blank">Vega-Lite</a>.
 </p>
 {% include 'dbs/list_public.html' %}
