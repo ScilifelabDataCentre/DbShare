@@ -27,10 +27,10 @@ def get_json(template, complete=False):
     "Return JSON for the template."
     if complete:
         result = template.copy()
-        result['owner'] = dbshare.api_user.get_json(template['owner'])
+        result['owner'] = dbshare.api.user.get_json(template['owner'])
     else:
         result = {'name': template['name'],
-                  'owner': dbshare.api_user.get_json(template['owner']),
+                  'owner': dbshare.api.user.get_json(template['owner']),
                   'public': template['public'],
                   'modified': template['modified'],
                   'created': template['created']}
