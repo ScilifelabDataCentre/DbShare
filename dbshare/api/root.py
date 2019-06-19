@@ -38,6 +38,9 @@ def root():
         result['templates']['all'] = {
             'href': utils.url_for('api_templates.all')
         }
+        result['users'] = {
+            'all': utils.url_for('api_users.all')
+        }
     if flask.g.current_user:
         result['user'] = dbshare.api.user.get_json(
             flask.g.current_user['username'])

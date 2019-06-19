@@ -33,6 +33,7 @@ import dbshare.api.table
 import dbshare.api.template
 import dbshare.api.templates
 import dbshare.api.user
+import dbshare.api.users
 import dbshare.api.view
 
 from dbshare import constants
@@ -92,6 +93,7 @@ app.register_blueprint(dbshare.api.template.blueprint,
 app.register_blueprint(dbshare.api.templates.blueprint,
                        url_prefix='/api/templates')
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
+app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
 # Add template filters.
