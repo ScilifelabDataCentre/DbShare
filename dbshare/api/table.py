@@ -198,7 +198,7 @@ def get_json(db, table, complete=False):
               'nrows': table['nrows'],
               'rows': {'href': url + '.json'},
               'data': {'href': url + '.csv',
-                       'content_type': constants.CSV_MIMETYPE,
+                       'content-type': constants.CSV_MIMETYPE,
                        'format': 'csv'}
     }
     if complete:
@@ -212,6 +212,47 @@ def get_json(db, table, complete=False):
                 'title': visual.get('title'),
                 'specification': {'href': url + '.json'}})
         result['visualizations'] = visuals
+        result['operations'] = {}
+        if dbshare.db.has_write_access(db):
+            result['operations']['table'] = {
+                'insert': {
+                    'title': 'Insert rows from body data into the table.',
+                    'href': utils.url_for('api_table.insert',
+                                          dbname=db['name'],
+                                          tablename=table['name']),
+                    'method': 'POST',
+                    'input': [
+                        {'content-type': constants.CSV_MIMETYPE},
+                        {'content-type': constants.JSON_MIMETYPE,
+                         'schema': {
+                             'href': dbshare.api.schema.schemas['table/input']['href']
+                         }
+                        }
+                    ]
+                },
+                'update': {
+                    'title': 'Update table rows from body data.',
+                    'href': utils.url_for('api_table.update',
+                                          dbname=db['name'],
+                                          tablename=table['name']),
+                    'method': 'POST',
+                    'input': {'content-type': constants.CSV_MIMETYPE}
+                },
+                'empty': {
+                    'title': 'Empty the table; delete all rows.',
+                    'href': utils.url_for('api_table.empty',
+                                          dbname=db['name'],
+                                          tablename=table['name']),
+                    'method': 'POST'
+                },
+                'delete': {
+                    'title': 'Delete the table.',
+                    'href': utils.url_for('api_table.table',
+                                          dbname=db['name'],
+                                          tablename=table['name']),
+                    'method': 'DELETE'
+                }
+            }
     else:
         result['href'] = utils.url_for('api_table.table',
                                        dbname=db['name'],

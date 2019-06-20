@@ -1,11 +1,12 @@
 "JSON schema definitions components."
 
-link_def = {
+link = {
     'title': 'A link to an object.',
     'type': 'object',
     'properties': {
+        'title': {'type': 'string'},
         'href': {'type': 'string', 'format': 'uri'},
-        'content_type': {'type': 'string', 'default': 'application/json'},
+        'content-type': {'type': 'string', 'default': 'application/json'},
         'format': {'type': 'string', 'default': 'json'}
     },
     'required': [
@@ -13,8 +14,8 @@ link_def = {
     ]
 }
 
-user_def = {
-    'title': 'The owner of the current object.',
+user = {
+    'title': 'The user associated with the current object.',
     'type': 'object',
     'properties': {
         'username': {'type': 'string'},
@@ -28,39 +29,57 @@ user_def = {
 
 property_names = {'pattern': '^[a-zA-Z][a-zA-Z0-9_-]*$'}
 
-operation_def = {
-    'title': 'An operation to modify the content of the DbShare server.',
+iobody = {
+    'title': 'Input/output data body.',
     'type': 'object',
     'properties': {
-        'title': {'type': 'string'},
-        'href': {'type': 'string', 'format': 'uri-template'},
-        'variables': {
+        'content-type': {'type': 'string'},
+        'schema': {
+            'title': 'JSON schema of data body content.',
             'type': 'object',
-            'propertyNames': property_names,
-            'additionalProperties': {
-                'type': 'object',
-                'properties': {
-                    'title': {'type': 'string'},
-                    'type': {'type': 'string',
-                             'enum': ['string']
-                    }
-                }
-            }
-        },
-        'method': {
-            'type': 'string',
-            'enum': ['PUT', 'POST', 'DELETE']
-        },
-        'input': {
-            'oneOf': [
-                {'type': 'boolean'},
-                {'type': 'object',
-                 'properties': {
-                     'contentType': {'type': 'string'},
-                     'schema': {'type': 'string', 'format': 'uri'}
-                 }
-                }
-            ]
+            'properties': {
+                'href': {'type': 'string', 'format': 'uri'}
+            },
+            'required': ['href']
+        }
+    },
+    'required': ['content-type']
+}
+
+io = {
+    'oneOf': [
+        {'$ref': '#/definitions/iobody'},
+        {'type': 'array',
+         'items': {'$ref': '#/definitions/iobody'}
+        }
+    ]
+}
+
+operations = {
+    'title': 'Operations for modifying the DbShare server data.',
+    'type': 'object',
+    'propertyNames': property_names,
+    'additionalProperties': {
+        'title': 'The property name is the type of entity operated on.',
+        'type': 'object',
+        'propertyNames': property_names,
+        'additionalProperties': {
+            'title': 'The property name is the operation.',
+            'type': 'object',
+            'properties': {
+                'title': {'type': 'string'},
+                'href': {'type': 'string', 'format': 'uri'},
+                'variables': {
+                    'type': 'object'
+                },
+                'method': {
+                    'type': 'string',
+                    'enum': ['POST', 'PUT', 'DELETE']
+                },
+                'input': io,
+                'output': io,
+            },
+            'required': ['href', 'method']
         }
     }
 }

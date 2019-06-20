@@ -19,7 +19,7 @@ JSON_MIMETYPE    = 'application/json'
 
 DEFAULT_CONFIG = {
     'base_url': 'http://127.0.0.1:5000', # DbShare server base url.
-    'base_schema': False,       # Use schema from server at base url.
+    'base_schema': None,        # Use schema from server at base url.
     'username': None,           # Needs to be set! Must have admin privileges.
     'apikey': None,             # Needs to be set! For the above user.
     'filename': '/tmp/test.sqlite3', # Sqlite3 file
@@ -48,19 +48,9 @@ def process_args(filepath=None):
     CONFIG.update(DEFAULT_CONFIG)
     with open(filepath) as infile:
         CONFIG.update(json.load(infile))
-    # Add API root url
+    # Add API root url.
     CONFIG['root_url'] = CONFIG['base_url'] + '/api'
     return args
-
-def url(*segments):
-    "Return the URL composed of the root URL and the given path segments."
-    return '/'.join([CONFIG['root_url']] + list(segments))
-
-def json_validate(instance, schema):
-    "Validate the JSON instance versus the given JSON schema."
-    jsonschema.validate(instance=instance,
-                        schema=schema,
-                        format_checker=jsonschema.draft7_format_checker)
 
 def run():
     unittest.main(argv=process_args())
@@ -70,6 +60,7 @@ class Base(unittest.TestCase):
     "Base class for DbShare test cases."
 
     def setUp(self):
+        self.schemas = {}
         self.session = requests.Session()
         self.session.headers.update({'x-apikey': CONFIG['apikey']})
         self.addCleanup(self.close_session)
@@ -77,33 +68,62 @@ class Base(unittest.TestCase):
     def close_session(self):
         self.session.close()
 
-    def get_schema(self, response):
-        "If a schema Link, then fetch and return the schema."
+    @property
+    def root(self):
+        "Return the API root data."
         try:
-            url = response.links['schema']['url']
+            return self._root
+        except AttributeError:
+            response = self.session.get(CONFIG['root_url'])
+            self.assertEqual(response.status_code, http.client.OK)
+            self.check_schema(response)
+            self._root = response.json()
+            return self._root
+
+    def check_schema(self, response):
+        """Check that there is a schema linked in the response headers,
+        and that the response JSON data matches that schema.
+        Return the response JSON.
+        """
+        self.assertEqual(response.status_code, http.client.OK)
+        url = response.links['schema']['url']
+        # Change to the local schema, rather than the default remote global.
+        if CONFIG['base_schema']:
+            b = urllib.parse.urlparse(CONFIG['base_url'])
+            s = urllib.parse.urlparse(url)
+            s = s._replace(scheme=b.scheme, netloc=b.netloc)
+            url = s.geturl()
+        try:
+            schema = self.schemas[url]
         except KeyError:
-            return None
-        else:
-            if CONFIG['base_schema']:
-                base = urllib.parse.urlparse(CONFIG['base_url'])
-                schema = urllib.parse.urlparse(url)
-                schema = schema._replace(scheme=base.scheme, netloc=base.netloc)
-                url = schema.geturl()
-            response = self.session.get(url)
-            self.assertTrue(response.status_code, http.client.OK)
-            return response.json()
+            r = self.session.get(url)
+            self.assertEqual(r.status_code, http.client.OK)
+            schema = r.json()
+            self.schemas[url] = schema
+        result = response.json()
+        self.validate_schema(result, schema)
+        return result
+
+    def validate_schema(self, instance, schema):
+        "Validate the JSON instance versus the given JSON schema."
+        jsonschema.validate(instance=instance,
+                            schema=schema,
+                            format_checker=jsonschema.draft7_format_checker)
 
     def create_database(self):
         "Create an empty database."
-        self.db_url = url('db', CONFIG['dbname'])
-        response = self.session.put(self.db_url)
+        dbops = self.root['operations']['database']
+        self.assertTrue('variables' in dbops['create'])
+        self.assertTrue('dbname' in dbops['create']['variables'])
+        url = dbops['create']['href'].format(dbname=CONFIG['dbname'])
+        response = self.session.put(url)
+        self.assertEqual(response.status_code, http.client.OK)
+        self.db_url = response.url
         self.addCleanup(self.delete_db)
         return response
 
     def upload_file(self):
         "Create a local Sqlite3 file and upload it."
-        # Define the url for the database.
-        self.db_url = url('db', CONFIG['dbname'])
         # Create the database in a local file.
         cnx = sqlite3.connect(CONFIG['filename'])
         self.addCleanup(self.delete_file)
@@ -124,10 +144,13 @@ class Base(unittest.TestCase):
                         " VALUES (?,?,?)", (3, -1.5, 'c'))
         cnx.close()
         # Upload the database file.
+        dbops = self.root['operations']['database']
+        url = dbops['create']['href'].format(dbname=CONFIG['dbname'])
         with open(CONFIG['filename'], 'rb') as infile:
-            response = self.session.put(self.db_url, data=infile)
+            response = self.session.put(url, data=infile)
+            self.assertEqual(response.status_code, http.client.OK)
+            self.db_url = response.url
         self.addCleanup(self.delete_db)
-        self.assertEqual(response.status_code, http.client.OK)
         return response
 
     def delete_file(self):

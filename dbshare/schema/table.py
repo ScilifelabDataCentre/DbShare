@@ -25,12 +25,11 @@ schema = {
     '$id': constants.SCHEMA_BASE_URL + '/table',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Table API JSON schema.',
-    'definitions': {
-        'link': definitions.link_def
-    },
+    'definitions': {'link': definitions.link},
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},
@@ -44,18 +43,17 @@ schema = {
         'columns': {
             'type': 'array',
             'items': columns},
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': [
         '$id',
+        'timestamp',
         'name', 
         'database',
         'nrows',
         'rows',
         'data',
         'visualizations',
-        'columns',
-        'timestamp'
+        'columns'
     ]
 }
 

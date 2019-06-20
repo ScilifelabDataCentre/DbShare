@@ -8,9 +8,7 @@ schema = {
     '$id': constants.SCHEMA_BASE_URL + '/view',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'View API JSON schema.',
-    'definitions': {
-        'link': definitions.link_def
-    },
+    'definitions': {'link': definitions.link},
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},

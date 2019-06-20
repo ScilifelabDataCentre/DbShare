@@ -22,10 +22,7 @@ class Root(base.Base):
     def test_schema(self):
         "Get the schema and check valid root API JSON."
         response = self.session.get(base.CONFIG['root_url'])
-        self.assertEqual(response.status_code, http.client.OK)
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(response.json(), schema)
+        self.check_schema(response)
 
 
 if __name__ == '__main__':

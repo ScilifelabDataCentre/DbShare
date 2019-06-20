@@ -176,29 +176,50 @@ def get_json(db, complete=False):
                            for view in db['views'].values()]
         result['operations'] = {}
         if dbshare.db.has_write_access(db):
-            result['operations']['edit'] = {
-                'title': 'Edit the metadata of the database.',
-                'method': 'POST',
-                'input': {
-                    'contentType': constants.JSON_MIMETYPE,
-                    'schema': dbshare.api.schema.schemas['db/edit']['href']
+            result['operations']['database'] = {
+                'edit': {
+                    'title': 'Edit the metadata of the database.',
+                    'href': utils.url_for('api_db.database', dbname=db['name']),
+                    'method': 'POST',
+                    'input': {
+                        'content-type': constants.JSON_MIMETYPE,
+                        'schema': {
+                            'href': dbshare.api.schema.schemas['db/edit']['href']}
+                    }
+                },
+                'delete': {
+                    'title': 'Delete the database.',
+                    'href': utils.url_for('api_db.database', dbname=db['name']),
+                    'method': 'DELETE'
                 }
             }
-            result['operations']['delete'] = {
-                'title': 'Delete the database.',
-                'method': 'DELETE'
+            result['operations']['table'] = {
+                'create': {
+                    'title': 'Create a table in the database.',
+                    'href': utils.url_for_unq('api_table.table',
+                                              dbname='{dbname}',
+                                              tablename='{tablename}'),
+                    'method': 'PUT',
+                    'input': {
+                        'content-type': constants.JSON_MIMETYPE,
+                        'schema': {
+                            'href': dbshare.api.schema.schemas['table/create']['href']
+                        }
+                    }
+                }
             }
         if dbshare.db.has_write_access(db, check_mode=False):
+            database = result['operations'].setdefault('database', {})
             if db['readonly']:
-                result['operations']['readwrite'] = {
+                database['readwrite'] = {
                     'title': 'Set the database to read-write.',
-                    'href': utils.url_for('api_db.readwrite', dbname=db['name']),
+                    'href': utils.url_for('api_db.readwrite',dbname=db['name']),
                     'method': 'POST'
                 }
             else:
-                result['operations']['readonly'] = {
+                database['readonly'] = {
                     'title': 'Set the database to read-only.',
-                    'href': utils.url_for('api_db.readonly', dbname=db['name']),
+                    'href': utils.url_for('api_db.readonly',dbname=db['name']),
                     'method': 'POST'
                 }
     return result

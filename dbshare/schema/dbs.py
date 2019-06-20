@@ -9,12 +9,12 @@ schema = {
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Databases map API JSON schema.',
     'definitions': {
-        'user': definitions.user_def,
-        'operation': definitions.operation_def
+        'user': definitions.user
     },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'title': {'type': 'string'},
         'owner': {'$ref': '#/definitions/user'},
         'total_size': {'type': 'integer', 'minimum': 0},
@@ -32,9 +32,7 @@ schema = {
                     'modified': {'type': 'string', 'format': 'timestamp'},
                     'created': {'type': 'string', 'format': 'timestamp'},
                     'href': {'type': 'string', 'format': 'uri'},
-                    'operations': {
-                        'create': {'$ref': '#/definitions/operation'}
-                    }
+                    'operations': definitions.operations
                 },
                 'required': [
                     'name',
@@ -48,12 +46,12 @@ schema = {
                     'href'
                 ]
             }
-        },
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+        }
     },
     'required': [
+        '$id',
+        'timestamp',
         'title',
-        'databases',
-        'timestamp'
+        'databases'
     ]
 }

@@ -1,4 +1,4 @@
-"Juery API JSON schema."
+"Query API JSON schema."
 
 from .. import constants
 

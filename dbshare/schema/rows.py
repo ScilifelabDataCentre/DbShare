@@ -1,6 +1,5 @@
 "Rows data (table or view) API JSON schema."
 
-from . import definitions
 from .. import constants
 
 

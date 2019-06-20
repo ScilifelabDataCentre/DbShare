@@ -11,17 +11,14 @@ class User(base.Base):
 
     def test_access(self):
         "Get JSON for the current user."
-        response = self.session.get(base.url('user', base.CONFIG['username']))
+        response = self.session.get(self.root['user']['href'])
         self.assertEqual(response.status_code, http.client.OK)
 
     def test_schema(self):
         "Valid user JSON."
-        response = self.session.get(base.url('user', base.CONFIG['username']))
-        self.assertEqual(response.status_code, http.client.OK)
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(response.json(), schema)
+        response = self.session.get(self.root['user']['href'])
+        self.check_schema(response)
 
 
 if __name__ == '__main__':
-    run()
+    base.run()

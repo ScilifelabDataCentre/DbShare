@@ -12,22 +12,17 @@ class Query(base.Base):
         "Upload a file containing a plain Sqlite3 database."
         super().setUp()
         self.upload_file()
-
-    def get_url(self):
-        return base.url('db', base.CONFIG['dbname'], 'query')
+        self.assertEqual(self.root['operations']['database']['query']['method'], 'POST')
+        self.assertTrue('variables' in self.root['operations']['database']['query'])
+        url = self.root['operations']['database']['query']['href']
+        self.url_query = url.format(dbname=base.CONFIG['dbname'])
 
     def test_table_query_one_column(self):
         "Get only one column from the test table."
         query = {'select': 't',
                  'from': 't1'}
-        response = self.session.post(self.get_url(), json=query)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-
-        # Valid query output JSON.
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
+        response = self.session.post(self.url_query, json=query)
+        result = self.check_schema(response)
 
         # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
@@ -37,14 +32,8 @@ class Query(base.Base):
         "Get all columns, there are 3 in the test table."
         query = {'select': '*',
                  'from': 't1'}
-        response = self.session.post(self.get_url(), json=query)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-
-        # Valid query output JSON.
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
+        response = self.session.post(self.url_query, json=query)
+        result = self.check_schema(response)
 
         # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
@@ -54,7 +43,7 @@ class Query(base.Base):
         "A bad query should yield HTTP Bad Request."
         query = {'select': None,
                  'from': 't1'}
-        response = self.session.post(self.get_url(), json=query)
+        response = self.session.post(self.url_query, json=query)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
     def test_table_query_rename_column(self):
@@ -62,14 +51,8 @@ class Query(base.Base):
         name = 'weird-column:name'
         query = {'select': f't as "{name}"',
                  'from': 't1'}
-        response = self.session.post(self.get_url(), json=query)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-
-        # Valid query output JSON.
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
+        response = self.session.post(self.url_query, json=query)
+        result = self.check_schema(response)
 
         # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))
@@ -81,14 +64,8 @@ class Query(base.Base):
         query = {'select': 't',
                  'from': 't1',
                  'limit': 2}
-        response = self.session.post(self.get_url(), json=query)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-
-        # Valid query output JSON.
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
+        response = self.session.post(self.url_query, json=query)
+        result = self.check_schema(response)
 
         # Check correct results.
         self.assertEqual(result['nrows'], len(result['data']))

@@ -10,19 +10,20 @@ import base
 class Table(base.Base):
     "Test the table API endpoint."
 
-    table_spec = {'name': 't1',
-                  'title': 'Test table',
-                  'columns': [
-                      {'name': 'i',
-                       'type': 'INTEGER',
-                       'primarykey': True},
-                      {'name': 't',
-                       'type': 'TEXT',
-                       'notnull': False},
-                      {'name': 'r',
-                       'type': 'REAL',
-                       'notnull': True}
-                  ]
+    table_spec = {
+        'name': 't1',
+        'title': 'Test table',
+        'columns': [
+            {'name': 'i',
+             'type': 'INTEGER',
+             'primarykey': True},
+            {'name': 't',
+             'type': 'TEXT',
+             'notnull': False},
+            {'name': 'r',
+             'type': 'REAL',
+             'notnull': True}
+        ]
     }
 
     def get_csvfile_data(self, rows):
@@ -31,64 +32,50 @@ class Table(base.Base):
         writer.writerow([c['name'] for c in self.table_spec['columns']])
         writer.writerows(rows)
         return csvfile.getvalue()
-        
-
-    def get_url(self, *segments):
-        return base.url('table',
-                        base.CONFIG['dbname'],
-                        self.table_spec['name'],
-                        *segments)
 
     def test_db_upload(self):
         "Create a database with table by file upload, check the table JSON."
-
-        # Upload a file containing a plain Sqlite3 database.
         response = self.upload_file()
-        self.assertEqual(response.status_code, http.client.OK)
+        result = self.check_schema(response)
 
-        # Valid database JSON.
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(response.json(), schema)
+        # Check contents of table JSON.
+        self.assertEqual(len(result['tables']), 1)
+        self.assertEqual(len(result['views']), 1)
+        table_url = result['tables'][0]['href']
+        self.assertEqual(result['tables'][0]['nrows'], 3)
+        rows_url = result['tables'][0]['rows']['href']
 
-        # The table API JSON is valid.
-        response = self.session.get(self.get_url())
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
-        rows_url = result['rows']['href']
+        # Validate the table API JSON.
+        response = self.session.get(table_url)
+        result = self.check_schema(response)
+        self.assertEqual(result['rows']['href'], rows_url)
 
-        # The table rows JSON is valid.
+        # Validate the table rows JSON, and content.
         response = self.session.get(rows_url)
-        self.assertEqual(response.status_code, http.client.OK)
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(response.json(), schema)
+        result = self.check_schema(response)
+        self.assertEqual(result['nrows'], 3)
+        self.assertEqual(result['nrows'], len(result['data']))
 
         # Content negotiation for rows using URL without '.json' extension.
         response = self.session.get(rows_url.rstrip('.json'),
                                     headers={'Accept': base.JSON_MIMETYPE})
-        self.assertEqual(response.status_code, http.client.OK)
-        base.json_validate(response.json(), schema)
+        self.check_schema(response)
 
     def test_create(self):
         "Create a database and a table in it. Check the table definition."
 
         # Create an empty database.
         response = self.create_database()
-        self.assertEqual(response.status_code, http.client.OK)
+        result = self.check_schema(response)
 
         # Create a table in the database.
-        response = self.session.put(self.get_url(), json=self.table_spec)
-        self.assertEqual(response.status_code, http.client.OK)
+        url = result['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.put(url, json=self.table_spec)
+        result = self.check_schema(response)
 
         # Check the created table.
-        result = response.json()
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
         self.assertEqual(len(result['columns']),
                          len(self.table_spec['columns']))
         self.assertEqual(result['title'], self.table_spec['title'])
@@ -103,7 +90,7 @@ class Table(base.Base):
         self.assertTrue(lookup['i']['notnull'])
 
         # Delete the table.
-        response = self.session.delete(self.get_url())
+        response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
 
         # Check no tables in the database.
@@ -117,29 +104,38 @@ class Table(base.Base):
 
         # Create an empty database.
         response = self.create_database()
-        self.assertEqual(response.status_code, http.client.OK)
+        result = self.check_schema(response)
 
         # Create a table in the database.
-        response = self.session.put(self.get_url(), json=self.table_spec)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        url = result['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.put(url, json=self.table_spec)
+        result = self.check_schema(response)
+        url_table = response.url
+        self.assertEqual(result['operations']['table']['empty']['method'],
+                         'POST')
+        url_empty = result['operations']['table']['empty']['href']
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 0)
 
         # Insert data.
+        self.assertEqual(result['operations']['table']['insert']['method'],
+                         'POST')
+        url = result['operations']['table']['insert']['href']
         data = {'data': [{'i': 1, 't': 'stuff', 'r': 1.2345}] }
-        response = self.session.post(self.get_url('insert'), json=data)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.post(url, json=data)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 1)
 
         data = {'data': [{'i': 2, 't': 'another', 'r': 3}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(result['nrows'], 2)
 
         data = {'data': [{'i': 3, 'r': -0.45}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(result['nrows'], 3)
@@ -147,43 +143,43 @@ class Table(base.Base):
         row_3 = {'i': 4, 't': 'multirow', 'r': -0.45}
         data = {'data': [row_3,
                          {'i': 5, 't': 'multirow 2', 'r': 1.2e4}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(result['nrows'], 5)
 
         # Try to insert invalid data of different kinds.
         data = {'data': [{'i': 3, 't': 'primary key clash', 'r': -0.1}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
         data = {'data': [{'i': 8, 't': 'missing value'}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
         data = {'data': [{'i': 9, 't': 'wrong type', 'r': 'string!'}] }
-        response = self.session.post(self.get_url('insert'), json=data)
+        response = self.session.post(url, json=data)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
-        response = self.session.get(self.get_url())
+        # Get the table data.
+        response = self.session.get(url_table)
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(result['nrows'], 5)
 
         # Get the rows and compare one of them
-        response = self.session.get(result['rows']['href'])
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        url = result['rows']['href']
+        response = self.session.get(url)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 5)
         self.assertEqual(len(result['data']), result['nrows'])
         self.assertEqual(result['data'][3], row_3)
 
         # Empty the table.
-        response = self.session.post(self.get_url('empty'))
+        response = self.session.post(url_empty)
         self.assertEqual(response.status_code, http.client.OK)
-        response = self.session.get(self.get_url())
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.get(response.url)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 0)
 
     def test_csv(self):
@@ -191,36 +187,37 @@ class Table(base.Base):
 
         # Create an empty database.
         response = self.create_database()
-        self.assertEqual(response.status_code, http.client.OK)
+        result = self.check_schema(response)
 
         # Create a table in the database.
-        response = self.session.put(self.get_url(), json=self.table_spec)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        url = result['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.put(url, json=self.table_spec)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 0)
 
         headers = {'Content-Type': 'text/csv'}
 
         # Insert CSV data.
+        self.assertEqual(result['operations']['table']['insert']['method'],
+                         'POST')
+        url = result['operations']['table']['insert']['href']
         data = self.get_csvfile_data([(1, 'test', 0.2),
                                       (2, 'another test', 4.123e5),
                                       (3, 'third', -13)])
-        response = self.session.post(self.get_url('insert'),
-                                     data=data,headers=headers)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.post(url, data=data, headers=headers)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 3)
 
         # Row with None for a pkey item.
         data = self.get_csvfile_data([(None, 'missing pkey', 0.2)])
-        response = self.session.post(self.get_url('insert'),
-                                     data=data,headers=headers)
+        response = self.session.post(url, data=data, headers=headers)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
         # Row with too many items.
         data = self.get_csvfile_data([(1, 'test', 2.1, 'superfluous')])
-        response = self.session.post(self.get_url('insert'),
-                                     data=data,headers=headers)
+        response = self.session.post(url, data=data, headers=headers)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
     def test_update(self):
@@ -229,36 +226,38 @@ class Table(base.Base):
         # Create an empty database.
         response = self.create_database()
         self.assertEqual(response.status_code, http.client.OK)
+        result = self.check_schema(response)
 
         # Create a table in the database.
-        response = self.session.put(self.get_url(), json=self.table_spec)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        url = result['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.put(url, json=self.table_spec)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 0)
 
         headers = {'Content-Type': 'text/csv'}
 
         # Insert CSV data.
+        self.assertEqual(result['operations']['table']['insert']['method'],
+                         'POST')
+        url = result['operations']['table']['insert']['href']
         data = self.get_csvfile_data([(1, 'test', 0.2),
                                       (2, 'another test', 4.123e5),
                                       (3, 'third', -13)])
-        response = self.session.post(self.get_url('insert'),
-                                     data=data,headers=headers)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.post(url, data=data, headers=headers)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 3)
 
-        # Update CSV data; check that it actually changed anything.
+        # Update CSV data; check that it actually changed something.
+        update_url = result['operations']['table']['update']['href']
         data = self.get_csvfile_data([(1, 'changed', -1.0)])
-        response = self.session.post(self.get_url('update'),
-                                     data=data,headers=headers)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.post(update_url, data=data, headers=headers)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 3)
 
         response = self.session.get(result['rows']['href'])
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        result = self.check_schema(response)
         rows = result['data']
         self.assertEqual(rows[0]['i'], 1)
         self.assertEqual(rows[0]['t'], 'changed')
@@ -267,14 +266,11 @@ class Table(base.Base):
 
         # Update non-existent row; should not change anything.
         data = self.get_csvfile_data([(4, 'this row does not exist', 1.0)])
-        response = self.session.post(self.get_url('update'),
-                                     data=data,headers=headers)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        response = self.session.post(update_url, data=data, headers=headers)
+        result = self.check_schema(response)
         self.assertEqual(result['nrows'], 3)
         response = self.session.get(result['rows']['href'])
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
+        result = self.check_schema(response)
         self.assertEqual(rows, result['data'])
 
 

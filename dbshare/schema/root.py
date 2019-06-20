@@ -4,37 +4,19 @@ from . import definitions
 from .. import constants
 
 
-input_output = {
-    'type': 'object',
-    'properties': {
-        'content-type': {'type': 'string'},
-        'schema': {
-            'type': 'object',
-            'properties': {
-                'href': {'type': 'string',
-                         'format': 'uri'}
-            },
-            'required': ['href']
-        }
-    },
-    'required': ['content-type']
-}
-
 schema = {
     '$id': constants.SCHEMA_BASE_URL + '/root',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'timestamp': {'type': 'string', 'format': 'datetime'},
     'title': 'API root JSON schema.',
     'definitions': {
-        'user': definitions.user_def,
-        'link': definitions.link_def
-    },
+        'link': definitions.link,
+        'iobody': definitions.iobody},
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'datetime'},
         'title': {'type': 'string'},
-        'version': {'type': 'string',
-                    'pattern': '^1\.[0-9]+\.[0-9]+$'},
+        'version': {'type': 'string', 'pattern': '^1\.[0-9]+\.[0-9]+$'},
         'databases': {
             'title': 'Links to collections of databases.',
             'type': 'object',
@@ -61,40 +43,8 @@ schema = {
         },
         'schema': {'title': 'Link to the schema documents.',
                    '$ref': '#/definitions/link'},
-        'user': {'title': 'Link to the current user.',
-                 '$ref': '#/definitions/user'},
-        'operations': {
-            'title': 'All URLs with non-GET methods specified by URI templates.',
-            'type': 'object',
-            'propertyNames': definitions.property_names,
-            'properties': {
-                'additionalProperties': {
-                    'title': 'The property name is the type of entity the operation pertains to.',
-                    'type': 'object',
-                    'propertyNames': definitions.property_names,
-                    'properties': {
-                        'additionalProperties': {
-                            'title': 'The property name is the operation.',
-                            'type': 'object',
-                            'properties': {
-                                'title': {'type': 'string'},
-                                'href': {'type': 'string', 'format': 'uri'},
-                                'variables': {
-                                    'type': 'object'
-                                },
-                                'method': {
-                                    'type': 'string',
-                                    'enum': ['POST', 'PUT', 'DELETE']
-                                },
-                                'input': input_output,
-                                'output': input_output
-                            },
-                            'required': ['href', 'method']
-                        }
-                    }
-                }
-            }
-        }
+        'user': definitions.user,
+        'operations': definitions.operations
     },
     'required': [
         '$id',

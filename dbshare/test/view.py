@@ -11,29 +11,19 @@ class View(base.Base):
     def setUp(self):
         "Upload a file containing a plain Sqlite3 database."
         super().setUp()
-        self.upload_file()
+        response = self.upload_file()
+        result = self.check_schema(response)
+        self.url_view = result['views'][0]['href']
 
     def test_db_upload(self):
         "Create a database with view by file upload, check the view JSON."
-
-        # Valid view JSON.
-        response = self.session.get(base.url('view', 
-                                             base.CONFIG['dbname'], 
-                                             'v1'))
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
-
-        # Valid view rows JSON.
-        rows_url = result['rows']['href']
-        response = self.session.get(rows_url)
-        self.assertEqual(response.status_code, http.client.OK)
-        result = response.json()
-        schema = self.get_schema(response)
-        self.assertTrue(schema is not None)
-        base.json_validate(result, schema)
+        response = self.session.get(self.url_view)
+        result = self.check_schema(response)
+        url = result['rows']['href']
+        response = self.session.get(url)
+        result = self.check_schema(response)
+        self.assertEqual(result['nrows'], 2)
+        self.assertEqual(len(result['data']), 2)
 
 
 if __name__ == '__main__':

@@ -41,7 +41,7 @@ def get_json(db, view, complete=False):
               'nrows': view.get('nrows'),
               'rows': {'href': url + '.json'},
               'data': {'href': url + '.csv', 
-                       'content_type': constants.CSV_MIMETYPE,
+                       'content-type': constants.CSV_MIMETYPE,
                        'format': 'csv'}
     }
     if complete:

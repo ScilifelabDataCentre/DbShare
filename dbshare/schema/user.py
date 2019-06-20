@@ -8,12 +8,11 @@ schema = {
     '$id': constants.SCHEMA_BASE_URL + '/user',
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'User API JSON schema.',
-    'definitions': {
-        'link': definitions.link_def
-    },
+    'definitions': {'link': definitions.link},
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'username': {'type': 'string'},
         'email': {'type': 'string', 'format': 'email'},
         'role': {'type': 'string', 'enum': ['admin', 'user']},
@@ -22,11 +21,11 @@ schema = {
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'},
         'databases': {'$ref': '#/definitions/link'},
-        'templates': {'$ref': '#/definitions/link'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+        'templates': {'$ref': '#/definitions/link'}
     },
     'required': [
         '$id',
+        'timestamp',
         'username',
         'email',
         'role',
@@ -35,7 +34,6 @@ schema = {
         'modified',
         'created',
         'databases',
-        'templates',
-        'timestamp'
+        'templates'
     ]
 }

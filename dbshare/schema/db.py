@@ -9,16 +9,16 @@ schema = {
     '$schema': constants.SCHEMA_SCHEMA_URL,
     'title': 'Database API JSON schema.',
     'definitions': {
-        'user': definitions.user_def,
-        'link': definitions.link_def
-    },
+        'link': definitions.link,
+        'iobody': definitions.iobody},
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},
-        'owner': {'$ref': '#/definitions/user'},
+        'owner': definitions.user,
         'public': {'type': 'boolean'},
         'readonly': {'type': 'boolean'},
         'size': {'type': 'integer', 'minimum': 0},
@@ -81,10 +81,11 @@ schema = {
                              'data']
             }
         },
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+        'operations': definitions.operations
     },
     'required': [
         '$id',
+        'timestamp',
         'name', 
         'title',
         'description',
@@ -94,8 +95,7 @@ schema = {
         'size',
         'modified',
         'created',
-        'tables',
-        'timestamp'
+        'tables'
     ]
 }
 
