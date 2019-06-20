@@ -7,6 +7,7 @@ from db import Db
 from table import Table
 from query import Query
 from view import View
+from crawl import Crawl
 
 
 if __name__ == '__main__':
