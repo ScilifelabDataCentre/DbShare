@@ -1,6 +1,7 @@
 "View API JSON schema."
 
 from . import definitions
+from . import query
 from . import visualization
 from .. import constants
 
@@ -26,9 +27,7 @@ schema = {
         'visualizations': {
             'type': 'array',
             'items': visualization.spec},
-        'query': {
-            'type': 'object'
-        },
+        'query': query.query,
         'timestamp': {'type': 'string', 'format': 'timestamp'}
     },
     'required': [

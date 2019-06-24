@@ -14,20 +14,53 @@ blueprint = flask.Blueprint('api_view', __name__)
 
 @blueprint.route('/<name:dbname>/<name:viewname>')
 def view(dbname, viewname):
-    "The schema for the view."
-    try:
-        db = dbshare.db.get_check_read(dbname)
-    except ValueError:
-        flask.abort(http.client.UNAUTHORIZED)
-    except KeyError:
-        flask.abort(http.client.NOT_FOUND)
-    try:
-        schema = db['views'][viewname]
-    except KeyError:
-        flask.abort(http.client.NOT_FOUND)
-    result = get_json(db, schema, complete=True)
-    result.update(schema)
-    return utils.jsonify(utils.get_json(**result), schema='/view')
+    """GET: Return the schema for the view.
+    PUT: Create the view.
+    DELETE: Delete the view.
+    """
+    if utils.http_GET():
+        try:
+            db = dbshare.db.get_check_read(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            schema = db['views'][viewname]
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        result = get_json(db, schema, complete=True)
+        result.update(schema)
+        return utils.jsonify(utils.get_json(**result), schema='/view')
+
+    elif utils.http_PUT():
+        try:
+            db = dbshare.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.add_view(flask.request.get_json(), create=True)
+        except (jsonschema.ValidationError, ValueError) as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
+        return flask.redirect(
+            flask.url_for('api_view.view', dbname=dbname, viewname=viewname))
+
+    elif utils.http_DELETE():
+        try:
+            db = dbshare.db.get_check_write(dbname)
+        except ValueError:
+            flask.abort(http.client.UNAUTHORIZED)
+        except KeyError:
+            flask.abort(http.client.NOT_FOUND)
+        try:
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.delete_view(viewname)
+        except ValueError as error:
+            utils.abort_json(http.client.BAD_REQUEST, error)
+        return ('', http.client.NO_CONTENT)
 
 def get_json(db, view, complete=False):
     "Return the JSON for the view."
