@@ -857,9 +857,10 @@ class DbContext:
     def add_view(self, schema, create=True):
         """Create a view in the database and add to the database definition.
         If 'create' is True, then actually create the view.
+        Raises jsonschema.ValidationError if the schema is invalid.
+        Raises ValueError if there is a problem with the input schema data.
         """
-        if not schema.get('name'):
-            raise ValueError('no view name defined')
+        utils.json_validate(schema, dbshare.schema.view.create)
         schema['name'] = schema['name'].lower()
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid view name')
@@ -867,8 +868,6 @@ class DbContext:
             raise ValueError('name is already in use for a table')
         if schema['name'] in self.db['views']:
             raise ValueError('name is already in use for a view')
-        if not schema.get('query'):
-            raise ValueError('no query statement defined')
         if create:
             sql = 'CREATE VIEW "%s" AS %s' % \
                   (schema['name'],

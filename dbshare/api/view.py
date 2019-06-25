@@ -3,6 +3,7 @@
 import http.client
 
 import flask
+import jsonschema
 
 import dbshare.db
 
@@ -12,7 +13,8 @@ from .. import utils
 
 blueprint = flask.Blueprint('api_view', __name__)
 
-@blueprint.route('/<name:dbname>/<name:viewname>')
+@blueprint.route('/<name:dbname>/<name:viewname>',
+                 methods=['GET', 'PUT', 'DELETE'])
 def view(dbname, viewname):
     """GET: Return the schema for the view.
     PUT: Create the view.
@@ -44,6 +46,7 @@ def view(dbname, viewname):
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_view(flask.request.get_json(), create=True)
         except (jsonschema.ValidationError, ValueError) as error:
+            print(error)
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for('api_view.view', dbname=dbname, viewname=viewname))

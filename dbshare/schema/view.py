@@ -13,6 +13,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'database': {'$ref': '#/definitions/link'},
@@ -28,17 +29,49 @@ schema = {
             'type': 'array',
             'items': visualization.spec},
         'query': query.query,
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+        'sources': {
+            'type': 'array',
+            'items': {'type': 'string'}
+        },
+        'columns': {
+            'type': 'array',
+            'items': {
+                'type': 'object',
+                'properties': {
+                    'name': {'type': 'string'},
+                    'type': {'type': 'string'}
+                },
+                'required': ['name', 'type']
+            }
+        }
     },
     'required': [
         '$id',
+        'timestamp',
         'name', 
         'database',
         'nrows',
         'rows',
         'data',
         'visualizations',
-        'query',
-        'timestamp'
+        'query'
+    ]
+}
+
+
+create = {
+    '$id': constants.SCHEMA_BASE_URL + '/view/create',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'View create API JSON schema.',
+    'type': 'object',
+    'properties': {
+        'name': {'type': 'string'},
+        'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
+        'query': query.query
+    },
+    'required': [
+        'name', 
+        'query'
     ]
 }

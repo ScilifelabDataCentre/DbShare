@@ -124,15 +124,12 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     try:
         title = schema.get('title') or "View {}".format(viewname)
         visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
-        if schema['query']['select'] == '*':
-            colnames = '*'
-        else:
-            colnames = ['"%s"' % c for c in schema['query']['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
-        sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
+        columns = [c['name'] for c in schema['columns']]
+        quoted_columns = ['"%s"' % c for c in columns]
+        sql = 'SELECT %s FROM "%s"' % (','.join(quoted_columns), viewname)
 
         if viewname.ext == 'json' or utils.accept_json():
-            columns = [c['name'] for c in schema['columns']]
             try:
                 cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
@@ -150,7 +147,6 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
             return utils.jsonify(utils.get_json(**result), schema='/rows')
 
         elif viewname.ext == 'csv':
-            columns = [c['name'] for c in schema['columns']]
             writer = utils.CsvWriter(header=columns)
             try:
                 cursor = utils.execute_timeout(dbcnx, sql)
@@ -301,8 +297,8 @@ def download_csv(dbname, viewname):
         else:
             header = None
         writer = utils.CsvWriter(header, delimiter=delimiter)
-        colnames = ['"%s"' % c for c in schema['query']['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
+        colnames = ['"%s"' % c for c in schema['query']['columns']]
         sql = 'SELECT %s FROM "%s"' % (','.join(colnames), viewname)
         writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:

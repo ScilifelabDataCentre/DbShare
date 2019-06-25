@@ -180,5 +180,30 @@ def root():
                 'method': 'POST'
             }
         }
+        result['operations']['view'] = {
+            'create': {
+                'title': 'Create a new view in the database.',
+                'href': utils.url_for_unq('api_view.view', dbname='{dbname}', viewname='{viewname}'),
+                'variables': {
+                    'dbname': {'title': 'Name of the database.'},
+                    'viewname': {'title': 'Name of the view.'}
+                },
+                'method': 'PUT',
+                'input' : {
+                    'content-type': constants.JSON_MIMETYPE,
+                    'schema': {
+                        'href': constants.SCHEMA_BASE_URL + '/view/create'
+                    }
+                }
+            },
+            'delete': {
+                'title': 'Delete the view from the database.',
+                'href': utils.url_for_unq('api_view.view', dbname='{dbname}', viewname='{viewname}'),
+                'variables': {
+                    'dbname': {'title': 'Name of the database.'},
+                    'viewname': {'title': 'Name of the view.'}
+                },
+                'method': 'DELETE'
+            }
+            }
     return utils.jsonify(utils.get_json(**result), schema='/root')
-

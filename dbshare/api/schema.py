@@ -30,6 +30,8 @@ schemas = {
                     'title': dbshare.schema.table.input['title']},
     'view': {'href':  dbshare.schema.view.schema['$id'],
              'title': dbshare.schema.view.schema['title']},
+    'view/create': {'href':  dbshare.schema.view.create['$id'],
+                     'title': dbshare.schema.view.create['title']},
     'rows': {'href':  dbshare.schema.rows.schema['$id'],
              'title': dbshare.schema.rows.schema['title']},
     'query/input': {'href':  dbshare.schema.query.input['$id'],
@@ -83,6 +85,10 @@ def table_input():
 @blueprint.route('/view')
 def view():
     return flask.jsonify(dbshare.schema.view.schema)
+
+@blueprint.route('/view/create')
+def view_create():
+    return flask.jsonify(dbshare.schema.view.create)
 
 @blueprint.route('/rows')
 def rows():

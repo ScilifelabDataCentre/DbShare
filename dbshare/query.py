@@ -95,7 +95,7 @@ def table(dbname):
 
 def get_query_from_request(check=False):
     """Get the query data from the current request values (=form or args) data.
-    Raise KeyError if a required part is missing if 'check' is True.
+    Raise KeyError if a required part is missing when 'check' is True.
     """
     result = {}
     result['select'] = flask.request.values.get('select')
