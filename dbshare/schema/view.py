@@ -54,7 +54,9 @@ schema = {
         'rows',
         'data',
         'visualizations',
-        'query'
+        'query',
+        'sources',
+        'columns'
     ]
 }
 

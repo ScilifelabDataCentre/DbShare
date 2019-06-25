@@ -126,7 +126,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
         dbcnx = dbshare.db.get_cnx(dbname)
         columns = [c['name'] for c in schema['columns']]
-        quoted_columns = ['"%s"' % c for c in columns]
+        quoted_columns = [f'"{c}"' for c in columns]
         sql = 'SELECT %s FROM "%s"' % (','.join(quoted_columns), viewname)
 
         if viewname.ext == 'json' or utils.accept_json():

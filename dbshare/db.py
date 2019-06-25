@@ -1050,7 +1050,6 @@ class DbContext:
                                                     'OFFSET'])
 
                 query['select'] = ''.join([t['raw'] for t in parts['SELECT']]).strip()
-                query['columns'] = dbshare.query.get_select_columns(query['select'])
                 query['from'] = ''.join([t['raw'] for t in parts['FROM']]).strip()
                 query['where'] = ''.join([t['raw'] for t in parts['WHERE']]).strip()
                 try:
@@ -1200,15 +1199,15 @@ def get_sql_create_table(schema, if_not_exists=False):
         if column['name'] == 'rowid':
             raise ValueError("column name 'rowid' is reserved by the system")
         names.add(column['name'])
-    # Collect columns forming primary key
+    # Collect columns forming primary key.
     primarykey = []
     for column in schema['columns']:
         if column.get('primarykey'):
             primarykey.append(column['name'])
-    # Column definitions, including column constraints
+    # Column definitions, including column constraints.
     clauses = []
     for column in schema['columns']:
-        coldef = ['"%s" %s' % (column['name'], column['type'])]
+        coldef = [f'''"{column['name']}" {column['type']}''']
         if column['name'] in primarykey:
             column['notnull'] = True
             if len(primarykey) == 1:
@@ -1216,16 +1215,16 @@ def get_sql_create_table(schema, if_not_exists=False):
         if column.get('notnull'):
             coldef.append('NOT NULL')
         clauses.append(' '.join(coldef))
-    # Primary key
+    # Primary key when more than one column.
     if len(primarykey) >= 2:
         clauses.append('PRIMARY KEY (%s)' %
                        ','.join(['"%s"' for k in primarykey]))
-    # Foreign keys
+    # Foreign keys.
     for foreignkey in schema.get('foreignkeys', []):
         clauses.append('FOREIGN KEY (%s) REFERENCES "%s" (%s)' %
-                       (','.join(['"%s"' % c for c in foreignkey['columns']]),
+                       (','.join([f'"{c}"' for c in foreignkey['columns']]),
                         foreignkey['ref'],
-                        ','.join(['"%s"'%c for c in foreignkey['refcolumns']])))
+                        ','.join([f'"{c}"' for c in foreignkey['refcolumns']])))
     sql = ['CREATE TABLE']
     if if_not_exists:
         sql.append('IF NOT EXISTS')
@@ -1248,7 +1247,7 @@ def get_sql_create_index(schema, if_not_exists=False):
     if if_not_exists:
         sql.append('IF NOT EXISTS')
     sql.append('"%s" ON "%s"' % (schema['name'], schema['table']))
-    sql.append("(%s)" % ','.join(['"%s"' % c for c in schema['columns']]))
+    sql.append("(%s)" % ','.join([f'"{c}"' for c in schema['columns']]))
     return ' '.join(sql)
 
 def get_cnx(dbname, write=False):

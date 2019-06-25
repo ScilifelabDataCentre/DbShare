@@ -58,8 +58,8 @@ def rows(dbname):
     return flask.render_template('query/rows.html',
                                  db=db,
                                  query=query,
-                                 columns=columns,
                                  sql=get_sql_statement(query),
+                                 columns=columns,
                                  rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
@@ -101,11 +101,6 @@ def get_query_from_request(check=False):
     result['select'] = flask.request.values.get('select')
     if check and not result['select']:
         raise KeyError('lacking SELECT part')
-    # Get result column names considering quotes and AS part, if any.
-    if result['select']:
-        result['columns'] = get_select_columns(result['select'])
-    else:
-        result['columns'] = []
     result['from']= flask.request.values.get('from')
     if check and not result['from']: 
         raise KeyError('lacking FROM part')
@@ -131,32 +126,9 @@ def get_query_from_request(check=False):
         pass
     return result
 
-def get_select_columns(select):
-    """Parse out column names from the SELECT part of the query.
-    Consider quotes and AS.
-    """
-    result = []
-    parts = []
-    for token in utils.lexer(select):
-        if token['value'] == ',':
-            result.append(''.join(parts))
-            parts = []
-        elif token['type'] == 'RESERVED' and \
-             token['value'] in ('DISTINCT', 'ALL'):
-            pass
-        elif token['type'] == 'RESERVED' and token['value'] == 'AS':
-            parts = []
-        elif token['type'] == 'WHITESPACE':
-            pass
-        else:
-            parts.append(token['value'])
-    if parts:
-        result.append(''.join(parts))
-    return result
-
 def get_from_sources(from_):
     """Parse out table/view names from the FROM part of the query.
-    Consider quotes and AS (ignored, contrary to columns)."""
+    Consider quotes and AS (which are ignored)."""
     result = []
     parts = []
     before_as = True

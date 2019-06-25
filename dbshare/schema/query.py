@@ -44,6 +44,10 @@ output = {
         'query': query,
         'sql': {'type': 'string'},
         'nrows': {'type': 'integer', 'mimimum': 0},
+        'columns': {
+            'type': 'array',
+            'items': {'type': 'string'}
+        },
         'cpu_time': {'type': 'number', 'mimimum': 0.0},
         'data': {
             'type': 'array',
@@ -54,6 +58,7 @@ output = {
         'query',
         'sql',
         'nrows',
+        'columns',
         'cpu_time',
         'data'
     ]

@@ -117,12 +117,12 @@ def query(dbname):
     except SystemError:
         flask.abort(http.client.REQUEST_TIMEOUT)
     columns = [d[0] for d in cursor.description]
-    query['columns'] = columns
     rows = cursor.fetchall()
     result = {
         'query': query,
         'sql': sql,
         'nrows': len(rows),
+        'columns': columns,
         'cpu_time': timer(),
         'data': [dict(zip(columns, row)) for row in rows]
     }
