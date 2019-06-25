@@ -47,6 +47,8 @@ class Crawl(base.Base):
             if data.get('method', 'GET') != 'GET': return
             for key, value in data.items():
                 if key == 'href':
+                    # 'href' is a dict within schema
+                    if not isinstance(value, str): continue
                     if value in self.checked: continue
                     if not value.startswith(base.CONFIG['root_url']): continue
                     parts = urllib.parse.urlparse(value)
