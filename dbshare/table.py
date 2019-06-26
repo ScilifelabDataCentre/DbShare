@@ -258,8 +258,90 @@ def schema(dbname, tablename):
         indexes=indexes,
         has_write_access=dbshare.db.has_write_access(db))
 
+@blueprint.route('/<name:dbname>/<name:tablename>/index',
+                 methods=['GET', 'POST'])
+@dbshare.user.login_required
+def index_create(dbname, tablename):
+    "Create an index on the table in the database."
+    try:
+        db = dbshare.db.get_check_write(dbname)
+    except ValueError as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+    positions = list(range(len(schema['columns'])))
+
+    if utils.http_GET():
+        dbshare.db.set_nrows(db, targets=db['tables'].keys())
+        return flask.render_template('table/index_create.html',
+                                     db=db,
+                                     schema=schema,
+                                     positions=positions)
+
+    elif utils.http_POST():
+        try:
+            prefix = constants.INDEX_PREFIX_TEMPLATE % schema['name']
+            ordinal = -1
+            for ix in db['indexes']:
+                if ix.startswith(prefix):
+                    try:
+                        ordinal = max(ordinal, int(ix['name'][len(prefix):]))
+                    except (ValueError, TypeError, IndexError):
+                        pass
+            index = {'name': prefix + str(ordinal+1),
+                     'table': schema['name'],
+                     'unique': utils.to_bool(flask.request.form.get('unique'))}
+            index['columns'] = []
+            for pos in positions:
+                column = flask.request.form.get("position%i" % pos)
+                if column:
+                    index['columns'].append(column)
+                else:
+                    break
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.add_index(index)
+        except (ValueError, sqlite3.Error) as error:
+            utils.flash_error(error)
+            return flask.redirect(
+                flask.url_for('.index_create', dbname=dbname, tablename=tablename))
+        else:
+            return flask.redirect(
+                flask.url_for('.schema', dbname=dbname, tablename=tablename))
+        
+# 'indexname' is not a proper name
+@blueprint.route('/<name:dbname>/<name:tablename>/index/<indexname>',
+                 methods=['POST', 'DELETE'])
+@dbshare.user.login_required
+def index_delete(dbname, tablename, indexname):
+    "Delete the index. 'tablename' is not needed, but included for consistency."
+    utils.check_csrf_token()
+    try:
+        db = dbshare.db.get_check_write(dbname)
+    except ValueError as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('home'))
+    try:
+        for index in db['indexes'].values():
+            if index['name'] == indexname:
+                tablename = index['table']
+                break
+        else:
+            raise ValueError('no such index in database')
+        with dbshare.db.DbContext(db) as ctx:
+            ctx.delete_index(indexname)
+    except (ValueError, sqlite3.Error) as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+    return flask.redirect(
+        flask.url_for('.schema', dbname=dbname, tablename=tablename))
+
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
+@dbshare.user.login_required
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
@@ -307,6 +389,7 @@ def row_insert(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row/<int:rowid>',
                  methods=['GET', 'POST', 'DELETE'])
+@dbshare.user.login_required
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
@@ -374,6 +457,7 @@ def row_edit(dbname, tablename, rowid):
 
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert')
+@dbshare.user.login_required
 def insert(dbname, tablename):
     "Insert data from a file into the table."
     try:
@@ -394,6 +478,7 @@ def insert(dbname, tablename):
     return flask.render_template('table/insert.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert/csv', methods=['POST'])
+@dbshare.user.login_required
 def insert_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     utils.check_csrf_token()
@@ -431,6 +516,7 @@ def insert_csv(dbname, tablename):
         flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update')
+@dbshare.user.login_required
 def update(dbname, tablename):
     "Update the table with data from a file."
     try:
@@ -452,6 +538,7 @@ def update(dbname, tablename):
     return flask.render_template('table/update.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update/csv', methods=['POST'])
+@dbshare.user.login_required
 def update_csv(dbname, tablename):
     "Update the table with data from a CSV file."
     utils.check_csrf_token()

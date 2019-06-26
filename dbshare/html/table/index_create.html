@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Create an index of table {{ schema['name']}}{% endblock %}
+{% block head_title %}Create an index for table {{ schema['name']}}{% endblock %}
 
-{% block body_title %}Create an index of table {{ schema['name']}}{% endblock %}
+{% block body_title %}Create an index for table {{ schema['name']}}{% endblock %}
 
 {% block main %}
 <div class="card border-info">
   <div class="card-body">
-    <form action="{{ url_for('.create', dbname=db['name'], tablename=schema['name']) }}"
+    <form action="{{ url_for('.index_create', dbname=db['name'], tablename=schema['name']) }}"
           method="POST">
       {{ csrf_token() }}
       <div class="form-group row">
@@ -63,7 +63,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('table.schema', dbname=db['name'], tablename=schema['name']) }}"
+  <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}
