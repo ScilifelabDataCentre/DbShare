@@ -103,6 +103,7 @@ def edit(templatename):
         with TemplateContext(template=template) as ctx:
             ctx.set_name(flask.request.form.get('name'))
             ctx.set_title(flask.request.form.get('title'))
+            ctx.set_description(flask.request.form.get('description'))
             ctx.set_code(flask.request.form.get('code'))
         return flask.redirect(
             flask.url_for('.display', templatename=template['name']))
@@ -112,8 +113,8 @@ def edit(templatename):
         with cnx:
             sql = "DELETE FROM templates WHERE name=?"
             cnx.execute(sql, (template['name'],))
-        return flask.redirect(flask.url_for('templates.owner',
-                                            username=template['owner']))
+        return flask.redirect(
+            flask.url_for('templates.owner', username=template['owner']))
 
 @blueprint.route('/<name:templatename>/clone', methods=['GET', 'POST'])
 @dbshare.user.login_required
@@ -385,11 +386,13 @@ class TemplateContext:
         with self.cnx:
             # Update existing template entry in the system database
             if self.old:
-                sql = "UPDATE templates SET name=?, owner=?, title=?, code=?," \
-                      " type=?, fields=?, public=?, modified=? WHERE name=?"
+                sql = "UPDATE templates SET name=?, owner=?, title=?," \
+                      " description=?, code=?, type=?, fields=?, public=?," \
+                      " modified=? WHERE name=?"
                 self.cnx.execute(sql, (self.template['name'],
                                        self.template['owner'],
                                        self.template.get('title'),
+                                       self.template.get('description'),
                                        self.template['code'],
                                        self.template['type'],
                                        json.dumps(self.template['fields']),
@@ -399,11 +402,13 @@ class TemplateContext:
             # Create template entry in the system database
             else:
                 sql = "INSERT INTO templates" \
-                      " (name, owner, title, code, type, fields, public," \
-                      "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+                      " (name, owner, title, description, code, type, fields," \
+                      " public, created, modified)" \
+                      " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
                 self.cnx.execute(sql, (self.template['name'],
                                        self.template['owner'],
                                        self.template.get('title'),
+                                       self.template.get('description'),
                                        self.template['code'], 
                                        self.template['type'], 
                                        json.dumps(self.template['fields']),
@@ -424,6 +429,10 @@ class TemplateContext:
     def set_title(self, title):
         "Set the template title."
         self.template['title'] = title or None
+
+    def set_description(self, description):
+        "Set the template description."
+        self.template['description'] = description or None
 
     def set_type(self, type):
         "Set the template type."
