@@ -162,7 +162,7 @@ def root():
             },
             'update': {
                 'title': 'Update rows in the table from CSV data.',
-                'href': utils.url_for_unq('api_table.insert', dbname='{dbname}', tablename='{tablename}'),
+                'href': utils.url_for_unq('api_table.update', dbname='{dbname}', tablename='{tablename}'),
                 'variables': {
                     'dbname': {'title': 'Name of the database.'},
                     'tablename': {'title': 'Name of the table.'}
@@ -205,5 +205,5 @@ def root():
                 },
                 'method': 'DELETE'
             }
-            }
+        }
     return utils.jsonify(utils.get_json(**result), schema='/root')
