@@ -243,12 +243,10 @@ def upload(dbname):
             utils.flash_message(f"Loaded {n} records.")
         except (ValueError, IndexError, sqlite3.Error) as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for('.upload',
-                                                dbname=dbname,
-                                                tablename=tablename))
-        return flask.redirect(flask.url_for('table.rows',
-                                            dbname=dbname,
-                                            tablename=tablename))
+            return flask.redirect(
+                flask.url_for('.upload', dbname=dbname, tablename=tablename))
+        return flask.redirect(
+            flask.url_for('table.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/clone', methods=['GET', 'POST'])
 @dbshare.user.login_required
@@ -777,8 +775,36 @@ class DbContext:
         self.update_table_nrows(schema)
         self.db['tables'][schema['name']] = schema
 
+    def add_table_column(self, schema, column):
+        """Add the given column to the table described by the schema.
+        Raise ValueError if there is any problem.
+        """
+        if not column['name'] or not constants.NAME_RX.match(column['name']):
+            raise ValueError('invalid column name')
+        column['name'] = column['name'].lower()
+        for col in schema['columns']:
+            if col['name'] == column['name']:
+                raise ValueError('non-unique column name')
+        if column['type'] not in constants.COLUMN_TYPES:
+            raise ValueError('invalid column type')
+        sql = f'''ALTER TABLE "{schema['name']}"''' \
+              f''' ADD COLUMN "{column['name']}" {column['type']}'''
+        if column.get('notnull'):
+            notnull = ['NOT NULL']
+            if column['type'] == constants.INTEGER:
+                notnull.append('DEFAULT 0')
+            elif column['type'] == constants.REAL:
+                notnull.append('DEFAULT 0.0')
+            elif column['type'] in (constants.TEXT, constants.BLOB):
+                notnull.append("DEFAULT ''")
+            sql += ' ' + ' '.join(notnull)
+        self.dbcnx.execute(sql)
+        schema['columns'].append(column)
+        self.update_table(schema)
+
     def update_table(self, schema):
         "Update the table with the new schema."
+        utils.json_validate(schema, dbshare.schema.table.create)
         sql = f"UPDATE {constants.TABLES} SET schema=? WHERE name=?"
         with self.dbcnx:
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))

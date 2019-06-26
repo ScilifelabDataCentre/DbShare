@@ -105,6 +105,11 @@
     Edit</a>
 </div>
 <div class="mt-2">
+  <a href="{{ url_for('.column', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-primary btn-block">
+    Add column</a>
+</div>
+<div class="mt-2">
   <a href="{{ url_for('index.create', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-secondary btn-block">
     Create index</a>

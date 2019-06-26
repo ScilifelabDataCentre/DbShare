@@ -55,9 +55,8 @@ def create(dbname):
                                                 name=viewname,
                                                 description=description,
                                                 **schema['query']))
-        return flask.redirect(flask.url_for('.rows', 
-                                            dbname=dbname,
-                                            viewname=viewname))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, viewname=viewname))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/edit',
                  methods=['GET', 'POST', 'DELETE'])
@@ -86,13 +85,11 @@ def edit(dbname, viewname):
                 ctx.update_view(schema)
         except ValueError as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for('.edit',
-                                                dbname=dbname,
-                                                viewname=viewname))
+            return flask.redirect(
+                flask.url_for('.edit', dbname=dbname, viewname=viewname))
         else:
-            return flask.redirect(flask.url_for('.rows', 
-                                                dbname=dbname,
-                                                viewname=viewname))
+            return flask.redirect(
+                flask.url_for('.rows', dbname=dbname, viewname=viewname))
 
     elif utils.http_DELETE():
         try:
@@ -184,8 +181,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
 
     except (SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.schema',
-                                            viewname=str(viewname)))
+        return flask.redirect(
+            flask.url_for('.schema', viewname=str(viewname)))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/schema')
 def schema(dbname, viewname):
@@ -251,12 +248,10 @@ def clone(dbname, viewname):
                 ctx.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for('.clone',
-                                                dbname=dbname,
-                                                viewname=viewname))
-        return flask.redirect(flask.url_for('.rows',
-                                            dbname=dbname,
-                                            viewname=schema['name']))
+            return flask.redirect(
+                flask.url_for('.clone', dbname=dbname, viewname=viewname))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, viewname=schema['name']))
 
 @blueprint.route('/<name:dbname>/<name:viewname>/download')
 def download(dbname, viewname):
@@ -303,9 +298,8 @@ def download_csv(dbname, viewname):
         writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.download',
-                                            dbname=dbname,
-                                            viewname=viewname))
+        return flask.redirect(
+            flask.url_for('.download', dbname=dbname, viewname=viewname))
     response = flask.make_response(writer.getvalue())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 

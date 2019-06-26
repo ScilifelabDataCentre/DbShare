@@ -86,9 +86,8 @@ def table(dbname):
                 ctx.add_table(schema, query=query)
         except (KeyError, SystemError, sqlite3.Error) as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for('.define',
-                                                dbname=dbname,
-                                                **query))
+            return flask.redirect(
+                flask.url_for('.define', dbname=dbname, **query))
         return flask.redirect(
             flask.url_for('table.rows', dbname=dbname,tablename=schema['name']))
 

@@ -56,8 +56,6 @@ def create(dbname):
                     flask.request.form.get(f"column{n}primarykey"))
                 column['notnull'] = utils.to_bool(
                     flask.request.form.get(f"column{n}notnull"))
-                column['unique'] = utils.to_bool(
-                    flask.request.form.get(f"column{n}unique"))
                 schema['columns'].append(column)
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
@@ -142,8 +140,8 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
 
     except (SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.schema',
-                                            tablename=str(tablename)))
+        return flask.redirect(
+            flask.url_for('.schema', tablename=str(tablename)))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST', 'DELETE'])
@@ -172,9 +170,8 @@ def edit(dbname, tablename):
                 ctx.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
-        return flask.redirect(flask.url_for('.schema',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.schema', dbname=dbname, tablename=tablename))
 
     elif utils.http_DELETE():
         try:
@@ -183,6 +180,38 @@ def edit(dbname, tablename):
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
+
+@blueprint.route('/<name:dbname>/<name:tablename>/column',
+                 methods=['GET', 'POST'])
+@dbshare.user.login_required
+def column(dbname, tablename):
+    "Add a column to the table."
+    try:
+        db = dbshare.db.get_check_write(dbname)
+    except (KeyError, ValueError) as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        utils.flash_error('no such table')
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+
+    if utils.http_GET():
+        return flask.render_template('table/column_add.html',
+                                     db=db, schema=schema)
+
+    elif utils.http_POST():
+        try:
+            column = {'name': flask.request.form.get('name'),
+                      'type': flask.request.form.get('type'),
+                      'notnull': utils.to_bool(flask.request.form.get('notnull'))}
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.add_table_column(schema, column)
+        except (ValueError, sqlite3.Error) as error:
+            utils.flash_error(error)
+        return flask.redirect(
+            flask.url_for('.schema', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
 @dbshare.user.login_required
@@ -205,9 +234,8 @@ def empty(dbname, tablename):
             ctx.empty_table(schema)
     except sqlite3.Error as error:
         utils.flash_error(error)
-    return flask.redirect(flask.url_for('.rows',
-                                        dbname=dbname,
-                                        tablename=tablename))
+    return flask.redirect(
+        flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/schema')
 def schema(dbname, tablename):
@@ -274,9 +302,8 @@ def row_insert(dbname, tablename):
                                          schema=schema,
                                          values=values)
         utils.flash_message('Row inserted.')
-        return flask.redirect(flask.url_for('.row_insert',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.row_insert', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row/<int:rowid>',
                  methods=['GET', 'POST', 'DELETE'])
@@ -297,15 +324,14 @@ def row_edit(dbname, tablename, rowid):
 
     if utils.http_GET():
         cursor = dbcnx.cursor()
-        names = ','.join(['"%(name)s"=?' % c for c in schema['columns']])
+        names = ','.join([f'''"{c['name']}"''' for c in schema['columns']])
         sql = f'''SELECT {names} FROM "{schema['name']}" WHERE rowid=?'''
         cursor.execute(sql, (rowid,))
         rows = cursor.fetchall()
         if len(rows) != 1:
             utils.flash_error('no such row in table')
-            return flask.redirect(flask.url_for('.rows',
-                                                dbname=dbname,
-                                                tablename=tablename))
+            return flask.redirect(
+                flask.url_for('.rows', dbname=dbname, tablename=tablename))
         return flask.render_template('table/row_edit.html',
                                      db=db,
                                      schema=schema,
@@ -334,9 +360,8 @@ def row_edit(dbname, tablename, rowid):
             utils.flash_error(error)
         else:
             utils.flash_message('Row updated.')
-        return flask.redirect(flask.url_for('.rows',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
     elif utils.http_DELETE():
         with dbshare.db.DbContext(db) as ctx:
@@ -344,9 +369,8 @@ def row_edit(dbname, tablename, rowid):
                 sql = f'''DELETE FROM "{schema['name']}" WHERE rowid=?'''
                 ctx.dbcnx.execute(sql, (rowid,))
                 ctx.update_table_nrows(schema)
-        return flask.redirect(flask.url_for('.rows',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert')
@@ -401,12 +425,10 @@ def insert_csv(dbname, tablename):
         utils.flash_message(f"Inserted {len(rows)} rows.")
     except (ValueError, sqlite3.Error) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.insert',
-                                            dbname=dbname,
-                                            tablename=tablename))
-    return flask.redirect(flask.url_for('.rows',
-                                        dbname=dbname,
-                                        tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.insert', dbname=dbname, tablename=tablename))
+    return flask.redirect(
+        flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update')
 def update(dbname, tablename):
@@ -457,13 +479,11 @@ def update_csv(dbname, tablename):
         nrows, count = update_csv_rows(db, schema, csvfile, delimiter)
     except ValueError as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.insert',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.insert', dbname=dbname, tablename=tablename))
     utils.flash_message(f"{nrows} rows in file; {count} table rows updated.")
-    return flask.redirect(flask.url_for('.rows',
-                                        dbname=dbname,
-                                        tablename=tablename))
+    return flask.redirect(
+        flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/clone', 
                  methods=['GET', 'POST'])
@@ -510,12 +530,10 @@ def clone(dbname, tablename):
                 ctx.update_table_nrows(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for('.clone',
-                                                dbname=dbname,
-                                                tablename=tablename))
-        return flask.redirect(flask.url_for('.rows',
-                                            dbname=dbname,
-                                            tablename=schema['name']))
+            return flask.redirect(
+                flask.url_for('.clone', dbname=dbname, tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, tablename=schema['name']))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/download')
 def download(dbname, tablename):
@@ -567,9 +585,8 @@ def download_csv(dbname, tablename):
         writer.write_rows(utils.execute_timeout(dbcnx, sql))
     except (ValueError, SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.download',
-                                            dbname=dbname,
-                                            tablename=tablename))
+        return flask.redirect(
+            flask.url_for('.download', dbname=dbname, tablename=tablename))
     response = flask.make_response(writer.getvalue())
     response.headers.set('Content-Type', constants.CSV_MIMETYPE)
     response.headers.set('Content-Disposition', 'attachment', 
