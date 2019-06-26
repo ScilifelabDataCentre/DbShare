@@ -37,8 +37,10 @@ def table(dbname, tablename):
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        result['indexes'] = [i for i in db['indexes'].values() 
+        result['indexes'] = [i for i in db['indexes'].values()
                              if i['table'] == tablename]
+        for i in result['indexes']:
+            i.pop('table')
         return utils.jsonify(utils.get_json(**result), schema='/table')
 
     elif utils.http_PUT():
@@ -50,7 +52,10 @@ def table(dbname, tablename):
             flask.abort(http.client.NOT_FOUND)
         try:
             with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table(flask.request.get_json())
+                schema = flask.request.get_json()
+                ctx.add_table(schema)
+                for index in schema.get('indexes', []):
+                    ctx.add_index(tablename, index)
         except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(

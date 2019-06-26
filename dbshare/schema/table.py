@@ -6,18 +6,37 @@ from .. import constants
 
 
 columns = {
-    'type': 'object',
-    'properties': {
-        'name': {'type': 'string'},
-        'type': {'type': 'string',
-                 'enum': ['INTEGER', 'REAL', 'TEXT', 'BLOB']},
-        'primarykey': {'type': 'boolean'},
-        'notnull': {'type': 'boolean'}
-    },
-    'required': [
-        'name',
-        'type'
-    ]
+    'type': 'array',
+    'items': {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'type': {'type': 'string',
+                     'enum': ['INTEGER', 'REAL', 'TEXT', 'BLOB']},
+            'primarykey': {'type': 'boolean'},
+            'notnull': {'type': 'boolean'}
+        },
+        'required': [
+            'name',
+            'type'
+        ]
+    }
+}
+
+indexes = {
+    'type': 'array',
+    'items': {
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'unique': {'type': 'boolean'},
+            'columns': {
+                'type': 'array',
+                'items': {'type': 'string'}
+            }
+        },
+        'required': ['unique', 'columns']
+    }
 }
 
 schema = {
@@ -39,9 +58,8 @@ schema = {
         'visualizations': {
             'type': 'array',
             'items': visualization.spec},
-        'columns': {
-            'type': 'array',
-            'items': columns},
+        'columns': columns,
+        'indexes': indexes
     },
     'required': [
         '$id',
@@ -52,7 +70,8 @@ schema = {
         'rows',
         'data',
         'visualizations',
-        'columns'
+        'columns',
+        'indexes'
     ]
 }
 
@@ -65,9 +84,8 @@ create = {
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},
-        'columns': {
-            'type': 'array',
-            'items': columns}
+        'columns': columns,
+        'indexes': indexes
     },
     'required': [
         'name', 

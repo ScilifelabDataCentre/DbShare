@@ -28,35 +28,35 @@ from . import constants
 from . import utils
 
 
-TABLES_TABLE = dict(
-    name=constants.TABLES,
-    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='schema', type=constants.TEXT, notnull=True)],
-)
+TABLES_TABLE = {
+    'name': constants.TABLES,
+    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
+                dict(name='schema', type=constants.TEXT, notnull=True)],
+}
 
-INDEXES_TABLE = dict(
-    name=constants.INDEXES,
-    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='schema', type=constants.TEXT, notnull=True)]
-)
+INDEXES_TABLE = {
+    'name': constants.INDEXES,
+    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
+                dict(name='schema', type=constants.TEXT, notnull=True)]
+}
 
-VIEWS_TABLE = dict(
-    name=constants.VIEWS,
-    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='schema', type=constants.TEXT, notnull=True)]
-)
+VIEWS_TABLE = {
+    'name': constants.VIEWS,
+    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
+                dict(name='schema', type=constants.TEXT, notnull=True)]
+}
 
-VISUALS_TABLE = dict(
-    name=constants.VISUALS,
-    columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-             dict(name='sourcename', type=constants.TEXT, notnull=True),
-             dict(name='spec', type=constants.TEXT, notnull=True)]
-)
+VISUALS_TABLE = {
+    'name': constants.VISUALS,
+    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
+                dict(name='sourcename', type=constants.TEXT, notnull=True),
+                dict(name='spec', type=constants.TEXT, notnull=True)]
+}
 
-VISUALS_INDEX = dict(
-    name=constants.VISUALS + '_index', 
-    table=constants.VISUALS,
-    columns=['sourcename'])
+VISUALS_INDEX = {
+    'name': constants.VISUALS + '_index', 
+    'columns': ['sourcename']
+}
 
 
 blueprint = flask.Blueprint('db', __name__)
@@ -600,7 +600,9 @@ class DbContext:
         self.dbcnx.execute(sql)
         sql = get_sql_create_table(VISUALS_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
-        sql = get_sql_create_index(VISUALS_INDEX, if_not_exists=True)
+        sql = get_sql_create_index(constants.VISUALS, 
+                                   VISUALS_INDEX, 
+                                   if_not_exists=True)
         self.dbcnx.execute(sql)
 
     def load_dbfile(self, infile):
@@ -853,15 +855,28 @@ class DbContext:
         sql = 'VACUUM'
         self.dbcnx.execute(sql)
 
-    def add_index(self, schema):
+    def add_index(self, tablename, schema):
         "Create an index in the database and add to the database definition."
-        if schema['table'] not in self.db['tables']:
-            raise ValueError("no such table %s for index %s" % (schema['table'],
-                                                                schema['name']))
-        schema['name'] = schema['name'].lower()
-        if schema['name'] in self.db['indexes']:
-            raise ValueError("index %s already defined" % schema['name'])
-        sql = get_sql_create_index(schema)
+        if tablename not in self.db['tables']:
+            raise ValueError(f"no such table {tablename}"
+                             f" for index {schema['name']}")
+        name = schema.get('name', '').lower()
+        if name:
+            if name in self.db['indexes']:
+                raise ValueError(f"index {name} already defined")
+        else:
+            prefix = f"_index_{tablename}_"
+            ordinal = -1
+            for ix in self.db['indexes']:
+                if ix.startswith(prefix):
+                    try:
+                        ordinal = max(ordinal, int(ix[len(prefix):]))
+                    except (ValueError, TypeError, IndexError):
+                        pass
+            name = prefix + str(ordinal+1)
+        schema['table'] = tablename
+        schema['name'] = name
+        sql = get_sql_create_index(tablename, schema)
         self.dbcnx.execute(sql)
         sql = "INSERT INTO %s (name, schema) VALUES (?, ?)" % constants.INDEXES
         with self.dbcnx:
@@ -1258,7 +1273,7 @@ def get_sql_create_table(schema, if_not_exists=False):
     sql.append("(%s)" % ', '.join(clauses))
     return ' '.join(sql)
 
-def get_sql_create_index(schema, if_not_exists=False):
+def get_sql_create_index(tablename, schema, if_not_exists=False):
     """Return SQL to create an index given by its schema.
     Raise ValueError if any problem.
     """
@@ -1272,7 +1287,7 @@ def get_sql_create_index(schema, if_not_exists=False):
     sql.append('INDEX')
     if if_not_exists:
         sql.append('IF NOT EXISTS')
-    sql.append('"%s" ON "%s"' % (schema['name'], schema['table']))
+    sql.append('"%s" ON "%s"' % (schema['name'], tablename))
     sql.append("(%s)" % ','.join([f'"{c}"' for c in schema['columns']]))
     return ' '.join(sql)
 

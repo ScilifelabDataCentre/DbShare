@@ -284,17 +284,7 @@ def index_create(dbname, tablename):
 
     elif utils.http_POST():
         try:
-            prefix = constants.INDEX_PREFIX_TEMPLATE % schema['name']
-            ordinal = -1
-            for ix in db['indexes']:
-                if ix.startswith(prefix):
-                    try:
-                        ordinal = max(ordinal, int(ix['name'][len(prefix):]))
-                    except (ValueError, TypeError, IndexError):
-                        pass
-            index = {'name': prefix + str(ordinal+1),
-                     'table': schema['name'],
-                     'unique': utils.to_bool(flask.request.form.get('unique'))}
+            index = {'unique': utils.to_bool(flask.request.form.get('unique'))}
             index['columns'] = []
             for pos in positions:
                 column = flask.request.form.get("position%i" % pos)
@@ -303,7 +293,7 @@ def index_create(dbname, tablename):
                 else:
                     break
             with dbshare.db.DbContext(db) as ctx:
-                ctx.add_index(index)
+                ctx.add_index(schema['name'], index)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(

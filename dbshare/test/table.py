@@ -233,9 +233,8 @@ class Table(base.Base):
         result = self.check_schema(response)
         self.assertEqual(result['nrows'], 0)
 
-        headers = {'Content-Type': 'text/csv'}
-
         # Insert CSV data.
+        headers = {'Content-Type': 'text/csv'}
         url = self.root['operations']['table']['insert']['href']
         url = url.format(dbname=base.CONFIG['dbname'],
                          tablename=self.table_spec['name'])
@@ -271,6 +270,47 @@ class Table(base.Base):
         response = self.session.get(result['rows']['href'])
         result = self.check_schema(response)
         self.assertEqual(rows, result['data'])
+
+    def test_index(self):
+        "Create database and table; create index and test it."
+
+        # Create an empty database.
+        response = self.create_database()
+        result = self.check_schema(response)
+
+        # Add an index definition to the table spec.
+        table_spec = self.table_spec.copy()
+        table_spec['indexes'] = [{'unique': True, 'columns': ['t']}]
+
+        # Create a table in the database.
+        url = self.root['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=table_spec['name'])
+        response = self.session.put(url, json=table_spec)
+        result = self.check_schema(response)
+        self.assertEqual(len(result['indexes']), 1)
+
+        # Add rows.
+        headers = {'Content-Type': 'text/csv'}
+        url = self.root['operations']['table']['insert']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        data = self.get_csvfile_data([(1, 'first row', 1.0),
+                                      (2, 'second row', 2.0)])
+        response = self.session.post(url, data=data, headers=headers)
+        result = self.check_schema(response)
+        self.assertEqual(result['nrows'], 2)
+
+        # Attempt to add rows that violates unique index.
+        data = self.get_csvfile_data([(3, 'second row', 3.0)])
+        response = self.session.post(url, data=data, headers=headers)
+        self.assertEqual(response.status_code, http.client.BAD_REQUEST)
+
+        # Add proper third row
+        data = self.get_csvfile_data([(3, 'third row', 3.0)])
+        response = self.session.post(url, data=data, headers=headers)
+        result = self.check_schema(response)
+        self.assertEqual(result['nrows'], 3)
 
 
 if __name__ == '__main__':

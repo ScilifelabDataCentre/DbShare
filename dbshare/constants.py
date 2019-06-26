@@ -17,7 +17,6 @@ TABLES  = '_tables'
 INDEXES = '_indexes'
 VIEWS   = '_views'
 VISUALS = '_visuals'
-INDEX_PREFIX_TEMPLATE = "_index_%s_"
 
 # Template types
 VEGA_LITE = 'Vega-Lite'

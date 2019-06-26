@@ -122,7 +122,9 @@ def init(app):
         sql = dbshare.db.get_sql_create_table(schema, if_not_exists=True)
         cnx.execute(sql)
     for schema in SYSTEM_INDEXES:
-        sql = dbshare.db.get_sql_create_index(schema, if_not_exists=True)
+        sql = dbshare.db.get_sql_create_index(schema['table'], 
+                                              schema, 
+                                              if_not_exists=True)
         cnx.execute(sql)
     # Check or set major version number.
     major = dbshare.__version__.split('.')[0]
