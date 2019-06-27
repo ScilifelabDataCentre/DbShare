@@ -72,6 +72,7 @@ def get_json(db, view, complete=False):
                         viewname=view['name'])
     result = {'name': view['name'],
               'title': view.get('title'),
+              'description': view.get('description'),
               'database': {'href': utils.url_for('api_db.database',
                                                  dbname=db['name'])},
               'nrows': view.get('nrows'),

@@ -26,7 +26,8 @@ query = {
     'required': [
         'select',
         'from'
-    ]
+    ],
+    'additionalProperties': False
 }
 
 input = {
@@ -41,6 +42,8 @@ output = {
     'title': 'Query output API JSON schema.',
     'type': 'object',
     'properties': {
+        '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'timestamp'},
         'query': query,
         'sql': {'type': 'string'},
         'nrows': {'type': 'integer', 'mimimum': 0},
@@ -52,14 +55,17 @@ output = {
         'data': {
             'type': 'array',
             'items': {'type': 'object'}
-        },
+        }
     },
     'required': [
+        '$id',
+        'timestamp',
         'query',
         'sql',
         'nrows',
         'columns',
         'cpu_time',
         'data'
-    ]
+    ],
+    'additionalProperties': False
 }

@@ -10,7 +10,9 @@ schema = {
     'title': 'Database API JSON schema.',
     'definitions': {
         'link': definitions.link,
-        'iobody': definitions.iobody},
+        'iobody': definitions.iobody,
+        'visualizations': definitions.visualizations
+    },
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
@@ -24,7 +26,7 @@ schema = {
         'size': {'type': 'integer', 'minimum': 0},
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'},
-        'hashes': {'type': 'object'},
+        'hashes': definitions.hashes,
         'tables': {
             'type': 'array',
             'items': {
@@ -32,25 +34,23 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
+                    'description': {'type': ['string', 'null']},
                     'href': {'type': 'string', 'format': 'uri'},
                     'database': {'$ref': '#/definitions/link'},
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
-                    'visualizations': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object'
-                        }
-                    }
+                    'visualizations': {'$ref': '#/definitions/visualizations'}
                 },
                 'required': ['name', 
                              'title',
+                             'description',
                              'href',
                              'database',
                              'nrows',
                              'rows',
-                             'data']
+                             'data'],
+                'additionalProperties': False
             }
         },
         'views': {
@@ -60,25 +60,23 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
+                    'description': {'type': ['string', 'null']},
                     'href': {'type': 'string', 'format': 'uri'},
                     'database': {'$ref': '#/definitions/link'},
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
                     'data': {'$ref': '#/definitions/link'},
-                    'visualizations': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object'
-                        }
-                    }
+                    'visualizations': {'$ref': '#/definitions/visualizations'}
                 },
                 'required': ['name',
                              'title',
+                             'description',
                              'href',
                              'database',
                              'nrows',
                              'rows',
-                             'data']
+                             'data'],
+                'additionalProperties': False
             }
         },
         'operations': definitions.operations
@@ -96,7 +94,8 @@ schema = {
         'modified',
         'created',
         'tables'
-    ]
+    ],
+    'additionalProperties': False
 }
 
 edit = {
@@ -109,5 +108,6 @@ edit = {
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},
         'public': {'type': 'boolean'}
-    }
+    },
+    'additionalProperties': False
 }

@@ -16,7 +16,7 @@ schema = {
         '$id': {'type': 'string', 'format': 'uri'},
         'timestamp': {'type': 'string', 'format': 'timestamp'},
         'title': {'type': 'string'},
-        'owner': {'$ref': '#/definitions/user'},
+        'user': {'$ref': '#/definitions/user'},
         'total_size': {'type': 'integer', 'minimum': 0},
         'databases': {
             'type': 'array',
@@ -25,12 +25,14 @@ schema = {
                 'properties': {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
+                    'description': {'type': ['string', 'null']},
                     'owner': {'$ref': '#/definitions/user'},
                     'public': {'type': 'boolean'},
                     'readonly': {'type': 'boolean'},
                     'size': {'type': 'integer'},
                     'modified': {'type': 'string', 'format': 'timestamp'},
                     'created': {'type': 'string', 'format': 'timestamp'},
+                    'hashes': definitions.hashes,
                     'href': {'type': 'string', 'format': 'uri'},
                     'operations': definitions.operations
                 },
@@ -44,7 +46,8 @@ schema = {
                     'modified',
                     'created',
                     'href'
-                ]
+                ],
+                'additionalProperties': False
             }
         }
     },
@@ -53,5 +56,6 @@ schema = {
         'timestamp',
         'title',
         'databases'
-    ]
+    ],
+    'additionalProperties': False
 }

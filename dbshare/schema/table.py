@@ -1,7 +1,6 @@
 "Table API JSON schema."
 
 from . import definitions
-from . import visualization
 from .. import constants
 
 
@@ -16,10 +15,8 @@ columns = {
             'primarykey': {'type': 'boolean'},
             'notnull': {'type': 'boolean'}
         },
-        'required': [
-            'name',
-            'type'
-        ]
+        'required': ['name', 'type'],
+        'additionalProperties': False
     }
 }
 
@@ -35,7 +32,8 @@ indexes = {
                 'items': {'type': 'string'}
             }
         },
-        'required': ['unique', 'columns']
+        'required': ['unique', 'columns'],
+        'additionalProperties': False
     }
 }
 
@@ -55,9 +53,7 @@ schema = {
         'nrows': {'type': 'integer', 'minimum': 0},
         'rows': {'$ref': '#/definitions/link'},
         'data': {'$ref': '#/definitions/link'},
-        'visualizations': {
-            'type': 'array',
-            'items': visualization.spec},
+        'visualizations': definitions.visualizations,
         'columns': columns,
         'indexes': indexes
     },
@@ -72,7 +68,8 @@ schema = {
         'visualizations',
         'columns',
         'indexes'
-    ]
+    ],
+    'additionalProperties': False
 }
 
 create = {
@@ -87,10 +84,7 @@ create = {
         'columns': columns,
         'indexes': indexes
     },
-    'required': [
-        'name', 
-        'columns'
-    ]
+    'required': ['name', 'columns']
 }
 
 input = {
@@ -104,7 +98,5 @@ input = {
             'items': {'type': 'object'}
         }
     },
-    'required': [
-        'data'
-    ]
+    'required': ['data']
 }

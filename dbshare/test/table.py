@@ -173,11 +173,14 @@ class Table(base.Base):
         self.assertEqual(result['data'][3], row_3)
 
         # Empty the table.
-        # response = self.session.post(url_empty)
-        # self.assertEqual(response.status_code, http.client.OK)
-        # response = self.session.get(response.url)
-        # result = self.check_schema(response)
-        # self.assertEqual(result['nrows'], 0)
+        url = self.root['operations']['table']['empty']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.post(url)
+        self.assertEqual(response.status_code, http.client.OK)
+        response = self.session.get(response.url)
+        result = self.check_schema(response)
+        self.assertEqual(result['nrows'], 0)
 
     def test_csv(self):
         "Create database and table; insert CSV operations."

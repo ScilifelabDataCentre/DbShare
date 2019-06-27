@@ -17,6 +17,12 @@ schema = {
         'email': {'type': 'string', 'format': 'email'},
         'role': {'type': 'string', 'enum': ['admin', 'user']},
         'status': {'type': 'string', 'enum': ['enabled', 'disabled']},
+        'quota': {
+            'oneOf': [
+                {'type': 'integer', 'minimum': 0},
+                {'type': 'null'}
+            ]
+        },
         'total_size': {'type': 'integer', 'minimum': 0},
         'modified': {'type': 'string', 'format': 'timestamp'},
         'created': {'type': 'string', 'format': 'timestamp'},
@@ -30,10 +36,12 @@ schema = {
         'email',
         'role',
         'status',
+        'quota',
         'total_size',
         'modified',
         'created',
         'databases',
         'templates'
-    ]
+    ],
+    'additionalProperties': False
 }

@@ -2,7 +2,6 @@
 
 from . import definitions
 from . import query
-from . import visualization
 from .. import constants
 
 schema = {
@@ -16,6 +15,7 @@ schema = {
         'timestamp': {'type': 'string', 'format': 'timestamp'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
         'database': {'$ref': '#/definitions/link'},
         'nrows': {
             'oneOf': [
@@ -25,9 +25,7 @@ schema = {
         },
         'rows': {'$ref': '#/definitions/link'},
         'data': {'$ref': '#/definitions/link'},
-        'visualizations': {
-            'type': 'array',
-            'items': visualization.spec},
+        'visualizations': definitions.visualizations,
         'query': query.query,
         'sources': {
             'type': 'array',
@@ -57,7 +55,8 @@ schema = {
         'query',
         'sources',
         'columns'
-    ]
+    ],
+    'additionalProperties': False
 }
 
 
@@ -72,8 +71,5 @@ create = {
         'description': {'type': ['string', 'null']},
         'query': query.query
     },
-    'required': [
-        'name', 
-        'query'
-    ]
+    'required': ['name', 'query']
 }

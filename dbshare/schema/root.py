@@ -21,28 +21,56 @@ schema = {
             'title': 'Links to collections of databases.',
             'type': 'object',
             'properties': {
-                'all': {'title': 'Link to all databases.',
-                        '$ref': '#/definitions/link'},
-                'owner': {'title': 'Link to databases owned by the current user.',
-                          '$ref': '#/definitions/link'},
-                'public': {'title': 'Link to public databases.',
-                           '$ref': '#/definitions/link'}},
-            'required': ['public']
+                'all': {
+                    'title': 'Link to list of all databases.',
+                    '$ref': '#/definitions/link'
+                },
+                'owner': {
+                    'title': 'Link to databases owned by the current user.',
+                    '$ref': '#/definitions/link'
+                },
+                'public': {
+                    'title': 'Link to list of public databases.',
+                    '$ref': '#/definitions/link'
+                }
+            },
+            'required': ['public'],
+            'additionalProperties': False
         },
         'templates': {
             'title': 'Links to collections of visualization templates.',
             'type': 'object',
             'properties': {
-                'all': {'title': 'Link to all templates.',
-                        '$ref': '#/definitions/link'},
-                'owner': {'title': 'Link to templates owned by the current user.',
-                          '$ref': '#/definitions/link'},
-                'public': {'title': 'Link to public templates.',
-                           '$ref': '#/definitions/link'}},
-            'required': ['public']
+                'all': {
+                    'title': 'Link to list of all templates.',
+                    '$ref': '#/definitions/link'
+                },
+                'owner': {
+                    'title': 'Link to templates owned by the current user.',
+                    '$ref': '#/definitions/link'
+                },
+                'public': {
+                    'title': 'Link to list of public templates.',
+                    '$ref': '#/definitions/link'
+                }
+            },
+            'required': ['public'],
+            'additionalProperties': False
         },
-        'schema': {'title': 'Link to the schema documents.',
-                   '$ref': '#/definitions/link'},
+        'schema': {
+            'title': 'Link to list of the schema documents.',
+            '$ref': '#/definitions/link'},
+        'users': {
+            'type': 'object',
+            'properties': {
+                'all': {
+                    'title': 'Link to list of all users',
+                    '$ref': '#/definitions/link'
+                }
+            },
+            'required': ['all'],
+            'additionalProperties': False
+        },
         'user': definitions.user,
         'operations': definitions.operations
     },
@@ -53,6 +81,8 @@ schema = {
         'version',
         'databases',
         'templates',
-        'schema'
-    ]
+        'schema',
+        'operations'
+    ],
+    'additionalProperties': False
 }

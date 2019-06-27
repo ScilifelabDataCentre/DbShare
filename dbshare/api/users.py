@@ -30,4 +30,4 @@ def all():
         'title': 'All user accounts.',
         'users': users
     }
-    return utils.jsonify(utils.get_json(**result))
+    return utils.jsonify(utils.get_json(**result), schema='/users')

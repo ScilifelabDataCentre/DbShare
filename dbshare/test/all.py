@@ -2,6 +2,7 @@
 
 from root import Root
 from user import User
+from users import Users
 from dbs import Dbs
 from db import Db
 from table import Table

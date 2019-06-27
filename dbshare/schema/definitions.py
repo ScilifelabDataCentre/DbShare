@@ -9,9 +9,8 @@ link = {
         'content-type': {'type': 'string', 'default': 'application/json'},
         'format': {'type': 'string', 'default': 'json'}
     },
-    'required': [
-        'href'
-    ]
+    'required': ['href'],
+    'additionalProperties': False
 }
 
 user = {
@@ -21,10 +20,8 @@ user = {
         'username': {'type': 'string'},
         'href': {'type': 'string', 'format': 'uri'}
     },
-    'required': [
-        'username',
-        'href'
-    ]
+    'required': ['username', 'href'],
+    'additionalProperties': False
 }
 
 property_names = {'pattern': '^[a-zA-Z][a-zA-Z0-9_-]*$'}
@@ -40,10 +37,12 @@ iobody = {
             'properties': {
                 'href': {'type': 'string', 'format': 'uri'}
             },
-            'required': ['href']
+            'required': ['href'],
+            'additionalProperties': False
         }
     },
-    'required': ['content-type']
+    'required': ['content-type'],
+    'additionalProperties': False
 }
 
 io = {
@@ -81,5 +80,34 @@ operations = {
             },
             'required': ['href', 'method']
         }
+    }
+}
+
+hashes = {
+    'title': 'Hash values for the body of the database.',
+    'type': 'object',
+    'properties': {
+        'md5': {'type': 'string'},
+        'sha1': {'type': 'string'}
+    },
+    'additionalProperties': False
+}
+
+visualizations = {
+    'title': 'List of visualization specifications.',
+    'type': 'array',
+    'items': {
+        'title': 'Visualization specification.',
+        'type': 'object',
+        'properties': {
+            'name': {'type': 'string'},
+            'title': {'type': ['string', 'null']},
+            'specification': {'$ref': '#/definitions/link'},
+        },
+        'required': [
+            'name',
+            'title',
+            'specification'],
+        'additionalProperties': False
     }
 }
