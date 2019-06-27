@@ -21,6 +21,10 @@ query = {
                 {'type': 'null'},
                 {'type': 'integer', 'minimum': 1}
             ]
+        },
+        'columns': {
+            'type': 'array',
+            'items': {'type': 'string'}
         }
     },
     'required': [

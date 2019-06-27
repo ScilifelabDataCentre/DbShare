@@ -38,5 +38,6 @@ schema = {
         'nrows',
         'data',
         'timestamp'
-    ]
+    ],
+    'additionalProperties': False
 }
