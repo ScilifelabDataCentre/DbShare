@@ -28,6 +28,7 @@ schema = {
         'created': {'type': 'string', 'format': 'timestamp'},
         'hashes': definitions.hashes,
         'tables': {
+            'title': 'The list of tables in the database.',
             'type': 'array',
             'items': {
                 'type': 'object',
@@ -54,6 +55,7 @@ schema = {
             }
         },
         'views': {
+            'title': 'The list of views in the database.',
             'type': 'array',
             'items': {
                 'type': 'object',
@@ -101,7 +103,7 @@ schema = {
 edit = {
     '$id': constants.SCHEMA_BASE_URL + '/db/edit',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'Database edit API JSON schema.',
+    'title': 'API JSON schema for editing the database metadata.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},

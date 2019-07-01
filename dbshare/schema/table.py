@@ -75,7 +75,7 @@ schema = {
 create = {
     '$id': constants.SCHEMA_BASE_URL + '/table/create',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'Table create API JSON schema.',
+    'title': 'API JSON schema for creating a table.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},
@@ -90,7 +90,7 @@ create = {
 input = {
     '$id': constants.SCHEMA_BASE_URL + '/table/input',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'Table data input JSON schema.',
+    'title': 'JSON schema for table data input.',
     'type': 'object',
     'properties': {
         'data': {

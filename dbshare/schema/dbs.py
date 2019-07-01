@@ -1,4 +1,4 @@
-"Databases map API JSON schema."
+"API JSON schema for the list of databases."
 
 from . import definitions
 from .. import constants
@@ -7,7 +7,7 @@ from .. import constants
 schema = {
     '$id': constants.SCHEMA_BASE_URL + '/dbs',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'Databases map API JSON schema.',
+    'title': 'API JSON schema for the list of databases.',
     'definitions': {
         'user': definitions.user
     },

@@ -61,6 +61,7 @@ schema = {
             'title': 'Link to list of the schema documents.',
             '$ref': '#/definitions/link'},
         'users': {
+            'title': 'Links to collections of users.',
             'type': 'object',
             'properties': {
                 'all': {
