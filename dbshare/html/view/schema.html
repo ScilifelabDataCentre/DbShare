@@ -14,7 +14,7 @@
   </tr>
   <tr>
     <th class="text-right">Description</th>
-    <td>{{ schema.get('description') or '' }}</td>
+    <td>{{ schema.get('description')|markdown }}</td>
   </tr>
   <tr>
     <th class="text-right">SELECT</th>

@@ -25,7 +25,12 @@
         <div class="col-md-10">
           <textarea id="description" name="description"
                     class="form-control" rows="2"
+                    aria-describedby="descriptionHelp"
 		    >{{ schema.get('description') or '' }}</textarea>
+          <small id="descriptionHelp" class="form-text text-muted">
+            <a href="{{ config['MARKDOWN_SYNTAX_URL'] }}"
+               target="_blank">Markdown syntax</a> may be used for formatting.
+          </small>
         </div>
       </div>
       <div class="form-group row">

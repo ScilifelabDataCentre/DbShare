@@ -5,7 +5,7 @@
 {% block body_title %}Schema for table {{ schema['name'] }}{% endblock %}
 
 {% block main %}
-<div class="m-2">{{ schema.get('description') or '' }}</div>
+<div class="m-2">{{ schema.get('description')|markdown }}</div>
 
 <div class="card border-primary">
   <div class="card-header bg-primary text-white">

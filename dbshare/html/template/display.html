@@ -20,7 +20,7 @@
   </tr>
   <tr>
     <th class="text-right">Description</th>
-    <td>{{ template.get('description') or '-' }}</td>
+    <td>{{ template.get('description')|markdown }}</td>
   </tr>
   <tr>
     <th class="text-right">Fields</th>

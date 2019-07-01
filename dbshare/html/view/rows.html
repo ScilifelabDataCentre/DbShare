@@ -5,7 +5,7 @@
 {% block body_title %}{{ title }}{% endblock %}
 
 {% block main %}
-<div class="m-2">{{ schema.get('description') or '' }}</div>
+<div class="m-2">{{ schema.get('description')|markdown }}</div>
 
 <div class="mx-3 ml-4">
   <span class="monospace mr-4">{{ sql }};</span>

@@ -5,11 +5,8 @@
 {% block body_title %}{{ title }}{% endblock %}
 
 {% block main %}
-<div class="row">
-  <div class="col-md-12">
-    {{ db['description']|markdown }}
-  </div>
-</div>
+<div class="m-2">{{ db.get('description')|markdown }}</div>
+
 <div class="row">
   <div class="col-md-6">
     <div class="card border-primary">
@@ -102,6 +99,7 @@
 <div class="py-1">
   <div>
     <a href="{{ url_for('.display', dbname=db['name']) + '.tar.gz' }}"
+       title="Gzipped tar file of directory containing all tables as CSV files."
        class="badge badge-pill badge-primary">CSV tar.gz</a>
   </div>
   <div>
