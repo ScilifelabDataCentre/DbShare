@@ -12,7 +12,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'username': {'type': 'string'},
         'email': {'type': 'string', 'format': 'email'},
         'role': {'type': 'string', 'enum': ['admin', 'user']},
@@ -24,8 +24,8 @@ schema = {
             ]
         },
         'total_size': {'type': 'integer', 'minimum': 0},
-        'modified': {'type': 'string', 'format': 'timestamp'},
-        'created': {'type': 'string', 'format': 'timestamp'},
+        'modified': {'type': 'string', 'format': 'date-time'},
+        'created': {'type': 'string', 'format': 'date-time'},
         'databases': {'$ref': '#/definitions/link'},
         'templates': {'$ref': '#/definitions/link'}
     },

@@ -11,7 +11,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'title': {'type': 'string'},
         'users': {
             'type': 'array',
@@ -25,8 +25,8 @@ schema = {
                         'type': 'string', 
                         'enum': ['enabled', 'disabled']
                     },
-                    'modified': {'type': 'string', 'format': 'timestamp'},
-                    'created': {'type': 'string', 'format': 'timestamp'},
+                    'modified': {'type': 'string', 'format': 'date-time'},
+                    'created': {'type': 'string', 'format': 'date-time'},
                     'href': {'type': 'string', 'format': 'uri'}
                 },
                 'required': [

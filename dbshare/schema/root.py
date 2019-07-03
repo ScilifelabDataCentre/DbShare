@@ -14,7 +14,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'datetime'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'title': {'type': 'string'},
         'version': {'type': 'string', 'pattern': '^1\.[0-9]+\.[0-9]+$'},
         'databases': {

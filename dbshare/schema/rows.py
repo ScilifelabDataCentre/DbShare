@@ -29,7 +29,7 @@ schema = {
             'type': 'array',
             'items': {'type': 'object'}
         },
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+        'timestamp': {'type': 'string', 'format': 'date-time'}
     },
     'required': [
         '$id',

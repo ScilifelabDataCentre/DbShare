@@ -16,7 +16,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},
@@ -24,8 +24,8 @@ schema = {
         'public': {'type': 'boolean'},
         'readonly': {'type': 'boolean'},
         'size': {'type': 'integer', 'minimum': 0},
-        'modified': {'type': 'string', 'format': 'timestamp'},
-        'created': {'type': 'string', 'format': 'timestamp'},
+        'modified': {'type': 'string', 'format': 'date-time'},
+        'created': {'type': 'string', 'format': 'date-time'},
         'hashes': definitions.hashes,
         'tables': {
             'title': 'The list of tables in the database.',

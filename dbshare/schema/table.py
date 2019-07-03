@@ -45,7 +45,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'name': {'type': 'string'},
         'title': {'type': ['string', 'null']},
         'description': {'type': ['string', 'null']},

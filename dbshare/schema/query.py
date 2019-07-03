@@ -47,7 +47,7 @@ output = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'query': query,
         'sql': {'type': 'string'},
         'nrows': {'type': 'integer', 'mimimum': 0},

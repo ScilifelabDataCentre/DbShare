@@ -14,7 +14,7 @@ schema = {
     'type': 'object',
     'properties': {
         '$id': {'type': 'string', 'format': 'uri'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
         'title': {'type': 'string'},
         'user': {'$ref': '#/definitions/user'},
         'total_size': {'type': 'integer', 'minimum': 0},
@@ -30,8 +30,8 @@ schema = {
                     'public': {'type': 'boolean'},
                     'readonly': {'type': 'boolean'},
                     'size': {'type': 'integer'},
-                    'modified': {'type': 'string', 'format': 'timestamp'},
-                    'created': {'type': 'string', 'format': 'timestamp'},
+                    'modified': {'type': 'string', 'format': 'date-time'},
+                    'created': {'type': 'string', 'format': 'date-time'},
                     'hashes': definitions.hashes,
                     'href': {'type': 'string', 'format': 'uri'},
                     'operations': definitions.operations
