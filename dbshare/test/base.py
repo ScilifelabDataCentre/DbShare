@@ -76,8 +76,7 @@ class Base(unittest.TestCase):
         except AttributeError:
             response = self.session.get(CONFIG['root_url'])
             self.assertEqual(response.status_code, http.client.OK)
-            self.check_schema(response)
-            self._root = response.json()
+            self._root = self.check_schema(response)
             return self._root
 
     def check_schema(self, response):
