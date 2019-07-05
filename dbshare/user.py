@@ -227,17 +227,17 @@ def edit(username):
             email = flask.request.form.get('email')
             if email != user['email']:
                 ctx.set_email(enail)
-            if is_admin_and_not_self(user):
-                ctx.set_role(flask.request.form.get('role'))
             if flask.request.form.get('apikey'):
                 ctx.set_apikey()
-            quota = flask.request.form.get('quota') or None
-            if quota:
-                try:
-                    quota = int(quota)
-                except (ValueError, TypeError):
-                    quota = -1
-            ctx.set_quota(quota)
+            if is_admin_and_not_self(user):
+                ctx.set_role(flask.request.form.get('role'))
+                quota = flask.request.form.get('quota') or None
+                if quota:
+                    try:
+                        quota = int(quota)
+                    except (ValueError, TypeError):
+                        quota = -1
+                ctx.set_quota(quota)
         return flask.redirect(
             flask.url_for('.profile', username=user['username']))
 
