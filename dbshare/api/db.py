@@ -22,7 +22,7 @@ blueprint = flask.Blueprint('api_db', __name__)
 @blueprint.route('/<name:dbname>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def database(dbname):
     """GET: List the database tables, views and metadata.
-    PUT: Create the database.
+    PUT: Create the database, load the data if any input.
     POST: Edit the database metadata.
     DELETE: Delete the database.
     """
@@ -40,20 +40,29 @@ def database(dbname):
         db = dbshare.db.get_db(dbname)
         if db is not None:
             utils.abort_json(http.client.FORBIDDEN, 'database exists')
+        if not flask.request.content_length:
+            add_func = None
+        elif flask.request.content_type is None:
+            add_func = None
+        elif flask.request.content_type == constants.SQLITE3_MIMETYPE:
+            add_func = dbshare.db.add_sqlite3_database
+        elif flask.request.content_type == constants.XLSX_MIMETYPE:
+            add_func = dbshare.db.add_xlsx_database
+        else:
+            flask.abort(http.client.UNSUPPORTED_MEDIA_TYPE)
         try:
-            if flask.request.content_length:
-                db = dbshare.db.add_database(
-                    dbname,
-                    infile=io.BytesIO(flask.request.get_data()),
-                    size=flask.request.content_length)
+            if add_func:
+                db = add_func(dbname,
+                              io.BytesIO(flask.request.get_data()),
+                              flask.request.content_length)
             else:
                 with dbshare.db.DbContext() as ctx:
-                    ctx.set_name(dbname)
+                    dbname = ctx.set_name(dbname)
                     ctx.initialize()
                 db = ctx.db
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
-        return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+        return flask.redirect(flask.url_for('.database', dbname=dbname))
 
     elif utils.http_POST(csrf=False):
         try:
@@ -67,7 +76,7 @@ def database(dbname):
             utils.json_validate(data, dbshare.schema.db.edit)
             with dbshare.db.DbContext(db) as ctx:
                 try:
-                    ctx.set_name(data['name'])
+                    dbname = ctx.set_name(data['name'])
                 except KeyError:
                     pass
                 try:
@@ -84,8 +93,7 @@ def database(dbname):
                     pass
         except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
-        return flask.redirect(
-            flask.url_for('api_db.database', dbname=db['name']))
+        return flask.redirect(flask.url_for('.database', dbname=dbname))
 
     elif utils.http_DELETE(csrf=False):
         try:
@@ -140,7 +148,7 @@ def readonly(dbname):
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+    return flask.redirect(flask.url_for('.database', dbname=dbname))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
 def readwrite(dbname):
@@ -154,7 +162,7 @@ def readwrite(dbname):
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
-    return flask.redirect(flask.url_for('api_db.database', dbname=dbname))
+    return flask.redirect(flask.url_for('.database', dbname=dbname))
 
 def get_json(db, complete=False):
     "Return the JSON for the database."

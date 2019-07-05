@@ -145,8 +145,9 @@ class Base(unittest.TestCase):
         # Upload the database file.
         dbops = self.root['operations']['database']
         url = dbops['create']['href'].format(dbname=CONFIG['dbname'])
+        headers = {'Content-Type': 'application/x-sqlite3'}
         with open(CONFIG['filename'], 'rb') as infile:
-            response = self.session.put(url, data=infile)
+            response = self.session.put(url, data=infile, headers=headers)
             self.assertEqual(response.status_code, http.client.OK)
             self.db_url = response.url
         self.addCleanup(self.delete_db)

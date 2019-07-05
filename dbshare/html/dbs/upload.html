@@ -1,13 +1,14 @@
 {% extends 'base.html' %}
 
-{% block head_title %}Upload a Sqlite3 file{% endblock %}
+{% block head_title %}Upload a database file{% endblock %}
 
-{% block body_title %}Upload a Sqlite3 file{% endblock %}
+{% block body_title %}Upload a database file{% endblock %}
 
 {% block main %}
 <div class="card border-primary">
-  <div class="card-body">
-    <ul class="m-2">
+  <div class="card-header">
+    <h3 class="card-title">Sqlite3 file</h3>
+    <ul>
       <li>
         If the file is a DbShare Sqlite3 file, the validity of its metadata
         will be checked to some extent.
@@ -30,6 +31,8 @@
         </ul>
       </li>
     </ul>
+  </div>
+  <div class="card-body">
     <form action="{{ url_for('.upload') }}"
           enctype="multipart/form-data"
           method="POST"
@@ -41,7 +44,7 @@
         </div>
         <div class="col-md-8">
           <input id="sqlite3file" name="sqlite3file"
-                 type="file" class="form-control-file" autofocus>
+                 type="file" class="form-control-file">
         </div>
       </div>
       <div class="form-group row">
@@ -66,7 +69,63 @@
       <div class="form-group row">
         <div class="col-md-4 offset-md-2">
           <button type="submit" class="btn btn-primary btn-lg btn-block">
-            Upload</button>
+            Upload Sqlite3 file</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card border-primary mt-4">
+  <div class="card-header">
+    <h3 class="card-title">XLSX file (Excel)</h3>
+    <ul>
+      <li>
+        Each worksheet is loaded into a separate table.
+      </li>
+      <li>
+        The name of a worksheet may be modified to make it a valid table name.
+      </li>
+    </ul>
+  </div>
+  <div class="card-body">
+    <form action="{{ url_for('.upload') }}"
+          enctype="multipart/form-data"
+          method="POST"
+          class="mt-4">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <div class="col-md-2 text-right">
+          <label for="xlsxfile" class="col-form-label">XLSX file</label>
+        </div>
+        <div class="col-md-8">
+          <input id="xlsxfile" name="xlsxfile" 
+                 type="file" class="form-control-file">
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-2 text-right">
+          <label for="dbname" class="col-form-label">
+            Database name</label>
+        </div>
+        <div class="col-md-8">
+          <input id="dbname" name="dbname" type="text" class="form-control">
+          <small class="form-text text-muted">
+            If none specified, the filename will be used.
+            <br>
+            The database name must be unique for this site. If not, an
+            attempt will be made to add a suffix to it to make it
+            unique.
+            <br>
+            This means that other user's database names restrict which
+            name you can use.
+          </small>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-4 offset-md-2">
+          <button type="submit" class="btn btn-primary btn-lg btn-block">
+            Upload XLSX file</button>
         </div>
       </div>
     </form>

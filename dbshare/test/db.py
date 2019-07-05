@@ -33,6 +33,15 @@ class Db(base.Base):
         self.assertEqual(response.status_code, http.client.OK)
         self.check_schema(response)
 
+    def test_bad_upload(self):
+        "Try uploading with the wrong content type."
+        dbops = self.root['operations']['database']
+        url = dbops['create']['href'].format(dbname=base.CONFIG['dbname'])
+        headers = {'Content-Type': 'application/garbage'}
+        response = self.session.put(url, data='garbage', headers=headers)
+        self.assertEqual(response.status_code,
+                         http.client.UNSUPPORTED_MEDIA_TYPE)
+
     def test_edit(self):
         "Create an empty database, edit it, check its JSON."
 

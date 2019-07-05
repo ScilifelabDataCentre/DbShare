@@ -15,7 +15,7 @@ blueprint = flask.Blueprint('dbs', __name__)
 @blueprint.route('/upload', methods=['GET', 'POST'])
 @dbshare.user.login_required
 def upload():
-    "Upload a DbShare Sqlite3 database file."
+    "Upload a database file: Sqlite3 or XLSX file."
     if utils.http_GET():
         return flask.render_template('dbs/upload.html')
 
@@ -23,11 +23,17 @@ def upload():
         try:
             infile = flask.request.files.get('sqlite3file')
             if infile is None:
-                raise ValueError('no file given')
+                infile = flask.request.files.get('xlsxfile')
+                if infile is None:
+                    raise ValueError('no file given')
+                else:
+                    add_func = dbshare.db.add_xlsx_database
+            else:
+                add_func = dbshare.db.add_sqlite3_database
             dbname = flask.request.form.get('dbname')
             if not dbname:
                 dbname = os.path.splitext(os.path.basename(infile.filename))[0]
-            db = dbshare.db.add_database(dbname, infile, modify_dbname=True)
+            db = add_func(dbname, infile, infile.content_length)
         except ValueError as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.upload'))

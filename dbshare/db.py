@@ -13,10 +13,12 @@ import shutil
 import sqlite3
 import stat
 import tarfile
+import tempfile
 import urllib.parse
 
 import dpath
 import flask
+import openpyxl
 
 import dbshare.system
 import dbshare.schema.table
@@ -226,7 +228,6 @@ def upload(dbname):
                 delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
             except KeyError:
                 raise ValueError('invalid delimiter')
-            nullrepr = flask.request.form.get('nullrepr') or ''
             header = utils.to_bool(flask.request.form.get('header'))
             try:
                 tablename = flask.request.form['tablename']
@@ -238,7 +239,6 @@ def upload(dbname):
                 tablename, n = ctx.load_csvfile(infile,
                                                 tablename,
                                                 delimiter=delimiter,
-                                                nullrepr=nullrepr,
                                                 header=header)
             utils.flash_message(f"Loaded {n} records.")
         except (ValueError, IndexError, sqlite3.Error) as error:
@@ -535,14 +535,23 @@ class DbContext:
         else:
             os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD|stat.S_IWRITE)
 
-    def set_name(self, name):
+    def set_name(self, name, modify=False):
         """Set or change the database name.
+        If 'modify' is True, then allow modifying the name to make it unique.
+        Return the final name.
         Raise ValueError if name is invalid or already in use.
         """
         assert not hasattr(self, '_dbcnx') # Must be done before any write ops.
         if name == self.db.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid database name')
+        if modify:
+            modified = name
+            for n in range(1, 1000): # Bail out if too many.
+                if get_db(modified) is None:
+                    name = modified
+                    break
+                modified = f"{name}-{n}"
         if get_db(name):
             raise ValueError('database name already in use')
         old_dbname = self.db.get('name')
@@ -554,6 +563,7 @@ class DbContext:
         # Update of spec data URLs must be done *after* db rename.
         if old_dbname:
             self.update_spec_data_urls(old_dbname)
+        return self.db['name']
 
     def set_title(self, title):
         "Set the database title."
@@ -605,14 +615,9 @@ class DbContext:
                                    if_not_exists=True)
         self.dbcnx.execute(sql)
 
-    def load_dbfile(self, infile):
-        "Load the entire database file present in the given file object."
-        with open(utils.dbpath(self.db['name']), 'wb') as outfile:
-            outfile.write(infile.read())
-
-    def load_csvfile(self, infile, tablename, 
-                     delimiter=',', nullrepr='', header=True):
-        """Load the CSV file and infer column types and constraints.
+    def load_csvfile(self, infile, tablename,
+                     delimiter=',', header=True, nullrepr=''):
+        """Load the CSV file as a table and infer column types and constraints.
         Return the tablename and the number of records read from the file.
         Raises ValueError or sqlite3.Error if any problem.
         """
@@ -1371,35 +1376,21 @@ def _set_nrows(cnx, target):
     sql = 'SELECT COUNT(*) FROM "%s"' % target['name']
     target['nrows'] = cnx.execute(sql).fetchone()[0]
 
-def add_database(dbname, infile, modify_dbname=False, size=0):
-    """Add the database file present in the given open file object.
+def add_sqlite3_database(dbname, infile, size):
+    """Add the Sqlite3 database file present in the given open file object.
     If the database has the metadata of a DbShare Sqlite3 database, check it.
     Else if the database appears to be a plain Sqlite3 database,
     infer the DbShare metadata from it by inspection.
-    If 'modify_name' is True, then attempt to fix a non-unique name.
-    'size' should be the size of the database file, if known.
+    'size' is the size of the database file.
     Return the database dictionary.
     Raise ValueError if any problem.
     """
     try:
         check_quota(size=size)
         with DbContext() as ctx:
-            try:
-                ctx.set_name(dbname)
-            except ValueError:
-                if not modify_dbname: raise
-                for n in range(1, 1000):
-                    try:
-                        modified_dbname = f"{dbname}-{n}"
-                        ctx.set_name(modified_dbname)
-                    except ValueError:
-                        pass
-                    else:
-                        dbname = modified_dbname
-                        break
-                else:
-                    raise ValueError('could not set database name')
-            ctx.load_dbfile(infile)
+            dbname = ctx.set_name(dbname, modify=True)
+            with open(utils.dbpath(dbname), 'wb') as outfile:
+                outfile.write(infile.read())
             ctx.initialize()
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
@@ -1411,6 +1402,29 @@ def add_database(dbname, infile, modify_dbname=False, size=0):
     except (ValueError, TypeError, sqlite3.Error) as error:
         delete_database(dbname)
         raise ValueError(str(error))
+
+def add_xlsx_database(dbname, infile, size):
+    """Add the XLSX file workbook as a database.
+    The worksheets are loaded as tables.
+    'size' is the size of the XLSX file.
+    Return the database dictionary.
+    Raise ValueError if any problem.
+    """
+    tmp = tempfile.NamedTemporaryFile(suffix='.xlsx')
+    tmp.write(infile.read())
+    tmp.seek(0)
+    try:
+        wb = openpyxl.load_workbook(tmp.name)
+        check_quota(size=size)
+        with DbContext() as ctx:
+            dbname = ctx.set_name(dbname)
+            ctx.initialize()
+    except (ValueError, IOError) as error:
+        raise ValueError(str(error))
+    for sheet in wb:
+        rows = list(sheet.values)
+        # XXX
+    return ctx.db
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."

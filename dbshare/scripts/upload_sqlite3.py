@@ -21,9 +21,11 @@ with dbshare.app.app.app_context():
         if user is None: raise ValueError('no such user')
         flask.g.current_user = user
         with open(args.filename, 'rb') as infile:
-            content = infile.read()
-        dbname = os.path.splitext(os.path.basename(args.filename))[0]
-        dbshare.db.add_database(dbname, None, content)
+            dbname = os.path.splitext(os.path.basename(args.filename))[0]
+            db = dbshare.db.add_sqlite3_database(dbname,
+                                                 infile,
+                                                 os.path.getsize(args.filename))
+            dbname = db['name']
     except (ValueError, IOError) as error:
         sys.exit(f"Error: {str(error)}")
     print(f"Uploaded database {dbname}.")

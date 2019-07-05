@@ -22,9 +22,6 @@ with dbshare.app.app.app_context():
     parser.add_argument('--delimiter', default='comma',
                         choices=list(delimiters.keys()),
                         help='The delimiter character between items in a line.')
-    parser.add_argument('--nullrepr', default='', action='store',
-                        help='The string used to represent the NULL value'
-                        ' in the CSV file records.')
     parser.add_argument('--noheader', dest='header', action='store_false',
                         help='The CSV file contains no header record.')
     args = parser.parse_args()
@@ -39,7 +36,6 @@ with dbshare.app.app.app_context():
             with dbshare.db.DbContext(db) as ctx:
                 tablename, n = ctx.load_csvfile(infile, tablename,
                                                 delimiter=delimiter,
-                                                nullrepr=args.nullrepr,
                                                 header=args.header)
     except (ValueError, IOError) as error:
         sys.exit(f"Error: {str(error)}")
