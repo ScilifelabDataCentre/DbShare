@@ -94,6 +94,7 @@ app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
 # Add template filters.
 app.add_template_filter(utils.thousands)
+app.add_template_filter(utils.size_none)
 app.add_template_filter(utils.none_as_question_mark)
 app.add_template_filter(utils.none_as_literal_null)
 app.add_template_filter(utils.none_as_empty_string)

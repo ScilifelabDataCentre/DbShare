@@ -32,8 +32,8 @@ Databases owned by {{ username }}
       <td>{{ db.get('title') or '-' }}</td>
       <td>{{ db['public'] | access }}</td>
       <td>{{ db['readonly'] | mode }}</td>
-      <td class="text-right">
-        <span class="text-monospace mr-4">{{ db['size']|thousands }}</span>
+      <td class="text-right pr-4">
+        {{ db['size'] | size_none }}
       </td>
       <td><small class="localtime">{{ db['modified'] }}</small></td>
     </tr>

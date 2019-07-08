@@ -259,11 +259,19 @@ def flash_message_limit(limit):
     flash_message(f"NOTE: The number of rows displayed is limited to {limit:,}.")
 
 def thousands(value):
-    "Template filter: Output integer with thousands delimiters."
+    "Template filter: Integer with thousands delimiters."
     if isinstance(value, int):
         return '{:,}'.format(value)
     else:
         return value
+
+def size_none(value):
+    "Template filter: Size in bytes with thousands delimiters, or 'none'."
+    if value is None:
+        value = '<em>none</em>'
+    else:
+        value = '<span class="text-monospace">{:,}</span>'.format(value)
+    return jinja2.utils.Markup(value)
 
 def none_as_question_mark(value):
     "Output None as '?'."

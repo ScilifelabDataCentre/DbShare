@@ -250,8 +250,7 @@
     {% endif %}
   </div>
   <div class="pt-1">
-    Size <span class="text-monospace">{{ db['size']|thousands }}</span>
-    bytes
+    Size {{ db['size'] | size_none }}  bytes
   </div>
   <div class="pt-1">
     Modified <span class="localtime">{{ db['modified'] }}</span>

@@ -14,6 +14,7 @@
       <th>Status</th>
       <th># databases</th>
       <th># templates</th>
+      <th>Size quota (bytes)</th>
       <th>Total size (bytes)</th>
     </tr>
   </thead>
@@ -44,7 +45,10 @@
 	  <span class="badge badge-info">{{ user['ntemplates'] }}</span></a>
       </td>
       <td class="text-right">
-        <span class="text-monospace mr-4">{{ user['size']|thousands }}</span>
+        {{ user.get('quota') | size_none }}
+      </td>
+      <td class="text-right">
+        {{ user['size'] | size_none }}
       </td>
     </tr>
     {% endfor %}

@@ -39,24 +39,19 @@
     </td>
   </tr>
   <tr>
-    <th class="text-right">Total size</th>
+    <th class="text-right">Total size (bytes)</th>
     <td>
-      <span class="text-monospace">{{ '{:,}'.format(usage) }}</span> bytes
-      {% if user.get('quota') and usage > user['quota'] %}
+      {{ total_size | size_none }}
+      {% if user.get('quota') and total_size > user['quota'] %}
       <br>
       <span class="text-danger">No more data may be added.</span>
       {% endif %}
     </td>
   </tr>
   <tr>
-    <th class="text-right">Size quota</th>
+    <th class="text-right">Size quota (bytes)</th>
     <td>
-      {% if user.get('quota') %}
-      <span class="text-monospace">{{ '{:,}'.format(user['quota']) }}</span>
-      bytes
-      {% else %}
-      <em>none</em>
-      {% endif %}
+      {{ user.get('quota') | size_none }}
     </td>
   </tr>
 </table>

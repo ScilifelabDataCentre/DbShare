@@ -193,14 +193,14 @@ def profile(username):
     if not is_admin_or_self(user):
         utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
-    ndbs, usage = dbshare.db.get_usage(username)
+    ndbs, total_size = dbshare.db.get_usage(username)
     ntemplates = len(dbshare.templates.get_templates(owner=username))
     deletable = ndbs == 0 and ntemplates == 0
     return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
                                  ndbs=ndbs,
-                                 usage=usage,
+                                 total_size=total_size,
                                  ntemplates=ntemplates,
                                  deletable=deletable)
 
