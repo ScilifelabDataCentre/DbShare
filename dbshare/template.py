@@ -309,7 +309,6 @@ def render(templatename, dbname, sourcename):
                 raise ValueError('no visual name given')
             if not constants.NAME_RX.match(visualname):
                 raise ValueError('invalid visual name')
-            visualname = visualname.lower()
             try:
                 dbshare.db.get_visual(db, visualname)
             except ValueError:
@@ -421,7 +420,6 @@ class TemplateContext:
         if name == self.template.get('name'): return
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid template name')
-        name = name.lower()
         if get_template(name):
             raise ValueError('template name already in use')
         self.template['name'] = name
@@ -451,8 +449,7 @@ class TemplateContext:
             raise ValueError('no name provided for field')
         if not constants.NAME_RX.match(name):
             raise ValueError('invalid name for field')
-        name = name.lower()
-        if name in self.template['fields']:
+        if utils.name_in_nocase(name, self.template['fields']):
             raise ValueError('field name already in use')
         field = {'name': name}
         field['types'] = flask.request.form.getlist('type')

@@ -622,8 +622,7 @@ class DbContext:
         Raises ValueError or sqlite3.Error if any problem.
         """
         tablename = utils.name_cleaned(tablename)
-        tablename = tablename.lower()
-        if tablename in self.db['tables']:
+        if utils.name_in_nocase(tablename, self.db['tables']):
             raise ValueError('table name already in use')
         schema = {'name': tablename}
 
@@ -758,10 +757,9 @@ class DbContext:
         utils.json_validate(schema, dbshare.schema.table.create)
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
-        schema['name'] = schema['name'].lower()
-        if schema['name'] in self.db['tables']:
+        if utils.name_in_nocase(schema['name'], self.db['tables']):
             raise ValueError('name is already in use for a table')
-        if schema['name'] in self.db['views']:
+        if utils.name_in_nocase(schema['name'], self.db['views']):
             raise ValueError('name is already in use for a view')
         if query:
             sql = dbshare.query.get_sql_statement(query)
@@ -788,10 +786,9 @@ class DbContext:
         """
         if not column['name'] or not constants.NAME_RX.match(column['name']):
             raise ValueError('invalid column name')
-        column['name'] = column['name'].lower()
-        for col in schema['columns']:
-            if col['name'] == column['name']:
-                raise ValueError('non-unique column name')
+        if utils.name_in_nocase(column['name'],
+                                [c['name'] for c in schema['columns']]):
+            raise ValueError('non-unique column name')
         if column['type'] not in constants.COLUMN_TYPES:
             raise ValueError('invalid column type')
         sql = f'''ALTER TABLE "{schema['name']}"''' \
@@ -862,12 +859,12 @@ class DbContext:
 
     def add_index(self, tablename, schema):
         "Create an index in the database and add to the database definition."
-        if tablename not in self.db['tables']:
+        if not utils.name_in_nocase(tablename, self.db['tables']):
             raise ValueError(f"no such table {tablename}"
                              f" for index {schema['name']}")
-        name = schema.get('name', '').lower()
+        name = schema.get('name', '')
         if name:
-            if name in self.db['indexes']:
+            if utils.name_in_nocase(name, self.db['indexes']):
                 raise ValueError(f"index {name} already defined")
         else:
             prefix = f"_index_{tablename}_"
@@ -907,12 +904,11 @@ class DbContext:
         Raises ValueError if there is a problem with the input schema data.
         """
         utils.json_validate(schema, dbshare.schema.view.create)
-        schema['name'] = schema['name'].lower()
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid view name')
-        if schema['name'] in self.db['tables']:
+        if utils.name_in_nocase(schema['name'], self.db['tables']):
             raise ValueError('name is already in use for a table')
-        if schema['name'] in self.db['views']:
+        if utils.name_in_nocase(schema['name'], self.db['views']):
             raise ValueError('name is already in use for a view')
         if create:
             sql = 'CREATE VIEW "%s" AS %s' % \
@@ -972,7 +968,7 @@ class DbContext:
         sql = "INSERT INTO %s (name, sourcename, spec)" \
               " VALUES (?, ?, ?)" % constants.VISUALS
         with self.dbcnx:
-            self.dbcnx.execute(sql, (visualname.lower(),
+            self.dbcnx.execute(sql, (visualname,
                                      sourcename,
                                      json.dumps(spec)))
 
@@ -982,15 +978,15 @@ class DbContext:
             new_visualname = visualname
         with self.dbcnx:
             sql = f"UPDATE {constants.VISUALS} SET name=?,spec=? WHERE name=?"
-            self.dbcnx.execute(sql,(new_visualname.lower(),
+            self.dbcnx.execute(sql,(new_visualname, 
                                     json.dumps(spec),
-                                    visualname.lower()))
+                                    visualname))
 
     def delete_visual(self, visualname):
         "Delete the visualization for the given source (table or view)."
         with self.dbcnx:
             sql = "DELETE FROM %s WHERE name=?" % constants.VISUALS
-            self.dbcnx.execute(sql, (visualname.lower(),))
+            self.dbcnx.execute(sql, (visualname,))
 
     def check_metadata(self):
         """Check the validity of the metadata for the database.
@@ -1002,9 +998,9 @@ class DbContext:
         if self.dbcnx.execute(sql).fetchone()[0] == 0:
             return False # No metadata; skip.
         sql = f"SELECT name FROM {constants.TABLES}"
-        tables1 = [r[0].lower() for r in self.dbcnx.execute(sql)]
+        tables1 = [r[0] for r in self.dbcnx.execute(sql)]
         sql = "SELECT name FROM sqlite_master WHERE type=?"
-        tables2 = [r[0].lower() for r in self.dbcnx.execute(sql, ('table',))]
+        tables2 = [r[0] for r in self.dbcnx.execute(sql, ('table',))]
         # Do not consider metadata tables and sqlite statistics tables, if any.
         tables2 = [n for n in tables2 if not n.startswith('_')]
         tables2 = [n for n in tables2 if not n.startswith('sqlite_')]
@@ -1069,8 +1065,8 @@ class DbContext:
             sql = f'PRAGMA table_info("{tablename}")'
             cursor.execute(sql)
             for row in cursor:
-                column = {'name': row[1].lower(), 
-                          'type': row[2].upper(),
+                column = {'name': row[1], 
+                          'type': row[2],
                           'notnull': bool(row[3]),
                           'primarykey': bool(row[5])}
                 schema['columns'].append(column)
@@ -1239,8 +1235,7 @@ def get_sql_create_table(schema, if_not_exists=False):
         raise ValueError('no columns defined')
     names = set()
     for column in schema['columns']:
-        column['name'] = column['name'].lower()
-        if column['name'] in names:
+        if utils.name_in_nocase(column['name'], names):
             raise ValueError("column name %s repeated" % column['name'])
         if column['name'] == 'rowid':
             raise ValueError("column name 'rowid' is reserved by the system")

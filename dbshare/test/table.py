@@ -1,5 +1,6 @@
 "Test the table API endpoint."
 
+import copy
 import csv
 import io
 import http.client
@@ -98,6 +99,29 @@ class Table(base.Base):
         self.assertEqual(response.status_code, http.client.OK)
         result = response.json()
         self.assertEqual(len(result['tables']), 0)
+
+    def test_name_clash(self):
+        "Try creating a table with uppercase name of already existing."
+
+        # Create an empty database.
+        response = self.create_database()
+        result = self.check_schema(response)
+
+        # Create a table in the database.
+        url = self.root['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
+        response = self.session.put(url, json=self.table_spec)
+        result = self.check_schema(response)
+
+        # Try creating same table but with upper-case name.
+        table_spec = copy.deepcopy(self.table_spec)
+        table_spec['name'] = table_spec['name'].upper()
+        url = self.root['operations']['table']['create']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=table_spec['name'])
+        response = self.session.put(url, json=table_spec)
+        self.assertEqual(response.status_code, http.client.BAD_REQUEST)
 
     def test_insert(self):
         "Create database and table; insert data."

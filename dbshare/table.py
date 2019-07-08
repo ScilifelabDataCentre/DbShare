@@ -47,7 +47,7 @@ def create(dbname):
                 if not name: break
                 if not constants.NAME_RX.match(name):
                     raise ValueError(f"invalid name in column {n+1}")
-                column = {'name': name.lower()}
+                column = {'name': name}
                 type = flask.request.form.get(f"column{n}type")
                 if type not in constants.COLUMN_TYPES:
                     raise ValueError(f"invalid type in column {n+1}")

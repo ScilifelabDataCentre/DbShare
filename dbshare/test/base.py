@@ -118,14 +118,14 @@ class Base(unittest.TestCase):
         response = self.session.put(url)
         self.assertEqual(response.status_code, http.client.OK)
         self.db_url = response.url
-        self.addCleanup(self.delete_db)
+        self.addCleanup(self.cleanup)
         return response
 
     def upload_file(self):
         "Create a local Sqlite3 file and upload it."
         # Create the database in a local file.
         cnx = sqlite3.connect(CONFIG['filename'])
-        self.addCleanup(self.delete_file)
+        self.addCleanup(self.cleanup)
         # Create a table in the database.
         cnx.execute("CREATE TABLE t1 ("
                     "i INTEGER PRIMARY KEY,"
@@ -150,16 +150,13 @@ class Base(unittest.TestCase):
             response = self.session.put(url, data=infile, headers=headers)
             self.assertEqual(response.status_code, http.client.OK)
             self.db_url = response.url
-        self.addCleanup(self.delete_db)
         return response
 
-    def delete_file(self):
+    def cleanup(self):
         try:
             os.remove(CONFIG['filename'])
         except OSError:
             pass
-
-    def delete_db(self):
         try:
             self.session.delete(self.db_url)
         except AttributeError:

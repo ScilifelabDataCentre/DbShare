@@ -47,16 +47,16 @@ class NameConverter(werkzeug.routing.BaseConverter):
     def to_python(self, value):
         if not constants.NAME_RX.match(value):
             raise werkzeug.routing.ValidationError
-        return value.lower()    # Case-insensitive
+        return value
 
 class NameExt:
     "Helper class for NameExtConverter."
     def __init__(self, match):
         if not match:
             raise werkzeug.routing.ValidationError
-        self.name = match.group(1).lower() # Case-insensitive
+        self.name = match.group(1)
         if match.group(2):
-            self.ext = match.group(2).strip('.').lower() # Case-insensitive
+            self.ext = match.group(2).strip('.')
         else:
             self.ext = None
     def __str__(self):
@@ -133,8 +133,7 @@ def get_iuid():
 def to_bool(s):
     "Convert string value into boolean."
     if not s: return False
-    s = s.lower()
-    return s in ('true', 't', 'yes', 'y')
+    return s.lower() in ('true', 't', 'yes', 'y')
 
 def get_time(offset=None):
     """Current date and time (UTC) in ISO format, with millisecond precision.
@@ -166,6 +165,10 @@ def name_cleaned(name):
         if char not in constants.NAME_CHARS:
             chars[pos] = '_'
     return ''.join(chars)
+
+def name_in_nocase(name, names):
+    "Using a non-case sensitive comparison, is the 'name' among the 'names'?"
+    return name.lower() in [n.lower() for n in names]
 
 def url_for(endpoint, **values):
     "Same as 'flask.url_for', but with '_external' set to True."

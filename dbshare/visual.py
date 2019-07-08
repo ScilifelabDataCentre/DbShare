@@ -78,7 +78,6 @@ def edit(dbname, visualname):
                 raise ValueError('no visual name given')
             if not constants.NAME_RX.match(newname):
                 raise ValueError('invalid visual name')
-            newname = newname.lower()
             if newname != visualname:
                 try:
                     dbshare.db.get_visual(db, newname)
@@ -140,7 +139,6 @@ def clone(dbname, visualname):
                 raise ValueError('no visual name given')
             if not constants.NAME_RX.match(visualname):
                 raise ValueError('invalid visual name')
-            visualname = visualname.lower()
             try:
                 dbshare.db.get_visual(db, visualname)
             except ValueError:
