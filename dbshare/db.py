@@ -77,7 +77,6 @@ def display(dbname):
             mode = 'w:' + dbname.ext.split('.')[1]
         except IndexError:
             mode = 'w'
-        dbcnx = get_cnx(db['name'])
         outfile = io.BytesIO()
         tar = tarfile.open(fileobj=outfile, mode=mode)
         schemas = list(db['tables'].values()) + list(db['views'].values())
@@ -87,7 +86,7 @@ def display(dbname):
                   (','.join([f'"{c}"' for c in columns]), schema['name'])
             writer = utils.CsvWriter(header=columns)
             try:
-                cursor = utils.execute_timeout(dbcnx, sql)
+                cursor = utils.execute_timeout(get_cnx(db['name']), sql)
             except SystemError:
                 pass
             else:
@@ -99,6 +98,37 @@ def display(dbname):
         tar.close()
         response = flask.make_response(outfile.getvalue())
         response.headers.set('Content-Type', constants.TAR_MIMETYPE)
+        response.headers.set('Content-Disposition', 'attachment', 
+                             filename=f"{dbname}.{dbname.ext}")
+        return response
+
+    elif dbname.ext == 'xlsx':
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        tables = list(db['tables'].values())
+        if tables:
+            ws.title = tables[0]['name']
+            for table in tables[1:]:
+                ws = wb.create_sheet(title=table['name'])
+        for table in tables:
+            ws = wb[table['name']]
+            columns = [c['name'] for c in table['columns']]
+            ws.append(columns)
+            sql = 'SELECT %s FROM "%s"' % \
+                  (','.join([f'"{c}"' for c in columns]), table['name'])
+            try:
+                cursor = utils.execute_timeout(get_cnx(db['name']), sql)
+            except SystemError:
+                pass
+            else:
+                for row in cursor:
+                    ws.append(list(row))
+        with tempfile.NamedTemporaryFile(suffix='.xlsx') as tmp:
+            wb.save(tmp.name)
+            tmp.seek(0)
+            content = tmp.read()
+        response = flask.make_response(content)
+        response.headers.set('Content-Type', constants.XLSX_MIMETYPE)
         response.headers.set('Content-Disposition', 'attachment', 
                              filename=f"{dbname}.{dbname.ext}")
         return response

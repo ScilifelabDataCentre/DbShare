@@ -98,8 +98,13 @@
 {% block meta %}
 <div>
   <a href="{{ url_for('.display', dbname=db['name']) + '.tar.gz' }}"
-     title="Gzipped tar file of directory containing all tables as CSV files."
+     title="Gzipped tar file of a directory containing all tables as CSV files."
      class="badge badge-pill badge-primary">CSV tar.gz</a>
+</div>
+<div>
+  <a href="{{ url_for('.display', dbname=db['name']) + '.xlsx' }}"
+     title="Excel 2007 file"
+     class="badge badge-pill badge-primary">XLSX</a>
 </div>
 {% endblock %} {# block meta #}
 
