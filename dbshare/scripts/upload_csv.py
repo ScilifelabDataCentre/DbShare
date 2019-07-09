@@ -31,12 +31,25 @@ with dbshare.app.app.app_context():
         flask.g.current_user = dbshare.user.get_user(username=db['owner'])
         tablename = os.path.basename(args.filename)
         tablename = os.path.splitext(tablename)[0]
+        tablename = utils.name_cleaned(tablename)
+        if utils.name_in_nocase(tablename, db['tables']):
+            raise ValueError('table name already in use')
         delimiter = delimiters[args.delimiter]['char']
+        # Read the file; eliminate empty records.
+        records = [r for r in csv.reader(infile, delimiter=delimiter) if r]
+        if not records:
+            raise ValueError('empty CSV file')
+        # Change empty string items to None.
+        for record in records:
+            for i, item in enumerate(record):
+                if item == '':
+                    record[i] = None
         with open(args.filename, newline='') as infile:
             with dbshare.db.DbContext(db) as ctx:
-                tablename, n = ctx.load_csvfile(infile, tablename,
-                                                delimiter=delimiter,
-                                                header=args.header)
+                ctx.create_table_load_records(tablename,
+                                              records,
+                                              has_header=args.header)
     except (ValueError, IOError) as error:
         sys.exit(f"Error: {str(error)}")
-    print(f"Loaded {n} records into table {tablename} in database {args.dbname}.")
+    print(f"Loaded {len(records)} records into table {tablename}"
+          f" in database {args.dbname}.")

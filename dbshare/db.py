@@ -228,19 +228,30 @@ def upload(dbname):
                 delimiter = flask.current_app.config['CSV_FILE_DELIMITERS'][delimiter]['char']
             except KeyError:
                 raise ValueError('invalid delimiter')
-            header = utils.to_bool(flask.request.form.get('header'))
             try:
                 tablename = flask.request.form['tablename']
                 if not tablename: raise KeyError
             except KeyError:
                 tablename = os.path.basename(csvfile.filename)
                 tablename = os.path.splitext(tablename)[0]
+            tablename = utils.name_cleaned(tablename)
+            if utils.name_in_nocase(tablename, db['tables']):
+                raise ValueError('table name already in use')
+            # Read the file; eliminate empty records.
+            records = [r for r in csv.reader(infile, delimiter=delimiter) if r]
+            if not records:
+                raise ValueError('empty CSV file')
+            # Change empty string items to None.
+            for record in records:
+                for i, item in enumerate(record):
+                    if item == '':
+                        record[i] = None
+            has_header = utils.to_bool(flask.request.form.get('header'))
             with DbContext(db) as ctx:
-                tablename, n = ctx.load_csvfile(infile,
-                                                tablename,
-                                                delimiter=delimiter,
-                                                header=header)
-            utils.flash_message(f"Loaded {n} records.")
+                ctx.create_table_load_records(tablename,
+                                              records,
+                                              has_header=has_header)
+            utils.flash_message(f"Loaded {len(records)} records.")
         except (ValueError, IndexError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(
@@ -615,22 +626,13 @@ class DbContext:
                                    if_not_exists=True)
         self.dbcnx.execute(sql)
 
-    def load_csvfile(self, infile, tablename,
-                     delimiter=',', header=True, nullrepr=''):
-        """Load the CSV file as a table and infer column types and constraints.
-        Return the tablename and the number of records read from the file.
+    def create_table_load_records(self, tablename, records, has_header=True):
+        """Create and load table from records (lists of data items).
+        Infer table column types and constraints from records contents.
         Raises ValueError or sqlite3.Error if any problem.
         """
-        tablename = utils.name_cleaned(tablename)
-        if utils.name_in_nocase(tablename, self.db['tables']):
-            raise ValueError('table name already in use')
-        schema = {'name': tablename}
-
-        # Preprocess CSV data; eliminate empty records
-        records = [r for r in csv.reader(infile, delimiter=delimiter) if r]
-        if not records:
-            raise ValueError('empty CSV file')
-        if header:
+        # Column names from header, or make up.
+        if has_header:
             header = records.pop(0)
             header = [utils.name_cleaned(n) for n in header]
             if len(header) != len(set(header)):
@@ -638,44 +640,56 @@ class DbContext:
         else:
             header = [f"column{i+1}" for i in range(len(records[0]))]
 
-        # Infer column types and constraints
+        # Infer column types and constraints.
+        schema = {'name': tablename}
         schema['columns'] = [{'name': name} for name in header]
         try:
             for i, column in enumerate(schema['columns']):
-                # First attempt: integer
-                column['notnull'] = True
                 type = None
+                column['notnull'] = True
+
+                # First attempt: integer
                 for n, record in enumerate(records):
                     value = record[i]
-                    if value == nullrepr:
+                    if value is None:
                         column['notnull'] = False
-                    else:
+                    elif isinstance(value, int):
+                        pass
+                    elif isinstance(value, str):
                         try:
                             int(value)
                         except (ValueError, TypeError):
                             break
+                    else:
+                        break
                 else:
                     type = constants.INTEGER
+
                 # Next attempt: float
                 if type is None:
                     for n, record in enumerate(records):
                         value = record[i]
-                        if value == nullrepr:
+                        if value is None:
                             column['notnull'] = False
-                        else:
+                        elif isinstance(value, (float, int)):
+                            pass
+                        elif isinstance(value, str):
                             try:
                                 float(value)
                             except (ValueError, TypeError):
                                 break
+                        else:
+                            break
                     else:
                         type = constants.REAL
+
                 # Default: text
                 if type is None:
                     column['type'] = constants.TEXT
                     if column['notnull']:
                         for record in records:
                             value = record[i]
-                            if value == nullrepr:
+                            if value is None:
                                 column['notnull'] = False
                                 break
                 else:
@@ -683,31 +697,24 @@ class DbContext:
         except IndexError:
             raise ValueError(f"record {i+1} has too few items")
 
-        # Create the table
+        # Create the table.
         self.add_table(schema)
 
-        # Actually convert values in records
+        # Actually convert values in records.
         for i, column in enumerate(schema['columns']):
             type = column['type']
             if type == constants.INTEGER:
                 for n, record in enumerate(records):
                     value = record[i]
-                    if value == nullrepr:
-                        record[i] = None
-                    else:
+                    if value is not None:
                         record[i] = int(value)
             elif type == constants.REAL:
                 for n, record in enumerate(records):
                     value = record[i]
-                    if value == nullrepr:
-                        record[i] = None
-                    else:
+                    if value is not None:
                         record[i] = float(value)
-            else:
-                for n, record in enumerate(records):
-                    if record[i] == nullrepr:
-                        record[i] = None
-        # Insert the data
+
+        # Insert the data.
         sql = 'INSERT INTO "%s" (%s) VALUES (%s)' % \
               (tablename,
                ','.join(['"%(name)s"' % c for c in schema['columns']]),
@@ -715,7 +722,6 @@ class DbContext:
         with self.dbcnx:
             self.dbcnx.executemany(sql, records)
         self.update_table_nrows(schema)
-        return tablename, len(records)
 
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,
@@ -1414,12 +1420,32 @@ def add_xlsx_database(dbname, infile, size):
         with DbContext() as ctx:
             dbname = ctx.set_name(dbname)
             ctx.initialize()
+        db = get_db(dbname, complete=True)
     except (ValueError, IOError) as error:
         raise ValueError(str(error))
     for sheet in wb:
-        rows = list(sheet.values)
-        # XXX
-    return ctx.db
+        # Ensure the table name is unique.
+        tname = utils.name_cleaned(sheet.title)
+        tablename = tname
+        count = 1
+        while tablename in db['tables']:
+            count += 1
+            tablename = f"{tname}{count}"
+        records = list(sheet.values)
+        # The header determines the number of columns;
+        # clip off any trailing None values.
+        for pos, item in enumerate(records[0]):
+            if item is None:
+                records[0] = records[0][:pos]
+                break
+        
+        # Truncate records to same number of items as header; convert to lists.
+        # Convert records from tuples to lists.
+        length = len(records[0])
+        records = [list(r[:length]) for r in records]
+        with DbContext(db) as ctx:
+            ctx.create_table_load_records(tablename, records)
+    return db
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
