@@ -37,21 +37,22 @@
 {% endblock %} {# block main #}
 
 {% block meta %}
-<div class="py-1">
-  <div>
-    <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.csv' }}"
-       class="badge badge-pill badge-primary">CSV</a>
-  </div>
-  <div>
-    <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.json' }}"
-       class="badge badge-pill badge-primary">JSON</a>
-  </div>
-  <div>
-    <a href="{{ url_for('api_table.table', dbname=db['name'], tablename=schema['name']) }}"
-       class="badge badge-pill badge-dark">API</a>
-  </div>
+<div>
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.csv' }}"
+     class="badge badge-pill badge-primary">CSV</a>
+</div>
+<div>
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.json' }}"
+     class="badge badge-pill badge-primary">JSON</a>
 </div>
 {% endblock %} {# block meta #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_table.table', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
 
 {% block links %}
 {% if visuals %}

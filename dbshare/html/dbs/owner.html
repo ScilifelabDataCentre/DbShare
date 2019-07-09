@@ -57,12 +57,12 @@ Databases owned by {{ username }}
 </div>
 {% endblock %} {# block actions #}
 
-{% block meta %}
+{% block api %}
 <div>
   <a href="{{ url_for('api_dbs.owner', username=username) }}"
      class="badge badge-pill badge-dark">API</a>
 </div>
-{% endblock %} {# block meta #}
+{% endblock %} {# block api #}
 
 {% block javascript %}
 <script>

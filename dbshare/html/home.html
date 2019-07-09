@@ -10,12 +10,12 @@
 {% include 'dbs/list_public.html' %}
 {% endblock %} {# block main #}
 
-{% block meta %}
+{% block api %}
 <div>
   <a href="{{ url_for('api.root') }}"
      class="badge badge-pill badge-dark">API</a>
 </div>
-{% endblock %} {# block meta #}
+{% endblock %} {# block api #}
 
 {% block javascript %}
 <script>
