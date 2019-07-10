@@ -27,6 +27,7 @@ Uses [Sqlite3](https://www.sqlite.org/),
 - Create a table, defining the columns; i.e. schema.
 - Create a table by uploading a CSV file.
 - Display the rows in a table.
+- Compute and display simple statistics for the columns in a table.
 - Display the schema of a table.
 - List the visualizations for a table.
 - Insert a row of data.
