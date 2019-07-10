@@ -36,18 +36,18 @@ schema = {
                     'name': {'type': 'string'},
                     'title': {'type': ['string', 'null']},
                     'description': {'type': ['string', 'null']},
-                    'href': {'type': 'string', 'format': 'uri'},
                     'nrows': {'type': ['number', 'null']},
                     'rows': {'$ref': '#/definitions/link'},
-                    'data': {'$ref': '#/definitions/link'}
+                    'data': {'$ref': '#/definitions/link'},
+                    'href': {'type': 'string', 'format': 'uri'}
                 },
                 'required': ['name', 
                              'title',
                              'description',
-                             'href',
                              'nrows',
                              'rows',
-                             'data'],
+                             'data',
+                             'href'],
                 'additionalProperties': False
             }
         },

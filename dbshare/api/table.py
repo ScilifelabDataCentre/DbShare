@@ -205,20 +205,20 @@ def empty(dbname, tablename):
     return flask.redirect(
         flask.url_for('api_table.table', dbname=dbname,tablename=tablename))
 
-def get_json(db, table, complete=False):
+def get_json(db, table, complete=False, title=False):
     "Return JSON for the table."
     rows_url = utils.url_for('table.rows',
                              dbname=db['name'],
                              tablename=table['name'])
-    result = {'name': table['name'],
-              'title': table.get('title'),
-              'description': table.get('description'),
-              'nrows': table['nrows'],
-              'rows': {'href': rows_url + '.json'},
-              'data': {'href': rows_url + '.csv',
-                       'content-type': constants.CSV_MIMETYPE,
-                       'format': 'csv'}
-    }
+    result = {'name': table['name']}
+    if complete or title:
+        result['title'] = table.get('title')
+        result['description'] = table.get('description')
+    result['nrows'] = table['nrows']
+    result['rows'] = {'href': rows_url + '.json'}
+    result['data'] = {'href': rows_url + '.csv',
+                      'content-type': constants.CSV_MIMETYPE,
+                      'format': 'csv'}
     if complete:
         result['database'] = {'href': utils.url_for('api_db.database',
                                                     dbname=db['name'])}

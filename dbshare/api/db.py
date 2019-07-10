@@ -178,7 +178,7 @@ def get_json(db, complete=False):
               'hashes': db['hashes']
     }
     if complete:
-        result['tables'] = [dbshare.api.table.get_json(db, table)
+        result['tables'] = [dbshare.api.table.get_json(db, table, title=True)
                             for table in db['tables'].values()]
         result['views'] = [dbshare.api.view.get_json(db, view)
                            for view in db['views'].values()]
