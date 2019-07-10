@@ -24,6 +24,8 @@ schemas = {
                 'title': dbshare.schema.db.edit['title']},
     'table': {'href':  dbshare.schema.table.schema['$id'],
               'title': dbshare.schema.table.schema['title']},
+    'table/statistics': {'href':  dbshare.schema.table.statistics['$id'],
+                         'title': dbshare.schema.table.statistics['title']},
     'table/create': {'href':  dbshare.schema.table.create['$id'],
                      'title': dbshare.schema.table.create['title']},
     'table/input': {'href':  dbshare.schema.table.input['$id'],
@@ -75,6 +77,10 @@ def db_edit():
 @blueprint.route('/table')
 def table():
     return flask.jsonify(dbshare.schema.table.schema)
+
+@blueprint.route('/table/statistics')
+def table_statistics():
+    return flask.jsonify(dbshare.schema.table.statistics)
 
 @blueprint.route('/table/create')
 def table_create():

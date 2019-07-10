@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Statistics for table {{ schema['name'] }}{% endblock %}
+
+{% block body_title %}Statistics for table {{ schema['name'] }}{% endblock %}
+
+{% block main %}
+<div class="m-2">{{ schema.get('description')|markdown }}</div>
+
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Columns</h5>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Type</th>
+	  <th>Statistics</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['name'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	  <td>
+            <table class="table table-borderless table-sm">
+              <colgroup>
+                <col style="width: 30%">
+                <col style="width: 70%">
+              </colgroup>
+              <tbody>
+                {% for stat in column['statistics'] %}
+                <tr>
+                  <td>{{ stat.get('title') or stat['name'] }}</td>
+                  <td>
+                    {{ stat['value'] }}
+                    {% if 'info' in stat %}
+                    {{ stat['info'] }}
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %} {# block main #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_table.statistics', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block actions %}
+<div class="mt-2">
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    {{ db['tables'][schema['name']]['nrows']|thousands }} rows</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
+     title="Display the schema of the table."
+     role="button" class="btn btn-outline-primary btn-block">Schema</a>
+</div>
+{% endblock %} {# block actions #}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %} {# block javascript #}

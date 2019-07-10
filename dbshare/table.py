@@ -4,6 +4,7 @@ import copy
 import csv
 import http.client
 import sqlite3
+import statistics as statistics_module
 
 import flask
 
@@ -84,10 +85,10 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
         columns = [c['name'] for c in schema['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
+        colnames = ','.join([f'"{c}"' for c in columns])
 
         if tablename.ext == 'json' or utils.accept_json():
-            sql = 'SELECT %s FROM "%s"' % \
-                  (','.join([f'"{c}"' for c in columns]), tablename)
+            sql = f'SELECT {colnames} FROM "{tablename}"'
             try:
                 cursor = utils.execute_timeout(dbcnx, sql)
             except SystemError:
@@ -105,8 +106,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
             return utils.jsonify(utils.get_json(**result), schema='/rows')
 
         elif tablename.ext == 'csv':
-            sql = 'SELECT %s FROM "%s"' % \
-                  (','.join([f'"{c}"' for c in columns]), tablename)
+            sql = f'SELECT {colnames} FROM "{tablename}"'
             writer = utils.CsvWriter(header=columns)
             try:
                 cursor = utils.execute_timeout(dbcnx, sql)
@@ -117,8 +117,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                   mimetype=constants.CSV_MIMETYPE)
 
         elif tablename.ext in (None, 'html'):
-            sql = 'SELECT rowid, %s FROM "%s"' % \
-                  (','.join([f'"{c}"' for c in columns]), tablename)
+            sql = f'SELECT rowid, {colnames} FROM "{tablename}"'
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] > limit:
                 sql += f" LIMIT {limit}"
@@ -670,6 +669,22 @@ def download_csv(dbname, tablename):
                          filename=f"{tablename}.csv")
     return response
 
+@blueprint.route('/<name:dbname>/<name:tablename>/statistics')
+def statistics(dbname, tablename):
+    "Display statistics for the content of the table's columns."
+    try:
+        db = dbshare.db.get_check_read(dbname)
+    except (KeyError, ValueError) as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('home'))
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        utils.flash_error('no such table')
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
+    compute_statistics(db, schema)
+    return flask.render_template('table/statistics.html', db=db, schema=schema)
+
 def get_row_values_errors(columns):
     "Return the values and errors from the form for a row given the columns."
     errors = {}
@@ -801,3 +816,81 @@ def update_csv_rows(db, schema, csvfile, delimiter):
     except sqlite3.Error as error:
         raise ValueError("row number %s; %s" (rowpos+1, str(error)))
     return (len(rows), count)
+
+def compute_statistics(db, schema):
+    "Get the stastistics for the content on the table's columns."
+    dbcnx = dbshare.db.get_cnx(db['name'])
+    for column in schema['columns']:
+        column['statistics'] = stats = []
+        sql = f'''SELECT "{column['name']}" FROM "{schema['name']}"'''
+        values = [row[0] for row in dbcnx.execute(sql)]
+
+        # Number of NULLs in the column.
+        if column.get('notnull'):
+            column['statistics'].append({'name': 'nulls',
+                                         'title': 'NULL values',
+                                         'value': 'NOT NULL'})
+            nonnull_values = values
+        else:
+            count = 0
+            for value in values:
+                if value is None: count += 1
+            stats.append({'name': 'nulls',
+                          'title': 'NULL values',
+                          'value': count})
+            if count:
+                nonnull_values = [v for v in values if v is not None]
+            else:
+                nonnull_values = values
+            stats.append({'name': 'nonnulls',
+                          'title': 'Non-NULL values',
+                          'value': len(nonnull_values)})
+
+        # Number of unique values in the column.
+        if column.get('primarykey'):
+            stats.append({'name': 'uniques',
+                          'title': 'Unique values', 
+                          'value': 'PRIMARY KEY'})
+        else:
+            uniques = set(nonnull_values)
+            stat = {'name': 'uniques',
+                    'title': 'Unique values',
+                    'value': len(uniques)}
+            if len(uniques) < 9:
+                stat['info'] = list(uniques)
+            stats.append(stat)
+
+        nonnull_values = sorted(nonnull_values)
+
+        # Numerical min, max, mean, median
+        if column['type'] in (constants.INTEGER, constants.REAL):
+            if len(nonnull_values):
+                stats.append({'name': 'min',
+                              'title': 'Minimum',
+                              'value': nonnull_values[0]})
+                mean = statistics_module.mean(nonnull_values)
+                stats.append({'name': 'mean',
+                              'title': 'Mean',
+                              'value': mean})
+                median = statistics_module.median_low(nonnull_values)
+                stats.append({'name': 'median',
+                              'title': 'Median',
+                              'value': median})
+                stats.append({'name': 'max',
+                              'title': 'Maximum',
+                              'value': nonnull_values[-1]})
+                if len(nonnull_values) > 2:
+                    stdev = statistics_module.stdev(nonnull_values, xbar=mean)
+                    stats.append({'name': 'stdev',
+                                  'title': 'Standard deviation',
+                                  'value': stdev})
+
+        # Lexical min, max
+        if column['type'] == constants.TEXT:
+            if len(nonnull_values):
+                stats.append({'name': 'min',
+                              'title': 'Lexical minimum',
+                              'value': nonnull_values[0]})
+                stats.append({'name': 'max',
+                              'title': 'Lexical maximum', 
+                              'value': nonnull_values[-1]})

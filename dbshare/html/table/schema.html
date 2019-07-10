@@ -94,6 +94,12 @@
      role="button" class="btn btn-outline-primary btn-block">
     {{ db['tables'][schema['name']]['nrows']|thousands }} rows</a>
 </div>
+<div class="mt-2">
+  <a href="{{ url_for('.statistics', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Compute and display statistics for the contents of the columns."
+     class="btn btn-outline-primary btn-block">Statistics</a>
+</div>
 {% if has_write_access %}
 <div class="mt-2">
   <a href="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"

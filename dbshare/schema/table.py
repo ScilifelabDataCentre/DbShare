@@ -13,7 +13,21 @@ columns = {
             'type': {'type': 'string',
                      'enum': ['INTEGER', 'REAL', 'TEXT', 'BLOB']},
             'primarykey': {'type': 'boolean'},
-            'notnull': {'type': 'boolean'}
+            'notnull': {'type': 'boolean'},
+            'statistics': {
+                'type': 'array',
+                'items': {
+                    'type': 'object',
+                    'properties': {
+                        'name': {'type': 'string'},
+                        'title': {'type': 'string'},
+                        'value': {},
+                        'info': {}
+                    },
+                    'required': ['name', 'value'],
+                    'additionalProperties': False
+                }
+            }
         },
         'required': ['name', 'type'],
         'additionalProperties': False
@@ -53,8 +67,10 @@ schema = {
         'nrows': {'type': 'integer', 'minimum': 0},
         'rows': {'$ref': '#/definitions/link'},
         'data': {'$ref': '#/definitions/link'},
-        'visualizations': definitions.visualizations,
+        'href': {'type': 'string', 'format': 'uri'},
+        'statistics': {'$ref': '#/definitions/link'},
         'columns': columns,
+        'visualizations': definitions.visualizations,
         'indexes': indexes
     },
     'required': [
@@ -65,9 +81,41 @@ schema = {
         'nrows',
         'rows',
         'data',
-        'visualizations',
         'columns',
+        'visualizations',
         'indexes'
+    ],
+    'additionalProperties': False
+}
+
+statistics = {
+    '$id': constants.SCHEMA_BASE_URL + '/table/statistics',
+    '$schema': constants.SCHEMA_SCHEMA_URL,
+    'title': 'Table API JSON statistics.',
+    'definitions': {'link': definitions.link},
+    'type': 'object',
+    'properties': {
+        '$id': {'type': 'string', 'format': 'uri'},
+        'timestamp': {'type': 'string', 'format': 'date-time'},
+        'name': {'type': 'string'},
+        'title': {'type': ['string', 'null']},
+        'description': {'type': ['string', 'null']},
+        'database': {'$ref': '#/definitions/link'},
+        'nrows': {'type': 'integer', 'minimum': 0},
+        'rows': {'$ref': '#/definitions/link'},
+        'data': {'$ref': '#/definitions/link'},
+        'href': {'type': 'string', 'format': 'uri'},
+        'columns': columns
+    },
+    'required': [
+        '$id',
+        'timestamp',
+        'name', 
+        'database',
+        'nrows',
+        'rows',
+        'data',
+        'columns'
     ],
     'additionalProperties': False
 }

@@ -73,8 +73,6 @@ def get_json(db, view, complete=False):
     result = {'name': view['name'],
               'title': view.get('title'),
               'description': view.get('description'),
-              'database': {'href': utils.url_for('api_db.database',
-                                                 dbname=db['name'])},
               'nrows': view.get('nrows'),
               'rows': {'href': url + '.json'},
               'data': {'href': url + '.csv', 
@@ -82,6 +80,8 @@ def get_json(db, view, complete=False):
                        'format': 'csv'}
     }
     if complete:
+        result['database'] = {'href': utils.url_for('api_db.database',
+                                                    dbname=db['name'])}
         visuals = []
         for visual in db['visuals'].get(view['name'], []):
             url = utils.url_for('visual.display',

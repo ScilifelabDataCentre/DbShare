@@ -74,7 +74,14 @@
 {% block actions %}
 <div class="mt-2">
   <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
+     title="Display the schema of the table."
      role="button" class="btn btn-outline-primary btn-block">Schema</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.statistics', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Compute and display statistics for the contents of the columns."
+     class="btn btn-outline-primary btn-block">Statistics</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.download', dbname=db['name'], tablename=schema['name']) }}"

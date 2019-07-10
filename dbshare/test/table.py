@@ -339,6 +339,23 @@ class Table(base.Base):
         result = self.check_schema(response)
         self.assertEqual(result['nrows'], 3)
 
+    def test_statistics(self):
+        "Test computation of statistics."
+
+        # Create database by file upload
+        response = self.upload_file()
+        result = self.check_schema(response)
+
+        # Get the table URL and the statistics URL
+        table_url = result['tables'][0]['href']
+        response = self.session.get(table_url)
+        result = self.check_schema(response)
+        statistics_url = result['statistics']['href']
+
+        # Check the statistics
+        response = self.session.get(statistics_url)
+        result = self.check_schema(response)
+
 
 if __name__ == '__main__':
     base.run()

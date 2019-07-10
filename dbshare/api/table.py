@@ -37,10 +37,6 @@ def table(dbname, tablename):
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        result['indexes'] = [i for i in db['indexes'].values()
-                             if i['table'] == tablename]
-        for i in result['indexes']:
-            i.pop('table')
         return utils.jsonify(utils.get_json(**result), schema='/table')
 
     elif utils.http_PUT():
@@ -74,6 +70,24 @@ def table(dbname, tablename):
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return ('', http.client.NO_CONTENT)
+
+@blueprint.route('/<name:dbname>/<name:tablename>/statistics', methods=['GET'])
+def statistics(dbname, tablename):
+    "GET: Return the schema for the table with statistics for the columns."
+    try:
+        db = dbshare.db.get_check_read(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    result = get_json(db, schema, complete=False)
+    dbshare.table.compute_statistics(db, schema)
+    result.update(schema)
+    return utils.jsonify(utils.get_json(**result), schema='/table/statistics')
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert', methods=['POST'])
 def insert(dbname, tablename):
@@ -199,8 +213,6 @@ def get_json(db, table, complete=False):
     result = {'name': table['name'],
               'title': table.get('title'),
               'description': table.get('description'),
-              'database': {'href': utils.url_for('api_db.database',
-                                                 dbname=db['name'])},
               'nrows': table['nrows'],
               'rows': {'href': rows_url + '.json'},
               'data': {'href': rows_url + '.csv',
@@ -208,6 +220,15 @@ def get_json(db, table, complete=False):
                        'format': 'csv'}
     }
     if complete:
+        result['database'] = {'href': utils.url_for('api_db.database',
+                                                    dbname=db['name'])}
+        result['statistics'] = {'href': utils.url_for('api_table.statistics',
+                                                      dbname=db['name'],
+                                                      tablename=table['name'])}
+        result['indexes'] = [i for i in db['indexes'].values()
+                             if i['table'] == table['name']]
+        for i in result['indexes']:
+            i.pop('table')
         visuals = []
         for visual in db['visuals'].get(table['name'], []):
             url = utils.url_for('visual.display',
