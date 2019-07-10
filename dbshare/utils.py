@@ -265,6 +265,13 @@ def thousands(value):
     else:
         return value
 
+def float3g(value):
+    "Template filter: Use 'g' formatting for float."
+    if isinstance(value, float):
+        return '{:3g}'.format(value)
+    else:
+        return value
+
 def size_none(value):
     "Template filter: Size in bytes with thousands delimiters, or 'none'."
     if value is None:
