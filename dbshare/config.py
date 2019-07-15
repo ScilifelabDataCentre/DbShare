@@ -51,27 +51,21 @@ CONFIG = dict(
                            'vertical-bar': {'label': "vertical-bar '|'", 
                                             'char': '|'},
                            'colon': {'label': "colon ':'", 'char': ':'}},
-    DBSHARE_URL = 'https://github.com/pekrau/DbShare',
-    FLASK_URL = 'http://flask.pocoo.org/',
-    JINJA2_URL = 'http://jinja.pocoo.org/docs',
-    SQLITE3_URL = 'https://www.sqlite.org/',
     SQLITE_VERSION = sqlite3.sqlite_version,
     JSONSCHEMA_URL = 'http://json-schema.org/draft-07/schema#',
     MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
-    # Bootstrap 4.3.1
-    BOOTSTRAP_SITE_URL = 'https://getbootstrap.com/docs/4.3/getting-started/introduction/',
+    # Bootstrap
     BOOTSTRAP_VERSION = '4.3.1',
     BOOTSTRAP_CSS_ATTRS = 'href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous"',
-    JQUERY_SITE_URL = 'https://jquery.com/',
-    JQUERY_VERSION = '3.3.1',
-    JQUERY_JS_ATTRS = 'src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"',
     POPPER_JS_ATTRS = 'src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"',
     BOOTSTRAP_JS_ATTRS = 'src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"',
-    # DataTables 1.10.18 for bootstrap 4
+    # jQuery
+    JQUERY_VERSION = '3.3.1',
+    JQUERY_JS_ATTRS = 'src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"',
+    # DataTables
     DATATABLES_CSS_URL = 'https://cdn.datatables.net/1.10.18/css/dataTables.bootstrap4.min.css',
     DATATABLES_JS_URL = 'https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js',
     DATATABLES_BOOTSTRAP_JS_URL = 'https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js',
-    DATATABLES_SITE_URL = 'https://datatables.net/',
     DATATABLES_VERSION = '1.10.18',
     # Vega and Vega-Lite
     VEGA_JS_URL = 'https://cdn.jsdelivr.net/npm/vega@5',
@@ -80,9 +74,7 @@ CONFIG = dict(
     VEGA_VERSION = '5',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
-    VEGA_SITE_URL = 'https://vega.github.io/vega/',
     VEGA_EMBED_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-embed@4',
-    VEGA_LITE_SITE_URL = 'https://vega.github.io/vega-lite/',
     VEGA_LITE_JS_URL = 'https://cdn.jsdelivr.net/npm/vega-lite@3',
     VEGA_LITE_SCHEMA_URL = 'https://vega.github.io/schema/vega-lite/v3.json',
     VEGA_LITE_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-lite-v3.json'),
