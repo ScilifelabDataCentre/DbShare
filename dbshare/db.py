@@ -197,9 +197,6 @@ def edit(dbname):
                     ctx.set_description(flask.request.form['description'])
                 except KeyError:
                     pass
-                # Recompute number or rows in tables, while we are at it...
-                for schema in ctx.db['tables'].values():
-                    ctx.update_table_nrows(schema)
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
@@ -751,7 +748,7 @@ class DbContext:
                ','.join('?' * len(schema['columns'])))
         with self.dbcnx:
             self.dbcnx.executemany(sql, records)
-        self.update_table_nrows(schema)
+        self.update_table(schema)
 
     def update_spec_data_urls(self, old_dbname):
         """When renaming or cloning the database,
@@ -813,7 +810,7 @@ class DbContext:
         with self.dbcnx:
             sql = f"INSERT INTO {constants.TABLES} (name,schema) VALUES (?,?)"
             self.dbcnx.execute(sql, (schema['name'], json.dumps(schema)))
-        self.update_table_nrows(schema)
+        self.update_table(schema)
         self.db['tables'][schema['name']] = schema
 
     def add_table_column(self, schema, column):
@@ -842,26 +839,28 @@ class DbContext:
         schema['columns'].append(column)
         self.update_table(schema)
 
-    def update_table(self, schema):
-        "Update the table with the new schema."
+    def update_table(self, schema, reset_cache=True):
+        """Update the table with the new schema, resetting the cached items:
+        1) Recompute the 'nrows' value.
+        2) Remove any column statistics.
+        """
+        if reset_cache:
+            sql = f'''SELECT COUNT(*) FROM "{schema['name']}"'''
+            schema['nrows'] = self.dbcnx.execute(sql).fetchone()[0]
+            for column in schema['columns']:
+                column.pop('statistics', None)
         utils.json_validate(schema, dbshare.schema.table.create)
-        sql = f"UPDATE {constants.TABLES} SET schema=? WHERE name=?"
         with self.dbcnx:
+            sql = f"UPDATE {constants.TABLES} SET schema=? WHERE name=?"
             self.dbcnx.execute(sql, (json.dumps(schema), schema['name']))
         self.db['tables'][schema['name']] = schema
-
-    def update_table_nrows(self, schema):
-        "Update the number of rows in the table."
-        sql = f'''SELECT COUNT(*) FROM "{schema['name']}"'''
-        schema['nrows'] = self.dbcnx.execute(sql).fetchone()[0]
-        self.update_table(schema)
 
     def empty_table(self, schema):
         "Empty the table; delete all rows."
         with self.dbcnx:
             sql = f'''DELETE FROM "{schema['name']}"'''
             self.dbcnx.execute(sql)
-            self.update_table_nrows(schema)
+            self.update_table(schema)
 
     def delete_table(self, tablename):
         "Delete the table from the database and from the database definition."

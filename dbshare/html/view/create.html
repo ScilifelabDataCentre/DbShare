@@ -93,7 +93,8 @@
               <button type="submit" aria-describedby="createHelp"
                       class="btn btn-success btn-lg btn-block">Create</button>
               <small id="executeHelp" class="form-text text-muted">
-                Maximum CPU time: {{ round(1000*config['EXECUTE_TIMEOUT'])|thousands }} ms.
+                Maximum CPU time:
+                {{ round(1000*config['EXECUTE_TIMEOUT']) | informative }} ms.
                 <br>
                 A view exceeding this limit will not produce any results.
               </small>
@@ -113,7 +114,7 @@
           Table <strong>{{ table['name'] }}</strong></button>
         <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
            class="btn btn-sm btn-outline-primary" role="button" target="_blank">
-          {{ table['nrows']|thousands }} rows</a>
+          {{ table['nrows'] | informative }} rows</a>
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">

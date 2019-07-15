@@ -166,7 +166,7 @@ def edit(dbname, tablename):
             with dbshare.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
-                ctx.update_table(schema)
+                ctx.update_table(schema, reset_cache=False)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(
@@ -440,7 +440,7 @@ def row_edit(dbname, tablename, rowid):
             with ctx.dbcnx:
                 sql = f'''DELETE FROM "{schema['name']}" WHERE rowid=?'''
                 ctx.dbcnx.execute(sql, (rowid,))
-                ctx.update_table_nrows(schema)
+                ctx.update_table(schema)
         return flask.redirect(
             flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
@@ -603,7 +603,7 @@ def clone(dbname, tablename):
                        colnames,
                        tablename)
                 ctx.dbcnx.execute(sql)
-                ctx.update_table_nrows(schema)
+                ctx.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(
@@ -765,7 +765,7 @@ def insert_rows(db, schema, rows):
             values = ','.join('?' * len(schema['columns']))
             sql = f'''INSERT INTO "{schema['name']}" ({names}) VALUES ({values})'''
             ctx.dbcnx.executemany(sql, rows)
-            ctx.update_table_nrows(schema)
+            ctx.update_table(schema)
 
 def update_csv_rows(db, schema, csvfile, delimiter):
     """Update the given table with the given CSV file.
@@ -818,7 +818,16 @@ def update_csv_rows(db, schema, csvfile, delimiter):
     return (len(rows), count)
 
 def compute_statistics(db, schema):
-    "Get the stastistics for the content on the table's columns."
+    """Compute the stastistics for the data of the table's columns.
+    Cache the results if the database is writeable.
+    """
+    # Skip if no columns.
+    if len(schema['columns']) == 0: return
+    # Skip if already present.
+    if 'statistics' in schema['columns'][0]: return
+
+    # Recompute and cache.
+    print('recomputing statistics', schema['name'])
     dbcnx = dbshare.db.get_cnx(db['name'])
     for column in schema['columns']:
         column['statistics'] = stats = []
@@ -829,7 +838,7 @@ def compute_statistics(db, schema):
         if column.get('notnull'):
             column['statistics'].append({'name': 'nulls',
                                          'title': 'NULL values',
-                                         'value': 'NOT NULL'})
+                                         'value': False})
             nonnull_values = values
         else:
             count = 0
@@ -850,7 +859,7 @@ def compute_statistics(db, schema):
         if column.get('primarykey'):
             stats.append({'name': 'uniques',
                           'title': 'Unique values', 
-                          'value': 'PRIMARY KEY'})
+                          'value': True})
         else:
             uniques = set(nonnull_values)
             stat = {'name': 'uniques',
@@ -894,3 +903,6 @@ def compute_statistics(db, schema):
                 stats.append({'name': 'max',
                               'title': 'Lexical maximum', 
                               'value': nonnull_values[-1]})
+    if dbshare.db.has_write_access(db):
+        with dbshare.db.DbContext(db) as ctx:
+            ctx.update_table(schema, reset_cache=False)

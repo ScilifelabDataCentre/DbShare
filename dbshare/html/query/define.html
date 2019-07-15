@@ -71,7 +71,8 @@
                       class="btn btn-success btn-lg btn-block">
                 Execute query</button>
               <small id="executeHelp" class="form-text text-muted">
-                Maximum CPU time: {{ round(1000*config['EXECUTE_TIMEOUT'])|thousands }} ms.
+                Maximum CPU time: 
+                {{ round(1000*config['EXECUTE_TIMEOUT']) | informative }} ms.
               </small>
             </div>
           </div>
@@ -91,7 +92,7 @@
 	Table <strong>{{ table['name'] }}</strong>
 	(<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
 	    target="_blank"
-            >{{ table['nrows']|none_as_question_mark|thousands }} rows</a>)
+            >{{ table['nrows'] | informative }} rows</a>)
       </div>
       <div id="{{ table['name'] }}" class="collapse">
         <div class="card-body">
@@ -122,7 +123,7 @@
 	View <strong>{{ view['name'] }}</strong>
 	(<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
 	    target="_blank"
-            >{{ view['nrows']|none_as_question_mark|thousands }} rows</a>)
+            >{{ view['nrows'] | informative }} rows</a>)
       </div>
       <div id="{{ view['name'] }}" class="collapse">
         <div class="card-body">

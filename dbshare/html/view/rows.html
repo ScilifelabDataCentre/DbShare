@@ -13,7 +13,7 @@
   {% if is_none(schema['nrows']) %}
   ?
   {% else %}
-  {{ schema['nrows']|thousands }}
+  {{ schema['nrows'] | informative }}
   {% endif %}
   rows
 </div>
@@ -146,7 +146,7 @@
 
 {% block info %}
 <div class="small mt-4">
-  CPU time: {{ g.timer.milliseconds|thousands }} ms
+  CPU time: {{ g.timer.milliseconds | informative }} ms
 </div>
 {% endblock %} {# block info #}
 

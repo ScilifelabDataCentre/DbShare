@@ -1,9 +1,8 @@
 # ![DbShare logo](https://raw.githubusercontent.com/pekrau/DbShare/master/dbshare/static/dbshare-32.png) DbShare
 
-Web service to share and query tabular data sets and allow visualizations.
-Uses [Sqlite3](https://www.sqlite.org/), 
-[Vega](https://vega.github.io/vega/) and
-[Vega-Lite](https://vega.github.io/vega-lite/).
+Web service to share and query tabular data sets stored in
+[SQLite3](https://www.sqlite.org/) databases.
+Uses [Vega-Lite](https://vega.github.io/vega-lite/) for visualization.
 
 ## Databases
 
@@ -72,19 +71,17 @@ Uses [Sqlite3](https://www.sqlite.org/),
 
 ## Visualization
 
-- Create a visualization of a table or view using
-  [Vega](https://vega.github.io/vega/) or
-  [Vega-Lite](https://vega.github.io/vega-lite/).
+**This feature is currently being redesigned.**
+
+- Create a visualization of a table or view.
 - Display a visualization.
 - Clone a visualization.
 - Edit a visualization.
-- Create a visualization template (Vega or Vega-Lite) with input fields
-  for pre-packaged charts.
 
 ## Software used
 
 - [Python 3.6+](https://www.python.org/)
-- [Sqlite3](https://www.sqlite.org/)
+- [SQLite3](https://www.sqlite.org/)
 - [Flask](http://flask.pocoo.org/)
 - [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
 - [Jinja2](http://jinja.pocoo.org/docs)

@@ -30,35 +30,16 @@
       <div class="collapse navbar-collapse" id="top_navbar">
         <ul class="navbar-nav mr-auto">
           {% if g.current_user %}
-          <li class="nav-item dropdown">
-            <a href="#" id="navbarPublic"
-               class="nav-link dropdown-toggle" 
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">Public</a>
-            <div class="dropdown-menu" aria-labelledby="navbarPublic">
-              <a href="{{ url_for('dbs.public') }}" class="dropdown-item">
-                Databases</a>
-              <a href="{{ url_for('templates.public') }}" class="dropdown-item">
-                Templates</a>
-            </div>
-          </li>
           <li class="nav-item ml-1">
             <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
                class="nav-link">My databases</a>
           </li>
+          {% if g.is_admin %}
           <li>
             <a href="{{ url_for('templates.owner', username=g.current_user['username']) }}"
                class="nav-link">My templates</a>
           </li>
-          {% else %} {# if g.current_user #}
-          <li class="nav-item">
-            <a href="{{ url_for('dbs.public') }}" class="nav-link">
-              Databases</a>
-          </li>
-          <li class="nav-item">
-            <a href="{{ url_for('templates.public') }}" class="nav-link">
-              Templates</a>
-          </li>
+          {% endif %} {# ig g.is_admin #}
           {% endif %} {# if g.current_user #}
 
           {% if db is defined %}
@@ -69,22 +50,6 @@
           </li>
           {% endif %} {# if db is defined #}
 
-          <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" id="navbarAbout"
-               role="button" data-toggle="dropdown"
-               aria-haspopup="true" aria-expanded="false">About</a>
-            <div class="dropdown-menu" aria-labelledby="navbarAbout">
-              <a href="{{ url_for('about.endpoints') }}"
-		 class="nav-link">URL endpoints</a>
-              <a href="{{ url_for('about.schema') }}"
-		 class="nav-link">API JSON schema</a>
-              <a href="{{ url_for('about.software') }}"
-		 class="nav-link">Software</a>
-	    </div>
-          </li>
-        </ul>
-
-        <ul class="navbar-nav justify-content-end">
           {% if g.is_admin %}
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
@@ -100,6 +65,23 @@
             </div>
           </li>
           {% endif %} {# if g.is_admin #}
+
+        </ul>
+
+        <ul class="navbar-nav justify-content-end">
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle mr-4" href="#" id="navbarAbout"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">About</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAbout">
+              <a href="{{ url_for('about.endpoints') }}"
+		 class="nav-link">URL endpoints</a>
+              <a href="{{ url_for('about.schema') }}"
+		 class="nav-link">API JSON schema</a>
+              <a href="{{ url_for('about.software') }}"
+		 class="nav-link">Software</a>
+	    </div>
+          </li>
 
           <li class="mx-1">
             {% if g.current_user %}

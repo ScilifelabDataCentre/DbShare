@@ -7,7 +7,7 @@
 {% block main %}
 <div class="mx-3 ml-4">
   <span class="monospace mr-4">{{ sql }};</span>
-  &rarr; {{ len(rows)|thousands }} rows
+  &rarr; {{ len(rows) | informative }} rows
 </div>
 
 <div class="mt-4">
@@ -85,7 +85,7 @@
 
 {% block info %}
 <div class="small mt-4">
-  CPU time: {{ g.timer.milliseconds|thousands }} ms
+  CPU time: {{ g.timer.milliseconds | informative }} ms
 </div>
 {% endblock %} {# block info #}
 

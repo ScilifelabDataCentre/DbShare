@@ -258,17 +258,18 @@ def flash_message_limit(limit):
     "Flash message about limit on number of rows."
     flash_message(f"NOTE: The number of rows displayed is limited to {limit:,}.")
 
-def thousands(value):
-    "Template filter: Integer with thousands delimiters."
-    if isinstance(value, int):
+def informative(value):
+    "Template filter: Informative representation of the value."
+    if isinstance(value, bool):
+        return repr(value)
+    elif isinstance(value, int):
         return '{:,}'.format(value)
-    else:
-        return value
-
-def float3g(value):
-    "Template filter: Use 'g' formatting for float."
-    if isinstance(value, float):
+    elif isinstance(value, float):
         return '{:3g}'.format(value)
+    elif isinstance(value, str):
+        return repr(value)
+    elif value is None:
+        return '?'
     else:
         return value
 

@@ -57,7 +57,7 @@
     {% if is_none(schema['nrows']) %}
     ?
     {% else %}
-    {{ schema['nrows']|thousands }}
+    {{ schema['nrows'] | informative }}
     {% endif %}
     rows</a>
 </div>

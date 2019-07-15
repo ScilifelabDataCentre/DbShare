@@ -7,18 +7,18 @@
 {% block main %}
 <div class="card border-primary">
   <div class="card-header">
-    <h3 class="card-title">Sqlite3 file</h3>
+    <h3 class="card-title">SQLite3 file</h3>
     <ul>
       <li>
-        If the file is a DbShare Sqlite3 file, the validity of its metadata
+        If the file is a DbShare SQLite3 file, the validity of its metadata
         will be checked to some extent.
       </li>
       <li>
-        If the file is a plain Sqlite3 file, an attempt will be made
+        If the file is a plain SQLite3 file, an attempt will be made
         to infer the DbShare metadata from its contents.
       </li>
       <li> 
-        Limitations for a plain Sqlite3 file are currently:
+        Limitations for a plain SQLite3 file are currently:
         <ul>
           <li>
             Only views with simple definitions can be parsed. Other
@@ -40,7 +40,7 @@
       {{ csrf_token() }}
       <div class="form-group row">
         <div class="col-md-2 text-right">
-          <label for="sqlite3file" class="col-form-label">Sqlite3 file</label>
+          <label for="sqlite3file" class="col-form-label">SQLite3 file</label>
         </div>
         <div class="col-md-8">
           <input id="sqlite3file" name="sqlite3file"
@@ -69,7 +69,7 @@
       <div class="form-group row">
         <div class="col-md-4 offset-md-2">
           <button type="submit" class="btn btn-primary btn-lg btn-block">
-            Upload Sqlite3 file</button>
+            Upload SQLite3 file</button>
         </div>
       </div>
     </form>
