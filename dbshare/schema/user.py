@@ -26,8 +26,7 @@ schema = {
         'total_size': {'type': 'integer', 'minimum': 0},
         'modified': {'type': 'string', 'format': 'date-time'},
         'created': {'type': 'string', 'format': 'date-time'},
-        'databases': {'$ref': '#/definitions/link'},
-        'templates': {'$ref': '#/definitions/link'}
+        'databases': {'$ref': '#/definitions/link'}
     },
     'required': [
         '$id',
@@ -40,8 +39,7 @@ schema = {
         'total_size',
         'modified',
         'created',
-        'databases',
-        'templates'
+        'databases'
     ],
     'additionalProperties': False
 }

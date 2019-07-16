@@ -26,8 +26,6 @@ def user(username):
     user['total_size'] = dbshare.db.get_usage(username)[1]
     user['databases'] = {'href': utils.url_for('api_dbs.owner',
                                                username=user['username'])}
-    user['templates'] = {'href': utils.url_for('api_templates.owner',
-                                               username=user['username'])}
     return utils.jsonify(utils.get_json(**user), schema='/user')
 
 def get_json(username):

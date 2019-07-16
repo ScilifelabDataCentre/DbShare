@@ -32,9 +32,9 @@
                 <col style="width: 70%">
               </colgroup>
               <tbody>
-                {% for stat in column['statistics'] %}
+                {% for name, stat in column['statistics'].items() %}
                 <tr>
-                  <td>{{ stat.get('title') or stat['name'] }}</td>
+                  <td>{{ stat.get('title') or name }}</td>
                   <td>
                     {{ stat['value'] | informative}}
                     {% if 'info' in stat %}

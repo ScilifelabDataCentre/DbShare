@@ -823,86 +823,68 @@ def compute_statistics(db, schema):
     """
     # Skip if no columns.
     if len(schema['columns']) == 0: return
-    # Skip if already present.
+    # Skip if statistics already present.
     if 'statistics' in schema['columns'][0]: return
 
-    # Recompute and cache.
-    print('recomputing statistics', schema['name'])
+    # Recompute statistics and cache.
     dbcnx = dbshare.db.get_cnx(db['name'])
     for column in schema['columns']:
-        column['statistics'] = stats = []
+        column['statistics'] = stats = {}
         sql = f'''SELECT "{column['name']}" FROM "{schema['name']}"'''
         values = [row[0] for row in dbcnx.execute(sql)]
 
         # Number of NULLs in the column.
+        stats['nulls'] = {'title': 'NULL values'}
         if column.get('notnull'):
-            column['statistics'].append({'name': 'nulls',
-                                         'title': 'NULL values',
-                                         'value': False})
+            stats['nulls']['value'] = False
             nonnull_values = values
         else:
             count = 0
             for value in values:
                 if value is None: count += 1
-            stats.append({'name': 'nulls',
-                          'title': 'NULL values',
-                          'value': count})
+            stats['nulls']['value'] = count
             if count:
                 nonnull_values = [v for v in values if v is not None]
             else:
                 nonnull_values = values
-            stats.append({'name': 'nonnulls',
-                          'title': 'Non-NULL values',
-                          'value': len(nonnull_values)})
+            stats['nonnulls'] = {'title': 'Non-NULL values',
+                                 'value': len(nonnull_values)}
 
         # Number of unique values in the column.
+        stats['uniques'] = {'title': 'Unique values'}
         if column.get('primarykey'):
-            stats.append({'name': 'uniques',
-                          'title': 'Unique values', 
-                          'value': True})
+            stats['uniques']['value'] = True
         else:
             uniques = set(nonnull_values)
-            stat = {'name': 'uniques',
-                    'title': 'Unique values',
-                    'value': len(uniques)}
+            stats['uniques']['value'] = len(uniques)
             if len(uniques) < 9:
-                stat['info'] = list(uniques)
-            stats.append(stat)
+                stats['uniques']['info'] = list(uniques)
 
         nonnull_values = sorted(nonnull_values)
 
         # Numerical min, max, mean, median
         if column['type'] in (constants.INTEGER, constants.REAL):
             if len(nonnull_values):
-                stats.append({'name': 'min',
-                              'title': 'Minimum',
-                              'value': nonnull_values[0]})
+                stats['min'] = {'title': 'Minimum', 'value': nonnull_values[0]}
                 mean = statistics_module.mean(nonnull_values)
-                stats.append({'name': 'mean',
-                              'title': 'Mean',
-                              'value': mean})
-                median = statistics_module.median_low(nonnull_values)
-                stats.append({'name': 'median',
-                              'title': 'Median',
-                              'value': median})
-                stats.append({'name': 'max',
-                              'title': 'Maximum',
-                              'value': nonnull_values[-1]})
+                stats['mean'] = {'title': 'Mean', 'value': mean}
+                stats['median'] = {
+                    'title': 'Median',
+                    'value': statistics_module.median_low(nonnull_values)}
+                stats['max'] = {'title': 'Maximum', 'value': nonnull_values[-1]}
                 if len(nonnull_values) > 2:
-                    stdev = statistics_module.stdev(nonnull_values, xbar=mean)
-                    stats.append({'name': 'stdev',
-                                  'title': 'Standard deviation',
-                                  'value': stdev})
+                    stats['stdev'] = {
+                        'title': 'Standard deviation',
+                        'value': statistics_module.stdev(nonnull_values,
+                                                         xbar=mean)}
 
         # Lexical min, max
         if column['type'] == constants.TEXT:
             if len(nonnull_values):
-                stats.append({'name': 'min',
-                              'title': 'Lexical minimum',
-                              'value': nonnull_values[0]})
-                stats.append({'name': 'max',
-                              'title': 'Lexical maximum', 
-                              'value': nonnull_values[-1]})
+                stats['min'] = {'title': 'Lexical minimum',
+                                'value': nonnull_values[0]}
+                stats['max'] = {'title': 'Lexical maximum', 
+                                'value': nonnull_values[-1]}
     if dbshare.db.has_write_access(db):
         with dbshare.db.DbContext(db) as ctx:
             ctx.update_table(schema, reset_cache=False)

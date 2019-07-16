@@ -55,7 +55,7 @@
 {% endblock %} {# block api #}
 
 {% block links %}
-{% if visuals %}
+{% if g.is_admin and visuals %}
 <div class="card border-info mt-2">
   <div class="card-header text-info py-2">Visualizations</div>
   <div class="card-body my-0 py-1">
@@ -89,11 +89,11 @@
      title="Download CSV file of the table contents."
      class="btn btn-outline-primary btn-block">Download</a>
 </div>
-{% if has_write_access %}
+{% if g.is_admin and has_write_access %}
 <div class="mt-2">
     <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
-      Create visualization</a>
+      Create chart</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
@@ -141,7 +141,7 @@
     <input type="hidden" name="_http_method" value="DELETE">
     <button type="submit" class="btn btn-danger btn-block"
 	    data-toggle="tooltip" data-placement="left"
-	    title="Delete this table and all its dependent views and visualizations."
+	    title="Delete this table and all its dependent views."
             onclick="return confirm('Really delete the table? Cannot be undone.')">
       Delete</button>
   </form>

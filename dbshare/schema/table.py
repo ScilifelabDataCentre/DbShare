@@ -14,20 +14,21 @@ columns = {
                      'enum': ['INTEGER', 'REAL', 'TEXT', 'BLOB']},
             'primarykey': {'type': 'boolean'},
             'notnull': {'type': 'boolean'},
+            'unique': {'type': 'boolean'},
             'statistics': {
-                'type': 'array',
-                'items': {
+                'type': 'object',
+                'propertyNames': definitions.property_names,
+                'additionalProperties': {
                     'type': 'object',
                     'properties': {
-                        'name': {'type': 'string'},
-                        'title': {'type': 'string'},
                         'value': {},
+                        'title': {'type': 'string'},
                         'info': {}
                     },
-                    'required': ['name', 'value'],
+                    'required': ['value'],
                     'additionalProperties': False
                 }
-            }
+            },
         },
         'required': ['name', 'type'],
         'additionalProperties': False

@@ -2,16 +2,16 @@
 
 Web service to share and query tabular data sets stored in
 [SQLite3](https://www.sqlite.org/) databases.
-Uses [Vega-Lite](https://vega.github.io/vega-lite/) for visualization.
+
 
 ## Databases
 
-- A database may contain tables, views, indexes and visualizations.
+- A database may contain tables, views and indexes.
 - A database is owned by the user account that created it.
 - A database may be private or public.
 - A database may be read/write or read-only.
 - Databases are isolated from one another.
-- Display the tables, views, indexes and visualizations in a database.
+- Display the tables, views and indexes in a database.
 - Create a database.
 - Rename a database.
 - Clone a database.
@@ -28,7 +28,6 @@ Uses [Vega-Lite](https://vega.github.io/vega-lite/) for visualization.
 - Display the rows in a table.
 - Compute and display simple statistics for the columns in a table.
 - Display the schema of a table.
-- List the visualizations for a table.
 - Insert a row of data.
 - Edit a row.
 - Delete a row.
@@ -54,7 +53,6 @@ Uses [Vega-Lite](https://vega.github.io/vega-lite/) for visualization.
 - A view is a predefined query which can be used as if it were a table.
 - Display the rows of a view.
 - Display the definition of a view.
-- List the visualizations for a view.
 - Create a view from a query.
 - Delete a view.
 - Clone a view.
@@ -69,14 +67,12 @@ Uses [Vega-Lite](https://vega.github.io/vega-lite/) for visualization.
 - View the schema of an index.
 - Delete an index.
 
-## Visualization
+## Charts
 
 **This feature is currently being redesigned.**
 
-- Create a visualization of a table or view.
-- Display a visualization.
-- Clone a visualization.
-- Edit a visualization.
+- Use [Vega-Lite](https://vega.github.io/vega-lite/) charts
+  to visualize the contents of a table or view.
 
 ## Software used
 

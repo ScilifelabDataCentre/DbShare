@@ -332,7 +332,7 @@ def download(dbname):
 @blueprint.route('/<name:dbname>/vacuum', methods=['POST'])
 @dbshare.user.login_required
 def vacuum(dbname):
-    "Run VACUUM on the database."
+    "Run VACUUM on the database. Also reset the table caches."
     utils.check_csrf_token()
     try:
         db = get_check_write(dbname) # Do NOT allow if read-only (for hashes)
@@ -340,6 +340,9 @@ def vacuum(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
+        with DbContext(db) as cnx:
+            for schema in db['tables'].values():
+                cnx.update_table(schema)
         dbcnx = get_cnx(db['name'], write=True)
         sql = 'VACUUM'
         dbcnx.execute(sql)

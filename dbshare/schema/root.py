@@ -37,26 +37,6 @@ schema = {
             'required': ['public'],
             'additionalProperties': False
         },
-        'templates': {
-            'title': 'Links to collections of visualization templates.',
-            'type': 'object',
-            'properties': {
-                'all': {
-                    'title': 'Link to list of all templates.',
-                    '$ref': '#/definitions/link'
-                },
-                'owner': {
-                    'title': 'Link to templates owned by the current user.',
-                    '$ref': '#/definitions/link'
-                },
-                'public': {
-                    'title': 'Link to list of public templates.',
-                    '$ref': '#/definitions/link'
-                }
-            },
-            'required': ['public'],
-            'additionalProperties': False
-        },
         'schema': {
             'title': 'Link to list of the schema documents.',
             '$ref': '#/definitions/link'},
@@ -81,7 +61,6 @@ schema = {
         'title',
         'version',
         'databases',
-        'templates',
         'schema',
         'operations'
     ],

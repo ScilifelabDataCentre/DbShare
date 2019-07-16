@@ -17,9 +17,6 @@ def root():
               'version': flask.current_app.config['VERSION'],
               'databases': {
                   'public': {'href': utils.url_for('api_dbs.public')}
-              },
-              'templates': {
-                  'public': {'href': utils.url_for('api_templates.public')}
               }
     }
     if flask.g.current_user:
@@ -27,17 +24,10 @@ def root():
             'href': utils.url_for('api_dbs.owner',
                                   username=flask.g.current_user['username'])
         }
-        result['templates']['owner'] = {
-            'href': utils.url_for('api_templates.owner',
-                                  username=flask.g.current_user['username'])
-        }
     result['schema'] = {'href': constants.SCHEMA_BASE_URL}
     if flask.g.is_admin:
         result['databases']['all'] = {
             'href': utils.url_for('api_dbs.all')
-        }
-        result['templates']['all'] = {
-            'href': utils.url_for('api_templates.all')
         }
         result['users'] = {
             'all': {'href': utils.url_for('api_users.all')}
