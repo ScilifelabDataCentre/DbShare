@@ -11,6 +11,7 @@ import dbshare.about
 import dbshare.config
 import dbshare.db
 import dbshare.dbs
+import dbshare.chart
 import dbshare.query
 import dbshare.site
 import dbshare.system
@@ -70,6 +71,7 @@ app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
 app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
 app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
+app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
 app.register_blueprint(dbshare.visual.blueprint, url_prefix='/visual')
 app.register_blueprint(dbshare.template.blueprint, url_prefix='/template')
 app.register_blueprint(dbshare.templates.blueprint, url_prefix='/templates')
@@ -95,7 +97,6 @@ app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 # Add template filters.
 app.add_template_filter(utils.informative)
 app.add_template_filter(utils.size_none)
-app.add_template_filter(utils.none_as_question_mark)
 app.add_template_filter(utils.none_as_literal_null)
 app.add_template_filter(utils.none_as_empty_string)
 app.add_template_filter(utils.do_markdown, name='markdown')

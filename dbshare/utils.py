@@ -281,13 +281,6 @@ def size_none(value):
         value = '<span class="text-monospace">{:,}</span>'.format(value)
     return jinja2.utils.Markup(value)
 
-def none_as_question_mark(value):
-    "Output None as '?'."
-    if value is None:
-        return '?'
-    else:
-        return value
-
 def none_as_literal_null(value):
     "Template filter: Output None as HTML '<NULL>' in safe mode."
     if value is None:

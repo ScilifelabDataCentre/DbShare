@@ -91,9 +91,9 @@
 </div>
 {% if g.is_admin and has_write_access %}
 <div class="mt-2">
-    <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
+    <a href="{{ url_for('chart.select', dbname=db['name'], tablename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
-      Create chart</a>
+      Select chart</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
