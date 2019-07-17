@@ -49,7 +49,7 @@ CHARTS = [
   }
 }'''
     },
-    {'name': 'scatterplot_classes',
+    {'name': 'scatterplot_color',
      'title': 'Two-dimensional scatterplot, points colored by class.',
      'variables': [
          {'name': 'x',
@@ -157,7 +157,7 @@ def produce(dbname, tablename, chartname):
             if chart['name'] == str(chartname): break
         else:
             raise ValueError('no such chart')
-        title = f"{chart['name']}, {schema['name']}"
+        title = f"{schema['name']} {chart['name']}"
         context = {
             'title': flask.request.args.get('title') or title,
             'width': int(flask.request.args.get('width') or
