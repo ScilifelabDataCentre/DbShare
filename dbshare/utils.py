@@ -116,16 +116,6 @@ def dbpath(dbname, dirpath=None):
     dirpath = os.path.expandvars(dirpath)
     return os.path.join(dirpath, dbname) + '.sqlite3'
 
-def url_for_rows(db, schema, external=False, csv=False):
-    "Return the URL for the rows of the table or view."
-    if schema['type'] == constants.TABLE:
-        url = url_for('table.rows', dbname=db['name'], tablename=schema['name'])
-    else:
-        url = url_for('view.rows', dbname=db['name'], viewname=schema['name'])
-    if csv:
-        url += '.csv'
-    return url
-
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."
     return uuid.uuid4().hex
@@ -170,9 +160,35 @@ def name_in_nocase(name, names):
     "Using a non-case sensitive comparison, is the 'name' among the 'names'?"
     return name.lower() in [n.lower() for n in names]
 
+def chunks(l, n):
+    "Return list l split into chunks of size n."
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
+
 def url_for(endpoint, **values):
-    "Same as 'flask.url_for', but with '_external' set to True."
-    return flask.url_for(endpoint, _external=True, **values)
+    """Same as 'flask.url_for', but with '_external' set to True.
+    If a key argument '_query' is present, its dictionary value
+    is URL encoded to query parameters appended to the URL.
+    """
+    query = values.pop('_query', None)
+    url = flask.url_for(endpoint, _external=True, **values)
+    if query:
+        query = urllib.parse.urlencode(query)
+        if '?' in query:
+            url += '&' + query
+        else:
+            url += '?' + query
+    return url
+
+def url_for_rows(db, schema, external=False, csv=False):
+    "Return the URL for the rows of the table or view."
+    if schema['type'] == constants.TABLE:
+        url = url_for('table.rows', dbname=db['name'], tablename=schema['name'])
+    else:
+        url = url_for('view.rows', dbname=db['name'], viewname=schema['name'])
+    if csv:
+        url += '.csv'
+    return url
 
 def url_for_unq(endpoint, **values):
     """Same as 'flask.url_for', but with '_external' set to True,

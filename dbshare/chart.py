@@ -1,6 +1,11 @@
 "Chart HTML endpoints."
 
+import http.client
+import json
+
 import flask
+import jinja2
+import jsonschema
 
 import dbshare.db
 
@@ -24,14 +29,12 @@ CHARTS = [
      'template': 
 '''{
   "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "title": "{{ TITLE }}",
-  "width": 400,
-  "height": 400,
+  "title": "{{ title }}",
+  "width": {{ width }},
+  "height": {{ height }},
   "data": {
-    "url": "{{ DATA_URL }}",
-    "format": {
-      "type": "csv"
-    }
+    "url": "{{ url }}",
+    "format": {"type": "csv"}
   },
   "mark": "point",
   "encoding": {
@@ -43,18 +46,49 @@ CHARTS = [
       "field": "{{ y }}",
       "type": "quantitative"
     }
-{% if color is defined %}
-    ,"color": {
+  }
+}'''
+    },
+    {'name': 'scatterplot_classes',
+     'title': 'Two-dimensional scatterplot, points colored by class.',
+     'variables': [
+         {'name': 'x',
+          'title': 'Horizontal dimension',
+          'type': 'REAL'
+         },
+         {'name': 'y',
+          'title': 'Vertical dimension',
+          'type': 'REAL'
+         },
+         {'name': 'color',
+          'title': 'Point color',
+          'type': 'TEXT'
+          }
+     ],
+     'template': 
+'''{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "{{ title }}",
+  "width": {{ width }},
+  "height": {{ height }},
+  "data": {
+    "url": "{{ url }}",
+    "format": {"type": "csv"}
+  },
+  "mark": "point",
+  "encoding": {
+    "x": {
+      "field": "{{ x }}",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "{{ y }}",
+      "type": "quantitative"
+    },
+    "color": {
       "field": "{{ color }}",
       "type": "nominal"
     }
-{% endif %}
-{% if shape is defined %}
-    ,"shape": {
-      "field": "{{ shape }}",
-      "type": "nominal"
-    }
-{% endif %}
   }
 }'''
     }
@@ -63,9 +97,9 @@ CHARTS = [
 
 blueprint = flask.Blueprint('chart', __name__)
 
-@blueprint.route('/select/<name:dbname>/<name:tablename>')
+@blueprint.route('/<name:dbname>/<name:tablename>/select')
 def select(dbname, tablename):
-    "Show selection of possible charts for the given table."
+    "Display selection of possible charts for the given table."
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
@@ -76,24 +110,37 @@ def select(dbname, tablename):
     except KeyError:
         utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
-    charts = []
+    charts = CHARTS.copy()
+    for chart in charts:
+        chart['combinations'] = combinations(chart['variables'],
+                                             schema['columns'])
+    charts = [c for c in charts if c['combinations']]
     return flask.render_template('chart/select.html',
                                  db=db,
                                  schema=schema,
                                  charts=charts)
 
-def combine_variables_columns(chart, schema, combination=None):
+def combinations(variables, columns, current=None):
     "Return all combinations of variables in chart to columns in table."
-    if combination in None:
-        combination = []
-    raise NotImplementedError
-    variable = chart['variables'][len(combination)]
-    if len(combination) == len(chart['variables']): return combination
-    
+    result = []
+    if current is None:
+        current = []
+    pos = len(current)
+    for column in columns:
+        if variables[pos]['type'] != column['type']: continue
+        if column['name'] in current: continue
+        if pos + 1 == len(variables):
+            result.append(dict(zip([v['name'] for v in variables],
+                                   current + [column['name']])))
+        else:
+            result.extend(combinations(variables,
+                                       columns,
+                                       current+[column['name']]))
+    return result
 
-@blueprint.route('/show/<name:dbname>/<name:tablename>/<name:chartname>')
-def show(dbname, tablename, chartname):
-    "Show the given chart for the given table."
+@blueprint.route('/<name:dbname>/<name:tablename>/produce/<nameext:chartname>')
+def produce(dbname, tablename, chartname):
+    "Produce the given chart for the given table."
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
@@ -101,7 +148,58 @@ def show(dbname, tablename, chartname):
         return flask.redirect(flask.url_for('home'))
     try:
         schema = db['tables'][str(tablename)]
+        schema['type'] = constants.TABLE
     except KeyError:
         utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
-    raise NotImplementedError
+    try:
+        for chart in CHARTS:
+            if chart['name'] == str(chartname): break
+        else:
+            raise ValueError('no such chart')
+        title = f"{chart['name']}, {schema['name']}"
+        context = {
+            'title': flask.request.args.get('title') or title,
+            'width': int(flask.request.args.get('width') or
+                         flask.current_app.config['CHART_DEFAULT_WIDTH']),
+            'height': int(flask.request.args.get('height') or
+                         flask.current_app.config['CHART_DEFAULT_HEIGHT']),
+            'url': utils.url_for_rows(db, schema, external=True, csv=True)
+        }
+        query = {}
+        for variable in chart['variables']:
+            colname = flask.request.args.get(variable['name'])
+            if not colname: 
+                raise ValueError(f"no column for variable {variable['name']}")
+            for column in schema['columns']:
+                if column['name'] == colname: break
+            else:
+                raise ValueError(f"no such column {colname}")
+            query[variable['name']] = colname
+        context.update(query)
+        spec = json.loads(jinja2.Template(chart['template']).render(**context))
+        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
+    except (ValueError, TypeError,
+            jinja2.TemplateError, jsonschema.ValidationError) as error:
+        utils.flash_error(str(error))
+        return flask.redirect(
+            flask.url_for('.select', dbname=dbname, tablename=tablename))
+
+    if chartname.ext == 'json' or utils.accept_json():
+        return utils.jsonify(spec)
+
+    elif chartname.ext in (None, 'html'):
+        url = utils.url_for('.produce',
+                            dbname=db['name'],
+                            tablename=schema['name'],
+                            chartname=chart['name'] + '.json',
+                            _query=query)
+        return flask.render_template('chart/produce.html',
+                                     title=title,
+                                     db=db,
+                                     schema=schema,
+                                     spec=spec,
+                                     json_url=url)
+
+    else:
+        flask.abort(http.client.NOT_ACCEPTABLE)

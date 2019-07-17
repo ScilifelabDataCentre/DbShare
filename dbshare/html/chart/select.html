@@ -10,20 +10,47 @@ Select chart for the table {{ schema['name'] }}
 
 {% block main %}
 {% for chart in charts %}
-<div class="card border-info">
-  <div class="card-header">{{ chart['title'] }}</div>
-  <div class="card-body">
-    <form action="{{ url_for('.show', dbname=db['name'], tablename=schema['name']/chart['name']) }}">
-      <table class="table">
-        {% for variable in chart['variables'] %}
-        <tr>
-          <td>{{ variable['name'] }}</td>
-          <td>{{ variable['title'] }}</td>
-          <td>{{ variable['column'] }}</td>
-        </tr>
-        {% endfor %}
-      </table>
-    </form>
+<div class="card border-info my-2">
+  <div class="card-header">
+    <a class="btn btn-info" title="Click to expand." data-toggle="collapse"
+       href="#{{ chart['name'] }}" role="button" 
+       aria-expanded="false" aria-controls="{{ chart['name'] }}">
+      {{ chart['title'] }}</a>
+  </div>
+  <div class="card-body collapse" id="{{ chart['name'] }}">
+    <table class="table table-sm table-borderless">
+      <tr>
+	<th colspan="2">Chart</th>
+	<th colspan="{{ len(chunk) }}">Columns</th>
+      </tr>
+      {% for chunk in utils.chunks(chart['combinations'], 5) %}
+      {% for pos, variable in enumerate(chart['variables']) %}
+      <tr>
+        <td>{{ variable['name'] }}</td>
+        <td>{{ variable['title'] }}</td>
+	{% for combination in chunk %}
+	<td width="15%">{{ combination[variable['name']] }}</td>
+	{% endfor %}
+	{% for n in range(5 - len(chunk)) %}
+	<td width="15%"></td>
+	{% endfor %}
+      </tr>
+      {% endfor %} {# pos, variable #}
+      <tr>
+	<td colspan="2"></td>
+	{% for combination in chunk %}
+	<td class="pb-3">
+	  <a class="btn btn-sm btn-outline-info btn-block"
+	     role="button"
+	     href="{{ utils.url_for('.produce', dbname=db['name'], tablename=schema['name'], chartname=chart['name'], _query=combination) }}">Produce</a>
+	</td>
+	{% endfor %}
+	{% for n in range(5 - len(chunk)) %}
+	<td></td>
+	{% endfor %}
+      </tr>
+    {% endfor %}
+    </table>
   </div>
 </div>
 {% endfor %}
