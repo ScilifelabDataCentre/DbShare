@@ -3,6 +3,7 @@
 import argparse
 import http.client
 import json
+import logging
 import os
 import re
 import sqlite3
@@ -53,6 +54,7 @@ def process_args(filepath=None):
     return args
 
 def run():
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
     unittest.main(argv=process_args())
 
 
@@ -60,6 +62,7 @@ class Base(unittest.TestCase):
     "Base class for DbShare test cases."
 
     def setUp(self):
+        self.log = logging.getLogger('TestLog')
         self.schemas = {}
         self.session = requests.Session()
         self.session.headers.update({'x-apikey': CONFIG['apikey']})
