@@ -93,21 +93,21 @@ hashes = {
     'additionalProperties': False
 }
 
-visualizations = {
-    'title': 'List of visualization specifications.',
-    'type': 'array',
-    'items': {
-        'title': 'Visualization specification.',
-        'type': 'object',
-        'properties': {
-            'name': {'type': 'string'},
-            'title': {'type': ['string', 'null']},
-            'specification': {'$ref': '#/definitions/link'},
-        },
-        'required': [
-            'name',
-            'title',
-            'specification'],
-        'additionalProperties': False
-    }
-}
+# visualizations = {
+#     'title': 'List of visualization specifications.',
+#     'type': 'array',
+#     'items': {
+#         'title': 'Visualization specification.',
+#         'type': 'object',
+#         'properties': {
+#             'name': {'type': 'string'},
+#             'title': {'type': ['string', 'null']},
+#             'specification': {'$ref': '#/definitions/link'},
+#         },
+#         'required': [
+#             'name',
+#             'title',
+#             'specification'],
+#         'additionalProperties': False
+#     }
+# }

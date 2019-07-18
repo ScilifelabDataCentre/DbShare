@@ -25,7 +25,7 @@ schema = {
         },
         'rows': {'$ref': '#/definitions/link'},
         'data': {'$ref': '#/definitions/link'},
-        'visualizations': definitions.visualizations,
+        # 'visualizations': definitions.visualizations,
         'query': query.query,
         'sources': {
             'type': 'array',
@@ -51,7 +51,7 @@ schema = {
         'nrows',
         'rows',
         'data',
-        'visualizations',
+        # 'visualizations',
         'query',
         'sources',
         'columns'

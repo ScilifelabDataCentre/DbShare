@@ -11,7 +11,7 @@ schema = {
     'definitions': {
         'link': definitions.link,
         'iobody': definitions.iobody,
-        'visualizations': definitions.visualizations
+        # 'visualizations': definitions.visualizations
     },
     'type': 'object',
     'properties': {

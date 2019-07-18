@@ -16,7 +16,7 @@ SYSTEM  = '_system'
 TABLES  = '_tables'
 INDEXES = '_indexes'
 VIEWS   = '_views'
-# VISUALS = '_visuals'
+CHARTS  = '_charts'
 
 # Database constants
 TABLE   = 'table'

@@ -70,7 +70,7 @@ schema = {
         'data': {'$ref': '#/definitions/link'},
         'statistics': {'$ref': '#/definitions/link'},
         'columns': columns,
-        'visualizations': definitions.visualizations,
+        # 'visualizations': definitions.visualizations,
         'indexes': indexes
     },
     'required': [
@@ -82,7 +82,7 @@ schema = {
         'rows',
         'data',
         'columns',
-        'visualizations',
+        # 'visualizations',
         'indexes'
     ],
     'additionalProperties': False
