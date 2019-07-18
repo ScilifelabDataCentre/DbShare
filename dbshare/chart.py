@@ -138,9 +138,9 @@ def combinations(variables, columns, current=None):
                                        current+[column['name']]))
     return result
 
-@blueprint.route('/<name:dbname>/<name:tablename>/produce/<nameext:chartname>')
-def produce(dbname, tablename, chartname):
-    "Produce the given chart for the given table."
+@blueprint.route('/<name:dbname>/<name:tablename>/render/<nameext:chartname>')
+def render(dbname, tablename, chartname):
+    "Render the given chart for the given table."
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
@@ -189,12 +189,12 @@ def produce(dbname, tablename, chartname):
         return utils.jsonify(spec)
 
     elif chartname.ext in (None, 'html'):
-        url = utils.url_for('.produce',
+        url = utils.url_for('.render',
                             dbname=db['name'],
                             tablename=schema['name'],
                             chartname=chart['name'] + '.json',
                             _query=query)
-        return flask.render_template('chart/produce.html',
+        return flask.render_template('chart/render.html',
                                      title=title,
                                      db=db,
                                      schema=schema,

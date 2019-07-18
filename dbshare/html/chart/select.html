@@ -42,7 +42,7 @@ Select chart for the table {{ schema['name'] }}
 	<td class="pb-3">
 	  <a class="btn btn-sm btn-outline-info btn-block"
 	     role="button"
-	     href="{{ utils.url_for('.produce', dbname=db['name'], tablename=schema['name'], chartname=chart['name'], _query=combination) }}">Produce</a>
+	     href="{{ utils.url_for('.render', dbname=db['name'], tablename=schema['name'], chartname=chart['name'], _query=combination) }}">Render</a>
 	</td>
 	{% endfor %}
 	{% for n in range(5 - len(chunk)) %}
