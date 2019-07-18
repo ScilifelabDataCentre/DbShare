@@ -69,13 +69,6 @@
      title="Download CSV file of the view contents."
      class="btn btn-outline-primary btn-block">Download</a>
 </div>
-{% if has_write_access %}
-<div class="mt-2">
-    <a href="{{ url_for('template.select', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
-      Create chart</a>
-</div>
-{% endif %} {# if has_write_access #}
 <div class="mt-2">
   <form action="{{ url_for('query.define', dbname=db['name']) }}"
         method="GET">

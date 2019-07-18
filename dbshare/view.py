@@ -120,7 +120,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "View {}".format(viewname)
-        visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
+        # visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
         dbcnx = dbshare.db.get_cnx(dbname)
         columns = [c['name'] for c in schema['columns']]
         quoted_columns = [f'"{c}"' for c in columns]
@@ -173,7 +173,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                          sql=sql,
                                          title=title,
                                          rows=cursor,
-                                         visuals=visuals,
+                                         # visuals=visuals,
                                          has_write_access=has_write_access)
 
         else:
