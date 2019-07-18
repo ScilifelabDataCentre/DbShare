@@ -1,30 +1,30 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Select chart for the tablese {{ schema['name'] }}
+Select chart to render the table {{ schema['name'] }}
 {% endblock %}
 
 {% block body_title %}
-Select chart for the table {{ schema['name'] }}
+Select chart to render the table {{ schema['name'] }}
 {% endblock %}
 
 {% block main %}
-{% for chart in charts %}
+{% for stencil in stencils %}
 <div class="card border-info my-2">
   <div class="card-header">
     <a class="btn btn-info" title="Click to expand." data-toggle="collapse"
-       href="#{{ chart['name'] }}" role="button" 
-       aria-expanded="false" aria-controls="{{ chart['name'] }}">
-      {{ chart['title'] }}</a>
+       href="#{{ stencil['name'] }}" role="button" 
+       aria-expanded="false" aria-controls="{{ stencil['name'] }}">
+      {{ stencil['title'] }}</a>
   </div>
-  <div class="card-body collapse" id="{{ chart['name'] }}">
+  <div class="card-body collapse" id="{{ stencil['name'] }}">
     <table class="table table-sm table-borderless">
       <tr>
-	<th colspan="2">Chart</th>
-	<th colspan="{{ len(chunk) }}">Columns</th>
+	<th colspan="2">Chart variables</th>
+	<th colspan="{{ len(chunk) }}">Table columns</th>
       </tr>
-      {% for chunk in utils.chunks(chart['combinations'], 5) %}
-      {% for pos, variable in enumerate(chart['variables']) %}
+      {% for chunk in utils.chunks(stencil['combinations'], 5) %}
+      {% for pos, variable in enumerate(stencil['variables']) %}
       <tr>
         <td>{{ variable['name'] }}</td>
         <td>{{ variable['title'] }}</td>
@@ -42,7 +42,7 @@ Select chart for the table {{ schema['name'] }}
 	<td class="pb-3">
 	  <a class="btn btn-sm btn-outline-info btn-block"
 	     role="button"
-	     href="{{ utils.url_for('.render', dbname=db['name'], tablename=schema['name'], chartname=chart['name'], _query=combination) }}">Render</a>
+	     href="{{ utils.url_for('.render', dbname=db['name'], tablename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Render</a>
 	</td>
 	{% endfor %}
 	{% for n in range(5 - len(chunk)) %}

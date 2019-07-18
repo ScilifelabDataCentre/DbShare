@@ -3,7 +3,6 @@
 Web service to share and query tabular data sets stored in
 [SQLite3](https://www.sqlite.org/) databases.
 
-
 ## Databases
 
 - A database may contain tables, views and indexes.
@@ -69,12 +68,12 @@ Web service to share and query tabular data sets stored in
 
 ## Charts
 
-- Charts use [Vega-Lite](https://vega.github.io/vega-lite/).
-- Render a chart for a table from a set of predefined charts.
-- TODO Column annotations to aid the selection among the predefined charts.
+- Render a chart for a table from a set of predefined stencils.
+- TODO Column annotations to aid the selection among the predefined stencils.
 - TODO Render a chart for a view.
 - TODO Allow saving a chart for a table or view.
 - TODO Allow editing or creating a chart from scratch.
+- Charts are based on [Vega-Lite](https://vega.github.io/vega-lite/).
 
 ## Software used
 
