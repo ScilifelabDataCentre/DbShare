@@ -13,7 +13,6 @@
       <th>Role</th>
       <th>Status</th>
       <th># databases</th>
-      <th># templates</th>
       <th>Size quota (bytes)</th>
       <th>Total size (bytes)</th>
     </tr>
@@ -39,10 +38,6 @@
       <td>
 	<a href="{{ url_for('dbs.owner', username=user['username']) }}">
 	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
-      </td>
-      <td>
-	<a href="{{ url_for('templates.owner', username=user['username']) }}">
-	  <span class="badge badge-info">{{ user['ntemplates'] }}</span></a>
       </td>
       <td class="text-right">
         {{ user.get('quota') | size_none }}

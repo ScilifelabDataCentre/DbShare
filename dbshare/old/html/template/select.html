@@ -51,16 +51,6 @@ Select a template for {{ schema['type'] }} {{ schema['name'] }}
 
 {% block actions %}
 <div class="mt-2">
-    <a href="{{ url_for('vega.create', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
-      Create Vega visualization</a>
-</div>
-<div class="mt-2">
-    <a href="{{ url_for('vega-lite.create', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
-      Create Vega-Lite visualization</a>
-</div>
-<div class="mt-2">
   <a href="{{ utils.url_for_rows(db, schema) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>

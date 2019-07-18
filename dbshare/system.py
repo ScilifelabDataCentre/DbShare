@@ -1,4 +1,4 @@
-"System database; metadata key/value, users, db list, templates."
+"System database; metadata key/value, users, db list."
 
 import sqlite3
 
@@ -70,18 +70,6 @@ SYSTEM_TABLES = [
                            ref='dbs',
                            refcolumns=['name'])]
     ),
-    dict(name='templates',
-         columns=[dict(name='name', type=constants.TEXT, primarykey=True),
-                  dict(name='owner', type=constants.TEXT, notnull=True),
-                  dict(name='title', type=constants.TEXT),
-                  dict(name='description', type=constants.TEXT),
-                  dict(name='type', type=constants.TEXT, notnull=True),
-                  dict(name='code', type=constants.TEXT, notnull=True),
-                  dict(name='fields', type=constants.TEXT, notnull=True),
-                  dict(name='public', type=constants.INTEGER, notnull=True),
-                  dict(name='created', type=constants.TEXT, notnull=True),
-                  dict(name='modified', type=constants.TEXT, notnull=True)
-         ]),
 ]
 
 SYSTEM_INDEXES = [

@@ -48,18 +48,6 @@ VIEWS_TABLE = {
                 dict(name='schema', type=constants.TEXT, notnull=True)]
 }
 
-VISUALS_TABLE = {
-    'name': constants.VISUALS,
-    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
-                dict(name='sourcename', type=constants.TEXT, notnull=True),
-                dict(name='spec', type=constants.TEXT, notnull=True)]
-}
-
-VISUALS_INDEX = {
-    'name': constants.VISUALS + '_index', 
-    'columns': ['sourcename']
-}
-
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -314,7 +302,7 @@ def clone(dbname):
         db = get_db(name, complete=True)
         with DbContext(db) as ctx:
             ctx.db['cloned']  = dbname # Will show up in logs
-            ctx.update_spec_data_urls(dbname)
+            # ctx.update_chart_data_urls(dbname)
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/download')
@@ -601,9 +589,10 @@ class DbContext:
             os.rename(utils.dbpath(old_dbname), utils.dbpath(name))
             # The entries in the dbs_log will be fixed in '__exit__'
         self.db['name'] = name
-        # Update of spec data URLs must be done *after* db rename.
-        if old_dbname:
-            self.update_spec_data_urls(old_dbname)
+        # XXX Reintroduce with saved charts
+        # Update of chart data URLs must be done *after* db rename.
+        # if old_dbname:
+        #     self.update_chart_data_urls(old_dbname)
         return self.db['name']
 
     def set_title(self, title):
@@ -648,12 +637,6 @@ class DbContext:
         sql = get_sql_create_table(INDEXES_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
         sql = get_sql_create_table(VIEWS_TABLE, if_not_exists=True)
-        self.dbcnx.execute(sql)
-        sql = get_sql_create_table(VISUALS_TABLE, if_not_exists=True)
-        self.dbcnx.execute(sql)
-        sql = get_sql_create_index(constants.VISUALS, 
-                                   VISUALS_INDEX, 
-                                   if_not_exists=True)
         self.dbcnx.execute(sql)
 
     def create_table_load_records(self, tablename, records, has_header=True):
@@ -753,34 +736,35 @@ class DbContext:
             self.dbcnx.executemany(sql, records)
         self.update_table(schema)
 
-    def update_spec_data_urls(self, old_dbname):
-        """When renaming or cloning the database,
-        the data URLs of visual specs must be updated.
-        """
-        old_table_url = utils.url_for('table.rows',
-                                      dbname=old_dbname, 
-                                      tablename='x')
-        old_table_url = old_table_url[:-1]
-        new_table_url = utils.url_for('table.rows',
-                                      dbname=self.db['name'],
-                                      tablename='x')
-        new_table_url = new_table_url[:-1]
-        old_view_url = utils.url_for('view.rows',
-                                     dbname=old_dbname,
-                                     viewname='x')
-        old_view_url = old_view_url[:-1]
-        new_view_url = utils.url_for('view.rows',
-                                     dbname=self.db['name'],
-                                     viewname='x')
-        new_view_url = new_view_url[:-1]
-        for visual in [v for visuallist in self.db['visuals'].values()
-                       for v in visuallist]:
-            spec = visual['spec']
-            for path, href in dpath.util.search(spec, 'data/url', yielded=True):
-                href = href.replace(old_table_url, new_table_url)
-                href = href.replace(old_view_url, new_view_url)
-                dpath.util.set(spec, path, href)
-            self.update_visual(visual['name'], spec)
+    # XXX Re-introduce with saved charts
+    # def update_chart_data_urls(self, old_dbname):
+    #     """When renaming or cloning the database,
+    #     the data URLs of chart specs must be updated.
+    #     """
+    #     old_table_url = utils.url_for('table.rows',
+    #                                   dbname=old_dbname, 
+    #                                   tablename='x')
+    #     old_table_url = old_table_url[:-1]
+    #     new_table_url = utils.url_for('table.rows',
+    #                                   dbname=self.db['name'],
+    #                                   tablename='x')
+    #     new_table_url = new_table_url[:-1]
+    #     old_view_url = utils.url_for('view.rows',
+    #                                  dbname=old_dbname,
+    #                                  viewname='x')
+    #     old_view_url = old_view_url[:-1]
+    #     new_view_url = utils.url_for('view.rows',
+    #                                  dbname=self.db['name'],
+    #                                  viewname='x')
+    #     new_view_url = new_view_url[:-1]
+    #     for visual in [v for visuallist in self.db['visuals'].values()
+    #                    for v in visuallist]:
+    #         spec = visual['spec']
+    #         for path, href in dpath.util.search(spec, 'data/url', yielded=True):
+    #             href = href.replace(old_table_url, new_table_url)
+    #             href = href.replace(old_view_url, new_view_url)
+    #             dpath.util.set(spec, path, href)
+    #         self.update_visual(visual['name'], spec)
 
     def add_table(self, schema, query=None, create=True):
         """Create the table in the database and add to the database definition.
@@ -874,11 +858,13 @@ class DbContext:
         # Delete all indexes for this table.
         for indexname in list(self.db['indexes']):
             self.delete_index(indexname)
+        # XXX Re-introduce with saved charts
         # Delete all visuals having this table as source.
-        for visual in self.db['visuals'].get(tablename, []):
-            self.delete_visual(visual['name'])
+        # for visual in self.db['visuals'].get(tablename, []):
+        #     self.delete_visual(visual['name'])
+
         # Delete all views having this table as source.
-        # Will recursively delete other dependent views and visuals.
+        # Will recursively delete other dependent views.
         for view in list(self.db['views'].values()):
             if tablename in view['sources']:
                 # Need to catch KeyError, since recursion might
@@ -982,11 +968,13 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
+        # XXX Re-introduce with saved charts
         # Delete all visuals having this view as source.
-        for visual in self.db['visuals'].get(viewname, []):
-            self.delete_visual(visual['name'])
+        # for visual in self.db['visuals'].get(viewname, []):
+        #     self.delete_visual(visual['name'])
+
         # Delete all views having this view as a source.
-        # Will recursively delete other dependent views and visuals.
+        # Will recursively delete other dependent views.
         for view in list(self.db['views'].values()):
             if viewname in view['sources']:
                 # Need to catch KeyError, since recursion might
@@ -1001,34 +989,9 @@ class DbContext:
         sql = 'DROP VIEW "%s"' % viewname
         self.dbcnx.execute(sql)
 
-    def add_visual(self, visualname, sourcename, spec):
-        "Add the visualization for the given source (table or view)."
-        sql = "INSERT INTO %s (name, sourcename, spec)" \
-              " VALUES (?, ?, ?)" % constants.VISUALS
-        with self.dbcnx:
-            self.dbcnx.execute(sql, (visualname,
-                                     sourcename,
-                                     json.dumps(spec)))
-
-    def update_visual(self, visualname, spec, new_visualname=None):
-        "Update the visualization for the given source (table or view)."
-        if new_visualname is None:
-            new_visualname = visualname
-        with self.dbcnx:
-            sql = f"UPDATE {constants.VISUALS} SET name=?,spec=? WHERE name=?"
-            self.dbcnx.execute(sql,(new_visualname, 
-                                    json.dumps(spec),
-                                    visualname))
-
-    def delete_visual(self, visualname):
-        "Delete the visualization for the given source (table or view)."
-        with self.dbcnx:
-            sql = "DELETE FROM %s WHERE name=?" % constants.VISUALS
-            self.dbcnx.execute(sql, (visualname,))
-
     def check_metadata(self):
         """Check the validity of the metadata for the database.
-        Fix the data URLs in the visuals.
+        Fix the data URLs in the saved charts.
         Return False if no metadata (i.e. not a DbShare file), else True.
         Raises ValueError or sqlite3.Error if any problem.
         """
@@ -1050,39 +1013,40 @@ class DbContext:
         # Does the views metatable exist?
         sql = f"SELECT name, schema FROM {constants.VIEWS}"
         self.dbcnx.execute(sql)
-        # Fix the data URLs in the visuals.
-        sql = f"SELECT name, spec FROM {constants.VISUALS}"
-        visuals = [{'name': row[0], 'spec': json.loads(row[1])}
-                   for row in self.dbcnx.execute(sql)]
-        # Update the data URLs in the visuals.
-        new_root = utils.url_for('home').rstrip('/')
-        # Identify the old URL root from a data url in a visual spec.
-        old_root = None
-        search = dpath.util.search
-        for visual in visuals:
-            for path,href in search(visual['spec'],'data/url',yielded=True):
-                parts = urllib.parse.urlparse(href)
-                old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
-                break
-        rx_table = re.compile(r'^.*/table/(.+)/.+$')
-        rx_view  = re.compile(r'^.*/view/(.+)/.+$')
-        for visual in visuals:
-            for path,href in search(visual['spec'],'data/url',yielded=True):
-                # Next, replace old URL root with new.
-                href = href.replace(old_root, new_root)
-                # And, old database name with new in URL path.
-                for m in [rx_table.match(href), rx_view.match(href)]:
-                    if m:
-                        href = href[: m.start(1)] + \
-                               self.db['name'] + \
-                               href[m.end(1) :]
-                        dpath.util.set(visual['spec'], path, href)
-                        break
-        with self.dbcnx:
-            sql = f"UPDATE {constants.VISUALS} SET spec=? WHERE name=?"
-            for visual in visuals:
-                self.dbcnx.execute(sql, (json.dumps(visual['spec']),
-                                         visual['name']))
+
+        # XXX Re-introduce with saved charts
+        # Fix the data URLs in the charts.
+        # sql = f"SELECT name, spec FROM {constants.VISUALS}"
+        # visuals = [{'name': row[0], 'spec': json.loads(row[1])}
+        #            for row in self.dbcnx.execute(sql)]
+        # new_root = utils.url_for('home').rstrip('/')
+        # # Identify the old URL root from a data url in a visual spec.
+        # old_root = None
+        # search = dpath.util.search
+        # for visual in visuals:
+        #     for path,href in search(visual['spec'],'data/url',yielded=True):
+        #         parts = urllib.parse.urlparse(href)
+        #         old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
+        #         break
+        # rx_table = re.compile(r'^.*/table/(.+)/.+$')
+        # rx_view  = re.compile(r'^.*/view/(.+)/.+$')
+        # for visual in visuals:
+        #     for path,href in search(visual['spec'],'data/url',yielded=True):
+        #         # Next, replace old URL root with new.
+        #         href = href.replace(old_root, new_root)
+        #         # And, old database name with new in URL path.
+        #         for m in [rx_table.match(href), rx_view.match(href)]:
+        #             if m:
+        #                 href = href[: m.start(1)] + \
+        #                        self.db['name'] + \
+        #                        href[m.end(1) :]
+        #                 dpath.util.set(visual['spec'], path, href)
+        #                 break
+        # with self.dbcnx:
+        #     sql = f"UPDATE {constants.VISUALS} SET spec=? WHERE name=?"
+        #     for visual in visuals:
+        #         self.dbcnx.execute(sql, (json.dumps(visual['spec']),
+        #                                  visual['name']))
         return True
 
     def infer_metadata(self):
@@ -1152,7 +1116,7 @@ class DbContext:
         sql = "SELECT name FROM sqlite_master WHERE type=?"
         cursor.execute(sql, ('index',))
         indexnames = [row[0] for row in cursor]
-        # Do not attempt to delete Sqlite3 indexes, or visuals index.
+        # Do not attempt to delete Sqlite3 indexes.
         indexnames = [n for n in indexnames 
                       if not n.startswith('sqlite_autoindex')]
         indexnames = [n for n in indexnames if not n.startswith('_')]
@@ -1196,27 +1160,17 @@ def get_db(name, complete=False):
         sql = "SELECT name, schema FROM %s" % constants.VIEWS
         cursor.execute(sql)
         db['views'] = dict([(row[0], json.loads(row[1])) for row in cursor])
-        sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
-        cursor.execute(sql)
-        visuals = [{'name': row[0],
-                  'sourcename': row[1], 
-                  'spec': json.loads(row[2])} for row in cursor]
-        db['visuals'] = {}
-        for visual in visuals:
-            db['visuals'].setdefault(visual['sourcename'], []).append(visual)
-        for sourcename, visuallist in list(db['visuals'].items()):
-            db['visuals'][sourcename] = utils.sorted_schema(visuallist)
-
-        sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
-        cursor.execute(sql)
-        visuals = [{'name': row[0],
-                    'sourcename': row[1], 
-                    'spec': json.loads(row[2])} for row in cursor]
-        db['visuals'] = {}
-        for visual in visuals:
-            db['visuals'].setdefault(visual['sourcename'], []).append(visual)
-        for sourcename, visuallist in list(db['visuals'].items()):
-            db['visuals'][sourcename] = utils.sorted_schema(visuallist)
+        # XXX Re-introduce with saved charts
+        # sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
+        # cursor.execute(sql)
+        # visuals = [{'name': row[0],
+        #           'sourcename': row[1], 
+        #           'spec': json.loads(row[2])} for row in cursor]
+        # db['visuals'] = {}
+        # for visual in visuals:
+        #     db['visuals'].setdefault(visual['sourcename'], []).append(visual)
+        # for sourcename, visuallist in list(db['visuals'].items()):
+        #     db['visuals'][sourcename] = utils.sorted_schema(visuallist)
     return db
 
 def get_usage(username=None):
@@ -1257,11 +1211,12 @@ def get_schema(db, sourcename):
             raise ValueError('no such table/view')
     return schema
 
-def get_visual(db, visualname):
-    # db['visuals'] has source name as key and visual lists as values.
-    for visual in itertools.chain.from_iterable(db['visuals'].values()):
-        if visual['name'] == visualname: return visual
-    raise ValueError('no such visual')
+# XXX Re-introduce with saved charts
+# def get_visual(db, visualname):
+#     # db['visuals'] has source name as key and visual lists as values.
+#     for visual in itertools.chain.from_iterable(db['visuals'].values()):
+#         if visual['name'] == visualname: return visual
+#     raise ValueError('no such visual')
 
 def get_sql_create_table(schema, if_not_exists=False):
     """Return SQL to create a table given by its schema.

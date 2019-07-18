@@ -31,16 +31,6 @@
                   schema</a>
               </td>
             </tr>
-	    <tr class="mt-0 pt-0">
-	      <td colspan="3" class="pl-4 mt-0 pt-0">
-		{% for visual in db['visuals'][table['name']] %}
-		<div>
-		  <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
-		     class="card-link">{{ visual['name'] }}</a>
-		</div>
-		{% endfor %}
-	      </td>
-	    </tr>
             {% endfor %} {# for table in #}
           </tbody>
         </table>
@@ -73,16 +63,6 @@
                   schema</a>
               </td>
 	    </tr>
-	    <tr class="mt-0 pt-0">
-	      <td colspan="3" class="pl-4 mt-0 pt-0">
-		{% for visual in db['visuals'][view['name']] %}
-		<div>
-		  <a href="{{ url_for('visual.display', dbname=db['name'], visualname=visual['name']) }}"
-		     class="card-link">{{ visual['name'] }}</a>
-		</div>
-		{% endfor %}
-	      </td>
-            </tr>
             {% endfor %}
           </tbody>
         </table>

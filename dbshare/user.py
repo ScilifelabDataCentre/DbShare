@@ -185,7 +185,6 @@ def password():
 @login_required
 def profile(username):
     "Display the profile of the given user."
-    import dbshare.template
     user = get_user(username=username)
     if user is None:
         utils.flash_error('no such user')
@@ -194,14 +193,12 @@ def profile(username):
         utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
     ndbs, total_size = dbshare.db.get_usage(username)
-    ntemplates = len(dbshare.templates.get_templates(owner=username))
-    deletable = ndbs == 0 and ntemplates == 0
+    deletable = ndbs == 0
     return flask.render_template('user/profile.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
                                  ndbs=ndbs,
                                  total_size=total_size,
-                                 ntemplates=ntemplates,
                                  deletable=deletable)
 
 @blueprint.route('/profile/<name:username>/edit',
@@ -242,7 +239,8 @@ def edit(username):
             flask.url_for('.profile', username=user['username']))
 
     elif utils.http_DELETE():
-        if not (ndbs == 0 and ntemplates == 0):
+        ndbs, total_size = dbshare.db.get_usage(username)
+        if ndbs != 0:
             utils.flash_error('cannot delete non-empty user account')
             return flask.redirect(flask.url_for('.profile', username=username))
         cnx = dbshare.system.get_cnx(write=True)
@@ -285,7 +283,6 @@ def logs(username):
 def users():
     "Display list of all users."
     import dbshare.dbs
-    import dbshare.templates
     cursor = dbshare.system.get_cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
@@ -300,8 +297,7 @@ def users():
               'created':    row[7],
               'modified':   row[8],
               'ndbs':       0,
-              'size':       0,
-              'ntemplates': len(dbshare.templates.get_templates(owner=row[0]))}
+              'size':       0}
              for row in cursor]
     lookup = dict([(u['username'], u) for u in users])
     for db in dbshare.dbs.get_dbs():

@@ -34,12 +34,6 @@
             <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
                class="nav-link">My databases</a>
           </li>
-          {% if g.is_admin %}
-          <li>
-            <a href="{{ url_for('templates.owner', username=g.current_user['username']) }}"
-               class="nav-link">My templates</a>
-          </li>
-          {% endif %} {# ig g.is_admin #}
           {% endif %} {# if g.current_user #}
 
           {% if db is defined %}
@@ -58,8 +52,6 @@
             <div class="dropdown-menu" aria-labelledby="navbarAdmin">
               <a class="dropdown-item" href="{{ url_for('dbs.all') }}">
                 All databases</a>
-              <a class="dropdown-item" href="{{ url_for('templates.all') }}">
-                All templates</a>
               <a class="dropdown-item" href="{{ url_for('user.users') }}">
                 All users</a>
             </div>

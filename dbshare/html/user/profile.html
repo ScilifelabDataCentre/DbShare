@@ -32,13 +32,6 @@
     </td>
   </tr>
   <tr>
-    <th class="text-right"># templates</th>
-    <td>
-      <a href="{{ url_for('templates.owner', username=user['username']) }}">
-	<span class="badge badge-info">{{ ntemplates }}</span></a>
-    </td>
-  </tr>
-  <tr>
     <th class="text-right">Total size (bytes)</th>
     <td>
       {{ total_size | size_none }}

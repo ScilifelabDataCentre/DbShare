@@ -16,21 +16,14 @@ import dbshare.query
 import dbshare.site
 import dbshare.system
 import dbshare.table
-import dbshare.template
-import dbshare.templates
 import dbshare.user
-import dbshare.vega
-import dbshare.vega_lite
 import dbshare.view
-import dbshare.visual
 
 import dbshare.api.root
 import dbshare.api.db
 import dbshare.api.dbs
 import dbshare.api.schema
 import dbshare.api.table
-import dbshare.api.template
-import dbshare.api.templates
 import dbshare.api.user
 import dbshare.api.users
 import dbshare.api.view
@@ -72,11 +65,6 @@ app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
 app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
 app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
 app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
-app.register_blueprint(dbshare.visual.blueprint, url_prefix='/visual')
-app.register_blueprint(dbshare.template.blueprint, url_prefix='/template')
-app.register_blueprint(dbshare.templates.blueprint, url_prefix='/templates')
-app.register_blueprint(dbshare.vega.blueprint, url_prefix='/vega')
-app.register_blueprint(dbshare.vega_lite.blueprint, url_prefix='/vega-lite')
 app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
 app.register_blueprint(dbshare.site.blueprint, url_prefix='/site')
@@ -86,10 +74,6 @@ app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
 app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
 app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
-app.register_blueprint(dbshare.api.template.blueprint,
-                       url_prefix='/api/template')
-app.register_blueprint(dbshare.api.templates.blueprint,
-                       url_prefix='/api/templates')
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
 app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
@@ -102,6 +86,22 @@ app.add_template_filter(utils.none_as_empty_string)
 app.add_template_filter(utils.do_markdown, name='markdown')
 app.add_template_filter(utils.access)
 app.add_template_filter(utils.mode)
+
+@app.before_first_request
+def upgrade():
+    "Upgrade the database(s) when moving to a new version."
+    if dbshare.__version__ == '1.5.5':
+        # Remove templates system table.
+        cnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
+        cnx.execute('DROP TABLE IF EXISTS templates')
+        dbnames = [c[0] for c in cnx.execute('SELECT name FROM dbs')]
+        cnx.close()
+        # Remove visuals index and tables in all databases.
+        for dbname in dbnames:
+            cnx = utils.get_cnx(utils.dbpath(dbname), write=True)
+            cnx.execute('DROP INDEX IF EXISTS _visuals_index')
+            cnx.execute('DROP TABLE IF EXISTS _visuals')
+            cnx.close()
 
 @app.context_processor
 def setup_template_context():

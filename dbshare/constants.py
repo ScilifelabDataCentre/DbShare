@@ -16,12 +16,16 @@ SYSTEM  = '_system'
 TABLES  = '_tables'
 INDEXES = '_indexes'
 VIEWS   = '_views'
-VISUALS = '_visuals'
+# VISUALS = '_visuals'
 
-# Template types
-VEGA_LITE = 'Vega-Lite'
-VEGA      = 'Vega'
-TEMPLATE_TYPES = (VEGA_LITE, VEGA)
+# Database constants
+TABLE   = 'table'
+VIEW    = 'view'
+INTEGER = 'INTEGER'
+REAL    = 'REAL'
+TEXT    = 'TEXT'
+BLOB    = 'BLOB'
+COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
 # User roles
 ADMIN = 'admin'
@@ -33,15 +37,6 @@ PENDING  = 'pending'
 ENABLED  = 'enabled'
 DISABLED = 'disabled'
 USER_STATUSES = (PENDING, ENABLED, DISABLED)
-
-# Database constants
-TABLE   = 'table'
-VIEW    = 'view'
-INTEGER = 'INTEGER'
-REAL    = 'REAL'
-TEXT    = 'TEXT'
-BLOB    = 'BLOB'
-COLUMN_TYPES = (INTEGER, REAL, TEXT, BLOB)
 
 # MIME types
 HTML_MIMETYPE    = 'text/html'
