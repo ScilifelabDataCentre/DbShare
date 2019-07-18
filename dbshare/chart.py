@@ -91,7 +91,47 @@ CHARTS = [
     }
   }
 }'''
+    },
+    {'name': 'bar_graph_record_counts',
+     'title': 'Bar graph of number of records per class.',
+     'variables': [
+         {'name': 'class',
+          'title': 'Record class.',
+          'type': 'TEXT'
+         }
+     ],
+     'template':
+'''{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "{{ title }}",
+  "width": {{ width }},
+  "height": {{ height }},
+  "data": {
+    "url": "{{ url }}",
+    "format": {"type": "csv"}
+  },
+  "transform": [
+    {
+      "aggregate": [{
+        "op": "count",
+         "field": "{{ class }}", 
+         "as": "counts"}],
+      "groupby": ["{{ class }}"]
     }
+  ],
+  "mark": "bar",
+  "encoding": {
+    "x": {
+      "field": "{{ class }}",
+      "type": "nominal"
+    },
+    "y": {
+      "field": "counts", 
+      "type": "quantitative"
+    }
+  }
+}'''
+     }
 ]
 
 
