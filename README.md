@@ -69,10 +69,12 @@ Web service to share and query tabular data sets stored in
 
 ## Charts
 
-**This feature is currently being redesigned.**
-
-- Use [Vega-Lite](https://vega.github.io/vega-lite/) charts
-  to visualize the contents of a table or view.
+- Charts use [Vega-Lite](https://vega.github.io/vega-lite/).
+- Render a chart for a table from a set of predefined charts.
+- TODO Column annotations to aid the selection among the predefined charts.
+- TODO Render a chart for a view.
+- TODO Allow saving a chart for a table or view.
+- TODO Allow editing or creating a chart from scratch.
 
 ## Software used
 
