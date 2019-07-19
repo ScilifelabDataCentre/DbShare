@@ -15,11 +15,11 @@ STENCILS = [
      'variables': [
          {'name': 'x',
           'title': 'Horizontal dimension',
-          'type': 'REAL'
+          'type': ['REAL', 'INTEGER']
          },
          {'name': 'y',
           'title': 'Vertical dimension',
-          'type': 'REAL'
+          'type': ['REAL', 'INTEGER']
          },
      ],
      'template': 
@@ -50,11 +50,11 @@ STENCILS = [
      'variables': [
          {'name': 'x',
           'title': 'Horizontal dimension',
-          'type': 'REAL'
+          'type': ['REAL', 'INTEGER']
          },
          {'name': 'y',
           'title': 'Vertical dimension',
-          'type': 'REAL'
+          'type': ['REAL', 'INTEGER']
          },
          {'name': 'color',
           'title': 'Point color',

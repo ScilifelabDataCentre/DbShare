@@ -54,15 +54,16 @@ def process_args(filepath=None):
     return args
 
 def run():
+    argv = process_args()
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-    unittest.main(argv=process_args())
+    logging.info(f"Root URL {CONFIG['root_url']}")
+    unittest.main(argv=argv)
 
 
 class Base(unittest.TestCase):
     "Base class for DbShare test cases."
 
     def setUp(self):
-        self.log = logging.getLogger('TestLog')
         self.schemas = {}
         self.session = requests.Session()
         self.session.headers.update({'x-apikey': CONFIG['apikey']})

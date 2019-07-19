@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block head_title %}
-Select chart to render table {{ schema['name'] }}
+Select chart to render {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block body_title %}
-Select chart to render table {{ schema['name'] }}
+Select chart to render {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block main %}
@@ -21,7 +21,9 @@ Select chart to render table {{ schema['name'] }}
     <table class="table table-sm table-borderless">
       <tr>
 	<th colspan="2">Chart variables</th>
-	<th colspan="{{ len(chunk) }}">Table columns</th>
+	<th colspan="{{ len(chunk) }}">
+	  {{ schema['type'].capitalize() }}  columns
+	</th>
       </tr>
       {% for chunk in utils.chunks(stencil['combinations'], 5) %}
       {% for pos, variable in enumerate(stencil['variables']) %}
@@ -42,7 +44,7 @@ Select chart to render table {{ schema['name'] }}
 	<td class="pb-3">
 	  <a class="btn btn-sm btn-outline-info btn-block"
 	     role="button"
-	     href="{{ utils.url_for('.render', dbname=db['name'], tablename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Render</a>
+	     href="{{ utils.url_for('.render', dbname=db['name'], sourcename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Render</a>
 	</td>
 	{% endfor %}
 	{% for n in range(5 - len(chunk)) %}
@@ -58,7 +60,11 @@ Select chart to render table {{ schema['name'] }}
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-dark btn-block">Cancel</a>
+  {% if schema['type'] == constants.TABLE %}
+  {% set url = url_for('table.rows', dbname=db['name'], tablename=schema['name']) %}
+  {% else %}
+  {% set url = url_for('view.rows', dbname=db['name'], viewname=schema['name']) %}
+  {% endif %}
+  <a href="{{ url }}" role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

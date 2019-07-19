@@ -10,7 +10,6 @@ class Root(base.Base):
 
     def test_access(self):
         "Access to the root API."
-        self.log.info(f"Root URL {base.CONFIG['root_url']}")
         response = self.session.get(base.CONFIG['root_url'])
         self.assertEqual(response.status_code, http.client.OK)
 
