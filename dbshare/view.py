@@ -89,7 +89,7 @@ def edit(dbname, viewname):
                 flask.url_for('.edit', dbname=dbname, viewname=viewname))
         else:
             return flask.redirect(
-                flask.url_for('.rows', dbname=dbname, viewname=viewname))
+                flask.url_for('.schema', dbname=dbname, viewname=viewname))
 
     elif utils.http_DELETE():
         try:

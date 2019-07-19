@@ -47,6 +47,8 @@ CONFIG = dict(
     EXECUTE_TIMEOUT_BACKOFF   = 1.75,
     CHART_DEFAULT_WIDTH = 400,
     CHART_DEFAULT_HEIGHT = 400,
+    COLUMN_ANNOTATIONS = ['quantitative', 'temporal', 
+                          'ordinal', 'nominal', 'ignore'],
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'semicolon': {'label': "semicolon ';'", 'char': ';'},

@@ -9,9 +9,8 @@
 
 <div class="mx-3 ml-4">
   <span class="text-monospace">{{ sql }};</span>
-  <span class="font-weight-bold ml-4">
-    &rarr; {{ schema['nrows'] | informative }} rows
-  </span>
+  <br>
+  <strong>{{ schema['nrows'] | informative }} rows</strong>
 </div>
 
 <div class="mt-4">

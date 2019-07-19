@@ -31,34 +31,36 @@ def select(dbname, sourcename):
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     stencils = dbshare.stencil.get_stencils()
     for stencil in stencils:
-        stencil['combinations'] = combinations(stencil['variables'],
-                                               schema['columns'])
+        stencil['combinations'] = combinations(stencil['variables'], schema)
     stencils = [c for c in stencils if c['combinations']]
     return flask.render_template('chart/select.html',
                                  db=db,
                                  schema=schema,
                                  stencils=stencils)
 
-def combinations(variables, columns, current=None):
-    "Return all combinations of variables in stencil to columns in table."
+def combinations(variables, schema, current=None):
+    "Return all combinations of variables in stencil to table/view columns."
     result = []
     if current is None:
         current = []
     pos = len(current)
-    for column in columns:
+    annotations = schema.get('annotations', {})
+    for column in schema['columns']:
+        if annotations.get(column['name'], {}).get('ignore'): continue
         if isinstance(variables[pos]['type'], str):
             if column['type'] != variables[pos]['type']: continue
         elif isinstance(variables[pos]['type'], list):
             if column['type'] not in variables[pos]['type']: continue
         else:
             continue
+        # XXX check annotation in variable
         if column['name'] in current: continue
         if pos + 1 == len(variables):
             result.append(dict(zip([v['name'] for v in variables],
                                    current + [column['name']])))
         else:
             result.extend(combinations(variables,
-                                       columns,
+                                       schema,
                                        current+[column['name']]))
     return result
 

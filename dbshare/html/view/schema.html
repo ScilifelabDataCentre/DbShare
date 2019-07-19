@@ -5,42 +5,74 @@
 {% block body_title %}Schema for view {{ schema['name'] }}{% endblock %}
 
 {% block main %}
-<table class="table table-sm table-borderless">
-  <col style="width:20%">
-  <col style="width:80%">
-  <tr>
-    <th class="text-right">Title</th>
-    <td>{{ schema.get('title') or '' }}</td>
-  </tr>
-  <tr>
-    <th class="text-right">Description</th>
-    <td>{{ schema.get('description')|markdown }}</td>
-  </tr>
-  <tr>
-    <th class="text-right">SELECT</th>
-    <td>{{ schema['query']['select'] }}</td>
-  </tr>
-  <tr>
-    <th class="text-right">FROM</th>
-    <td>{{ html_from|safe }}</td>
-  </tr>
-  <tr>
-    <th class="text-right">WHERE</th>
-    <td>{{ schema['query']['where'] or ''}}</td>
-  </tr>
-  <tr>
-    <th class="text-right">ORDER BY</th>
-    <td>{{ schema['query']['orderby'] or ''}}</td>
-  </tr>
-  <tr>
-    <th class="text-right">LIMIT</th>
-    <td>{{ schema['query']['limit'] or ''}}</td>
-  </tr>
-  <tr>
-    <th class="text-right">OFFSET</th>
-    <td>{{ schema['query']['offset'] or ''}}</td>
-  </tr>
-</table>
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Columns</h5>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Type</th>
+	  <th>Annotation</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['name'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card border-success mt-4">
+  <div class="card-header bg-success text-white">
+    <h5 class="card-title">Query</h5>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-borderless">
+      <col style="width:20%">
+      <col style="width:80%">
+      <tr>
+	<th class="text-right">Title</th>
+	<td>{{ schema.get('title') or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-right">Description</th>
+	<td>{{ schema.get('description')|markdown }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">SELECT</th>
+	<td class="text-monospace">{{ schema['query']['select'] }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">FROM</th>
+	<td class="text-monospace">{{ html_from|safe }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">WHERE</th>
+	<td class="text-monospace">{{ schema['query']['where'] or ''}}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">ORDER BY</th>
+	<td class="text-monospace">{{ schema['query']['orderby'] or ''}}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">LIMIT</th>
+	<td class="text-monospace">{{ schema['query']['limit'] or ''}}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">OFFSET</th>
+	<td class="text-monospace">{{ schema['query']['offset'] or ''}}</td>
+      </tr>
+    </table>
+  </div>
+</div>
 {% endblock %} {# block main #}
 
 {% block api %}
@@ -54,12 +86,7 @@
 <div class="mt-2">
   <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-outline-primary btn-block">
-    {% if is_none(schema['nrows']) %}
-    ?
-    {% else %}
-    {{ schema['nrows'] | informative }}
-    {% endif %}
-    rows</a>
+    {{ schema['nrows'] | informative }} rows</a>
 </div>
 {% if has_write_access %}
 <div class="mt-2">
@@ -67,7 +94,7 @@
      role="button" data-toggle="tooltip" data-placement="left"
      title="Edit the metadata of this view."
      role="button" class="btn btn-primary btn-block">
-    Edit</a>
+    Edit metadata</a>
 </div>
 {% endif %}
 <div class="mt-2">
