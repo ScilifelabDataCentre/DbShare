@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+
+{% block head_title %}{{ title }}{% endblock %}
+
+{% block body_title %}{{ title }}{% endblock %}
+
+{% block main %}
+{{ body | markdown }}
+{% endblock %} {# block main #}

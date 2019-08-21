@@ -1,16 +1,32 @@
 "About endpoints."
 
+import os.path
 import sqlite3
 import sys
 
 import flask
 import flask_mail
+import http.client
 import jinja2
 import jsonschema
 
 import dbshare.api.schema
 
+
 blueprint = flask.Blueprint('about', __name__)
+
+@blueprint.route('/doc/<pagename>')
+def doc(pagename):
+    "Documentation page in Markdown format."
+    filepath = os.path.join(flask.current_app.config['DOCS_DIRPATH'],
+                            pagename + '.md')
+    try:
+        with open(filepath) as infile:
+            body = infile.read()
+    except IOError:
+        flask.abort(http.client.NOT_FOUND)
+    title = pagename.replace('-', ' ').capitalize()
+    return flask.render_template('about/doc.html', title=title, body=body)
 
 @blueprint.route('/endpoints')
 def endpoints():
