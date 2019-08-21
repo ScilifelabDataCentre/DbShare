@@ -90,18 +90,7 @@ app.add_template_filter(utils.mode)
 @app.before_first_request
 def upgrade():
     "Upgrade the database(s) when moving to a new version."
-    if dbshare.__version__ == '1.5.5':
-        # Remove templates system table.
-        cnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
-        cnx.execute('DROP TABLE IF EXISTS templates')
-        dbnames = [c[0] for c in cnx.execute('SELECT name FROM dbs')]
-        cnx.close()
-        # Remove visuals index and tables in all databases.
-        for dbname in dbnames:
-            cnx = utils.get_cnx(utils.dbpath(dbname), write=True)
-            cnx.execute('DROP INDEX IF EXISTS _visuals_index')
-            cnx.execute('DROP TABLE IF EXISTS _visuals')
-            cnx.close()
+    pass
 
 @app.context_processor
 def setup_template_context():
@@ -117,7 +106,10 @@ def setup_template_context():
 
 @app.before_request
 def prepare():
-    "Connect to the system database (read-only); get the current user."
+    """Actions performed before every access.
+    - Connect to the system database (read-only).
+    - Get the current user.
+    """
     flask.g.cnx = dbshare.system.get_cnx()
     flask.g.current_user = dbshare.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \

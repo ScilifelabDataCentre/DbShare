@@ -1,5 +1,10 @@
 {% extends 'base.html' %}
 
+{% block style %}
+.combinations th,  .combinations td {padding: 0.5rem;}
+.combinations td a {margin: 0 1rem;}
+{% endblock %}
+
 {% block head_title %}
 Select chart to render {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
@@ -18,40 +23,26 @@ Select chart to render {{ schema['type'] }} {{ schema['name'] }}
       {{ stencil['title'] }}</a>
   </div>
   <div class="card-body collapse" id="{{ stencil['name'] }}">
-    <table class="table table-sm table-borderless">
+    <table class="combinations">
       <tr>
-	<th colspan="2">Chart variables</th>
-	<th colspan="{{ len(chunk) }}">
-	  {{ schema['type'].capitalize() }}  columns
-	</th>
+        <th></th>
+        {% for variable in stencil['variables'] %}
+        <th>{{ variable['name'] }}<br>{{ variable['title'] }}</th>
+        {% endfor %}
+        <th></th>
       </tr>
-      {% for chunk in utils.chunks(stencil['combinations'], 5) %}
-      {% for pos, variable in enumerate(stencil['variables']) %}
+      {% for combination in stencil['combinations'] %}
       <tr>
-        <td>{{ variable['name'] }}</td>
-        <td>{{ variable['title'] }}</td>
-	{% for combination in chunk %}
-	<td width="15%">{{ combination[variable['name']] }}</td>
-	{% endfor %}
-	{% for n in range(5 - len(chunk)) %}
-	<td width="15%"></td>
-	{% endfor %}
-      </tr>
-      {% endfor %} {# pos, variable #}
-      <tr>
-	<td colspan="2"></td>
-	{% for combination in chunk %}
-	<td class="pb-3">
-	  <a class="btn btn-sm btn-outline-info btn-block"
+        <td>
+	  <a class="btn btn-sm btn-info"
 	     role="button"
 	     href="{{ utils.url_for('.render', dbname=db['name'], sourcename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Render</a>
-	</td>
-	{% endfor %}
-	{% for n in range(5 - len(chunk)) %}
-	<td></td>
-	{% endfor %}
+        </td>
+        {% for variable in stencil['variables'] %}
+        <td>{{ combination[variable['name']] }}</td>
+        {% endfor %}
       </tr>
-    {% endfor %}
+      {% endfor %}
     </table>
   </div>
 </div>
