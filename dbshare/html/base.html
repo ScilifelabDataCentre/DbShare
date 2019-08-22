@@ -66,6 +66,10 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">About</a>
             <div class="dropdown-menu" aria-labelledby="navbarAbout">
+              <a href="{{ url_for('about.doc', pagename='overview') }}"
+		 class="nav-link">Overview</a>
+              <a href="{{ url_for('about.doc', pagename='tutorial') }}"
+		 class="nav-link">Tutorial</a>
               <a href="{{ url_for('about.endpoints') }}"
 		 class="nav-link">URL endpoints</a>
               <a href="{{ url_for('about.schema') }}"

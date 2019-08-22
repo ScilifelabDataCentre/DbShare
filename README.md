@@ -3,20 +3,28 @@
 Web service to share and query tabular data sets stored in
 [SQLite3](https://www.sqlite.org/) databases.
 
-## Databases
+A demo instance of the system can be viewed at
+[SciLifeLab](https://dbshare.scilifelab.se/).
 
-- A database may contain tables, views and indexes.
-- A database is owned by the user account that created it.
-- A database may be private or public.
-- A database may be read/write or read-only.
-- Databases are isolated from one another.
-- Display the tables, views and indexes in a database.
-- Create a database.
-- Rename a database.
-- Clone a database.
-- Delete a database.
-- Download the Sqlite3 file containing one database and its DbShare metadata.
-- Upload a Sqlite3 database file (plain, or containing DbShare metadata).
+[Here](https://dbshare.scilifelab.se/about/doc/overview) is an
+overview of the capabilities of DbShare.
+
+## Software used
+
+- [Python 3.6+](https://www.python.org/)
+- [SQLite3](https://www.sqlite.org/)
+- [Flask](http://flask.pocoo.org/)
+- [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
+- [Jinja2](http://jinja.pocoo.org/docs)
+- [Vega](https://vega.github.io/vega/)
+- [Vega-Lite](https://vega.github.io/vega-lite/)
+- [jsonschema](https://github.com/Julian/jsonschema)
+- [dpath-python](https://github.com/akesterson/dpath-python)
+- [Bootstrap](https://getbootstrap.com/)
+- [jQuery](https://jquery.com/)
+- [jQuery localtime](https://plugins.jquery.com/jquery.localtime/)
+- [DataTables](https://datatables.net/)
+
 
 ## Tables
 
@@ -74,19 +82,3 @@ Web service to share and query tabular data sets stored in
 - TODO Allow saving a chart for a table or view.
 - TODO Allow editing or creating a chart from scratch.
 - Charts are based on [Vega-Lite](https://vega.github.io/vega-lite/).
-
-## Software used
-
-- [Python 3.6+](https://www.python.org/)
-- [SQLite3](https://www.sqlite.org/)
-- [Flask](http://flask.pocoo.org/)
-- [Flask-Mail](https://pythonhosted.org/Flask-Mail/)
-- [Jinja2](http://jinja.pocoo.org/docs)
-- [Vega](https://vega.github.io/vega/)
-- [Vega-Lite](https://vega.github.io/vega-lite/)
-- [jsonschema](https://github.com/Julian/jsonschema)
-- [dpath-python](https://github.com/akesterson/dpath-python)
-- [Bootstrap](https://getbootstrap.com/)
-- [jQuery](https://jquery.com/)
-- [jQuery localtime](https://plugins.jquery.com/jquery.localtime/)
-- [DataTables](https://datatables.net/)

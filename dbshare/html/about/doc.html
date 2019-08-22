@@ -4,6 +4,10 @@
 
 {% block body_title %}{{ title }}{% endblock %}
 
-{% block main %}
-{{ body | markdown }}
+{% block supermain %}
+<div class="row">
+  <div class="col-md-9 offset-md-1">
+    {{ body | markdown }}
+  </div>
+</div>
 {% endblock %} {# block main #}
