@@ -1,7 +1,6 @@
 The DbShare system allows web access to data published in the form of
-[SQLite3](https://www.sqlite.org/) relational databases.
-
-Queries on the data can be performed using SQL.
+[SQLite3](https://www.sqlite.org/) relational databases. Queries on
+the data can be performed using SQL.
 
 The data may be visualized in charts based on predefined stencils
 (templates) using the [Vega-Lite](https://vega.github.io/vega-lite/)
@@ -30,8 +29,9 @@ Only users with an account at a site may create databases there.
 A database may be created from scratch, and its tables, indexes, views
 and charts to be defined via the web interface.
 
-An existing SQLite3 file may be uploaded. The system will attempt to
-inspect the data in it and infer the DbShare-related metadata from it.
+An existing SQLite3 file may be uploaded. The system will inspect the
+data in it and and attempt to infer the DbShare-related metadata from
+it.
 
 #### Ownership
 
