@@ -16,57 +16,9 @@ from . import utils
 
 blueprint = flask.Blueprint('chart', __name__)
 
-@blueprint.route('/<name:dbname>/<name:sourcename>/select')
-def select(dbname, sourcename):
-    "Display selection of stencils to make a chart for the given table/view."
-    try:
-        db = dbshare.db.get_check_read(dbname)
-    except (KeyError, ValueError) as error:
-        utils.flash_error(error)
-        return flask.redirect(flask.url_for('home'))
-    try:
-        schema = dbshare.db.get_schema(db, sourcename)
-    except KeyError:
-        utils.flash_error('no such table or view')
-        return flask.redirect(flask.url_for('db.display', dbname=dbname))
-    stencils = dbshare.stencil.get_stencils()
-    for stencil in stencils:
-        stencil['combinations'] = combinations(stencil['variables'], schema)
-    stencils = [c for c in stencils if c['combinations']]
-    return flask.render_template('chart/select.html',
-                                 db=db,
-                                 schema=schema,
-                                 stencils=stencils)
-
-def combinations(variables, schema, current=None):
-    "Return all combinations of variables in stencil to table/view columns."
-    result = []
-    if current is None:
-        current = []
-    pos = len(current)
-    annotations = schema.get('annotations', {})
-    for column in schema['columns']:
-        if annotations.get(column['name'], {}).get('ignore'): continue
-        if isinstance(variables[pos]['type'], str):
-            if column['type'] != variables[pos]['type']: continue
-        elif isinstance(variables[pos]['type'], list):
-            if column['type'] not in variables[pos]['type']: continue
-        else:
-            continue
-        # XXX check annotation in variable
-        if column['name'] in current: continue
-        if pos + 1 == len(variables):
-            result.append(dict(zip([v['name'] for v in variables],
-                                   current + [column['name']])))
-        else:
-            result.extend(combinations(variables,
-                                       schema,
-                                       current+[column['name']]))
-    return result
-
-@blueprint.route('/<name:dbname>/<name:sourcename>/render/<nameext:stencilname>')
-def render(dbname, sourcename, stencilname):
-    "Render the chart for the given table/view and stencil."
+@blueprint.route('/<name:dbname>/<name:sourcename>/save/<name:stencilname>')
+def save(dbname, sourcename, stencilname):
+    "Save the chart for the given table/view and stencil."
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
@@ -108,21 +60,16 @@ def render(dbname, sourcename, stencilname):
         return flask.redirect(
             flask.url_for('.select', dbname=dbname, sourcename=sourcename))
 
-    if stencilname.ext == 'json' or utils.accept_json():
-        return utils.jsonify(spec)
+    # XXX Save it, redirect to its page.
 
-    elif stencilname.ext in (None, 'html'):
-        url = utils.url_for('.render',
-                            dbname=db['name'],
-                            sourcename=schema['name'],
-                            stencilname=stencil['name'] + '.json',
-                            _query=query)
-        return flask.render_template('chart/render.html',
-                                     title=title,
-                                     db=db,
-                                     schema=schema,
-                                     spec=spec,
-                                     json_url=url)
-
-    else:
-        flask.abort(http.client.NOT_ACCEPTABLE)
+        # url = utils.url_for('.render',
+        #                     dbname=db['name'],
+        #                     sourcename=schema['name'],
+        #                     stencilname=stencil['name'] + '.json',
+        #                     _query=query)
+        # return flask.render_template('chart/render.html',
+        #                              title=title,
+        #                              db=db,
+        #                              schema=schema,
+        #                              spec=spec,
+        #                              json_url=url)

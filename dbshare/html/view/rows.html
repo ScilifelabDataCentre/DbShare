@@ -65,9 +65,9 @@
      class="btn btn-outline-primary btn-block">Download</a>
 </div>
 <div class="mt-2">
-    <a href="{{ url_for('chart.select', dbname=db['name'], sourcename=schema['name']) }}"
+    <a href="{{ url_for('stencil.select', dbname=db['name'], sourcename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
-      Select chart</a>
+      Select chart stencil</a>
 </div>
 <div class="mt-2">
   <form action="{{ url_for('query.define', dbname=db['name']) }}"

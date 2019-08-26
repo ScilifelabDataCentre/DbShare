@@ -14,6 +14,7 @@ import dbshare.dbs
 import dbshare.chart
 import dbshare.query
 import dbshare.site
+import dbshare.stencil
 import dbshare.system
 import dbshare.table
 import dbshare.user
@@ -64,6 +65,7 @@ app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
 app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
 app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
+app.register_blueprint(dbshare.stencil.blueprint, url_prefix='/stencil')
 app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
 app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
