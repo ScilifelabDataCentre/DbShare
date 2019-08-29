@@ -12,6 +12,36 @@
 
 {% block main %}
 <div id="chart" class="m-4"></div>
+{% if has_write_access %}
+<div class="card border-success">
+  <div class="card-header text-white bg-success">
+    Save chart
+  </div>
+  <div class="card-body">
+    <form action=" {{ url_for('chart.save', dbname=db['name'], sourcename=schema['name'], stencilname=stencilname) }}"
+          method="POST">
+      {{ csrf_token() }}
+      <div class="form-group row">
+        <label for="name" class="col-md-2 col-form-label text-right">
+          Name</label>
+        <div class="col-md-6">
+          <input id="name" name="name" type="text" autofocus
+                 aria-describedby="nameHelp" class="form-control">
+          <small id="nameHelp" class="form-text text-muted">
+            The chart name must be unique within the database.
+          </small>
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-3 offset-md-2">
+          <button type="submit" class="btn btn-success btn-lg btn-block">
+	    Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %} {# if has_write_access #}
 {% endblock %}
 
 {% block actions %}

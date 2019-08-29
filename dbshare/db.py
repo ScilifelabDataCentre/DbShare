@@ -48,6 +48,13 @@ VIEWS_TABLE = {
                 dict(name='schema', type=constants.TEXT, notnull=True)]
 }
 
+CHARTS_TABLE = {
+    'name': constants.CHARTS,
+    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
+                dict(name='schema', type=constants.TEXT, notnull=True),
+                dict(name='spec', type=constants.TEXT, notnull=True)]
+}
+
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -637,6 +644,8 @@ class DbContext:
         sql = get_sql_create_table(INDEXES_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
         sql = get_sql_create_table(VIEWS_TABLE, if_not_exists=True)
+        self.dbcnx.execute(sql)
+        sql = get_sql_create_table(CHARTS_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
 
     def create_table_load_records(self, tablename, records, has_header=True):
