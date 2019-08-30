@@ -101,6 +101,7 @@ def render(dbname, sourcename, stencilname):
                                      schema=schema,
                                      stencilname=str(stencilname),
                                      spec=spec,
+                                     context=context,
                                      json_url=json_url)
 
     else:
