@@ -121,17 +121,17 @@ def get_chart_spec_context(db, schema, stencilname):
     try:
         context = {
             'url': utils.url_for_rows(db, schema, external=True, csv=True),
-            'title': flask.request.args.get('title') or
-                     f"{schema['name']} {stencil['name']}",
-            'width': int(flask.request.args.get('width') or
+            'title': flask.request.values.get('title') or
+                     f"{schema['type'].capitalize()} {schema['name']}: {stencil['name']}",
+            'width': int(flask.request.values.get('width') or
                          flask.current_app.config['CHART_DEFAULT_WIDTH']),
-            'height': int(flask.request.args.get('height') or
+            'height': int(flask.request.values.get('height') or
                          flask.current_app.config['CHART_DEFAULT_HEIGHT'])
         }
     except TypeError as error:
         raise ValueError(str(error))
     for variable in stencil['variables']:
-        colname = flask.request.args.get(variable['name'])
+        colname = flask.request.values.get(variable['name'])
         if not colname: 
             raise ValueError(f"no column for variable {variable['name']}")
         for column in schema['columns']:

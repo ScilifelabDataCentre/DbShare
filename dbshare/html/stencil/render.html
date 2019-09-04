@@ -17,8 +17,10 @@
 {% block actions %}
 {% if has_write_access %}
 <div class="mt-2">
-  <form action="{{ url_for('chart.save', dbname=db['name'], sourcename=schema['name'], stencilname=stencilname) }}"
+  <form action="{{ url_for('chart.save', dbname=db['name']) }}"
 	method="GET">
+    <input type="hidden" name="sourcename" value="{{ schema['name'] }}">
+    <input type="hidden" name="stencilname" value="{{ stencilname }}">
     {% for key, value in context.items() %}
     {% if key != 'url' %}
     <input type="hidden" name="{{ key }}" value="{{ context[key] }}">

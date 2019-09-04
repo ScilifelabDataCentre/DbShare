@@ -998,6 +998,20 @@ class DbContext:
         sql = 'DROP VIEW "%s"' % viewname
         self.dbcnx.execute(sql)
 
+    def add_chart(self, chartname, schema, spec):
+        """Create the chart in the database and add to the database definition.
+        Raises ValueError if the chart name is already used.
+        Raises jsonschema.ValidationError if the spec is invalid.
+        """
+        if utils.name_in_nocase(chartname, self.db['charts']):
+            raise ValueError('name is already in use for a table')
+        sql = "INSERT INTO %s (name, schema, spec) VALUES (?,?,?)" % constants.CHARTS
+        with self.dbcnx:
+            self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
+        self.db['charts'][chartname] = {'name': chartname,
+                                        'schema': schema['name'],
+                                        'spec': spec}
+
     def check_metadata(self):
         """Check the validity of the metadata for the database.
         Fix the data URLs in the saved charts.
@@ -1169,17 +1183,12 @@ def get_db(name, complete=False):
         sql = "SELECT name, schema FROM %s" % constants.VIEWS
         cursor.execute(sql)
         db['views'] = dict([(row[0], json.loads(row[1])) for row in cursor])
-        # XXX Re-introduce with saved charts
-        # sql = "SELECT name, sourcename, spec FROM %s" % constants.VISUALS
-        # cursor.execute(sql)
-        # visuals = [{'name': row[0],
-        #           'sourcename': row[1], 
-        #           'spec': json.loads(row[2])} for row in cursor]
-        # db['visuals'] = {}
-        # for visual in visuals:
-        #     db['visuals'].setdefault(visual['sourcename'], []).append(visual)
-        # for sourcename, visuallist in list(db['visuals'].items()):
-        #     db['visuals'][sourcename] = utils.sorted_schema(visuallist)
+        sql = "SELECT name, schema, spec FROM %s" % constants.CHARTS
+        cursor.execute(sql)
+        db['charts'] = dict([(row[0], {'name': row[0], 
+                                       'schema': row[1], 
+                                       'spec': json.loads(row[2])})
+                             for row in cursor])
     return db
 
 def get_usage(username=None):
