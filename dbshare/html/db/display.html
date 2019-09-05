@@ -20,7 +20,7 @@
             {% for table in utils.sorted_schema(db['tables'].values()) %}
             <tr>
 	      <td>
-		<strong>{{ table['title'] or table['name'] }}</strong>
+		<strong title="{{ table['title'] or '' }}">{{ table['name'] }}</strong>
 	      </td>
               <td>
 		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
@@ -31,6 +31,20 @@
                   schema</a>
               </td>
             </tr>
+            {% if charts.get(table['name']) %}
+            <tr>
+              <td class="pt-0"></td>
+              <td colspan="2" class="pt-0">
+                {% for c in charts[table['name']] %}
+                <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
+                   title="{{ c['spec']['title'] }}"
+                   class="text-info">
+                  {{ c['name'] }}
+                </a>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endif %} {# if charts #}
             {% endfor %} {# for table in #}
           </tbody>
         </table>
@@ -52,7 +66,7 @@
             {% for view in utils.sorted_schema(db['views'].values()) %}
             <tr>
 	      <td>
-		<strong>{{ view['title'] or view['name'] }}</strong>
+		<strong title="{{ view['title'] or '' }}">{{ view['name'] }}</strong>
 	      </td>
               <td>
 		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
@@ -63,7 +77,21 @@
                   schema</a>
               </td>
 	    </tr>
-            {% endfor %}
+            {% if charts.get(view['name']) %}
+            <tr>
+              <td class="pt-0"></td>
+              <td colspan="2" class="pt-0">
+                {% for c in charts[view['name']] %}
+                <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
+                   title="{{ c['spec']['title'] }}"
+                   class="text-info">
+                  {{ c['name'] }}
+                </a>
+                {% endfor %}
+              </td>
+            </tr>
+            {% endif %} {# if charts #}
+            {% endfor %} {# for view in #}
           </tbody>
         </table>
         {% else %}

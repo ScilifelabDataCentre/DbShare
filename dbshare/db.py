@@ -129,9 +129,15 @@ def display(dbname):
         return response
 
     elif dbname.ext in (None, 'html'):
+        charts = {}
+        for table in db['tables'].values(): charts[table['name']] = []
+        for view in db['views'].values(): charts[view['name']] = []
+        for chart in db['charts'].values():
+            charts[chart['schema']].append(chart)
         return flask.render_template(
             'db/display.html', 
             db=db,
+            charts=charts,
             title=db.get('title') or "Database {}".format(dbname),
             has_write_access=has_write_access(db),
             can_change_mode=has_write_access(db, check_mode=False))
