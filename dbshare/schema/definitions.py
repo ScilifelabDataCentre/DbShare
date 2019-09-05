@@ -67,7 +67,7 @@ operations = {
             'type': 'object',
             'properties': {
                 'title': {'type': 'string'},
-                'href': {'type': 'string', 'format': 'uri'},
+                'href': {'type': 'string', 'format': 'uri-template'},
                 'variables': {
                     'type': 'object'
                 },

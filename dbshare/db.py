@@ -1004,7 +1004,7 @@ class DbContext:
         Raises jsonschema.ValidationError if the spec is invalid.
         """
         if utils.name_in_nocase(chartname, self.db['charts']):
-            raise ValueError('name is already in use for a table')
+            raise ValueError('name is already in use for a chart')
         sql = "INSERT INTO %s (name, schema, spec) VALUES (?,?,?)" % constants.CHARTS
         with self.dbcnx:
             self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
