@@ -67,7 +67,7 @@
 <div class="mt-2">
     <a href="{{ url_for('stencil.select', dbname=db['name'], sourcename=schema['name']) }}"
        role="button" class="btn btn-info btn-block">
-      Select chart</a>
+      Create chart</a>
 </div>
 <div class="mt-2">
   <form action="{{ url_for('query.define', dbname=db['name']) }}"
@@ -121,6 +121,22 @@
 {% endblock %} {# block actions #}
 
 {% block info %}
+{% if charts %}
+<div class="card mt-4 border-info">
+  <div class="card-header text-info">
+    Saved charts
+  </div>
+  <div class="card-body">
+    {% for chart in charts %}
+    <a href="{{ url_for('chart.display', dbname=db['name'], chartname=chart['name']) }}"
+       title="{{ chart['spec']['title'] }}">
+      {{ chart['name'] }}
+    </a>
+    <br>
+    {% endfor %}
+  </div>
+</div>
+{% endif %} {# if charts #}
 <div class="small mt-4">
   CPU time: {{ g.timer.milliseconds | informative }} ms
 </div>

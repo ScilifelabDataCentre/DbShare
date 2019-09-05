@@ -66,8 +66,8 @@ def combinations(variables, schema, current=None):
     return result
 
 @blueprint.route('/<name:dbname>/<name:sourcename>/<nameext:stencilname>')
-def render(dbname, sourcename, stencilname):
-    "Render the chart for the given table/view and stencil."
+def create(dbname, sourcename, stencilname):
+    "Create the chart for the given table/view and stencil."
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
@@ -89,12 +89,12 @@ def render(dbname, sourcename, stencilname):
         return utils.jsonify(spec)
 
     elif stencilname.ext in (None, 'html'):
-        json_url = utils.url_for('.render',
+        json_url = utils.url_for('.create',
                                  dbname=db['name'],
                                  sourcename=schema['name'],
                                  stencilname=str(stencilname) + '.json',
                                  _query=context)
-        return flask.render_template('stencil/render.html',
+        return flask.render_template('stencil/create.html',
                                      title=context['title'],
                                      db=db,
                                      has_write_access=dbshare.db.has_write_access(db),

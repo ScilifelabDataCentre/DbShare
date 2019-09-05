@@ -166,6 +166,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 cursor = utils.execute_timeout(dbcnx, sql)
             query = schema['query']
             sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT
+            charts = [c for c in db['charts'].values()
+                      if c['schema'] == str(viewname)]
             return flask.render_template('view/rows.html', 
                                          db=db,
                                          schema=schema,
@@ -173,7 +175,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                                          sql=sql,
                                          title=title,
                                          rows=cursor,
-                                         # visuals=visuals,
+                                         charts=charts,
                                          has_write_access=has_write_access)
 
         else:

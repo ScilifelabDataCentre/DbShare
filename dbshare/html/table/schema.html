@@ -29,7 +29,7 @@
 	    {{ column['notnull'] and 'NOT NULL' or '' }}
           </td>
 	  <td>
-	    {{ ', '.join(schema.get('annotations', {})[column['name']].keys()) }}
+	    {{ ', '.join(schema.get('annotations', {}).get(column['name'], {}).keys()) }}
 	  </td>
 	</tr>
 	{% endfor %}

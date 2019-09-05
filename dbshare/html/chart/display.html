@@ -15,6 +15,19 @@
 {% endblock %}
 
 {% block actions %}
+{% if schema['type'] == constants.TABLE %}
+<div class="mt-2">
+  <a href="{{ url_for('table.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Rows in table</a>
+</div>
+{% else %}
+<div class="mt-2">
+  <a href="{{ url_for('view.rows', dbname=db['name'], viewname=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    Rows in view</a>
+</div>
+{% endif %}
 {% if has_write_access %}
 {% endif %} {# if has_write_access #}
 {% endblock %}

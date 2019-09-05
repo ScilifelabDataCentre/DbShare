@@ -80,6 +80,11 @@ def display(dbname, chartname):
     except KeyError as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=db['name']))
+    try:
+        schema = dbshare.db.get_schema(db, chart['schema'])
+    except KeyError:
+        utils.flash_error('no such table or view')
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if chartname.ext == 'json' or utils.accept_json():
         return flask.jsonify(chart['spec'])
@@ -88,6 +93,8 @@ def display(dbname, chartname):
         json_url = flask.url_for('.display', dbname=dbname, chartname=chartname)
         json_url += '.json'
         return flask.render_template('chart/display.html',
+                                     db=db,
+                                     schema=schema,
                                      spec=chart['spec'],
                                      json_url=json_url)
 

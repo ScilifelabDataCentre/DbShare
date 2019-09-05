@@ -123,6 +123,8 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 sql += f" LIMIT {limit}"
                 utils.flash_message_limit(limit)
             cursor = utils.execute_timeout(dbcnx, sql)
+            charts = [c for c in db['charts'].values()
+                      if c['schema'] == str(tablename)]
             updateable = bool([c for c in schema['columns']
                                if c.get('primarykey')])
             return flask.render_template('table/rows.html', 
@@ -130,7 +132,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                                          schema=schema,
                                          title=title,
                                          rows=cursor,
-                                         # visuals=visuals,
+                                         charts=charts,
                                          updateable=updateable,
                                          has_write_access=has_write_access)
 
