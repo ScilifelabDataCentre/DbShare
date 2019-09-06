@@ -6,11 +6,11 @@
 {% endblock %}
 
 {% block head_title %}
-Create chart for {{ schema['type'] }} {{ schema['name'] }}
+Select chart for {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block body_title %}
-Create chart for {{ schema['type'] }} {{ schema['name'] }}
+Select chart for {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block main %}
@@ -36,7 +36,7 @@ Create chart for {{ schema['type'] }} {{ schema['name'] }}
         <td>
 	  <a class="btn btn-sm btn-info"
 	     role="button"
-	     href="{{ utils.url_for('.create', dbname=db['name'], sourcename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Create</a>
+	     href="{{ utils.url_for('.display', dbname=db['name'], sourcename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Display</a>
         </td>
         {% for variable in stencil['variables'] %}
         <td>{{ combination[variable['name']] }}</td>
