@@ -1,8 +1,8 @@
 {% extends 'base.html' %}
 
-{% block head_title %}{{ spec['title'] }}{% endblock %}
+{% block head_title %}{{ chart['spec']['title'] }}{% endblock %}
 
-{% block body_title %}{{ spec['title'] }}{% endblock %}
+{% block body_title %}{{ chart['spec']['title'] }}{% endblock %}
 
 {% block meta %}
 <div>
@@ -29,7 +29,19 @@
 </div>
 {% endif %}
 {% if has_write_access %}
-{% endif %} {# if has_write_access #}
+<div class="mt-2">
+  <form action="{{ url_for('.edit', dbname=db['name'], chartname=chart['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this chart."
+            onclick="return confirm('Really delete the chart? Cannot be undone.')">
+      Delete</button>
+  </form>
+</div>
+{% endif %} {# has_write_access #}
 {% endblock %}
 
 {% block javascript %}
@@ -37,6 +49,6 @@
 <script src="{{ config['VEGA_LITE_JS_URL'] }}"></script>
 <script src="{{ config['VEGA_EMBED_JS_URL'] }}"></script>
 <script type="text/javascript">
-  vegaEmbed('#chart', {{ spec | tojson(indent=2) }});
+  vegaEmbed('#chart', {{ chart['spec'] | tojson(indent=2) }});
 </script>
 {% endblock %}

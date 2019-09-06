@@ -129,7 +129,8 @@
   <div class="card-body">
     {% for chart in charts %}
     <a href="{{ url_for('chart.display', dbname=db['name'], chartname=chart['name']) }}"
-       title="{{ chart['spec']['title'] }}">
+       title="{{ chart['spec']['title'] }}"
+       class="text-info">
       {{ chart['name'] }}
     </a>
     <br>

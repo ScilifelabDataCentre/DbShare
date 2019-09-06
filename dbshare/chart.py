@@ -95,7 +95,8 @@ def display(dbname, chartname):
         return flask.render_template('chart/display.html',
                                      db=db,
                                      schema=schema,
-                                     spec=chart['spec'],
+                                     chart=chart,
+                                     has_write_access=dbshare.db.has_write_access(db),
                                      json_url=json_url)
 
 @blueprint.route('/<name:dbname>/<name:chartname>/edit',
@@ -103,8 +104,18 @@ def display(dbname, chartname):
 def edit(dbname, chartname):
     "Edit the named chart. Or delete it."
     try:
-        db = get_check_write(dbname)
+        db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('.display', dbname=dbname))
-    raise NotImplementedError
+
+    if utils.http_GET():
+        raise NotImplementedError
+
+    elif utils.http_POST():
+        raise NotImplementedError
+
+    elif utils.http_DELETE():
+        with dbshare.db.DbContext(db) as ctx:
+            ctx.delete_chart(chartname)
+        return flask.redirect(flask.url_for('db.display', dbname=dbname))

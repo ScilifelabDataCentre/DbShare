@@ -203,11 +203,6 @@ def edit(dbname):
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
     elif utils.http_DELETE():
-        try:
-            get_check_write(dbname)
-        except (KeyError, ValueError) as error:
-            utils.flash_error(error)
-            return flask.redirect(flask.url_for('home'))
         delete_database(dbname)
         return flask.redirect(
             flask.url_for('dbs.owner',
@@ -1017,6 +1012,16 @@ class DbContext:
         self.db['charts'][chartname] = {'name': chartname,
                                         'schema': schema['name'],
                                         'spec': spec}
+
+    def delete_chart(self, chartname):
+        "Delete the chart from the database."
+        try:
+            self.db['charts'].pop(chartname)
+        except KeyError:
+            raise ValueError('no such chart in database')
+        with self.dbcnx:
+            sql = "DELETE FROM %s WHERE name=?" % constants.CHARTS
+            self.dbcnx.execute(sql, (chartname,))
 
     def check_metadata(self):
         """Check the validity of the metadata for the database.
