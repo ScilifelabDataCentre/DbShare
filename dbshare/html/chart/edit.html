@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Edit chart {{ chart['name'] }}{% endblock %}
+
+{% block body_title %}Edit chart {{ chart['name'] }}{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.edit', dbname=db['name'], chartname=chart['name']) }}"
+      method="POST">
+  {{ csrf_token() }}
+  <div class="form-group row">
+    <label for="spec" class="col-md-2 col-form-label text-right">
+      Specification</label>
+    <div class="col-md-10">
+      <textarea id="spec" name="spec" 
+                class="form-control text-monospace" rows="30"
+                aria-describedby="specHelp"
+		>{{ chart['spec'] | tojson(indent=2) }}</textarea>
+      <small id="specHelp" class="form-text text-muted">
+        <a href="https://vega.github.io/vega-lite/"
+           target="_blank">Vega-Lite specification</a>.
+        <strong>Do not</strong> edit the data["url"] value.
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-md-3 offset-md-2">
+      <button type="submit" 
+              class="btn btn-primary btn-lg btn-block">Save</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block actions %}
+<div class="mt-2">
+  <a href="{{ url_for('.display', dbname=db['name'], chartname=chart['name']) }}"
+     role="button" class="btn btn-dark btn-block">
+    Cancel</a>
+</div>
+{% endblock %}

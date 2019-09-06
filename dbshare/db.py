@@ -1006,12 +1006,23 @@ class DbContext:
         """
         if utils.name_in_nocase(chartname, self.db['charts']):
             raise ValueError('name is already in use for a chart')
-        sql = "INSERT INTO %s (name, schema, spec) VALUES (?,?,?)" % constants.CHARTS
+        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
         with self.dbcnx:
+            sql = "INSERT INTO {constants.CHARTS} (name, schema, spec) VALUES (?,?,?)"
             self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
         self.db['charts'][chartname] = {'name': chartname,
                                         'schema': schema['name'],
                                         'spec': spec}
+
+    def update_chart(self, chartname, spec):
+        """Update the chat in the database.
+        Raises jsonschema.ValidationError if the spec is invalid.
+        """
+        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
+        with self.dbcnx:
+            sql = f"UPDATE {constants.CHARTS} SET spec=? WHERE name=?"
+            self.dbcnx.execute(sql, (json.dumps(spec), chartname))
+        self.db['charts'][chartname]['spec'] = spec
 
     def delete_chart(self, chartname):
         "Delete the chart from the database."

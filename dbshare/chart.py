@@ -90,14 +90,13 @@ def display(dbname, chartname):
         return flask.jsonify(chart['spec'])
 
     elif chartname.ext in (None, 'html'):
-        json_url = flask.url_for('.display', dbname=dbname, chartname=chartname)
-        json_url += '.json'
+        url = flask.url_for('.display', dbname=dbname, chartname=chartname)
         return flask.render_template('chart/display.html',
                                      db=db,
                                      schema=schema,
                                      chart=chart,
                                      has_write_access=dbshare.db.has_write_access(db),
-                                     json_url=json_url)
+                                     json_url=url + '.json')
 
 @blueprint.route('/<name:dbname>/<name:chartname>/edit',
                  methods=['GET', 'POST', 'DELETE'])
@@ -107,13 +106,26 @@ def edit(dbname, chartname):
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
-        return flask.redirect(flask.url_for('.display', dbname=dbname))
+        return flask.redirect(
+            flask.url_for('.display', dbname=dbname, chartname=chartname))
+    try:
+        chart = db['charts'][str(chartname)]
+    except KeyError as error:
+        utils.flash_error(error)
+        return flask.redirect(flask.url_for('db.display', dbname=db['name']))
 
     if utils.http_GET():
-        raise NotImplementedError
+        return flask.render_template('chart/edit.html', db=db, chart=chart)
 
     elif utils.http_POST():
-        raise NotImplementedError
+        try:
+            spec = json.loads(flask.request.form['spec'])
+            with dbshare.db.DbContext(db) as ctx:
+                ctx.update_chart(chartname, spec)
+        except (KeyError, ValueError, jsonschema.ValidationError) as error:
+            utils.flash_error(error)
+        return flask.redirect(
+            flask.url_for('.display', dbname=dbname, chartname=chartname))
 
     elif utils.http_DELETE():
         with dbshare.db.DbContext(db) as ctx:
