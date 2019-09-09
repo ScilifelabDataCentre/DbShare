@@ -82,7 +82,6 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "Table {}".format(tablename)
-        # visuals = utils.sorted_schema(db['visuals'].get(schema['name'], []))
         columns = [c['name'] for c in schema['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
         colnames = ','.join([f'"{c}"' for c in columns])
