@@ -15,11 +15,6 @@ columns = {
             'primarykey': {'type': 'boolean'},
             'notnull': {'type': 'boolean'},
             'unique': {'type': 'boolean'},
-            'annotations': {
-                'type': 'object',
-                'propertyNames': definitions.property_names,
-                'additionalProperties': {'type': 'object'}
-            },
             'statistics': {
                 'type': 'object',
                 'propertyNames': definitions.property_names,

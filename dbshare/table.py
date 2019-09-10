@@ -167,11 +167,10 @@ def edit(dbname, tablename):
             with dbshare.db.DbContext(db) as ctx:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
-                schema['annotations'] = {}
-                for column in schema ['columns']:
-                    ann = flask.request.form.get(f"column:{column['name']}")
-                    if ann in flask.current_app.config['COLUMN_ANNOTATIONS']:
-                         schema['annotations'][column['name']] = {ann: True}
+                try:
+                    del schema['annotations']
+                except KeyError:
+                    pass
                 ctx.update_table(schema, reset_cache=False)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)

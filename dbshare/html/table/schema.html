@@ -16,7 +16,7 @@
 	  <th>Name</th>
 	  <th>Type</th>
 	  <th>Constraints</th>
-	  <th>Annotation</th>
+	  <!-- <th>Annotation</th> -->
 	</tr>
       </thead>
       <tbody>
@@ -28,9 +28,9 @@
             {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
 	    {{ column['notnull'] and 'NOT NULL' or '' }}
           </td>
-	  <td>
-	    {{ ', '.join(schema.get('annotations', {}).get(column['name'], {}).keys()) }}
-	  </td>
+	  <!-- <td> -->
+	  <!--   {{ ', '.join(schema.get('annotations', {}).get(column['name'], {}).keys()) }} -->
+	  <!-- </td> -->
 	</tr>
 	{% endfor %}
       </tbody>

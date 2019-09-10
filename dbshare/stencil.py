@@ -45,9 +45,9 @@ def combinations(variables, schema, current=None):
     if current is None:
         current = []
     pos = len(current)
-    annotations = schema.get('annotations', {})
+    # annotations = schema.get('annotations', {})
     for column in schema['columns']:
-        if annotations.get(column['name'], {}).get('ignore'): continue
+        # if annotations.get(column['name'], {}).get('ignore'): continue
         if isinstance(variables[pos]['type'], str):
             if column['type'] != variables[pos]['type']: continue
         elif isinstance(variables[pos]['type'], list):
