@@ -70,8 +70,8 @@ schema = {
         'data': {'$ref': '#/definitions/link'},
         'statistics': {'$ref': '#/definitions/link'},
         'columns': columns,
-        # 'visualizations': definitions.visualizations,
-        'indexes': indexes
+        'indexes': indexes,
+        'charts': definitions.charts
     },
     'required': [
         '$id',
@@ -82,8 +82,8 @@ schema = {
         'rows',
         'data',
         'columns',
-        # 'visualizations',
-        'indexes'
+        'indexes',
+        'charts'
     ],
     'additionalProperties': False
 }

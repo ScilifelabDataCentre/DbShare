@@ -102,12 +102,12 @@ charts = {
         'properties': {
             'name': {'type': 'string'},
             'title': {'type': ['string', 'null']},
-            'specifications': {'$ref': '#/definitions/link'},
+            'spec': {'$ref': '#/definitions/link'},
         },
         'required': [
             'name',
             'title',
-            'specifications'],
+            'spec'],
         'additionalProperties': False
     }
 }
