@@ -14,6 +14,13 @@
 <div id="chart" class="m-4"></div>
 {% endblock %}
 
+{% block api %}
+<div>
+  <a href="{{ url_for('api_chart.chart', dbname=db['name'], chartname=chart['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
 {% block actions %}
 {% if schema['type'] == constants.TABLE %}
 <div class="mt-2">

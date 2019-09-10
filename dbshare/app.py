@@ -28,6 +28,7 @@ import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.users
 import dbshare.api.view
+import dbshare.api.chart
 
 from dbshare import constants
 from dbshare import utils
@@ -76,6 +77,7 @@ app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
 app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
 app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
 app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
+app.register_blueprint(dbshare.api.chart.blueprint, url_prefix='/api/chart')
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
 app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')

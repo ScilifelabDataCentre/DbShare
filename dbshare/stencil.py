@@ -9,7 +9,6 @@ import jinja2
 import jsonschema
 
 import dbshare.db
-import dbshare.stencil
 
 from . import constants
 from . import utils
@@ -45,7 +44,6 @@ def combinations(variables, schema, current=None):
     if current is None:
         current = []
     pos = len(current)
-    # annotations = schema.get('annotations', {})
     for column in schema['columns']:
         # if annotations.get(column['name'], {}).get('ignore'): continue
         if isinstance(variables[pos]['type'], str):
@@ -54,7 +52,7 @@ def combinations(variables, schema, current=None):
             if column['type'] not in variables[pos]['type']: continue
         else:
             continue
-        # XXX check annotation in variable
+        # XXX check annotation in variable, when implemented
         if column['name'] in current: continue
         if pos + 1 == len(variables):
             result.append(dict(zip([v['name'] for v in variables],
@@ -76,10 +74,12 @@ def display(dbname, sourcename, stencilname):
     try:
         schema = dbshare.db.get_schema(db, sourcename)
     except KeyError:
-        utils.flash_error('no such table')
+        utils.flash_error('no such table or view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
-        spec, context = get_chart_spec_context(db, schema, str(stencilname))
+        stencil = get_stencil(str(stencilname))
+        context = get_context(db, schema, stencil)
+        spec = get_chart_spec(stencil, context)
     except ValueError as error:
         utils.flash_error(str(error))
         return flask.redirect(
@@ -92,14 +92,14 @@ def display(dbname, sourcename, stencilname):
         json_url = utils.url_for('.display',
                                  dbname=db['name'],
                                  sourcename=schema['name'],
-                                 stencilname=str(stencilname) + '.json',
+                                 stencilname=stencil['name'] + '.json',
                                  _query=context)
         return flask.render_template('stencil/display.html',
                                      title=context['title'],
                                      db=db,
                                      has_write_access=dbshare.db.has_write_access(db),
                                      schema=schema,
-                                     stencilname=str(stencilname),
+                                     stencilname=stencil['name'],
                                      spec=spec,
                                      context=context,
                                      json_url=json_url)
@@ -107,19 +107,13 @@ def display(dbname, sourcename, stencilname):
     else:
         flask.abort(http.client.NOT_ACCEPTABLE)
 
-
-def get_chart_spec_context(db, schema, stencilname):
-    """Return the chart spec and context given the table/view schema
-    and any variables given in the request.
-    Raise ValueError if something is wrong.
+def get_context(db, schema, stencil):
+    """Return the context for producing a chart from the stencil.
+    Get values from the request.
+    Raise ValueError if anything is wrong.
     """
-    for stencil in dbshare.stencil.get_stencils():
-        if stencil['name'] == str(stencilname):
-            break
-    else:
-        raise ValueError('no such stencil')
     try:
-        context = {
+        result = {
             'url': utils.url_for_rows(db, schema, external=True, csv=True),
             'title': flask.request.values.get('title') or
                      f"{schema['type'].capitalize()} {schema['name']}: {stencil['name']}",
@@ -138,19 +132,32 @@ def get_chart_spec_context(db, schema, stencilname):
             if column['name'] == colname: break
         else:
             raise ValueError(f"no such column {colname}")
-        context[variable['name']] = colname
+        result[variable['name']] = colname
+    return result
+
+def get_chart_spec(stencil, context):
+    """Return the chart spec given the stencil and the context.
+    Raise ValueError if something is wrong.
+    """
     try:
-        spec = jinja2.Template(stencil['template']).render(**context)
-        spec = json.loads(spec)
-        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
+        result = jinja2.Template(stencil['template']).render(**context)
+        result = json.loads(result)
+        utils.json_validate(result,flask.current_app.config['VEGA_LITE_SCHEMA'])
     except (jinja2.TemplateError, jsonschema.ValidationError) as error:
         raise ValueError(str(error))
-    return spec, context
+    return result
 
 def get_stencils():
     "Return the available stencils."
     # XXX Redesign, get stencils from files.
     return copy.deepcopy(STENCILS)
+
+def get_stencil(stencilname):
+    for stencil in STENCILS:
+        if stencil['name'] == stencilname:
+            return copy.deepcopy(stencil)
+    else:
+        raise ValueError('no such stencil')
 
 # XXX Redesign, split out into files.
 STENCILS = [

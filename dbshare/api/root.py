@@ -196,4 +196,30 @@ def root():
                 'method': 'DELETE'
             }
         }
+        result['operations']['chart'] = {
+            'create': {
+                'title': 'Create a new chart in the database.',
+                'href': utils.url_for_unq('api_chart.chart', dbname='{dbname}', chartname='{chartname}'),
+                'variables': {
+                    'dbname': {'title': 'Name of the database.'},
+                    'chartname': {'title': 'Name of the chart.'}
+                },
+                'method': 'PUT',
+                'input' : {
+                    'content-type': constants.JSON_MIMETYPE,
+                    'schema': {
+                        'href': constants.SCHEMA_BASE_URL + '/chart/create' # XXX
+                    }
+                }
+            },
+            'delete': {
+                'title': 'Delete the chart from the database.',
+                'href': utils.url_for_unq('api_view.view', dbname='{dbname}', chartname='{chartname}'),
+                'variables': {
+                    'dbname': {'title': 'Name of the database.'},
+                    'chartname': {'title': 'Name of the chart.'}
+                },
+                'method': 'DELETE'
+            }
+        }
     return utils.jsonify(utils.get_json(**result), schema='/root')

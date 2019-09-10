@@ -38,9 +38,9 @@ def save(dbname):
                                             dbname=dbname,
                                             sourcename=sourcename))
     try:
-        spec, context = dbshare.stencil.get_chart_spec_context(db,
-                                                               schema, 
-                                                               stencilname)
+        stencil = dbshare.stencil.get_stencil(stencilname)
+        context = dbshare.stencil.get_context(db, schema, stencil)
+        spec = dbshare.stencil.get_chart_spec(stencil, context)
     except (KeyError, ValueError) as error:
         utils.flash_error(str(error))
         return flask.redirect(flask.url_for('stencil.select',

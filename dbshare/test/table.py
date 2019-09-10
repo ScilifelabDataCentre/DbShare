@@ -91,6 +91,9 @@ class Table(base.Base):
         self.assertTrue(lookup['i']['notnull'])
 
         # Delete the table.
+        url = self.root['operations']['table']['delete']['href']
+        url = url.format(dbname=base.CONFIG['dbname'],
+                         tablename=self.table_spec['name'])
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
 
