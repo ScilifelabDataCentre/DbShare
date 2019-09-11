@@ -3,6 +3,7 @@
 import http
 
 import flask
+import jsonschema
 
 import dbshare.db
 import dbshare.stencil
@@ -30,8 +31,9 @@ def chart(dbname, chartname):
             chart = db['charts'][chartname]
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        # return utils.jsonify(utils.get_json(**chart), schema='/chart')
-        return utils.jsonify(utils.get_json(**chart))
+        import json
+        print(json.dumps(utils.get_json(**chart), indent=2))
+        return utils.jsonify(utils.get_json(**chart), schema='/chart')
 
     elif utils.http_PUT():
         try:
@@ -43,10 +45,11 @@ def chart(dbname, chartname):
         try:
             with dbshare.db.DbContext(db) as ctx:
                 data = flask.request.get_json()
+                schema = dbshare.db.get_schema(db, data['sourcename'])
                 stencil = dbshare.stencil.get_stencil(data['stencilname'])
-                spec = dbshare.stencil.get_chart_spec(stencil, data['context'])
-                ctx.add_chart(data['chartname'], schema, spec)
-        except (KeyError, ValueErrorjsonschema.ValidationError) as error:
+                spec = dbshare.stencil.get_chart_spec(stencil, data)
+                ctx.add_chart(chartname, schema, spec)
+        except (KeyError, ValueError, jsonschema.ValidationError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for('api_chart.chart', dbname=dbname,chartname=chartname))

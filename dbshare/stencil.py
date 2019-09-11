@@ -149,7 +149,7 @@ def get_chart_spec(stencil, context):
 
 def get_stencils():
     "Return the available stencils."
-    # XXX Redesign, get stencils from files.
+    # XXX Redesign, get stencils from files, including from site dir.
     return copy.deepcopy(STENCILS)
 
 def get_stencil(stencilname):

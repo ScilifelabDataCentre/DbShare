@@ -133,7 +133,7 @@ def display(dbname):
         for table in db['tables'].values(): charts[table['name']] = []
         for view in db['views'].values(): charts[view['name']] = []
         for chart in db['charts'].values():
-            charts[chart['schema']].append(chart)
+            charts[chart['source']].append(chart)
         return flask.render_template(
             'db/display.html', 
             db=db,
@@ -778,7 +778,7 @@ class DbContext:
         sql = f"SELECT name, schema, spec FROM {constants.CHARTS}"
         cursor = self.dbcnx.execute(sql)
         charts = [{'name': row[0],
-                   'schema': row[1],
+                   'source': row[1],
                    'spec': json.loads(row[2])} for row in cursor]
         new_root = utils.url_for('home').rstrip('/')
         # Identify the old URL root from a data url in a chart spec.
@@ -902,8 +902,8 @@ class DbContext:
         for indexname in list(self.db['indexes']):
             self.delete_index(indexname)
         # Delete all charts having this table as source.
-        for chart in self.db['charts'].values():
-            if chart['schema'] == tablename:
+        for chart in list(self.db['charts'].values()):
+            if chart['source'] == tablename:
                 self.delete_chart(chart['name'])
 
         # Delete all views having this table as source.
@@ -1012,8 +1012,8 @@ class DbContext:
         except KeyError:
             raise ValueError('no such view in database')
         # Delete all charts having this view as source.
-        for chart in self.db['charts'].values():
-            if chart['schema'] == viewname:
+        for chart in list(self.db['charts'].values()):
+            if chart['source'] == viewname:
                 self.delete_chart(chart['name'])
 
         # Delete all views having this view as a source.
@@ -1044,7 +1044,7 @@ class DbContext:
             sql = f"INSERT INTO {constants.CHARTS} (name, schema, spec) VALUES (?,?,?)"
             self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
         self.db['charts'][chartname] = {'name': chartname,
-                                        'schema': schema['name'],
+                                        'source': schema['name'],
                                         'spec': spec}
 
     def update_chart(self, chartname, spec):
@@ -1210,7 +1210,7 @@ def get_db(name, complete=False):
         sql = "SELECT name, schema, spec FROM %s" % constants.CHARTS
         cursor.execute(sql)
         db['charts'] = dict([(row[0], {'name': row[0], 
-                                       'schema': row[1], 
+                                       'source': row[1], 
                                        'spec': json.loads(row[2])})
                              for row in cursor])
     return db

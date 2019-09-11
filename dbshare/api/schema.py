@@ -9,6 +9,7 @@ import dbshare.schema.rows
 import dbshare.schema.table
 import dbshare.schema.view
 import dbshare.schema.query
+import dbshare.schema.chart
 import dbshare.schema.user
 import dbshare.schema.users
 from dbshare import constants
@@ -40,6 +41,8 @@ schemas = {
                     'title': dbshare.schema.query.input['title']},
     'query/output': {'href':  dbshare.schema.query.output['$id'],
                      'title': dbshare.schema.query.output['title']},
+    'chart': {'href':  dbshare.schema.chart.schema['$id'],
+              'title': dbshare.schema.chart.schema['title']},
     'user': {'href':  dbshare.schema.user.schema['$id'],
              'title': dbshare.schema.user.schema['title']},
     'users': {'href':  dbshare.schema.users.schema['$id'],
@@ -122,6 +125,11 @@ def query_input():
 def query_output():
     "JSON schema for query output API."
     return flask.jsonify(dbshare.schema.query.output)
+
+@blueprint.route('/chart')
+def chart():
+    "JSON schema for chart API."
+    return flask.jsonify(dbshare.schema.chart.schema)
 
 @blueprint.route('/user')
 def user():

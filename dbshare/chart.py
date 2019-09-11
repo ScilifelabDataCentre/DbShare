@@ -81,7 +81,7 @@ def display(dbname, chartname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=db['name']))
     try:
-        schema = dbshare.db.get_schema(db, chart['schema'])
+        schema = dbshare.db.get_schema(db, chart['source'])
     except KeyError:
         utils.flash_error('no such table or view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))

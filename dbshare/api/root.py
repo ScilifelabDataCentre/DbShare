@@ -214,7 +214,7 @@ def root():
             },
             'delete': {
                 'title': 'Delete the chart from the database.',
-                'href': utils.url_for_unq('api_view.view', dbname='{dbname}', chartname='{chartname}'),
+                'href': utils.url_for_unq('api_chart.chart', dbname='{dbname}', chartname='{chartname}'),
                 'variables': {
                     'dbname': {'title': 'Name of the database.'},
                     'chartname': {'title': 'Name of the chart.'}
