@@ -1,14 +1,17 @@
 "Stencil HTML endpoints."
 
 import copy
+import glob
 import http.client
 import json
+import os.path
 
 import flask
 import jinja2
 import jsonschema
 
 import dbshare.db
+import dbshare.schema.stencil
 
 from . import constants
 from . import utils
@@ -149,134 +152,47 @@ def get_chart_spec(stencil, context):
 
 def get_stencils():
     "Return the available stencils."
-    # XXX Redesign, get stencils from files, including from site dir.
     return copy.deepcopy(STENCILS)
 
 def get_stencil(stencilname):
-    for stencil in STENCILS:
-        if stencil['name'] == stencilname:
-            return copy.deepcopy(stencil)
-    else:
+    try:
+        return copy.deepcopy(STENCILS_LOOKUP[stencilname])
+    except KeyError:
         raise ValueError('no such stencil')
 
-# XXX Redesign, split out into files.
-STENCILS = [
-    {'name': 'scatterplot',
-     'title': 'Basic two-dimensional scatterplot.',
-     'variables': [
-         {'name': 'x',
-          'title': 'Horizontal dimension',
-          'type': ['REAL', 'INTEGER']
-         },
-         {'name': 'y',
-          'title': 'Vertical dimension',
-          'type': ['REAL', 'INTEGER']
-         },
-     ],
-     'template': 
-'''{
-  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "title": "{{ title }}",
-  "width": {{ width }},
-  "height": {{ height }},
-  "data": {
-    "url": "{{ url }}",
-    "format": {"type": "csv"}
-  },
-  "mark": "point",
-  "encoding": {
-    "x": {
-      "field": "{{ x }}",
-      "type": "quantitative"
-    },
-    "y": {
-      "field": "{{ y }}",
-      "type": "quantitative"
-    }
-  }
-}'''
-    },
-    {'name': 'scatterplot_color',
-     'title': 'Two-dimensional scatterplot, points colored by class.',
-     'variables': [
-         {'name': 'x',
-          'title': 'Horizontal dimension',
-          'type': ['REAL', 'INTEGER']
-         },
-         {'name': 'y',
-          'title': 'Vertical dimension',
-          'type': ['REAL', 'INTEGER']
-         },
-         {'name': 'color',
-          'title': 'Point color',
-          'type': 'TEXT'
-          }
-     ],
-     'template': 
-'''{
-  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "title": "{{ title }}",
-  "width": {{ width }},
-  "height": {{ height }},
-  "data": {
-    "url": "{{ url }}",
-    "format": {"type": "csv"}
-  },
-  "mark": "point",
-  "encoding": {
-    "x": {
-      "field": "{{ x }}",
-      "type": "quantitative"
-    },
-    "y": {
-      "field": "{{ y }}",
-      "type": "quantitative"
-    },
-    "color": {
-      "field": "{{ color }}",
-      "type": "nominal"
-    }
-  }
-}'''
-    },
-    {'name': 'bar_graph_record_counts',
-     'title': 'Bar graph of number of records per class.',
-     'variables': [
-         {'name': 'class',
-          'title': 'Record class.',
-          'type': 'TEXT'
-         }
-     ],
-     'template':
-'''{
-  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
-  "title": "{{ title }}",
-  "width": {{ width }},
-  "height": {{ height }},
-  "data": {
-    "url": "{{ url }}",
-    "format": {"type": "csv"}
-  },
-  "transform": [
-    {
-      "aggregate": [{
-        "op": "count",
-         "field": "{{ class }}", 
-         "as": "counts"}],
-      "groupby": ["{{ class }}"]
-    }
-  ],
-  "mark": "bar",
-  "encoding": {
-    "x": {
-      "field": "{{ class }}",
-      "type": "nominal"
-    },
-    "y": {
-      "field": "counts", 
-      "type": "quantitative"
-    }
-  }
-}'''
-     }
-]
+STENCILS = []
+STENCILS_LOOKUP = {}
+
+def init(app):
+    "Read the stencils from file."
+    filenames = glob.glob(f"{ app.config['STENCILS_DIRPATH'] }/*.json")
+    for filename in filenames:
+        load_stencil(filename)
+    dirpath = app.config['SITE_STENCILS_DIRPATH']
+    if dirpath:
+        dirpath = os.path.expandvars(os.path.expanduser(dirpath))
+        filenames = glob.glob(f"{ dirpath }/*.json")
+        for filename in filenames:
+            load_stencil(filename)
+    STENCILS.sort(key=lambda s: s['name'])
+
+def load_stencil(filename):
+    "Load the stencil from the given file."
+    with open(filename) as infile:
+        stencil = json.load(infile)
+    try:
+        filename = filename.replace('.json', '.template')
+        with open(filename) as infile:
+            stencil['template'] = infile.read()
+    except IOError:
+        pass
+    utils.json_validate(stencil, dbshare.schema.stencil.schema)
+    # Replace stencil in list if already loaded.
+    if stencil['name'] in STENCILS_LOOKUP:
+        for pos, st in enumerate(STENCILS):
+            if st['name'] == stencil['name']:
+                STENCILS[pos] = stencil
+                break
+    else:
+        STENCILS.append(stencil)
+    STENCILS_LOOKUP[stencil['name']] = stencil

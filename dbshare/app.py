@@ -60,6 +60,9 @@ dbshare.system.init(app)
 # Init the mail handler.
 utils.mail.init_app(app)
 
+# Init the stencils.
+dbshare.stencil.init(app)
+
 # Set up the URL map.
 app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
 app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')

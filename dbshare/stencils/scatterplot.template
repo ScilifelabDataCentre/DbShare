@@ -1,0 +1,21 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v3.json",
+  "title": "{{ title }}",
+  "width": {{ width }},
+  "height": {{ height }},
+  "data": {
+    "url": "{{ url }}",
+    "format": {"type": "csv"}
+  },
+  "mark": "point",
+  "encoding": {
+    "x": {
+      "field": "{{ x }}",
+      "type": "quantitative"
+    },
+    "y": {
+      "field": "{{ y }}",
+      "type": "quantitative"
+    }
+  }
+}
