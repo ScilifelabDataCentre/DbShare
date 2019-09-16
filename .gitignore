@@ -1,4 +1,6 @@
 site
 *.json
+!dbshare/chart_templates/*.json
+!site/chart_templates/*.json
 *.pyc
 *~

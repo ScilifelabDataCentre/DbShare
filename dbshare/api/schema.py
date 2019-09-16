@@ -43,6 +43,8 @@ schemas = {
                      'title': dbshare.schema.query.output['title']},
     'chart': {'href':  dbshare.schema.chart.schema['$id'],
               'title': dbshare.schema.chart.schema['title']},
+    'chart/template': {'href':  dbshare.schema.chart.template_schema['$id'],
+                       'title': dbshare.schema.chart.template_schema['title']},
     'user': {'href':  dbshare.schema.user.schema['$id'],
              'title': dbshare.schema.user.schema['title']},
     'users': {'href':  dbshare.schema.users.schema['$id'],
@@ -130,6 +132,11 @@ def query_output():
 def chart():
     "JSON schema for chart API."
     return flask.jsonify(dbshare.schema.chart.schema)
+
+@blueprint.route('/chart/template')
+def chart_template():
+    "JSON schema for chart template API."
+    return flask.jsonify(dbshare.schema.chart.template_schema)
 
 @blueprint.route('/user')
 def user():

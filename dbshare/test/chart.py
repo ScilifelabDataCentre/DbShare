@@ -60,9 +60,9 @@ class Chart(base.Base):
         result = self.check_schema(response)
         self.assertEqual(result['nrows'], 4)
 
-        # Create the chart from the stencil 'scatterplot_color'
+        # Create the chart from the chart template 'scatterplot_color'
         data = {'sourcename': self.table_spec['name'],
-                'stencilname': 'scatterplot_color',
+                'templatename': 'scatterplot_color',
                 'title': 'Testing chart',
                 'width': 600,
                 'height': 600,
@@ -133,9 +133,9 @@ class Chart(base.Base):
         response = self.session.put(url, json=view_spec)
         result = self.check_schema(response)
 
-        # Create the chart from the stencil 'scatterplot_color'
+        # Create the chart from the chart template 'scatterplot_color'
         data = {'sourcename': VIEWNAME,
-                'stencilname': 'scatterplot_color',
+                'templatename': 'scatterplot_color',
                 'title': 'Testing chart of view',
                 'width': 600,
                 'height': 600,

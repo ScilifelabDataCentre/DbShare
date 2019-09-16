@@ -14,7 +14,7 @@
           method="POST">
       {{ csrf_token() }}
       <input type="hidden" name="sourcename" value="{{ schema['name'] }}">
-      <input type="hidden" name="stencilname" value="{{ stencilname }}">
+      <input type="hidden" name="templatename" value="{{ templatename }}">
       {% for key, value in context.items() %}
       <input type="hidden" name="{{ key }}" value="{{ context[key] }}">
       {% endfor %}
@@ -43,7 +43,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('stencil.select', dbname=db['name'], sourcename=schema['name']) }}"
+  <a href="{{ url_for('.select', dbname=db['name'], sourcename=schema['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

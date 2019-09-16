@@ -14,31 +14,31 @@ Select chart for {{ schema['type'] }} {{ schema['name'] }}
 {% endblock %}
 
 {% block main %}
-{% for stencil in stencils %}
+{% for template in templates %}
 <div class="card border-info my-2">
   <div class="card-header">
     <a class="btn btn-info" title="Click to expand." data-toggle="collapse"
-       href="#{{ stencil['name'] }}" role="button" 
-       aria-expanded="false" aria-controls="{{ stencil['name'] }}">
-      {{ stencil['title'] }}</a>
+       href="#{{ template['name'] }}" role="button" 
+       aria-expanded="false" aria-controls="{{ template['name'] }}">
+      {{ template['title'] }}</a>
   </div>
-  <div class="card-body collapse" id="{{ stencil['name'] }}">
+  <div class="card-body collapse" id="{{ template['name'] }}">
     <table class="combinations">
       <tr>
         <th></th>
-        {% for variable in stencil['variables'] %}
+        {% for variable in template['variables'] %}
         <th>{{ variable['name'] }}<br>{{ variable['title'] }}</th>
         {% endfor %}
         <th></th>
       </tr>
-      {% for combination in stencil['combinations'] %}
+      {% for combination in template['combinations'] %}
       <tr>
         <td>
 	  <a class="btn btn-sm btn-info"
 	     role="button"
-	     href="{{ utils.url_for('.display', dbname=db['name'], sourcename=schema['name'], stencilname=stencil['name'], _query=combination) }}">Display</a>
+	     href="{{ utils.url_for('.render', dbname=db['name'], sourcename=schema['name'], templatename=template['name'], _query=combination) }}">Render</a>
         </td>
-        {% for variable in stencil['variables'] %}
+        {% for variable in template['variables'] %}
         <td>{{ combination[variable['name']] }}</td>
         {% endfor %}
       </tr>

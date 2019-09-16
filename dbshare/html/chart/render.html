@@ -18,7 +18,7 @@
     Change chart parameters
   </div>
   <div class="card-body">
-    <form action="{{ url_for('.display', dbname=db['name'], sourcename=schema['name'], stencilname=stencilname) }}"
+    <form action="{{ url_for('.render', dbname=db['name'], sourcename=schema['name'], templatename=templatename) }}"
           method="GET">
       {% for key, value in context.items() %}
       {% if key not in ('title', 'width', 'height') %}
@@ -71,7 +71,7 @@
   <form action="{{ url_for('chart.save', dbname=db['name']) }}"
 	method="GET">
     <input type="hidden" name="sourcename" value="{{ schema['name'] }}">
-    <input type="hidden" name="stencilname" value="{{ stencilname }}">
+    <input type="hidden" name="templatename" value="{{ templatename }}">
     {% for key, value in context.items() %}
     {% if key != 'url' %}
     <input type="hidden" name="{{ key }}" value="{{ context[key] }}">

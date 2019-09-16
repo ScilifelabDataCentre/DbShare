@@ -6,7 +6,7 @@ import flask
 import jsonschema
 
 import dbshare.db
-import dbshare.stencil
+import dbshare.chart
 
 from .. import utils
 
@@ -46,8 +46,8 @@ def chart(dbname, chartname):
             with dbshare.db.DbContext(db) as ctx:
                 data = flask.request.get_json()
                 schema = dbshare.db.get_schema(db, data['sourcename'])
-                stencil = dbshare.stencil.get_stencil(data['stencilname'])
-                spec = dbshare.stencil.get_chart_spec(stencil, data)
+                template = dbshare.chart.get_template(data['templatename'])
+                spec = dbshare.chart.get_chart_spec(template, data)
                 ctx.add_chart(chartname, schema, spec)
         except (KeyError, ValueError, jsonschema.ValidationError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)

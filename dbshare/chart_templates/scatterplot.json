@@ -1,0 +1,13 @@
+{"name": "scatterplot",
+ "title": "Basic two-dimensional scatterplot.",
+ "variables": [
+   {"name": "x",
+    "title": "Horizontal dimension",
+    "type": ["REAL", "INTEGER"]
+   },
+   {"name": "y",
+    "title": "Vertical dimension",
+    "type": ["REAL", "INTEGER"]
+   }
+ ]
+}

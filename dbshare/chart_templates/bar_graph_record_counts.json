@@ -1,0 +1,9 @@
+{"name": "bar_graph_record_counts",
+ "title": "Bar graph of number of records per class.",
+ "variables": [
+   {"name": "class",
+    "title": "Record class.",
+    "type": "TEXT"
+   }
+ ]
+}

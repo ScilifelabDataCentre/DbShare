@@ -16,7 +16,7 @@ CONFIG = dict(
     DATABASES_DIRPATH = 'data',
     SITE_NAME = 'DbShare',
     SITE_STATIC_DIRPATH = None,
-    SITE_STENCILS_DIRPATH = None,
+    SITE_CHART_TEMPLATES_DIRPATH = None,
     HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
     HOST_NAME = None,
     HOST_URL = None,
@@ -34,7 +34,7 @@ CONFIG = dict(
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
     DOCS_DIRPATH = os.path.join(ROOT_DIRPATH, 'docs'),
-    STENCILS_DIRPATH = os.path.join(ROOT_DIRPATH, 'stencils'),
+    CHART_TEMPLATES_DIRPATH = os.path.join(ROOT_DIRPATH, 'chart_templates'),
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55

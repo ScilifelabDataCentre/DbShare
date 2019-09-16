@@ -14,7 +14,6 @@ import dbshare.dbs
 import dbshare.chart
 import dbshare.query
 import dbshare.site
-import dbshare.stencil
 import dbshare.system
 import dbshare.table
 import dbshare.user
@@ -60,8 +59,8 @@ dbshare.system.init(app)
 # Init the mail handler.
 utils.mail.init_app(app)
 
-# Init the stencils.
-dbshare.stencil.init(app)
+# Init the chart templates.
+dbshare.chart.init(app)
 
 # Set up the URL map.
 app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
@@ -69,7 +68,6 @@ app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
 app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
 app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
 app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
-app.register_blueprint(dbshare.stencil.blueprint, url_prefix='/stencil')
 app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
 app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
 app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
@@ -96,7 +94,7 @@ app.add_template_filter(utils.mode)
 
 @app.before_first_request
 def upgrade():
-    "Upgrade the database(s) when moving to a new version."
+    "Upgrade the database(s) for a new version."
     pass
 
 @app.context_processor
