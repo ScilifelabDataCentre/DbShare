@@ -1,8 +1,8 @@
-### Using DbShare without an account
+### Exploring databases using DbShare
 
-Even if you do not have an account in a DbShare system, you can still
-use it to explore public databases. This tutorial uses a public database at the 
-[SciLifeLab instance of DbShare](https://dbshare.scilifelab.se/).
+Public databases in DbShare can be explored without having an account
+in the system. This tutorial uses a public database at the [SciLifeLab
+instance of DbShare](https://dbshare.scilifelab.se/).
 
 The the [demo database](https://dbshare.scilifelab.se/db/demo)
 contains the following:
