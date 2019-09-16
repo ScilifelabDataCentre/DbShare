@@ -100,6 +100,13 @@
 </div>
 {% endif %} {# if updateable #}
 <div class="mt-2">
+  <a href="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Edit the metadata of this table."
+     role="button" class="btn btn-primary btn-block">
+    Edit metadata</a>
+</div>
+<div class="mt-2">
   <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
      role="button" data-toggle="tooltip" data-placement="left"
      title="Make a complete copy of this table."

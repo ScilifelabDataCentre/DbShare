@@ -62,7 +62,7 @@ def create(dbname):
                  methods=['GET', 'POST', 'DELETE'])
 @dbshare.user.login_required
 def edit(dbname, viewname):
-    "Edit the view. Or delete the view."
+    "Edit the metadata of the view. Or delete the view."
     try:
         db = dbshare.db.get_check_write(dbname)
     except (KeyError, ValueError) as error:
@@ -87,9 +87,8 @@ def edit(dbname, viewname):
             utils.flash_error(error)
             return flask.redirect(
                 flask.url_for('.edit', dbname=dbname, viewname=viewname))
-        else:
-            return flask.redirect(
-                flask.url_for('.schema', dbname=dbname, viewname=viewname))
+        return flask.redirect(
+            flask.url_for('.rows', dbname=dbname, viewname=viewname))
 
     elif utils.http_DELETE():
         try:

@@ -88,15 +88,6 @@
      role="button" class="btn btn-outline-primary btn-block">
     {{ schema['nrows'] | informative }} rows</a>
 </div>
-{% if has_write_access %}
-<div class="mt-2">
-  <a href="{{ url_for('.edit', dbname=db['name'], viewname=schema['name']) }}"
-     role="button" data-toggle="tooltip" data-placement="left"
-     title="Edit the metadata of this view."
-     role="button" class="btn btn-primary btn-block">
-    Edit metadata</a>
-</div>
-{% endif %}
 <div class="mt-2">
   <form action="{{ url_for('query.define', dbname=db['name']) }}"
         method="GET">

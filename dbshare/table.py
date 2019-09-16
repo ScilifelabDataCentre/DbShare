@@ -175,7 +175,7 @@ def edit(dbname, tablename):
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(
-            flask.url_for('.schema', dbname=dbname, tablename=tablename))
+            flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
     elif utils.http_DELETE():
         try:

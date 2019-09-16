@@ -87,7 +87,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

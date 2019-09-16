@@ -46,7 +46,7 @@
 
 {% block actions %}
 <div class="mt-2">
-  <a href="{{ url_for('.schema', dbname=db['name'], viewname=schema['name']) }}"
+  <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
      role="button" class="btn btn-dark btn-block">Cancel</a>
 </div>
 {% endblock %}

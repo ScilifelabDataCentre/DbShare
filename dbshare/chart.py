@@ -280,7 +280,7 @@ TEMPLATES = []
 TEMPLATES_LOOKUP = {}
 
 def init(app):
-    "Read the templates from file."
+    "Read the chart templates from the system and site directories."
     filenames = glob.glob(f"{ app.config['CHART_TEMPLATES_DIRPATH'] }/*.json")
     for filename in filenames:
         load_template(filename)
