@@ -109,5 +109,6 @@ def init(app):
                 filepath = None
             else:
                 break
+    print(' > DbShare version:', CONFIG['VERSION'])
     if filepath:
         print(' > Configuration file:', filepath)
