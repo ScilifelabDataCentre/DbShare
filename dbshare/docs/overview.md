@@ -2,8 +2,8 @@ The DbShare system allows web access to data published in the form of
 [SQLite3](https://www.sqlite.org/) relational databases. Queries on
 the data can be performed using SQL.
 
-The data may be visualized in charts based on predefined stencils
-(templates) using the [Vega-Lite](https://vega.github.io/vega-lite/)
+The data may be visualized in charts made from predefined templates
+based on the [Vega-Lite](https://vega.github.io/vega-lite/)
 specification format.
 
 ### Databases
@@ -11,25 +11,32 @@ specification format.
 A database contains tables and optionally, indexes views and charts. A
 database is a single SQLite3 file. The web interface of DbShare allows
 displaying and querying the data in a database using SQL. The metadata
-of the database (schema, indexes, etc) can be viewed. A DbShare
-instance may host many databases. A database is completely isolated
-from other databases. Its name is unique in each DbShare instance.
+of the database (schema, indexes, etc) can be viewed.
+
+A DbShare site may host many databases. A database is completely
+isolated from other databases. Its name is unique in each DbShare
+site.
 
 ### Web and API interfaces
 
 There are two interfaces to the system: The web HTML-based interface
 for humans, and the JSON-based API for programmatic access via scripts
-executing on e.g. the user's computer. Other web sites may link
-to the data or charts of a DbShare instance, if the access privileges
-allow it.
+executing on e.g. the user's computer.
+
+Other web sites may refer to the data of a DbShare site, if the
+database is set as public. The DbShare site can therefore be used a
+source of the data for other web services that create special
+visualizations, or use the data in some other way.
 
 #### Creation
 
-Only users with an account may create databases in the site. A
-database may be created from scratch, and its tables, indexes, views
-and charts to be defined via the web interface.  An existing SQLite3
-file may be uploaded. The system will inspect the data in it and and
-attempt to infer the DbShare-related metadata from it.
+Only users with an account in the DbShare site may create databases in
+it. A database may be created from scratch, and its tables, indexes,
+views and charts to be defined via the web interface.
+
+An existing SQLite3 file may be uploaded. The DbShare system will
+inspect the schema and data in it and and attempt to infer the
+DbShare-related metadata.
 
 #### Ownership
 
@@ -39,16 +46,16 @@ account has a quota for the total size of the databases owned by it.
 
 #### Private and public access
 
-A database is by default private, in which case only the owner of it
+A database is private by default, in which case only the owner of it
 can access it. The database owner may set the database to being
 public, which means that anyone, including anonymous users, can access
 and query the data.
 
 #### Read/write or read-only
 
-A database is read/write by default. The owner of a database may set
-it to be read-only, thus ensuring that no modifying operations can be
-performed on it.
+Only the owner may modify a database. A database is read/write by
+default.  The owner may set it to be read-only, thus ensuring that
+he/she can perform no modifying operations on it.
 
 #### Database operations
 
@@ -60,8 +67,8 @@ the owner of a database may delete it.
 
 #### Download
 
-A SQLite3 database file can be downloaded. Tables, views and queries
-can be downloaded as CSV or JSON format files.
+The SQLite3 file containing a database can be downloaded. Tables,
+views and queries can be downloaded as CSV or JSON format files.
 
 ### Tables
 
@@ -108,8 +115,9 @@ column.
 
 The data in a table or view may be visualized on a chart using the
 [Vega-Lite](https://vega.github.io/vega-lite/) specification
-format. There are a set of chart templates which can be used to
-quickly create a chart which can be saved in the database. The charts
-are dynamic in the sense that each time the chart is viewed, the data
-is read from the database.  The Vega-Lite code of the saved charts may be
-edited.
+format. The charts are dynamic in the sense that each time the chart
+is viewed, the data is read from the database.
+
+There are a set of chart templates which can be used to quickly create
+a chart which can be saved in the database. The Vega-Lite code of the
+saved charts may be edited.

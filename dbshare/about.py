@@ -25,7 +25,12 @@ def doc(pagename):
             body = infile.read()
     except IOError:
         flask.abort(http.client.NOT_FOUND)
-    title = pagename.replace('-', ' ').capitalize()
+    if body.startswith('#'):
+        title, body = body.split('\n', 1)
+        title = title.lstrip('#').strip()
+        body = body.strip()
+    else:
+        title = pagename.replace('-', ' ').capitalize()
     return flask.render_template('about/doc.html', title=title, body=body)
 
 @blueprint.route('/endpoints')

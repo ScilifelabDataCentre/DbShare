@@ -15,8 +15,13 @@
           <label for="name" class="col-form-label">Table name</label>
 	</div>
 	<div class="col-md-6">
-          <input id="name" name="name" type="text" 
-		 class="form-control" autofocus>
+          <input id="name" name="name" type="text"  autofocus
+		 aria-describedby="nameHelp" class="form-control">
+          <small id="nameHelp" class="form-text text-muted">
+            The table name must be a valid identifier, i.e. begin
+            with a letter and optionally continue with letters, digits,
+            underscores or dashes.
+          </small>
         </div>
       </div>
       <div class="form-group row">

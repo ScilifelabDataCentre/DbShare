@@ -97,7 +97,7 @@ schema = {
 edit = {
     '$id': constants.SCHEMA_BASE_URL + '/db/edit',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'API JSON schema for editing the database metadata.',
+    'title': 'Database metadata editing API JSON schema.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},

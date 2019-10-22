@@ -30,37 +30,45 @@ def define(dbname):
                                  query=query,
                                  has_write_access=has_write_access)
 
-@blueprint.route('/<name:dbname>/rows', methods=['POST'])
+@blueprint.route('/<name:dbname>/rows',
+                 methods=['GET', 'POST'])
 def rows(dbname):
     "Display results of a query to the database."
-    utils.check_csrf_token()
     try:
         db = dbshare.db.get_check_read(dbname)
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    query = {}
-    try:
-        query = get_query_from_request(check=True)
-        query_limited = query.copy()
-        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-        if query['limit'] is None or query['limit'] > limit:
-            query_limited['limit'] = limit
-        dbcnx = dbshare.db.get_cnx(dbname)
-        cursor = utils.execute_timeout(dbcnx, get_sql_statement(query_limited))
-        rows = cursor.fetchall()
-        if len(rows) >= query_limited['limit']:
-            utils.flash_message_limit(limit)
-        columns = [d[0] for d in cursor.description]
-    except (KeyError, SystemError, sqlite3.Error) as error:
-        utils.flash_error(error)
-        return flask.redirect(flask.url_for('.define', dbname=dbname, **query))
-    return flask.render_template('query/rows.html',
-                                 db=db,
-                                 query=query,
-                                 sql=get_sql_statement(query),
-                                 columns=columns,
-                                 rows=rows)
+
+    # May get here as a result of login redirect.
+    if utils.http_GET():
+        return flask.redirect(flask.url_for('.define', dbname=dbname))
+
+    elif utils.http_POST():
+        query = {}
+        try:
+            query = get_query_from_request(check=True)
+            query_limited = query.copy()
+            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+            if query['limit'] is None or query['limit'] > limit:
+                query_limited['limit'] = limit
+            dbcnx = dbshare.db.get_cnx(dbname)
+            cursor = utils.execute_timeout(dbcnx,
+                                           get_sql_statement(query_limited))
+            rows = cursor.fetchall()
+            if len(rows) >= query_limited['limit']:
+                utils.flash_message_limit(limit)
+            columns = [d[0] for d in cursor.description]
+        except (KeyError, SystemError, sqlite3.Error) as error:
+            utils.flash_error(error)
+            return flask.redirect(
+                flask.url_for('.define', dbname=dbname, **query))
+        return flask.render_template('query/rows.html',
+                                     db=db,
+                                     query=query,
+                                     sql=get_sql_statement(query),
+                                     columns=columns,
+                                     rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
 @dbshare.user.login_required

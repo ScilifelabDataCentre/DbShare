@@ -54,11 +54,14 @@ def all():
                                  dbs=dbs,
                                  total_size=sum([db['size'] for db in dbs]))
 
+@blueprint.route('/owner')
 @blueprint.route('/owner/<name:username>')
 @dbshare.user.login_required
-def owner(username):
+def owner(username=''):
     "Display the list of databases owned by the given user."
-    if not has_access(username):
+    if not username:
+        username = flask.g.current_user['username']
+    elif not has_access(username):
         utils.flash_error("you may not access the list of the user's databases")
         return flask.redirect(flask.url_for('home'))
     dbs = get_dbs(owner=username)

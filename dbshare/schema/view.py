@@ -63,7 +63,7 @@ schema = {
 create = {
     '$id': constants.SCHEMA_BASE_URL + '/view/create',
     '$schema': constants.SCHEMA_SCHEMA_URL,
-    'title': 'API JSON schema for creating a view.',
+    'title': 'View creation API JSON schema.',
     'type': 'object',
     'properties': {
         'name': {'type': 'string'},

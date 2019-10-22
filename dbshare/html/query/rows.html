@@ -51,6 +51,7 @@
   <a href="{{ url_for('.define', dbname=db['name']) }}"
      role="button" class="btn btn-success btn-block">New query</a>
 </div>
+{% if g.current_user %}
 <div class="mt-2">
   <form action="{{ url_for('view.create', dbname=db['name']) }}"
         method="GET">
@@ -82,6 +83,7 @@
 	    >Create table</button>
   </form>
 </div>
+{% endif %} {# if g.current_user #}
 {% endblock %} {# block actions #}
 
 {% block info %}

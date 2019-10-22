@@ -56,9 +56,20 @@
 
 {% block actions %}
 <div class="mt-2">
+  <form action="{{ url_for('query.define', dbname=db['name']) }}"
+        method="GET">
+    <input type="hidden" name="from" value="{{ schema['name'] }}">
+    <button type="submit" class="btn btn-success btn-block"
+            role="button" data-toggle="tooltip" data-placement="left"
+            title="Construct an SQL query to extract data from the table.">
+      Query</button>
+  </form>
+</div>
+<div class="mt-2">
   <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
-     title="Display the schema of the table."
-     role="button" class="btn btn-outline-primary btn-block">Schema</a>
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Show the schema for the table."
+     class="btn btn-outline-primary btn-block">Schema</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.statistics', dbname=db['name'], tablename=schema['name']) }}"
@@ -74,13 +85,17 @@
 </div>
 <div class="mt-2">
     <a href="{{ url_for('chart.select', dbname=db['name'], sourcename=schema['name']) }}"
-       role="button" class="btn btn-info btn-block">
+       role="button" data-toggle="tooltip" data-placement="left"
+       title="Select a chart type for visualizing this data."
+       class="btn btn-info btn-block">
       Chart</a>
 </div>
 {% if has_write_access %}
 <div class="mt-2">
   <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
-     role="button" class="btn btn-primary btn-block">
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Add data to create a new row in the table."
+     class="btn btn-primary btn-block">
     Insert row</a>
 </div>
 <div class="mt-2">

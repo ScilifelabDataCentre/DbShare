@@ -10,7 +10,7 @@ import dbshare
 ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Default configurable values; modified by reading JSON file in 'init'.
-CONFIG = dict(
+DEFAULT_CONFIG = dict(
     VERSION = dbshare.__version__,
     SERVER_NAME = '127.0.0.1:5000',
     DATABASES_DIRPATH = 'data',
@@ -25,11 +25,11 @@ CONFIG = dict(
     JSONIFY_AS_ASCII = False,
     JSON_SORT_KEYS = False,
     MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # seconds; 1 week
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # in seconds; 1 week
     USER_ENABLE_IMMEDIATELY = False,
     USER_ENABLE_EMAIL_WHITELIST = [], # List of regexp's
-    USER_DEFAULT_QUOTA = 2**24,       # 16 megabytes
-    TABLE_INITIAL_COLUMNS = 8,
+    USER_DEFAULT_QUOTA = 2**27,       # 134 megabytes
+    TABLE_INITIAL_COLUMNS = 10,
     MAX_NROWS_DISPLAY = 2000,
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
@@ -91,11 +91,10 @@ CONFIG = dict(
 )
 
 def init(app):
-    """Perform the configuration of the Flask app.
-    Set the defaults, and then read JSON config file."""
+    "Configure the Flask app. Read a JSON config file to modify the defaults."
     # Set the defaults specified above.
-    app.config.from_mapping(CONFIG)
-    # Modify the configuration from a JSON config file.
+    app.config.from_mapping(DEFAULT_CONFIG)
+    # Modify the configuration as specified in a JSON config file.
     try:
         filepath = os.environ['CONFIG_FILEPATH']
         app.config.from_json(filepath)
@@ -109,6 +108,6 @@ def init(app):
                 filepath = None
             else:
                 break
-    print(' > DbShare version:', CONFIG['VERSION'])
+    print(' > DbShare version:', app.config['VERSION'])
     if filepath:
         print(' > Configuration file:', filepath)

@@ -128,7 +128,9 @@
 {% block actions %}
 <div class="mt-2">
   <a href="{{ url_for('query.define', dbname=db['name']) }}"
-     role="button" class="btn btn-success btn-block">Query</a>
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Construct an SQL query to extract data from the database."
+     class="btn btn-success btn-block">Query</a>
 </div>
 <div class="mt-2">
   <a href="{{ url_for('.download', dbname=db['name']) }}"

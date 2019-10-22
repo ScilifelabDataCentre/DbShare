@@ -31,8 +31,8 @@
         <ul class="navbar-nav mr-auto">
           {% if g.current_user %}
           <li class="nav-item ml-1">
-            <a href="{{ url_for('dbs.owner', username=g.current_user['username']) }}"
-               class="nav-link">My databases</a>
+            <a href="{{ url_for('dbs.owner') }}" class="nav-link">
+              My databases</a>
           </li>
           {% endif %} {# if g.current_user #}
 
@@ -68,8 +68,10 @@
             <div class="dropdown-menu" aria-labelledby="navbarAbout">
               <a href="{{ url_for('about.doc', pagename='overview') }}"
 		 class="nav-link">Overview</a>
-              <a href="{{ url_for('about.doc', pagename='tutorial') }}"
-		 class="nav-link">Tutorial</a>
+              <a href="{{ url_for('about.doc', pagename='tutorial-explore') }}"
+		 class="nav-link">Tutorial: Explore a database</a>
+              <a href="{{ url_for('about.doc', pagename='tutorial-create') }}"
+		 class="nav-link">Tutorial: Create a database</a>
               <a href="{{ url_for('about.endpoints') }}"
 		 class="nav-link">URL endpoints</a>
               <a href="{{ url_for('about.schema') }}"
