@@ -53,11 +53,18 @@ def create(dbname):
                 if type not in constants.COLUMN_TYPES:
                     raise ValueError(f"invalid type in column {n+1}")
                 column['type'] = type
-                column['primarykey'] = utils.to_bool(
-                    flask.request.form.get(f"column{n}primarykey"))
                 column['notnull'] = utils.to_bool(
                     flask.request.form.get(f"column{n}notnull"))
                 schema['columns'].append(column)
+            try:
+                npk = int(flask.request.form['column_primarykey'])
+            except (KeyError, ValueError, TypeError):
+                pass
+            else:
+                try:
+                    schema['columns'][npk]['primarykey'] = True
+                except IndexError:
+                    pass
             with dbshare.db.DbContext(db) as ctx:
                 ctx.add_table(schema)
         except ValueError as error:
