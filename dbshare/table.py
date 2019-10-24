@@ -71,7 +71,9 @@ def create(dbname):
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.create', dbname=dbname))
         else:
-            return flask.redirect(flask.url_for('db.display', dbname=dbname))
+            return flask.redirect(flask.url_for('.rows',
+                                                dbname=dbname,
+                                                tablename=schema['name']))
 
 @blueprint.route('/<name:dbname>/<nameext:tablename>')
 def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
