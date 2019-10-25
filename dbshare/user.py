@@ -181,10 +181,13 @@ def password():
             do_login(username, password)
         return flask.redirect(flask.url_for('home'))
 
+@blueprint.route('/profile')
 @blueprint.route('/profile/<name:username>')
 @login_required
-def profile(username):
+def profile(username=None):
     "Display the profile of the given user."
+    if not username:
+        username = flask.g.current_user['username']
     user = get_user(username=username)
     if user is None:
         utils.flash_error('no such user')

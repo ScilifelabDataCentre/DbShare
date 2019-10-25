@@ -102,6 +102,7 @@ It is possible for an anonymous user to create a chart from a table or view.
   in any way, assuming knowledge of Vega-Lite.
 - It is possible to save the chart as a PNG or SVG file by clicking the
   symbol **...** in the upper right corner of the chart.
-- It is also possible to view the Vega-Lite JSON code for the chart,
-  which can be used by anyone who understands Vega-Lite to download, edit, 
+- It is also possible to view the
+  [Vega-Lite](https://vega.github.io/vega-lite/) JSON code for the chart,
+  which can be used by a Vega-Lite expert to download, edit, 
   or use as a template for other purposes.
