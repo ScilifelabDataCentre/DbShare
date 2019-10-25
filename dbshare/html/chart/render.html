@@ -90,9 +90,7 @@
 {% endblock %}
 
 {% block javascript %}
-<script src="{{ config['VEGA_JS_URL'] }}"></script>
-<script src="{{ config['VEGA_LITE_JS_URL'] }}"></script>
-<script src="{{ config['VEGA_EMBED_JS_URL'] }}"></script>
+{% include 'chart/vega_lite_js.html' %}
 <script type="text/javascript">
   vegaEmbed('#chart', {{ spec | tojson(indent=2) }});
 </script>

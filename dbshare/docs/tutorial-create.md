@@ -26,7 +26,7 @@ If you have an account (see [register](/user/register)), and have logged in
 
 - On the database page, click **Create table**.
 - Provide a name for the table.
-- A maximum of ten columns can be defined in this interface.
+- A maximum of 8 columns can be defined in this interface.
     - Provide the column name.
     - Choose which data type the column should have.
     - Decide if the column should be a primary key. Only one column
