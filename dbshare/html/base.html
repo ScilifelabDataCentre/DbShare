@@ -161,7 +161,7 @@
       <div class="row">
         <div class="col-md-4">
           {% if config['HOST_URL'] %}
-          <a href="{{ config['HOST_URL'] }}" target="_blank">
+          <a href="{{ config['HOST_URL'] }}"
             {% if config['HOST_LOGO'] %}
             <img src="{{ url_for('site.static',filename=config['HOST_LOGO']) }}"
                  title="{{ config['HOST_NAME'] or '' }}">
@@ -179,9 +179,8 @@
           {% endif %}
         </div>
         <div class="col-md-4 offset-md-4 text-right">
-          <a href="https://github.com/pekrau/DbShare"
-             target="_blank">DbShare</a>
-          {{ config['VERSION'] }}
+          <a href="https://github.com/pekrau/DbShare">
+	    Version {{ config['VERSION'] }}</a>
         </div>
       </div>
       {% endblock %}
