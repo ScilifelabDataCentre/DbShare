@@ -1,5 +1,6 @@
 "System database; metadata key/value, users, db list."
 
+import datetime
 import sqlite3
 
 import flask
@@ -15,6 +16,17 @@ SYSTEM_TABLES = [
     dict(name='meta',
          columns=[dict(name='key', type=constants.TEXT, primarykey= True),
                   dict(name='value', type=constants.TEXT, notnull=True)
+         ]
+    ),
+    dict(name='access_logs',
+         columns=[dict(name='remote_addr', type=constants.TEXT),
+                  dict(name='username', type=constants.TEXT),
+                  dict(name='dbname', type=constants.TEXT),
+                  dict(name='date', type=constants.TEXT),
+                  dict(name='time', type=constants.TEXT),
+                  dict(name='method', type=constants.TEXT),
+                  dict(name='path', type=constants.TEXT),
+                  dict(name='status_code', type=constants.INTEGER)
          ]
     ),
     dict(name='users',
@@ -76,30 +88,53 @@ SYSTEM_INDEXES = [
     dict(name='users_email', table='users', columns=['email'], unique=True),
     dict(name='users_apikey', table='users', columns=['apikey']),
     dict(name='users_logs_username', table='users_logs', columns=['username']),
-    dict(name='dbs_logs_id', table='dbs_logs', columns=['name'])
+    dict(name='dbs_logs_id', table='dbs_logs', columns=['name']),
+    dict(name='access_logs_remote_addr', table='access_logs', columns=['remote_addr']),
+    dict(name='access_logs_username', table='access_logs', columns=['username']),
+    dict(name='access_logs_dbname', table='access_logs', columns=['dbname']),
+    dict(name='access_logs_date', table='access_logs', columns=['date']),
 ]
 
-def get_cnx(write=False):
-    """Return the existing connection to the system database, else a new one.
-    If write is true, then assume the old connection is read-only,
-    so close it and open a new one.
-    """
-    path = utils.dbpath(constants.SYSTEM)
-    if write:
-        try:
-            flask.g.cnx.close()
-        except AttributeError:
-            pass
-        flask.g.cnx = utils.get_cnx(path, write=True)
+def get_cnx():
+    "Return the existing connection to the system database, else a new one."
     try:
         return flask.g.cnx
     except AttributeError:
-        flask.g.cnx = utils.get_cnx(path)
+        flask.g.cnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
         return flask.g.cnx
 
-def get_cursor(write=False):
+def get_cursor():
     "Return a cursor for the system database."
-    return get_cnx(write=write).cursor()
+    return get_cnx().cursor()
+
+def log_access(response):
+    "Add log entry for an access after response has been prepared."
+    # Skip if logging turned off.
+    if not flask.current_app.config['ACCESS_LOGGING']:
+        return response
+    # Skip if access to '/static*'.
+    if flask.request.path.startswith('/static'):
+        return response
+    cnx = get_cnx()
+    with cnx:
+        sql = "INSERT INTO access_logs (remote_addr, username," \
+              " dbname, date, time, method, path, status_code)" \
+              " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+        if flask.g.current_user:
+            username = flask.g.current_user['username']
+        else:
+            username = None
+        dt = datetime.datetime.utcnow()
+        values = [flask.request.remote_addr,
+                  username,
+                  getattr(flask.g, 'dbname', None),
+                  dt.date().isoformat(),
+                  dt.time().replace(microsecond=0).isoformat(),
+                  flask.request.method,
+                  flask.request.path,
+                  response.status_code]
+        cnx.execute(sql, values)
+    return response
 
 def init(app):
     "Initialize tables in the system database, if not done."

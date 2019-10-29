@@ -38,14 +38,8 @@ app.url_map.converters['nameext'] = utils.NameExtConverter
 app.jinja_env.trim_blocks = True
 app.jinja_env.lstrip_blocks = True
 
-# Get and sanity check the configuration.
+# Get the configuration.
 dbshare.config.init(app)
-assert app.config['SECRET_KEY']
-assert app.config['SALT_LENGTH'] > 6
-assert app.config['MIN_PASSWORD_LENGTH'] > 4
-assert app.config['EXECUTE_TIMEOUT'] > 0.0
-assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
-assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
 
 # Read the JSON Schema files; must be present.
 with open(app.config['VEGA_SCHEMA']) as infile:
@@ -106,8 +100,7 @@ def setup_template_context():
                 enumerate=enumerate,
                 len=len,
                 range=range,
-                round=round,
-                is_none=lambda v: v is None)
+                round=round)
 
 @app.before_request
 def prepare():
@@ -120,6 +113,8 @@ def prepare():
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
     flask.g.timer = utils.Timer()
+
+app.after_request(dbshare.system.log_access)
 
 @app.route('/')
 def home():

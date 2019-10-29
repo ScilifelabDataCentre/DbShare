@@ -464,7 +464,7 @@ class DbContext:
             return self._cnx
         except AttributeError:
             # Don't close connection at exit; done externally to the context
-            self._cnx = dbshare.system.get_cnx(write=True)
+            self._cnx = dbshare.system.get_cnx()
             return self._cnx
 
     @property
@@ -1332,10 +1332,12 @@ def get_cnx(dbname, write=False):
         except AttributeError:
             pass
         flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname), write=write)
+        flask.g.dbname = dbname
     try:
         return flask.g.dbcnx
     except AttributeError:
         flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname))
+        flask.g.dbname = dbname
         return flask.g.dbcnx
 
 def has_read_access(db):
@@ -1473,7 +1475,7 @@ def add_xlsx_database(dbname, infile, size):
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
-    cnx = dbshare.system.get_cnx(write=True)
+    cnx = dbshare.system.get_cnx()
     with cnx:
         sql = 'DELETE FROM dbs_logs WHERE name=?'
         cnx.execute(sql, (dbname,))

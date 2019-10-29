@@ -17,6 +17,7 @@ DEFAULT_CONFIG = dict(
     SITE_NAME = 'DbShare',
     SITE_STATIC_DIRPATH = None,
     SITE_CHART_TEMPLATES_DIRPATH = None,
+    ACCESS_LOGGING = False,
     HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
     HOST_NAME = None,
     HOST_URL = None,
@@ -74,7 +75,10 @@ DEFAULT_CONFIG = dict(
 )
 
 def init(app):
-    "Configure the Flask app. Read a JSON config file to modify the defaults."
+    """Configure the Flask app.
+    Read a JSON config file to modify the defaults.
+    Perform a sanity check on the settings.
+    """
     # Set the defaults specified above.
     app.config.from_mapping(DEFAULT_CONFIG)
     # Modify the configuration as specified in a JSON config file.
@@ -91,6 +95,12 @@ def init(app):
                 filepath = None
             else:
                 break
+    assert app.config['SECRET_KEY']
+    assert app.config['SALT_LENGTH'] > 6
+    assert app.config['MIN_PASSWORD_LENGTH'] > 4
+    assert app.config['EXECUTE_TIMEOUT'] > 0.0
+    assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
+    assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
     print(' > DbShare version:', app.config['VERSION'])
     if filepath:
         print(' > Configuration file:', filepath)

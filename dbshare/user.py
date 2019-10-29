@@ -246,7 +246,7 @@ def edit(username):
         if ndbs != 0:
             utils.flash_error('cannot delete non-empty user account')
             return flask.redirect(flask.url_for('.profile', username=username))
-        cnx = dbshare.system.get_cnx(write=True)
+        cnx = dbshare.system.get_cnx()
         with cnx:
             sql = "DELETE FROM users_logs WHERE username=?"
             cnx.execute(sql, (username,))
@@ -351,7 +351,7 @@ class UserContext:
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = dbshare.system.get_cnx(write=True)
+        self.cnx = dbshare.system.get_cnx()
 
     def __enter__(self):
         return self
