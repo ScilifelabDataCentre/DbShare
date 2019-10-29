@@ -488,10 +488,6 @@ class DbContext:
         with self.cnx:
             # Update the existing database entry in system.
             if self.old:
-                # The foreign key from dbs_log to dbs will temporarily be wrong.
-                # Switch off enforcing foreign key until updating done.
-                sql = 'PRAGMA foreign_keys=OFF'
-                self.cnx.execute(sql)
                 sql = "UPDATE dbs SET name=?, owner=?, title=?," \
                     "description=?, public=?, readonly=?, modified=?" \
                     " WHERE name=?"
@@ -522,8 +518,6 @@ class DbContext:
                 elif self.old['hashes'] and not self.db['hashes']:
                     sql = "DELETE FROM dbs_hashes WHERE name=?"
                     self.cnx.execute(sql, (self.db['name'],))
-                sql = 'PRAGMA foreign_keys=ON'
-                self.cnx.execute(sql)
 
             # New database.
             else:

@@ -97,7 +97,6 @@ def get_cnx(path, write=False):
     """
     if write:
         cnx = sqlite3.connect(path)
-        cnx.execute('PRAGMA foreign_keys=ON')
     else:
         path = "file:%s?mode=ro" % path
         cnx = sqlite3.connect(path, uri=True)

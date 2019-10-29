@@ -48,11 +48,7 @@ SYSTEM_TABLES = [
                   dict(name='remote_addr', type=constants.TEXT),
                   dict(name='user_agent', type=constants.TEXT),
                   dict(name='timestamp', type=constants.TEXT, notnull=True)
-         ],
-         foreignkeys=[dict(name='users_fk',
-                           columns=['username'],
-                           ref='users',
-                           refcolumns=['username'])]
+         ]
     ),
     dict(name='dbs',
          columns=[dict(name='name', type=constants.TEXT, primarykey=True),
@@ -63,12 +59,14 @@ SYSTEM_TABLES = [
                   dict(name='readonly', type=constants.INTEGER, notnull=True),
                   dict(name='created', type=constants.TEXT, notnull=True),
                   dict(name='modified', type=constants.TEXT, notnull=True)
-         ]),
+         ]
+    ),
     dict(name='dbs_hashes',
          columns=[dict(name='name', type=constants.TEXT, notnull=True),
                   dict(name='hashname', type=constants.TEXT, notnull=True),
                   dict(name='hashvalue', type=constants.TEXT, primarykey=True)
-         ]),
+         ]
+    ),
     dict(name='dbs_logs',
          columns=[dict(name='name', type=constants.TEXT, notnull=True),
                   dict(name='new', type=constants.TEXT, notnull=True),
@@ -76,11 +74,7 @@ SYSTEM_TABLES = [
                   dict(name='remote_addr', type=constants.TEXT),
                   dict(name='user_agent', type=constants.TEXT),
                   dict(name='timestamp', type=constants.TEXT, notnull=True)
-         ],
-         foreignkeys=[dict(name='dbs_fk',
-                           columns=['name'],
-                           ref='dbs',
-                           refcolumns=['name'])]
+         ]
     ),
 ]
 
