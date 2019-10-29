@@ -64,7 +64,6 @@ DEFAULT_CONFIG = dict(
     BOOTSTRAP_VERSION = '4.3.1',
     JQUERY_VERSION = '3.3.1',
     DATATABLES_VERSION = '1.10.18',
-    VEGA_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-v5.json'),
     VEGA_VERSION = '5',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
