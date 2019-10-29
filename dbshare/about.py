@@ -10,7 +10,9 @@ import http.client
 import jinja2
 import jsonschema
 
+import dbshare
 import dbshare.api.schema
+from dbshare import constants
 
 
 blueprint = flask.Blueprint('about', __name__)
@@ -59,7 +61,8 @@ def software():
     "Display software in system with links and version info."
     config = flask.current_app.config
     v = sys.version_info
-    data = [('DbShare', 'https://github.com/pekrau/DbShare', config['VERSION']),
+    data = [('DbShare',
+             'https://github.com/pekrau/DbShare', dbshare.__version__),
             ('Python', 'https://www.python.org/',
              f"{v.major}.{v.minor}.{v.micro}"),
             ('Sqlite3', 'https://www.sqlite.org/', sqlite3.version),
@@ -67,19 +70,21 @@ def software():
             ('Flask-Mail',
              'https://pythonhosted.org/Flask-Mail', flask_mail.__version__),
             ('Jinja2', 'http://jinja.pocoo.org/docs', jinja2.__version__),
-            ('Vega', 'https://vega.github.io/vega/', config['VEGA_VERSION']),
+            ('Vega', 'https://vega.github.io/vega/', constants.VEGA_VERSION),
             ('Vega-Lite', 
-             'https://vega.github.io/vega-lite/', config['VEGA_LITE_VERSION']),
+             'https://vega.github.io/vega-lite/', constants.VEGA_LITE_VERSION),
             ('jsonschema', 
              'https://github.com/Julian/jsonschema', jsonschema.__version__),
             ('dpath-python',
-             'https://github.com/akesterson/dpath-python', '1.4.2'),
+             'https://github.com/akesterson/dpath-python', 
+             constants.DPATH_VERSION),
             ('Bootstrap',
-             'https://getbootstrap.com/', config['BOOTSTRAP_VERSION']),
-            ('jQuery', 'https://jquery.com/', config['JQUERY_VERSION']),
+             'https://getbootstrap.com/', constants.BOOTSTRAP_VERSION),
+            ('jQuery', 'https://jquery.com/', constants.JQUERY_VERSION),
             ('jQuery localtime', 
-             'https://plugins.jquery.com/jquery.localtime/', '0.9.1'),
+             'https://plugins.jquery.com/jquery.localtime/',
+             constants.JQUERY_LOCALTIME_VERSION),
             ('DataTables', 
-             'https://datatables.net/', config['DATATABLES_VERSION']),
+             'https://datatables.net/', constants.DATATABLES_VERSION),
     ]
     return flask.render_template('about/software.html', data=data)

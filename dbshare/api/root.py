@@ -2,10 +2,10 @@
 
 import flask
 
+import dbshare
 import dbshare.api.user
-
-from .. import constants
-from .. import utils
+from dbshare import constants
+from dbshare import utils
 
 blueprint = flask.Blueprint('api', __name__)
 
@@ -14,7 +14,7 @@ blueprint = flask.Blueprint('api', __name__)
 def root():
     "API root resource; links to other API resources."
     result = {'title': 'DbShare API', 
-              'version': flask.current_app.config['VERSION'],
+              'version': dbshare.__version__,
               'databases': {
                   'public': {'href': utils.url_for('api_dbs.public')}
               }

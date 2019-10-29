@@ -2,7 +2,18 @@
 
 import re
 import string
+import sqlite3
 
+import dbshare
+
+# Version numbers not obtainable programmatically
+BOOTSTRAP_VERSION        = '4.3.1'
+JQUERY_VERSION           = '3.3.1'
+JQUERY_LOCALTIME_VERSION = '0.9.1'
+DPATH_VERSION            = '1.4.2'
+DATATABLES_VERSION       = '1.10.18'
+VEGA_VERSION             = '5'
+VEGA_LITE_VERSION        = '3'
 
 NAME_RX      = re.compile(r'^[a-z][a-z0-9_-]*$', re.I)
 NAME_CHARS   = frozenset(string.ascii_letters + string.digits + '_' + '-')

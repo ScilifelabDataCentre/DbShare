@@ -11,7 +11,6 @@ ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_CONFIG = dict(
-    VERSION = dbshare.__version__,
     SERVER_NAME = '127.0.0.1:5000',
     DATABASES_DIRPATH = 'data',
     SITE_NAME = 'DbShare',
@@ -59,16 +58,10 @@ DEFAULT_CONFIG = dict(
                            'vertical-bar': {'label': "vertical-bar '|'", 
                                             'char': '|'},
                            'colon': {'label': "colon ':'", 'char': ':'}},
-    SQLITE_VERSION = sqlite3.sqlite_version,
     MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
-    BOOTSTRAP_VERSION = '4.3.1',
-    JQUERY_VERSION = '3.3.1',
-    DATATABLES_VERSION = '1.10.18',
-    VEGA_VERSION = '5',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
     VEGA_LITE_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-lite-v3.json'),
-    VEGA_LITE_VERSION = '3',
     VEGA_LITE_DEFAULT_WIDTH = 400,
     VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
@@ -100,6 +93,6 @@ def init(app):
     assert app.config['EXECUTE_TIMEOUT'] > 0.0
     assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
     assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
-    print(' > DbShare version:', app.config['VERSION'])
+    print(' > DbShare version:', dbshare.__version__)
     if filepath:
         print(' > Configuration file:', filepath)
