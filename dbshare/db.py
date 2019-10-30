@@ -25,8 +25,9 @@ import dbshare.schema.table
 import dbshare.table
 import dbshare.query
 import dbshare.user
-from dbshare import constants
-from dbshare import utils
+
+from . import constants
+from . import utils
 
 
 TABLES_TABLE = {
