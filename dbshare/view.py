@@ -71,7 +71,7 @@ def edit(dbname, viewname):
     try:
         schema = db['views'][viewname]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -115,7 +115,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
     try:
         schema = db['views'][str(viewname)]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         title = schema.get('title') or "View {}".format(viewname)
@@ -154,8 +154,8 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
         elif viewname.ext in (None, 'html'):
             limit = flask.current_app.config['MAX_NROWS_DISPLAY']
             if schema['nrows'] is None:
-                utils.flask_error('too many rows to fetch; interrupted')
-                rows = []
+                utils.flash_error('too many rows to fetch; interrupted')
+                cursor = []     # Fake cursor
             elif schema['nrows'] > limit:
                 utils.flash_message_limit(limit)
                 sql += f" LIMIT {limit}"
@@ -195,7 +195,7 @@ def schema(dbname, viewname):
     try:
         schema = db['views'][viewname]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     has_write_access = dbshare.db.has_write_access(db)
     sources = [dbshare.db.get_schema(db, name) for name in schema['sources']]
@@ -232,7 +232,7 @@ def clone(dbname, viewname):
     try:
         schema = db['views'][viewname]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     if utils.http_GET():
@@ -264,7 +264,7 @@ def download(dbname, viewname):
     try:
         schema = db['views'][viewname]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     return flask.render_template('view/download.html', db=db,schema=schema)
 
@@ -279,7 +279,7 @@ def download_csv(dbname, viewname):
     try:
         schema = db['views'][viewname]
     except KeyError:
-        utils.flask_error('no such view')
+        utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
         delimiter = flask.request.form.get('delimiter') or 'comma'
