@@ -1,10 +1,16 @@
 "Constant values."
 
+import os.path
 import re
 import string
 import sqlite3
 
 import dbshare
+
+
+VERSION = dbshare.__version__
+
+ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
 # Version numbers not obtainable programmatically
 BOOTSTRAP_VERSION        = '4.3.1'
@@ -60,3 +66,7 @@ XLSX_MIMETYPE    = 'application/vnd.openxmlformats-officedocument.spreadsheetml.
 # JSON schema
 SCHEMA_BASE_URL = 'https://dbshare.scilifelab.se/api/schema'
 SCHEMA_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'
+
+# Read in JSON Schema for Vega-Lite from file.
+with open(os.path.join(ROOT_DIRPATH, 'schema/vega-lite-v3.json')) as infile:
+    VEGA_LITE_SCHEMA = json.load(infile)

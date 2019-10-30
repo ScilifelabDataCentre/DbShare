@@ -261,7 +261,7 @@ def get_chart_spec(template, context):
     try:
         result = jinja2.Template(template['template']).render(**context)
         result = json.loads(result)
-        utils.json_validate(result,flask.current_app.config['VEGA_LITE_SCHEMA'])
+        utils.json_validate(result, constants.VEGA_LITE_SCHEMA)
     except (jinja2.TemplateError, jsonschema.ValidationError) as error:
         raise ValueError(str(error))
     return result

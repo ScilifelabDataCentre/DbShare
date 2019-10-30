@@ -41,10 +41,6 @@ app.jinja_env.lstrip_blocks = True
 # Get the configuration.
 dbshare.config.init(app)
 
-# Read the JSON Schema files; must be present.
-with open(app.config['VEGA_LITE_SCHEMA']) as infile:
-    app.config['VEGA_LITE_SCHEMA'] = json.load(infile)
-
 # Init the system database.
 dbshare.system.init(app)
 

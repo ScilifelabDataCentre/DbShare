@@ -25,9 +25,8 @@ import dbshare.schema.table
 import dbshare.table
 import dbshare.query
 import dbshare.user
-
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 TABLES_TABLE = {
@@ -1033,7 +1032,7 @@ class DbContext:
         """
         if utils.name_in_nocase(chartname, self.db['charts']):
             raise ValueError('name is already in use for a chart')
-        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
+        utils.json_validate(spec, constants.VEGA_LITE_SCHEMA)
         with self.dbcnx:
             sql = f"INSERT INTO {constants.CHARTS} (name, schema, spec) VALUES (?,?,?)"
             self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
@@ -1045,7 +1044,7 @@ class DbContext:
         """Update the chart in the database.
         Raises jsonschema.ValidationError if the spec is invalid.
         """
-        utils.json_validate(spec, flask.current_app.config['VEGA_LITE_SCHEMA'])
+        utils.json_validate(spec, constants.VEGA_LITE_SCHEMA)
         with self.dbcnx:
             sql = f"UPDATE {constants.CHARTS} SET spec=? WHERE name=?"
             self.dbcnx.execute(sql, (json.dumps(spec), chartname))

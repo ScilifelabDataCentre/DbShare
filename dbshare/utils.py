@@ -20,8 +20,8 @@ import jsonschema
 import markdown
 import werkzeug.routing
 
-from .lexer import Lexer
-from . import constants
+from dbshare.lexer import Lexer
+from dbshare import constants
 
 
 # Global instance of mail interface.
@@ -41,6 +41,7 @@ lexer = Lexer([
      'regexp': r"(?P<quotechar>[\'|\"])\S+(?P=quotechar)",
      'convert': 'quotechar_strip'}
 ])
+
 
 class NameConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name."

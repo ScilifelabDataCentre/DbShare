@@ -32,17 +32,17 @@ CONFIG = {}
 
 def process_args(filepath=None):
     """Process command-line arguments for this test suite.
-    Reset the configuration and read the given configuration file.
+    Reset the settingsuration and read the given settings file.
     Return the unused arguments.
     """
     if filepath is None:
         parser = argparse.ArgumentParser()
-        parser.add_argument('-C', '--config', dest='config',
-                            metavar='FILE', default='config.json',
-                            help='Configuration file')
+        parser.add_argument('-S', '--settings', dest='settings',
+                            metavar='FILE', default='settings.json',
+                            help='Settings file')
         parser.add_argument('unittest_args', nargs='*')
         options, args = parser.parse_known_args()
-        filepath = options.config
+        filepath = options.settings
         args = [sys.argv[0]] + args
     else:
         args = sys.argv

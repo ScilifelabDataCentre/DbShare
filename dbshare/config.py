@@ -5,9 +5,7 @@ import os.path
 import sqlite3
 
 import dbshare
-
-
-ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
+from dbshare import constants
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_CONFIG = dict(
@@ -33,8 +31,9 @@ DEFAULT_CONFIG = dict(
     MAX_NROWS_DISPLAY = 2000,
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
-    DOCS_DIRPATH = os.path.join(ROOT_DIRPATH, 'docs'),
-    CHART_TEMPLATES_DIRPATH = os.path.join(ROOT_DIRPATH, 'chart_templates'),
+    DOCS_DIRPATH = os.path.join(constants.ROOT_DIRPATH, 'docs'),
+    CHART_TEMPLATES_DIRPATH = os.path.join(constants.ROOT_DIRPATH,
+                                           'chart_templates'),
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55
@@ -61,7 +60,6 @@ DEFAULT_CONFIG = dict(
     MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
     VEGA_DEFAULT_WIDTH = 400,
     VEGA_DEFAULT_HEIGHT = 400,
-    VEGA_LITE_SCHEMA = os.path.join(ROOT_DIRPATH, 'schema/vega-lite-v3.json'),
     VEGA_LITE_DEFAULT_WIDTH = 400,
     VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
@@ -73,14 +71,15 @@ def init(app):
     """
     # Set the defaults specified above.
     app.config.from_mapping(DEFAULT_CONFIG)
-    # Modify the configuration as specified in a JSON config file.
+    # Modify the configuration as specified in a JSON settings file.
     try:
-        filepath = os.environ['CONFIG_FILEPATH']
+        filepath = os.environ['SETTINGS_FILEPATH']
         app.config.from_json(filepath)
         # Raises an error if filepath variable defined, but no such file.
     except KeyError:
-        for filepath in ['config.json', '../site/config.json']:
-            filepath = os.path.normpath(os.path.join(ROOT_DIRPATH, filepath))
+        for filepath in ['settings.json', '../site/settings.json']:
+            filepath = os.path.normpath(os.path.join(constants.ROOT_DIRPATH,
+                                                     filepath))
             try:
                 app.config.from_json(filepath)
             except FileNotFoundError:
@@ -95,4 +94,4 @@ def init(app):
     assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
     print(' > DbShare version:', dbshare.__version__)
     if filepath:
-        print(' > Configuration file:', filepath)
+        print(' > Settings file:', filepath)
