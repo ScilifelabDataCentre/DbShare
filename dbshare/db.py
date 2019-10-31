@@ -24,7 +24,6 @@ import dbshare.system
 import dbshare.schema.table
 import dbshare.table
 import dbshare.query
-import dbshare.user
 
 from . import constants
 from . import utils
@@ -146,7 +145,7 @@ def display(dbname):
         flask.abort(http.client.NOT_ACCEPTABLE)
 
 @blueprint.route('/', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def create():
     "Create a database."
     try:
@@ -172,7 +171,7 @@ def create():
         return flask.redirect(flask.url_for('.display', dbname=ctx.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST', 'DELETE'])
-@dbshare.user.login_required
+@utils.login_required
 def edit(dbname):
     "Edit the database metadata. Or delete the database."
     try:
@@ -229,7 +228,7 @@ def logs(dbname):
     return flask.render_template('db/logs.html', db=db, logs=logs)
 
 @blueprint.route('/<name:dbname>/upload', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def upload(dbname):
     "Create a table from the data in a CSV file."
     try:
@@ -283,7 +282,7 @@ def upload(dbname):
             flask.url_for('table.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/clone', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def clone(dbname):
     "Create a clone of the database."
     try:
@@ -326,7 +325,7 @@ def download(dbname):
                            as_attachment=True)
 
 @blueprint.route('/<name:dbname>/vacuum', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def vacuum(dbname):
     "Run VACUUM on the database. Also reset the table caches."
     utils.check_csrf_token()
@@ -347,7 +346,7 @@ def vacuum(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/analyze', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def analyze(dbname):
     "Run ANALYZE on the database."
     utils.check_csrf_token()
@@ -365,7 +364,7 @@ def analyze(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/public', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def public(dbname):
     "Set the database to public access."
     utils.check_csrf_token()
@@ -384,7 +383,7 @@ def public(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/private', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def private(dbname):
     "Set the database to private access."
     utils.check_csrf_token()
@@ -403,7 +402,7 @@ def private(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readwrite', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def readwrite(dbname):
     "Set the database to read-write mode."
     utils.check_csrf_token()
@@ -423,7 +422,7 @@ def readwrite(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def readonly(dbname):
     "Set the database to read-only mode. Compute content hashes."
     utils.check_csrf_token()

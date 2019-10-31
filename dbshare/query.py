@@ -30,8 +30,7 @@ def define(dbname):
                                  query=query,
                                  has_write_access=has_write_access)
 
-@blueprint.route('/<name:dbname>/rows',
-                 methods=['GET', 'POST'])
+@blueprint.route('/<name:dbname>/rows', methods=['GET', 'POST'])
 def rows(dbname):
     "Display results of a query to the database."
     try:
@@ -71,7 +70,7 @@ def rows(dbname):
                                      rows=rows)
 
 @blueprint.route('/<name:dbname>/table', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def table(dbname):
     "Create a table containing the results of the query."
     try:

@@ -1,4 +1,4 @@
-"About endpoints."
+"About HTML endpoints."
 
 import os.path
 import sqlite3
@@ -12,7 +12,9 @@ import jsonschema
 
 import dbshare
 import dbshare.api.schema
-from dbshare import constants
+
+from . import constants
+from . import utils
 
 
 blueprint = flask.Blueprint('about', __name__)
@@ -88,3 +90,8 @@ def software():
              'https://datatables.net/', constants.DATATABLES_VERSION),
     ]
     return flask.render_template('about/software.html', data=data)
+
+@blueprint.route('/settings')
+@utils.admin_required
+def settings():
+    return flask.render_template('about/settings.html')

@@ -12,7 +12,7 @@ from .. import utils
 blueprint = flask.Blueprint('api_user', __name__)
 
 @blueprint.route('/<name:username>')
-@dbshare.user.login_required
+@utils.login_required
 def user(username):
     "Return the API JSON user profile."
     user = dbshare.user.get_user(username=username)

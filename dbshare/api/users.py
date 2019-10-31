@@ -12,6 +12,7 @@ from .. import utils
 blueprint = flask.Blueprint('api_users', __name__)
 
 @blueprint.route('/all')
+@utils.admin_required
 def all():
     "Return the list of all user accounts."
     cursor = dbshare.system.get_cursor()

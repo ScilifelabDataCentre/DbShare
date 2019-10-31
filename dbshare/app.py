@@ -32,11 +32,20 @@ import dbshare.api.chart
 from dbshare import constants
 from dbshare import utils
 
-app = flask.Flask('dbshare', template_folder='html')
+app = flask.Flask('dbshare')
+
+# Add URL map converters
 app.url_map.converters['name'] = utils.NameConverter
 app.url_map.converters['nameext'] = utils.NameExtConverter
-app.jinja_env.trim_blocks = True
-app.jinja_env.lstrip_blocks = True
+
+# Add template filters.
+app.add_template_filter(utils.informative)
+app.add_template_filter(utils.size_none)
+app.add_template_filter(utils.none_as_literal_null)
+app.add_template_filter(utils.none_as_empty_string)
+app.add_template_filter(utils.do_markdown, name='markdown')
+app.add_template_filter(utils.access)
+app.add_template_filter(utils.mode)
 
 # Get the configuration.
 dbshare.config.init(app)
@@ -49,41 +58,6 @@ utils.mail.init_app(app)
 
 # Init the chart templates.
 dbshare.chart.init(app)
-
-# Set up the URL map.
-app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
-app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
-app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
-app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
-app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
-app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
-app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
-app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
-app.register_blueprint(dbshare.site.blueprint, url_prefix='/site')
-
-app.register_blueprint(dbshare.api.root.blueprint, url_prefix='/api')
-app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
-app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
-app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
-app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
-app.register_blueprint(dbshare.api.chart.blueprint, url_prefix='/api/chart')
-app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
-app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
-app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
-
-# Add template filters.
-app.add_template_filter(utils.informative)
-app.add_template_filter(utils.size_none)
-app.add_template_filter(utils.none_as_literal_null)
-app.add_template_filter(utils.none_as_empty_string)
-app.add_template_filter(utils.do_markdown, name='markdown')
-app.add_template_filter(utils.access)
-app.add_template_filter(utils.mode)
-
-@app.before_first_request
-def upgrade():
-    "Upgrade the database(s) for a new version."
-    pass
 
 @app.context_processor
 def setup_template_context():
@@ -117,6 +91,27 @@ def home():
         return flask.redirect(flask.url_for('api.root'))
     return flask.render_template('home.html',
                                  dbs=dbshare.dbs.get_dbs(public=True))
+
+# Set up the URL map.
+app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
+app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
+app.register_blueprint(dbshare.table.blueprint, url_prefix='/table')
+app.register_blueprint(dbshare.query.blueprint, url_prefix='/query')
+app.register_blueprint(dbshare.view.blueprint, url_prefix='/view')
+app.register_blueprint(dbshare.chart.blueprint, url_prefix='/chart')
+app.register_blueprint(dbshare.user.blueprint, url_prefix='/user')
+app.register_blueprint(dbshare.about.blueprint, url_prefix='/about')
+app.register_blueprint(dbshare.site.blueprint, url_prefix='/site')
+
+app.register_blueprint(dbshare.api.root.blueprint, url_prefix='/api')
+app.register_blueprint(dbshare.api.db.blueprint, url_prefix='/api/db')
+app.register_blueprint(dbshare.api.dbs.blueprint, url_prefix='/api/dbs')
+app.register_blueprint(dbshare.api.table.blueprint, url_prefix='/api/table')
+app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
+app.register_blueprint(dbshare.api.chart.blueprint, url_prefix='/api/chart')
+app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
+app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
+app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
 
 # This code is used only during testing.

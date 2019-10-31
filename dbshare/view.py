@@ -8,7 +8,6 @@ import flask
 
 import dbshare.db
 import dbshare.table
-import dbshare.user
 
 from . import constants
 from . import utils
@@ -17,7 +16,7 @@ from . import utils
 blueprint = flask.Blueprint('view', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def create(dbname):
     "Create a view of the data in the database."
     try:
@@ -60,7 +59,7 @@ def create(dbname):
 
 @blueprint.route('/<name:dbname>/<name:viewname>/edit',
                  methods=['GET', 'POST', 'DELETE'])
-@dbshare.user.login_required
+@utils.login_required
 def edit(dbname, viewname):
     "Edit the metadata of the view. Or delete the view."
     try:
@@ -221,7 +220,7 @@ def schema(dbname, viewname):
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def clone(dbname, viewname):
     "Create a clone of the view."
     try:

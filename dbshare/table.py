@@ -9,7 +9,6 @@ import statistics as statistics_module
 import flask
 
 import dbshare.db
-import dbshare.user
 
 from . import constants
 from . import utils
@@ -18,7 +17,7 @@ from . import utils
 blueprint = flask.Blueprint('table', __name__)
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def create(dbname):
     "Create a table with columns in the database."
     try:
@@ -154,7 +153,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST', 'DELETE'])
-@dbshare.user.login_required
+@utils.login_required
 def edit(dbname, tablename):
     "Edit the table metadata. Or delete the table."
     try:
@@ -196,7 +195,7 @@ def edit(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/column',
                  methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def column(dbname, tablename):
     "Add a column to the table."
     try:
@@ -227,7 +226,7 @@ def column(dbname, tablename):
             flask.url_for('.schema', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/empty', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def empty(dbname, tablename):
     "Empty the table; delete all rows."
     utils.check_csrf_token()
@@ -273,7 +272,7 @@ def schema(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/index',
                  methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def index_create(dbname, tablename):
     "Create an index on the table in the database."
     try:
@@ -318,7 +317,7 @@ def index_create(dbname, tablename):
 # 'indexname' is not a proper name
 @blueprint.route('/<name:dbname>/<name:tablename>/index/<indexname>',
                  methods=['POST', 'DELETE'])
-@dbshare.user.login_required
+@utils.login_required
 def index_delete(dbname, tablename, indexname):
     "Delete the index. 'tablename' is not needed, but included for consistency."
     utils.check_csrf_token()
@@ -344,7 +343,7 @@ def index_delete(dbname, tablename, indexname):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row',
                  methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def row_insert(dbname, tablename):
     "Insert a row into the table."
     try:
@@ -392,7 +391,7 @@ def row_insert(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/row/<int:rowid>',
                  methods=['GET', 'POST', 'DELETE'])
-@dbshare.user.login_required
+@utils.login_required
 def row_edit(dbname, tablename, rowid):
     "Edit or delete a row into the table."
     try:
@@ -460,7 +459,7 @@ def row_edit(dbname, tablename, rowid):
 
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert')
-@dbshare.user.login_required
+@utils.login_required
 def insert(dbname, tablename):
     "Insert data from a file into the table."
     try:
@@ -481,7 +480,7 @@ def insert(dbname, tablename):
     return flask.render_template('table/insert.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert/csv', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def insert_csv(dbname, tablename):
     "Insert data from a CSV file into the table."
     utils.check_csrf_token()
@@ -519,7 +518,7 @@ def insert_csv(dbname, tablename):
         flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update')
-@dbshare.user.login_required
+@utils.login_required
 def update(dbname, tablename):
     "Update the table with data from a file."
     try:
@@ -541,7 +540,7 @@ def update(dbname, tablename):
     return flask.render_template('table/update.html', db=db, schema=schema)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/update/csv', methods=['POST'])
-@dbshare.user.login_required
+@utils.login_required
 def update_csv(dbname, tablename):
     "Update the table with data from a CSV file."
     utils.check_csrf_token()
@@ -577,7 +576,7 @@ def update_csv(dbname, tablename):
 
 @blueprint.route('/<name:dbname>/<name:tablename>/clone', 
                  methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def clone(dbname, tablename):
     "Create a clone of the table."
     try:

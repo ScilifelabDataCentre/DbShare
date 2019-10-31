@@ -5,7 +5,9 @@ import os.path
 import sqlite3
 
 import dbshare
-from dbshare import constants
+
+from . import constants
+
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_CONFIG = dict(
@@ -85,6 +87,7 @@ def init(app):
             except FileNotFoundError:
                 filepath = None
             else:
+                app.config['SETTINGS_FILEPATH'] = filepath
                 break
     assert app.config['SECRET_KEY']
     assert app.config['SALT_LENGTH'] > 6
@@ -92,6 +95,3 @@ def init(app):
     assert app.config['EXECUTE_TIMEOUT'] > 0.0
     assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
     assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
-    print(' > DbShare version:', dbshare.__version__)
-    if filepath:
-        print(' > Settings file:', filepath)

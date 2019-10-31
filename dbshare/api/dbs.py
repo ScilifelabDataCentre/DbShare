@@ -8,7 +8,6 @@ import dbshare.dbs
 import dbshare.user
 
 import dbshare.api.db
-import dbshare.api.user
 
 from .. import utils
 
@@ -25,7 +24,7 @@ def public():
     return utils.jsonify(utils.get_json(**result), schema='/dbs')
 
 @blueprint.route('/all')
-@dbshare.user.admin_required
+@utils.admin_required
 def all():
     "Return the list of all databases."
     dbs = dbshare.dbs.get_dbs()
@@ -37,7 +36,7 @@ def all():
     return utils.jsonify(utils.get_json(**result), schema='/dbs')
 
 @blueprint.route('/owner/<name:username>')
-@dbshare.user.login_required
+@utils.login_required
 def owner(username):
     "Return the list of databases owned by the given user."
     if not dbshare.dbs.has_access(username):

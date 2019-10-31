@@ -2,6 +2,7 @@
 
 import csv
 import datetime
+import functools
 import http.client
 import io
 import json
@@ -42,6 +43,26 @@ lexer = Lexer([
      'convert': 'quotechar_strip'}
 ])
 
+def login_required(f):
+    "Decorator for checking if logged in. Send to login page if not."
+    @functools.wraps(f)
+    def wrap(*args, **kwargs):
+        if not flask.g.current_user:
+            url = flask.url_for('user.login', next=flask.request.base_url)
+            return flask.redirect(url)
+        return f(*args, **kwargs)
+    return wrap
+
+def admin_required(f):
+    """Decorator for checking if logged in and 'admin' role.
+    Otherwise return status 401 Unauthorized.
+    """
+    @functools.wraps(f)
+    def wrap(*args, **kwargs):
+        if not flask.g.is_admin:
+            flask.abort(http.client.UNAUTHORIZED)
+        return f(*args, **kwargs)
+    return wrap
 
 class NameConverter(werkzeug.routing.BaseConverter):
     "URL route converter for a name."

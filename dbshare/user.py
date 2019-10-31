@@ -1,6 +1,6 @@
 "User profile and login/logout HTMl endpoints."
 
-import functools
+# import functools
 import http.client
 import json
 import re
@@ -16,26 +16,26 @@ from . import constants
 from . import utils
 
 
-def login_required(f):
-    "Decorator for checking if logged in. Send to login page if not."
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not flask.g.current_user:
-            url = flask.url_for('user.login', next=flask.request.base_url)
-            return flask.redirect(url)
-        return f(*args, **kwargs)
-    return wrap
+# def login_required(f):
+#     "Decorator for checking if logged in. Send to login page if not."
+#     @functools.wraps(f)
+#     def wrap(*args, **kwargs):
+#         if not flask.g.current_user:
+#             url = flask.url_for('user.login', next=flask.request.base_url)
+#             return flask.redirect(url)
+#         return f(*args, **kwargs)
+#     return wrap
 
-def admin_required(f):
-    """Decorator for checking if logged in and 'admin' role.
-    Otherwise return status 401 Unauthorized.
-    """
-    @functools.wraps(f)
-    def wrap(*args, **kwargs):
-        if not flask.g.is_admin:
-            flask.abort(http.client.UNAUTHORIZED)
-        return f(*args, **kwargs)
-    return wrap
+# def admin_required(f):
+#     """Decorator for checking if logged in and 'admin' role.
+#     Otherwise return status 401 Unauthorized.
+#     """
+#     @functools.wraps(f)
+#     def wrap(*args, **kwargs):
+#         if not flask.g.is_admin:
+#             flask.abort(http.client.UNAUTHORIZED)
+#         return f(*args, **kwargs)
+#     return wrap
 
 
 blueprint = flask.Blueprint('user', __name__)
@@ -183,7 +183,7 @@ def password():
 
 @blueprint.route('/profile')
 @blueprint.route('/profile/<name:username>')
-@login_required
+@utils.login_required
 def profile(username=None):
     "Display the profile of the given user."
     if not username:
@@ -206,7 +206,7 @@ def profile(username=None):
 
 @blueprint.route('/profile/<name:username>/edit',
                  methods=['GET', 'POST', 'DELETE'])
-@login_required
+@utils.login_required
 def edit(username):
     "Edit the user profile. Or delete the user."
     user = get_user(username=username)
@@ -259,7 +259,7 @@ def edit(username):
             return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/profile/<name:username>/logs')
-@login_required
+@utils.login_required
 def logs(username):
     "Display the log records of the given user."
     user = get_user(username=username)
@@ -282,7 +282,7 @@ def logs(username):
     return flask.render_template('user/logs.html', user=user, logs=logs)
 
 @blueprint.route('/users')
-@admin_required
+@utils.admin_required
 def users():
     "Display list of all users."
     import dbshare.dbs
@@ -309,7 +309,7 @@ def users():
     return flask.render_template('user/users.html', users=users)
 
 @blueprint.route('/enable/<name:username>', methods=['POST'])
-@admin_required
+@utils.admin_required
 def enable(username):
     "Enable the given user account."
     user = get_user(username=username)
@@ -323,7 +323,7 @@ def enable(username):
     return flask.redirect(flask.url_for('.profile', username=username))
 
 @blueprint.route('/disable/<name:username>', methods=['POST'])
-@admin_required
+@utils.admin_required
 def disable(username):
     "Disable the given user account."
     user = get_user(username=username)

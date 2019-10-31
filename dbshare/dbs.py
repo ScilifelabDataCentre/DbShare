@@ -5,7 +5,6 @@ import os.path
 import flask
 
 import dbshare.db
-import dbshare.user
 
 from . import utils
 
@@ -13,7 +12,7 @@ from . import utils
 blueprint = flask.Blueprint('dbs', __name__)
 
 @blueprint.route('/upload', methods=['GET', 'POST'])
-@dbshare.user.login_required
+@utils.login_required
 def upload():
     "Upload a database file: Sqlite3 or XLSX file."
     if utils.http_GET():
@@ -46,7 +45,7 @@ def public():
                                  dbs=get_dbs(public=True))
 
 @blueprint.route('/all')
-@dbshare.user.admin_required
+@utils.admin_required
 def all():
     "Display the list of all databases."
     dbs = get_dbs()
@@ -56,7 +55,7 @@ def all():
 
 @blueprint.route('/owner')
 @blueprint.route('/owner/<name:username>')
-@dbshare.user.login_required
+@utils.login_required
 def owner(username=''):
     "Display the list of databases owned by the given user."
     if not username:
