@@ -15,7 +15,7 @@ class Query(base.Base):
         self.assertEqual(self.root['operations']['database']['query']['method'], 'POST')
         self.assertTrue('variables' in self.root['operations']['database']['query'])
         url = self.root['operations']['database']['query']['href']
-        self.url_query = url.format(dbname=base.CONFIG['dbname'])
+        self.url_query = url.format(dbname=base.SETTINGS['dbname'])
 
     def test_table_query_one_column(self):
         "Get only one column from the test table."

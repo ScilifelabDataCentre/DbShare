@@ -36,7 +36,7 @@ class Db(base.Base):
     def test_bad_upload(self):
         "Try uploading with the wrong content type."
         dbops = self.root['operations']['database']
-        url = dbops['create']['href'].format(dbname=base.CONFIG['dbname'])
+        url = dbops['create']['href'].format(dbname=base.SETTINGS['dbname'])
         headers = {'Content-Type': 'application/garbage'}
         response = self.session.put(url, data='garbage', headers=headers)
         self.assertEqual(response.status_code,

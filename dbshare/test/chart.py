@@ -42,7 +42,7 @@ class Chart(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -50,7 +50,7 @@ class Chart(base.Base):
         # Insert CSV data.
         headers = {'Content-Type': 'text/csv'}
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'class1', 4.5),
                                       (2, 'class2', 2.1),
@@ -71,7 +71,7 @@ class Chart(base.Base):
                 'color': 't'}
         CHARTNAME = 'testchart'
         url = self.root['operations']['chart']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          chartname=CHARTNAME)
         response = self.session.put(url, json=data)
         result = self.check_schema(response)
@@ -83,7 +83,7 @@ class Chart(base.Base):
 
         # Delete the table.
         url = self.root['operations']['table']['delete']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
@@ -101,7 +101,7 @@ class Chart(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -109,7 +109,7 @@ class Chart(base.Base):
         # Insert CSV data.
         headers = {'Content-Type': 'text/csv'}
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'class1', 4.5),
                                       (2, 'class2', 2.1),
@@ -128,7 +128,7 @@ class Chart(base.Base):
                       'where': 'r<8'}
         }
         url = self.root['operations']['view']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          viewname=view_spec['name'])
         response = self.session.put(url, json=view_spec)
         result = self.check_schema(response)
@@ -144,14 +144,14 @@ class Chart(base.Base):
                 'color': 't'}
         CHARTNAME = 'testchart2'
         url = self.root['operations']['chart']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          chartname=CHARTNAME)
         response = self.session.put(url, json=data)
         result = self.check_schema(response)
 
         # Delete the table.
         url = self.root['operations']['table']['delete']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)

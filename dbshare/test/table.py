@@ -71,7 +71,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -92,7 +92,7 @@ class Table(base.Base):
 
         # Delete the table.
         url = self.root['operations']['table']['delete']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)
@@ -112,7 +112,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -121,7 +121,7 @@ class Table(base.Base):
         table_spec = copy.deepcopy(self.table_spec)
         table_spec['name'] = table_spec['name'].upper()
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=table_spec['name'])
         response = self.session.put(url, json=table_spec)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
@@ -135,7 +135,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -145,7 +145,7 @@ class Table(base.Base):
 
         # Insert data.
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = {'data': [{'i': 1, 't': 'stuff', 'r': 1.2345}] }
         response = self.session.post(url, json=data)
@@ -201,7 +201,7 @@ class Table(base.Base):
 
         # Empty the table.
         url = self.root['operations']['table']['empty']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.post(url)
         self.assertEqual(response.status_code, http.client.OK)
@@ -218,7 +218,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -228,7 +228,7 @@ class Table(base.Base):
 
         # Insert CSV data.
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'test', 0.2),
                                       (2, 'another test', 4.123e5),
@@ -257,7 +257,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         response = self.session.put(url, json=self.table_spec)
         result = self.check_schema(response)
@@ -266,7 +266,7 @@ class Table(base.Base):
         # Insert CSV data.
         headers = {'Content-Type': 'text/csv'}
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'test', 0.2),
                                       (2, 'another test', 4.123e5),
@@ -277,7 +277,7 @@ class Table(base.Base):
 
         # Update CSV data; check that it actually changed something.
         update_url = self.root['operations']['table']['update']['href']
-        update_url = update_url.format(dbname=base.CONFIG['dbname'],
+        update_url = update_url.format(dbname=base.SETTINGS['dbname'],
                                        tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'changed', -1.0)])
         response = self.session.post(update_url, data=data, headers=headers)
@@ -314,7 +314,7 @@ class Table(base.Base):
 
         # Create a table in the database.
         url = self.root['operations']['table']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=table_spec['name'])
         response = self.session.put(url, json=table_spec)
         result = self.check_schema(response)
@@ -323,7 +323,7 @@ class Table(base.Base):
         # Add rows.
         headers = {'Content-Type': 'text/csv'}
         url = self.root['operations']['table']['insert']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          tablename=self.table_spec['name'])
         data = self.get_csvfile_data([(1, 'first row', 1.0),
                                       (2, 'second row', 2.0)])

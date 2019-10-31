@@ -22,7 +22,7 @@ class Crawl(base.Base):
 
     def test_crawl(self):
         "Start at the root and find all hrefs from there."
-        response = self.session.get(base.CONFIG['root_url'])
+        response = self.session.get(base.SETTINGS['root_url'])
         self.assertEqual(response.status_code, http.client.OK)
         self.extract(response.json())
         while self.remaining:
@@ -50,10 +50,10 @@ class Crawl(base.Base):
                     # 'href' is a dict within schema
                     if not isinstance(value, str): continue
                     if value in self.checked: continue
-                    if not value.startswith(base.CONFIG['root_url']): continue
+                    if not value.startswith(base.SETTINGS['root_url']): continue
                     parts = urllib.parse.urlparse(value)
                     match = PATH_RX.match(parts.path)
-                    if match and match.group(2) != base.CONFIG['dbname']:
+                    if match and match.group(2) != base.SETTINGS['dbname']:
                         continue
                     self.remaining.add(value)
                 else:

@@ -10,7 +10,7 @@ from . import constants
 
 
 # Default configurable values; modified by reading JSON file in 'init'.
-DEFAULT_CONFIG = dict(
+DEFAULT_SETTINGS = dict(
     SERVER_NAME = '127.0.0.1:5000',
     DATABASES_DIRPATH = 'data',
     SITE_NAME = 'DbShare',
@@ -70,7 +70,7 @@ def init(app):
     Perform a sanity check on the settings.
     """
     # Set the defaults specified above.
-    app.config.from_mapping(DEFAULT_CONFIG)
+    app.config.from_mapping(DEFAULT_SETTINGS)
     # Modify the configuration as specified in a JSON settings file.
     try:
         filepath = os.environ['SETTINGS_FILEPATH']

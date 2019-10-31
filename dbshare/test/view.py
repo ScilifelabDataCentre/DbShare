@@ -33,7 +33,7 @@ class View(base.Base):
                       'where': 'i>=3'}
         }
         url = self.root['operations']['view']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          viewname=view_spec['name'])
         response = self.session.put(url, json=view_spec)
         self.assertEqual(response.status_code, http.client.BAD_REQUEST)
@@ -49,7 +49,7 @@ class View(base.Base):
                       'where': 'i>=3'}
         }
         url = self.root['operations']['view']['create']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          viewname=view_spec['name'])
         response = self.session.put(url, json=view_spec)
         result = self.check_schema(response)
@@ -63,7 +63,7 @@ class View(base.Base):
 
         # Delete the view.
         url = self.root['operations']['view']['delete']['href']
-        url = url.format(dbname=base.CONFIG['dbname'],
+        url = url.format(dbname=base.SETTINGS['dbname'],
                          viewname=view_spec['name'])
         response = self.session.delete(url)
         self.assertEqual(response.status_code, http.client.NO_CONTENT)

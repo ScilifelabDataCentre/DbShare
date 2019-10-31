@@ -18,7 +18,7 @@ SCHEMA_LINK_RX = re.compile(r'<([^>])+>; rel="([^"]+)')
 
 JSON_MIMETYPE    = 'application/json'
 
-DEFAULT_CONFIG = {
+DEFAULT_SETTINGS = {
     'base_url': 'http://127.0.0.1:5000', # DbShare server base url.
     'base_schema': None,        # Use schema from server at base url.
     'username': None,           # Needs to be set! Must have admin privileges.
@@ -28,7 +28,7 @@ DEFAULT_CONFIG = {
 }
 
 # The actual configuration values to use.
-CONFIG = {}
+SETTINGS = {}
 
 def process_args(filepath=None):
     """Process command-line arguments for this test suite.
@@ -46,17 +46,17 @@ def process_args(filepath=None):
         args = [sys.argv[0]] + args
     else:
         args = sys.argv
-    CONFIG.update(DEFAULT_CONFIG)
+    SETTINGS.update(DEFAULT_SETTINGS)
     with open(filepath) as infile:
-        CONFIG.update(json.load(infile))
+        SETTINGS.update(json.load(infile))
     # Add API root url.
-    CONFIG['root_url'] = CONFIG['base_url'] + '/api'
+    SETTINGS['root_url'] = SETTINGS['base_url'] + '/api'
     return args
 
 def run():
     argv = process_args()
     logging.basicConfig(stream=sys.stderr, level=logging.INFO)
-    logging.info(f"Root URL {CONFIG['root_url']}")
+    logging.info(f"Root URL {SETTINGS['root_url']}")
     unittest.main(argv=argv)
 
 
@@ -66,7 +66,7 @@ class Base(unittest.TestCase):
     def setUp(self):
         self.schemas = {}
         self.session = requests.Session()
-        self.session.headers.update({'x-apikey': CONFIG['apikey']})
+        self.session.headers.update({'x-apikey': SETTINGS['apikey']})
         self.addCleanup(self.close_session)
 
     def close_session(self):
@@ -78,7 +78,7 @@ class Base(unittest.TestCase):
         try:
             return self._root
         except AttributeError:
-            response = self.session.get(CONFIG['root_url'])
+            response = self.session.get(SETTINGS['root_url'])
             self.assertEqual(response.status_code, http.client.OK)
             self._root = self.check_schema(response)
             return self._root
@@ -91,8 +91,8 @@ class Base(unittest.TestCase):
         self.assertEqual(response.status_code, http.client.OK)
         url = response.links['schema']['url']
         # Change to the local schema, rather than the default remote global.
-        if CONFIG['base_schema']:
-            b = urllib.parse.urlparse(CONFIG['base_url'])
+        if SETTINGS['base_schema']:
+            b = urllib.parse.urlparse(SETTINGS['base_url'])
             s = urllib.parse.urlparse(url)
             s = s._replace(scheme=b.scheme, netloc=b.netloc)
             url = s.geturl()
@@ -118,7 +118,7 @@ class Base(unittest.TestCase):
         dbops = self.root['operations']['database']
         self.assertTrue('variables' in dbops['create'])
         self.assertTrue('dbname' in dbops['create']['variables'])
-        url = dbops['create']['href'].format(dbname=CONFIG['dbname'])
+        url = dbops['create']['href'].format(dbname=SETTINGS['dbname'])
         response = self.session.put(url)
         self.assertEqual(response.status_code, http.client.OK)
         self.db_url = response.url
@@ -128,7 +128,7 @@ class Base(unittest.TestCase):
     def upload_file(self):
         "Create a local Sqlite3 file and upload it."
         # Create the database in a local file.
-        cnx = sqlite3.connect(CONFIG['filename'])
+        cnx = sqlite3.connect(SETTINGS['filename'])
         self.addCleanup(self.cleanup)
         # Create a table in the database.
         cnx.execute("CREATE TABLE t1 ("
@@ -148,9 +148,9 @@ class Base(unittest.TestCase):
         cnx.close()
         # Upload the database file.
         dbops = self.root['operations']['database']
-        url = dbops['create']['href'].format(dbname=CONFIG['dbname'])
+        url = dbops['create']['href'].format(dbname=SETTINGS['dbname'])
         headers = {'Content-Type': 'application/x-sqlite3'}
-        with open(CONFIG['filename'], 'rb') as infile:
+        with open(SETTINGS['filename'], 'rb') as infile:
             response = self.session.put(url, data=infile, headers=headers)
             self.assertEqual(response.status_code, http.client.OK)
             self.db_url = response.url
@@ -158,7 +158,7 @@ class Base(unittest.TestCase):
 
     def cleanup(self):
         try:
-            os.remove(CONFIG['filename'])
+            os.remove(SETTINGS['filename'])
         except OSError:
             pass
         try:
