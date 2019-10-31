@@ -1,6 +1,5 @@
 "User profile and login/logout HTMl endpoints."
 
-# import functools
 import http.client
 import json
 import re
@@ -14,28 +13,6 @@ import dbshare.system
 
 from . import constants
 from . import utils
-
-
-# def login_required(f):
-#     "Decorator for checking if logged in. Send to login page if not."
-#     @functools.wraps(f)
-#     def wrap(*args, **kwargs):
-#         if not flask.g.current_user:
-#             url = flask.url_for('user.login', next=flask.request.base_url)
-#             return flask.redirect(url)
-#         return f(*args, **kwargs)
-#     return wrap
-
-# def admin_required(f):
-#     """Decorator for checking if logged in and 'admin' role.
-#     Otherwise return status 401 Unauthorized.
-#     """
-#     @functools.wraps(f)
-#     def wrap(*args, **kwargs):
-#         if not flask.g.is_admin:
-#             flask.abort(http.client.UNAUTHORIZED)
-#         return f(*args, **kwargs)
-#     return wrap
 
 
 blueprint = flask.Blueprint('user', __name__)
@@ -80,7 +57,7 @@ def do_login(username, password):
 @blueprint.route('/logout', methods=['POST'])
 def logout():
     "Logout from the user account."
-    del flask.session['username']
+    flask.session.pop('username', None)
     return flask.redirect(flask.url_for('home'))
 
 @blueprint.route('/register', methods=['GET', 'POST'])

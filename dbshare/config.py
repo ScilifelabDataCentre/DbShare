@@ -22,7 +22,7 @@ DEFAULT_CONFIG = dict(
     HOST_URL = None,
     SECRET_KEY = None,
     SALT_LENGTH = 12,
-    JSONIFY_AS_ASCII = False,
+    JSON_AS_ASCII = False,
     JSON_SORT_KEYS = False,
     MIN_PASSWORD_LENGTH = 6,
     PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # in seconds; 1 week
@@ -60,8 +60,6 @@ DEFAULT_CONFIG = dict(
                                             'char': '|'},
                            'colon': {'label': "colon ':'", 'char': ':'}},
     MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
-    VEGA_DEFAULT_WIDTH = 400,
-    VEGA_DEFAULT_HEIGHT = 400,
     VEGA_LITE_DEFAULT_WIDTH = 400,
     VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
