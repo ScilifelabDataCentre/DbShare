@@ -1,4 +1,4 @@
-"Base class for tests."
+"Base class for tests using unittest."
 
 import argparse
 import http.client

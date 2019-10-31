@@ -1,4 +1,4 @@
-# Tutorial: API usage
+# Tutorial: Using the API
 
 The API can be used to access and edit databases and their data.
 

@@ -1,4 +1,4 @@
-"Run all tests."
+"Run all tests (unittest)."
 
 from root import Root
 from user import User

@@ -15,43 +15,33 @@
       </div>
       <div class="card-body">
         {% if db['tables'] %}
-        <table class="table table-sm table-borderless">
-          <tbody>
-            {% for table in utils.sorted_schema(db['tables'].values()) %}
-            <tr>
-	      <td>
-		<strong title="{{ table['title'] or '' }}">{{ table['name'] }}</strong>
-	      </td>
-              <td>
-		<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
-		  {{ table['nrows'] | informative }} rows</a>
-              </td>
-              <td>
-                <a href="{{ url_for('table.schema', dbname=db['name'], tablename=table['name']) }}">
-                  schema</a>
-              </td>
-            </tr>
-            {% if charts.get(table['name']) %}
-            <tr>
-              <td class="pt-0"></td>
-              <td colspan="2" class="pt-0">
-                {% for c in charts[table['name']] %}
-                <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
-                   title="{{ c['spec']['title'] }}"
-                   class="text-info">
-                  {{ c['name'] }}
-                </a>
-                <br>
-                {% endfor %}
-              </td>
-            </tr>
-            {% endif %} {# if charts #}
-            {% endfor %} {# for table in #}
-          </tbody>
-        </table>
+        {% for table in utils.sorted_schema(db['tables'].values()) %}
+        <div class="row">
+	  <div class="col-md-6">
+	    <strong title="{{ table['title'] or '' }}">{{ table['name'] }}</strong>
+          </div>
+          <div class="col-md-3">
+	    <a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}">
+	      {{ table['nrows'] | informative }} rows</a>
+          </div>
+          <div class="col-md-3">
+            <a href="{{ url_for('table.schema', dbname=db['name'], tablename=table['name']) }}">
+              schema</a>
+          </div>
+        </div>
+        <div class="row pb-2">
+          <div class="col-md-11 offset-md-1">
+            {% for c in charts[table['name']] %}
+            <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
+               title="{{ c['spec']['title'] }}"
+               class="text-info pr-3">{{ c['name'] }}</a>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %} {# for table in #}
         {% else %}
         <em>none</em>
-        {% endif %}
+        {% endif %} {# if db['tables'] #}
       </div>
     </div>
   </div>
@@ -62,43 +52,33 @@
       </div>
       <div class="card-body">
         {% if db['views'] %}
-        <table class="table table-sm table-borderless">
-          <tbody>
-            {% for view in utils.sorted_schema(db['views'].values()) %}
-            <tr>
-	      <td>
-		<strong title="{{ view['title'] or '' }}">{{ view['name'] }}</strong>
-	      </td>
-              <td>
-		<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
-		{{ view['nrows'] | informative }} rows</a>
-              </td>
-              <td>
-                <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">
-                  schema</a>
-              </td>
-	    </tr>
-            {% if charts.get(view['name']) %}
-            <tr>
-              <td class="pt-0"></td>
-              <td colspan="2" class="pt-0">
-                {% for c in charts[view['name']] %}
-                <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
-                   title="{{ c['spec']['title'] }}"
-                   class="text-info">
-                  {{ c['name'] }}
-                </a>
-                <br>
-                {% endfor %}
-              </td>
-            </tr>
-            {% endif %} {# if charts #}
-            {% endfor %} {# for view in #}
-          </tbody>
-        </table>
-        {% else %}
-        <em>none</em>
-        {% endif %}
+        {% for view in utils.sorted_schema(db['views'].values()) %}
+        <div class="row">
+	  <div class="col-md-6">
+	    <strong title="{{ view['title'] or '' }}">{{ view['name'] }}</strong>
+          </div>
+          <div class="col-md-3">
+	    <a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}">
+	      {{ view['nrows'] | informative }} rows</a>
+          </div>
+          <div class="col-md-3">
+            <a href="{{ url_for('view.schema', dbname=db['name'], viewname=view['name'])}}">
+              schema</a>
+          </div>
+	</div>
+        <div class="row pb-2">
+          <div class="col-md-11 offset-md-1">
+            {% for c in charts[view['name']] %}
+            <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
+               title="{{ c['spec']['title'] }}"
+               class="text-info pr-3">{{ c['name'] }}</a>
+            {% endfor %}
+          </div>
+          {% endfor %} {# for view in #}
+          {% else %}
+          <em>none</em>
+          {% endif %} {# if db['views'] #}
+        </div>
       </div>
     </div>
   </div>
