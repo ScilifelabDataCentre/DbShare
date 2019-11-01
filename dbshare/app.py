@@ -1,10 +1,6 @@
 "DbShare web app."
 
-import json
-import time
-
 import flask
-import flask_mail
 
 import dbshare
 import dbshare.about
@@ -28,13 +24,13 @@ import dbshare.api.user
 import dbshare.api.users
 import dbshare.api.view
 import dbshare.api.chart
-
 from dbshare import constants
 from dbshare import utils
 
-app = flask.Flask('dbshare')
 
-# Add URL map converters
+app = flask.Flask(__name__)
+
+# Add URL map converters.
 app.url_map.converters['name'] = utils.NameConverter
 app.url_map.converters['nameext'] = utils.NameExtConverter
 
@@ -114,6 +110,6 @@ app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
 
 
-# This code is used only during testing.
+# This code is used only during development.
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

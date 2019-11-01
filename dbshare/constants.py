@@ -10,6 +10,7 @@ import dbshare
 
 
 VERSION = dbshare.__version__
+SOURCE_URL = 'https://github.com/pekrau/DbShare'
 
 ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 

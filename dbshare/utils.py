@@ -21,7 +21,7 @@ import jsonschema
 import markdown
 import werkzeug.routing
 
-from dbshare.lexer import Lexer
+import dbshare.lexer
 from dbshare import constants
 
 
@@ -29,7 +29,7 @@ from dbshare import constants
 mail = flask_mail.Mail()
 
 # Global instance of SQL lexer.
-lexer = Lexer([
+lexer = dbshare.lexer.Lexer([
     {'type': 'RESERVED',
      'regexp': r"(?i)SELECT|DISTINCT|ALL|FROM|AS|WHERE|ORDER|BY|AND|OR|NOT|"
                r"LIMIT|CREATE|VIEW",
