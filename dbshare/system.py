@@ -104,7 +104,7 @@ def get_cursor():
 def log_access(response):
     "Add log entry for an access after response has been prepared."
     # Skip if logging turned off.
-    if not flask.current_app.config['ACCESS_LOGGING']:
+    if not flask.current_app.config['LOG_ACCESS']:
         return response
     # Skip if access to '/static*'.
     if flask.request.path.startswith('/static'):
