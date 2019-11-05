@@ -38,7 +38,7 @@
 {% if has_write_access %}
 <div class="mt-2">
   <form action="{{ url_for('.edit', dbname=db['name'], chartname=chart['name']) }}">
-    <button type="submit" class="btn btn-primary btn-block"
+    <button type="submit" class="btn btn-info btn-block"
 	    data-toggle="tooltip" data-placement="left"
 	    title="Edit the Vega-Lite specification for this chart.">
       Edit</button>

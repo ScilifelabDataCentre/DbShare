@@ -9,6 +9,7 @@ import json
 import os.path
 import re
 import sqlite3
+import string
 import threading
 import time
 import urllib.parse
@@ -166,7 +167,7 @@ def name_cleaned(name):
     chars = list(name.strip())
     chars.reverse()
     while chars:
-        if chars[-1] in constants.string.ascii_letters:
+        if chars[-1] in string.ascii_letters:
             chars.reverse()
             break
         chars.pop()

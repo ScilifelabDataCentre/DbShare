@@ -810,7 +810,6 @@ class DbContext:
         Raises ValueError if there is a problem with the input schema data.
         Raises SystemError if the query is interrupted by time-out.
         """
-        utils.json_validate(schema, dbshare.schema.table.create)
         if not constants.NAME_RX.match(schema['name']):
             raise ValueError('invalid table name')
         if utils.name_in_nocase(schema['name'], self.db['tables']):
@@ -824,10 +823,16 @@ class DbContext:
             if not schema.get('description'):
                 schema['description'] = sql
             sql = 'PRAGMA table_info("%s")' % schema['name']
-            cursor = self.dbcnx.execute(sql)
-            schema['columns'] = [{'name': row[1], 'type': row[2]} 
-                                 for row in cursor]
+            schema['columns'] = []
+            for row in self.dbcnx.execute(sql):
+                column = {'name': row[1]}
+                if row[2] == 'INT':
+                    column['type'] = constants.INTEGER
+                else:
+                    column['type'] = row[2]
+                schema['columns'].append(column)
         elif create:
+            utils.json_validate(schema, dbshare.schema.table.create)
             sql = get_sql_create_table(schema)
             self.dbcnx.execute(sql)
         with self.dbcnx:
