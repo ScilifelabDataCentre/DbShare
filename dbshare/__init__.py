@@ -67,8 +67,7 @@ class Constants:
     TAR_MIMETYPE     = 'application/x-tar'
     XLSX_MIMETYPE    = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    # JSON schema
-    SCHEMA_BASE_URL = 'https://dbshare.scilifelab.se/api/schema'
+    # Misc
     JSON_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'
 
     def __setattr__(self, key, value):
