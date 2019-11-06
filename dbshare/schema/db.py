@@ -5,7 +5,7 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + '/db',
+    '$id': '/db',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Database API JSON schema.',
     'definitions': {
@@ -95,7 +95,7 @@ schema = {
 }
 
 edit = {
-    '$id': constants.SCHEMA_BASE_URL + '/db/edit',
+    '$id': '/db/edit',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Database metadata editing API JSON schema.',
     'type': 'object',

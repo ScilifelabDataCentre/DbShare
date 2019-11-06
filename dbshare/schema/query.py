@@ -35,13 +35,13 @@ query = {
 }
 
 input = {
-    '$id': constants.SCHEMA_BASE_URL + '/query/input',
+    '$id': '/query/input',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Query input API JSON schema.'}
 input.update(query)
 
 output = {
-    '$id': constants.SCHEMA_BASE_URL + '/query/output',
+    '$id': '/query/output',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Query output API JSON schema.',
     'type': 'object',

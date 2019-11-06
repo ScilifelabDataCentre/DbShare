@@ -5,7 +5,7 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + '/user',
+    '$id': '/user',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'User API JSON schema.',
     'definitions': {'link': definitions.link},

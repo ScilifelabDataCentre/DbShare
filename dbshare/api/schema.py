@@ -12,44 +12,6 @@ import dbshare.schema.query
 import dbshare.schema.chart
 import dbshare.schema.user
 import dbshare.schema.users
-from dbshare import constants
-
-schemas = {
-    'root': {'href':  dbshare.schema.root.schema['$id'],
-             'title': dbshare.schema.root.schema['title']},
-    'dbs': {'href':  dbshare.schema.dbs.schema['$id'],
-            'title': dbshare.schema.dbs.schema['title']},
-    'db': {'href':  dbshare.schema.db.schema['$id'],
-           'title': dbshare.schema.db.schema['title']},
-    'db/edit': {'href':  dbshare.schema.db.edit['$id'],
-                'title': dbshare.schema.db.edit['title']},
-    'table': {'href':  dbshare.schema.table.schema['$id'],
-              'title': dbshare.schema.table.schema['title']},
-    'table/statistics': {'href':  dbshare.schema.table.statistics['$id'],
-                         'title': dbshare.schema.table.statistics['title']},
-    'table/create': {'href':  dbshare.schema.table.create['$id'],
-                     'title': dbshare.schema.table.create['title']},
-    'table/input': {'href':  dbshare.schema.table.input['$id'],
-                    'title': dbshare.schema.table.input['title']},
-    'view': {'href':  dbshare.schema.view.schema['$id'],
-             'title': dbshare.schema.view.schema['title']},
-    'view/create': {'href':  dbshare.schema.view.create['$id'],
-                     'title': dbshare.schema.view.create['title']},
-    'rows': {'href':  dbshare.schema.rows.schema['$id'],
-             'title': dbshare.schema.rows.schema['title']},
-    'query/input': {'href':  dbshare.schema.query.input['$id'],
-                    'title': dbshare.schema.query.input['title']},
-    'query/output': {'href':  dbshare.schema.query.output['$id'],
-                     'title': dbshare.schema.query.output['title']},
-    'chart': {'href':  dbshare.schema.chart.schema['$id'],
-              'title': dbshare.schema.chart.schema['title']},
-    'chart/template': {'href':  dbshare.schema.chart.template_schema['$id'],
-                       'title': dbshare.schema.chart.template_schema['title']},
-    'user': {'href':  dbshare.schema.user.schema['$id'],
-             'title': dbshare.schema.user.schema['title']},
-    'users': {'href':  dbshare.schema.users.schema['$id'],
-              'title': dbshare.schema.users.schema['title']},
-}
 
 
 blueprint = flask.Blueprint('api_schema', __name__)
@@ -58,12 +20,47 @@ blueprint = flask.Blueprint('api_schema', __name__)
 def schema():
     "Map of available JSON schemas."
     return flask.jsonify({
-        '$id': constants.SCHEMA_BASE_URL.rstrip('/'),
+        '$id': flask.request.url,
         'title': schema.__doc__,
-        'schemas': schemas
+        'schemas': {
+            'root': {'href':  dbshare.schema.root.schema['$id'],
+                     'title': dbshare.schema.root.schema['title']},
+            'dbs': {'href':  dbshare.schema.dbs.schema['$id'],
+                    'title': dbshare.schema.dbs.schema['title']},
+            'db': {'href':  dbshare.schema.db.schema['$id'],
+                   'title': dbshare.schema.db.schema['title']},
+            'db/edit': {'href':  dbshare.schema.db.edit['$id'],
+                        'title': dbshare.schema.db.edit['title']},
+            'table': {'href':  dbshare.schema.table.schema['$id'],
+                      'title': dbshare.schema.table.schema['title']},
+            'table/statistics': {'href':  dbshare.schema.table.statistics['$id'],
+                                 'title': dbshare.schema.table.statistics['title']},
+            'table/create': {'href':  dbshare.schema.table.create['$id'],
+                             'title': dbshare.schema.table.create['title']},
+            'table/input': {'href':  dbshare.schema.table.input['$id'],
+                            'title': dbshare.schema.table.input['title']},
+            'view': {'href':  dbshare.schema.view.schema['$id'],
+                     'title': dbshare.schema.view.schema['title']},
+            'view/create': {'href':  dbshare.schema.view.create['$id'],
+                            'title': dbshare.schema.view.create['title']},
+            'rows': {'href':  dbshare.schema.rows.schema['$id'],
+                     'title': dbshare.schema.rows.schema['title']},
+            'query/input': {'href':  dbshare.schema.query.input['$id'],
+                            'title': dbshare.schema.query.input['title']},
+            'query/output': {'href':  dbshare.schema.query.output['$id'],
+                             'title': dbshare.schema.query.output['title']},
+            'chart': {'href':  dbshare.schema.chart.schema['$id'],
+                      'title': dbshare.schema.chart.schema['title']},
+            'chart/template': {'href':  dbshare.schema.chart.template_schema['$id'],
+                               'title': dbshare.schema.chart.template_schema['title']},
+            'user': {'href':  dbshare.schema.user.schema['$id'],
+                     'title': dbshare.schema.user.schema['title']},
+            'users': {'href':  dbshare.schema.users.schema['$id'],
+                      'title': dbshare.schema.users.schema['title']},
+        }
     })
 
-@blueprint.route('/root')
+@blueprint.route('root')
 def root():
     "JSON schema for root API."
     return flask.jsonify(dbshare.schema.root.schema)

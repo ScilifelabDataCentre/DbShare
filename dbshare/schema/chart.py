@@ -5,7 +5,7 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + '/chart',
+    '$id': '/chart',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Chart API JSON schema.',
     'definitions': {'link': definitions.link},
@@ -28,7 +28,7 @@ schema = {
 }
 
 template_schema = {
-    '$id': constants.SCHEMA_BASE_URL + '/chart/template',
+    '$id': '/chart/template',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Chart template API JSON schema.',
     'type': 'object',

@@ -9,6 +9,7 @@ import dbshare.db
 import dbshare.dbs
 import dbshare.chart
 import dbshare.query
+import dbshare.schema
 import dbshare.site
 import dbshare.system
 import dbshare.table
@@ -46,14 +47,10 @@ app.add_template_filter(utils.mode)
 # Get the configuration.
 dbshare.config.init(app)
 
-# Init the system database.
+# Initialize the subsystems.
 dbshare.system.init(app)
-
-# Init the mail handler.
-utils.mail.init_app(app)
-
-# Init the chart templates.
 dbshare.chart.init(app)
+utils.mail.init_app(app)
 
 @app.context_processor
 def setup_template_context():
@@ -65,6 +62,11 @@ def setup_template_context():
                 len=len,
                 range=range,
                 round=round)
+
+@app.before_first_request
+def set_schema_base_url():
+    "Must be done after URL routes have been defined."
+    dbshare.schema.set_base_url(utils.url_for('api_schema.schema'))
 
 @app.before_request
 def prepare():

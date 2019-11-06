@@ -237,9 +237,10 @@ def jsonify(result, schema=None):
     Optionally add a header Link to the schema given by its URL path."""
     response = flask.jsonify(result)
     if schema:
-        response.headers.add('Link',
-                             f'<{constants.SCHEMA_BASE_URL}{schema}>',
-                             rel='schema')
+        response.headers.add(
+            'Link',
+            f"<{flask.current_app.config['SCHEMA_BASE_URL']}{schema}>",
+            rel='schema')
     return response
 
 def http_GET():

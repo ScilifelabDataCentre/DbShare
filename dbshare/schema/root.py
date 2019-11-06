@@ -5,7 +5,7 @@ from .. import constants
 
 
 schema = {
-    '$id': constants.SCHEMA_BASE_URL + '/root',
+    '$id': '/root',             # To be modified at run time.
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'API root JSON schema.',
     'definitions': {

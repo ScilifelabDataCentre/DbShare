@@ -13,6 +13,7 @@ blueprint = flask.Blueprint('api', __name__)
 @blueprint.route('')
 def root():
     "API root resource; links to other API resources."
+    schema_base_url = flask.current_app.config['SCHEMA_BASE_URL']
     result = {'title': 'DbShare API', 
               'version': dbshare.__version__,
               'databases': {
@@ -24,7 +25,7 @@ def root():
             'href': utils.url_for('api_dbs.owner',
                                   username=flask.g.current_user['username'])
         }
-    result['schema'] = {'href': constants.SCHEMA_BASE_URL}
+    result['schema'] = {'href': schema_base_url}
     if flask.g.is_admin:
         result['databases']['all'] = {
             'href': utils.url_for('api_dbs.all')
@@ -47,13 +48,13 @@ def root():
                 'input' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/query/input'
+                        'href': schema_base_url + '/query/input'
                     }
                 },
                 'output' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/query/output'
+                        'href': schema_base_url + '/query/output'
                     }
                 }
             }
@@ -79,7 +80,7 @@ def root():
                 'input' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/db/edit'
+                        'href': schema_base_url + '/db/edit'
                     }
                 }
             },
@@ -120,7 +121,7 @@ def root():
                 'input' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/table/create'
+                        'href': schema_base_url + '/table/create'
                     }
                 }
             },
@@ -142,10 +143,11 @@ def root():
                 },
                 'method': 'POST',
                 'input' : [
-                    {'content-type': constants.JSON_MIMETYPE,
-                     'schema': {
-                         'href': constants.SCHEMA_BASE_URL + '/table/input'
-                     }
+                    {
+                        'content-type': constants.JSON_MIMETYPE,
+                        'schema': {
+                            'href': schema_base_url + '/table/input'
+                        }
                     },
                     {'content-type': constants.CSV_MIMETYPE}
                 ]
@@ -182,7 +184,7 @@ def root():
                 'input' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/view/create'
+                        'href': schema_base_url + '/view/create'
                     }
                 }
             },
@@ -208,7 +210,7 @@ def root():
                 'input' : {
                     'content-type': constants.JSON_MIMETYPE,
                     'schema': {
-                        'href': constants.SCHEMA_BASE_URL + '/chart/create' # XXX
+                        'href': schema_base_url + '/chart/create' # XXX
                     }
                 }
             },

@@ -32,7 +32,6 @@ def chart(dbname, chartname):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         import json
-        print(json.dumps(utils.get_json(**chart), indent=2))
         return utils.jsonify(utils.get_json(**chart), schema='/chart')
 
     elif utils.http_PUT():
