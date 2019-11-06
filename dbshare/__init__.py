@@ -8,11 +8,12 @@ import os.path
 import re
 import string
 
-__version__ = '1.8.5'
+__version__ = '1.8.6'
 
 class Constants:
-    VERSION    = __version__
-    SOURCE_URL = 'https://github.com/pekrau/DbShare'
+    VERSION     = __version__
+    SOURCE_URL  = 'https://github.com/pekrau/DbShare'
+    SOURCE_NAME = 'DbShare'
 
     ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
