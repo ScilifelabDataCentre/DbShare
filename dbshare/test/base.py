@@ -20,7 +20,6 @@ JSON_MIMETYPE    = 'application/json'
 
 DEFAULT_SETTINGS = {
     'base_url': 'http://127.0.0.1:5000', # DbShare server base url.
-    'base_schema': None,        # Use schema from server at base url.
     'username': None,           # Needs to be set! Must have admin privileges.
     'apikey': None,             # Needs to be set! For the above user.
     'filename': '/tmp/test.sqlite3', # Sqlite3 file
@@ -90,12 +89,6 @@ class Base(unittest.TestCase):
         """
         self.assertEqual(response.status_code, http.client.OK)
         url = response.links['schema']['url']
-        # Change to the local schema, rather than the default remote global.
-        if SETTINGS['base_schema']:
-            b = urllib.parse.urlparse(SETTINGS['base_url'])
-            s = urllib.parse.urlparse(url)
-            s = s._replace(scheme=b.scheme, netloc=b.netloc)
-            url = s.geturl()
         try:
             schema = self.schemas[url]
         except KeyError:
