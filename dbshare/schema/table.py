@@ -54,7 +54,7 @@ indexes = {
 
 schema = {
     '$id': constants.SCHEMA_BASE_URL + '/table',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Table API JSON schema.',
     'definitions': {'link': definitions.link},
     'type': 'object',
@@ -90,7 +90,7 @@ schema = {
 
 statistics = {
     '$id': constants.SCHEMA_BASE_URL + '/table/statistics',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Table statistics API JSON schema.',
     'definitions': {'link': definitions.link},
     'type': 'object',
@@ -119,7 +119,7 @@ statistics = {
 
 create = {
     '$id': constants.SCHEMA_BASE_URL + '/table/create',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Table creation API JSON schema.',
     'type': 'object',
     'properties': {
@@ -134,7 +134,7 @@ create = {
 
 input = {
     '$id': constants.SCHEMA_BASE_URL + '/table/input',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'Table data input API JSON schema.',
     'type': 'object',
     'properties': {

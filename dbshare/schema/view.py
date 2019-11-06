@@ -6,7 +6,7 @@ from .. import constants
 
 schema = {
     '$id': constants.SCHEMA_BASE_URL + '/view',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'View API JSON schema.',
     'definitions': {'link': definitions.link},
     'type': 'object',
@@ -62,7 +62,7 @@ schema = {
 
 create = {
     '$id': constants.SCHEMA_BASE_URL + '/view/create',
-    '$schema': constants.SCHEMA_SCHEMA_URL,
+    '$schema': constants.JSON_SCHEMA_URL,
     'title': 'View creation API JSON schema.',
     'type': 'object',
     'properties': {

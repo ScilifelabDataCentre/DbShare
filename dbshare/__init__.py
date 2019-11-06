@@ -69,14 +69,14 @@ class Constants:
 
     # JSON schema
     SCHEMA_BASE_URL = 'https://dbshare.scilifelab.se/api/schema'
-    SCHEMA_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'
+    JSON_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'
 
     def __setattr__(self, key, value):
         raise ValueError('cannot set constant')
 
 
 # Read in JSON Schema for Vega-Lite from file.
-with open(os.path.join(Constants.ROOT_DIRPATH,'schema/vega-lite-v3.json')) as f:
+with open(os.path.join(Constants.ROOT_DIRPATH,'static/vega-lite-v3.json')) as f:
     Constants.VEGA_LITE_SCHEMA = json.load(f)
 
 constants = Constants()
