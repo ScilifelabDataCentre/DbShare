@@ -155,7 +155,7 @@
       <div class="row">
         <div class="col-md-4">
           {% if config['HOST_URL'] %}
-          <a href="{{ config['HOST_URL'] }}"
+          <a href="{{ config['HOST_URL'] }}">
             {% if config['HOST_LOGO'] %}
             <img src="{{ url_for('site.static',filename=config['HOST_LOGO']) }}"
                  title="{{ config['HOST_NAME'] or '' }}">
