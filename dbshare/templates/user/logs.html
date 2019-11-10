@@ -31,7 +31,7 @@
 
 {% block actions %}
 <div>
-  <a href="{{ url_for('.profile', username=user['username']) }}"
+  <a href="{{ url_for('.display', username=user['username']) }}"
      role="button" class="btn btn-dark btn-block">Back</a>
 </div>
 {% endblock %}

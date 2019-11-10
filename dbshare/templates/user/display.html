@@ -90,7 +90,7 @@
 {% endif %} {# if g.current_user... #}
 {% if deletable %}
 <div class="mt-2">
-  <form action="{{ url_for('.profile', username=user['username']) }}"
+  <form action="{{ url_for('.display', username=user['username']) }}"
 	method="POST">
     {{ csrf_token() }}
     <input type="hidden" name="_http_method" value="DELETE">

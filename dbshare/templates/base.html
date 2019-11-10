@@ -87,7 +87,7 @@
 
           <li class="mx-1">
             {% if g.current_user %}
-            <a href="{{ url_for('user.profile', username=g.current_user['username']) }}"
+            <a href="{{ url_for('user.display', username=g.current_user['username']) }}"
 	       role="button"
                class="btn btn-outline-secondary my-2 my-sm-0">
               User {{ g.current_user['username'] }}</a>

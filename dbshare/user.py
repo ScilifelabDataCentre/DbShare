@@ -1,4 +1,4 @@
-"User profile and login/logout HTMl endpoints."
+"User display and login/logout HTMl endpoints."
 
 import http.client
 import json
@@ -90,7 +90,7 @@ def register():
             site = flask.current_app.config['SITE_NAME']
             message = flask_mail.Message(f"{site} user account pending",
                                          recipients=emails)
-            url = utils.url_for('.profile', username=user['username'])
+            url = utils.url_for('.display', username=user['username'])
             message.body = f"To enable the user account, go to {url}"
             utils.mail.send(message)
             utils.flash_message('User account created; an email will be sent'
@@ -158,11 +158,11 @@ def password():
             do_login(username, password)
         return flask.redirect(flask.url_for('home'))
 
-@blueprint.route('/profile')
-@blueprint.route('/profile/<name:username>')
+@blueprint.route('/display')
+@blueprint.route('/display/<name:username>')
 @utils.login_required
-def profile(username=None):
-    "Display the profile of the given user."
+def display(username=None):
+    "Display the given user."
     if not username:
         username = flask.g.current_user['username']
     user = get_user(username=username)
@@ -174,18 +174,18 @@ def profile(username=None):
         return flask.redirect(flask.url_for('home'))
     ndbs, total_size = dbshare.db.get_usage(username)
     deletable = ndbs == 0
-    return flask.render_template('user/profile.html',
+    return flask.render_template('user/display.html',
                                  user=user,
                                  enable_disable=is_admin_and_not_self(user),
                                  ndbs=ndbs,
                                  total_size=total_size,
                                  deletable=deletable)
 
-@blueprint.route('/profile/<name:username>/edit',
+@blueprint.route('/display/<name:username>/edit',
                  methods=['GET', 'POST', 'DELETE'])
 @utils.login_required
 def edit(username):
-    "Edit the user profile. Or delete the user."
+    "Edit the user display. Or delete the user."
     user = get_user(username=username)
     if user is None:
         utils.flash_error('no such user')
@@ -216,13 +216,13 @@ def edit(username):
                         quota = -1
                 ctx.set_quota(quota)
         return flask.redirect(
-            flask.url_for('.profile', username=user['username']))
+            flask.url_for('.display', username=user['username']))
 
     elif utils.http_DELETE():
         ndbs, total_size = dbshare.db.get_usage(username)
         if ndbs != 0:
             utils.flash_error('cannot delete non-empty user account')
-            return flask.redirect(flask.url_for('.profile', username=username))
+            return flask.redirect(flask.url_for('.display', username=username))
         cnx = dbshare.system.get_cnx()
         with cnx:
             sql = "DELETE FROM users_logs WHERE username=?"
@@ -235,7 +235,7 @@ def edit(username):
         else:
             return flask.redirect(flask.url_for('home'))
 
-@blueprint.route('/profile/<name:username>/logs')
+@blueprint.route('/display/<name:username>/logs')
 @utils.login_required
 def logs(username):
     "Display the log records of the given user."
@@ -297,7 +297,7 @@ def enable(username):
         ctx.set_status(constants.ENABLED)
         ctx.set_password()
     send_password_code(user, 'enabled')
-    return flask.redirect(flask.url_for('.profile', username=username))
+    return flask.redirect(flask.url_for('.display', username=username))
 
 @blueprint.route('/disable/<name:username>', methods=['POST'])
 @utils.admin_required
@@ -309,7 +309,7 @@ def disable(username):
         return flask.redirect(flask.url_for('home'))
     with UserContext(user) as ctx:
         ctx.set_status(constants.DISABLED)
-    return flask.redirect(flask.url_for('.profile', username=username))
+    return flask.redirect(flask.url_for('.display', username=username))
 
 
 class UserContext:

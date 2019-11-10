@@ -241,7 +241,7 @@
   <div class="pt-1">
     Owner
     {% if g.current_user and g.current_user == db['owner'] or g.is_admin %}
-    <a href="{{ url_for('user.profile', username=db['owner'])}}">
+    <a href="{{ url_for('user.display', username=db['owner'])}}">
       {{ db['owner'] }}</a>
     {% else %}
     {{ db['owner'] }}

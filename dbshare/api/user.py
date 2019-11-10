@@ -1,4 +1,4 @@
-"User profile API endpoints."
+"User display API endpoints."
 
 import http.client
 
@@ -14,7 +14,7 @@ blueprint = flask.Blueprint('api_user', __name__)
 @blueprint.route('/<name:username>')
 @utils.login_required
 def user(username):
-    "Return the API JSON user profile."
+    "Return the API JSON user display."
     user = dbshare.user.get_user(username=username)
     if user is None:
         flask.abort(http.client.NOT_FOUND)
