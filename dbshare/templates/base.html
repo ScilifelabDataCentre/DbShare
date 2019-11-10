@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block head_title %}DbShare{% endblock %}</title>
+    {% if config['SITE_ICON'] %}
+    <link rel="icon" href="{{ url_for('site.static', filename=config['SITE_ICON']) }}">
+    {% else %}
     <link rel="icon" href="{{ url_for('static', filename='dbshare-32.png') }}">
-    {# bootstrap 4.3.1 #}
+    {% endif %}
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" 
           integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T"
           crossorigin="anonymous" 
@@ -21,10 +24,14 @@
     <nav class="navbar navbar-expand-md navbar-light"
          style="background-color: #e6e6e6;">
       <a class="navbar-brand" href="{{ url_for('home') }}">
-        <img src="{{ url_for('static', filename='dbshare-32.png') }}"
-             width="32" height="32" title="DbShare" alt="DbShare"
-             class="d-inline-block align-top">
-        DbShare</a>
+        <img width="32" height="32" class="d-inline-block align-top"
+	     {% if config['SITE_LOGO'] %}
+	     src="{{ url_for('site.static', filename=config['SITE_LOGO']) }}"
+	     {% else %}
+	     src="{{ url_for('static', filename='dbshare-32.png') }}"
+             {% endif %}
+	     title="{{ config['SITE_NAME'] }}" alt="{{ config['SITE_NAME'] }}">
+        {{ config['SITE_NAME'] }}</a>
       <button type="button" class="navbar-toggler navbar-toggler-right"
               data-toggle="collapse" data-target="#top_navbar"
               aria-controls="top_navbar" aria-expanded="false"
@@ -107,7 +114,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col-md-9 offset-md-1">
-          <h2 class="mt-2 mb-3">{% block body_title %}DbShare{% endblock %}</h2>
+          <h2 class="mt-2 mb-3">{% block body_title %}{{ config['SITE_NAME'] }}{% endblock %}</h2>
           {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
             <strong>Error:</strong> {{ msg }}
@@ -173,13 +180,16 @@
           {% endif %}
         </div>
         <div class="col-md-4 offset-md-4 text-right">
-          <a href="{{ constants.SOURCE_URL}}">{{ constants.SOURCE_NAME }}</a>
+          <a href="{{ constants.SOURCE_URL}}">
+            <img src="{{ url_for('static', filename='dbshare-32.png') }}"
+		 width="32" height="32">
+	    {{ constants.SOURCE_NAME }}
+	  </a>
 	  version {{ constants.VERSION}}
         </div>
       </div>
       {% endblock %}
     </div>
-    {# bootstrap 4.3.1 #}
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
             integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
             crossorigin="anonymous"></script>
@@ -189,10 +199,8 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-    {# datatables 1.10.18 #}
     <script src="https://cdn.datatables.net/1.10.18/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.10.18/js/dataTables.bootstrap4.min.js"></script>
-    {# localtime 0.9.1 (static) #}
     <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
     {% block javascript %}
     {% endblock %}
