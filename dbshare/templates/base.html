@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block head_title %}DbShare{% endblock %}</title>
+    <title>{% block head_title %}{{ config['SITE_NAME'] }}{% endblock %}</title>
     {% if config['SITE_ICON'] %}
     <link rel="icon" href="{{ url_for('site.static', filename=config['SITE_ICON']) }}">
     {% else %}
