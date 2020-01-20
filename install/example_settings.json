@@ -1,0 +1,19 @@
+{
+  "DEBUG": true,
+  "SECRET_KEY": "change this",
+  "SITE_STATIC_DIRPATH": "~/DbShare/site/static",
+  "SITE_NAME": "Organization DbShare",
+  "SITE_CHART_TEMPLATES_DIRPATH": "~/DbShare/site/chart_templates",
+  "HOST_LOGO": "logo.png",
+  "HOST_NAME": "Organiztion",
+  "HOST_URL": "https://www.home-org.xyz/",
+  "DATABASES_DIRPATH": "~/DbShare-data",
+  "CONTACT_EMAIL": "user@sorg.xyz",
+  "MAIL_SERVER": "smtp.gmail.com",
+  "MAIL_PORT": 587,
+  "MAIL_USE_TLS": true,
+  "MAIL_USERNAME": "user@sorg.xyz",
+  "MAIL_PASSWORD": "secret",
+  "MAIL_DEFAULT_SENDER": "User <user@sorg.xyz>",
+  "USER_ENABLE_EMAIL_WHITELIST": [".+@org.xyz"]
+}
