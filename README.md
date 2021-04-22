@@ -9,5 +9,5 @@ A demo site for the system can be viewed at
 [an overview](https://dbshare.scilifelab.se/about/doc/overview) of the
 features.
 
-See [https://github.com/pekrau/DbShare/tree/master/install](here) for
+See [here](https://github.com/pekrau/DbShare/tree/master/install) for
 installation notes.
