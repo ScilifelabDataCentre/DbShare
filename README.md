@@ -8,3 +8,6 @@ A demo site for the system can be viewed at
 [SciLifeLab](https://dbshare.scilifelab.se/). This site also provides
 [an overview](https://dbshare.scilifelab.se/about/doc/overview) of the
 features.
+
+See [https://github.com/pekrau/DbShare/tree/master/install](here) for
+installation notes.
