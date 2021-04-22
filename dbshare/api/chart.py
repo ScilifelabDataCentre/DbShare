@@ -3,15 +3,18 @@
 import http
 
 import flask
+import flask_cors
 import jsonschema
 
 import dbshare.db
 import dbshare.chart
-
-from .. import utils
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_chart', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/<name:dbname>/<name:chartname>',
                  methods=['GET', 'PUT', 'DELETE'])
@@ -31,8 +34,7 @@ def chart(dbname, chartname):
             chart = db['charts'][chartname]
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        import json
-        return utils.jsonify(utils.get_json(**chart), schema='/chart')
+        return utils.jsonify(utils.get_json(**chart), '/chart')
 
     elif utils.http_PUT():
         try:

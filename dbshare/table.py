@@ -110,7 +110,7 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
                 'nrows': schema['nrows'],
                 'data': [dict(zip(columns, row)) for row in cursor]
             }
-            return utils.jsonify(utils.get_json(**result), schema='/rows')
+            return utils.jsonify(utils.get_json(**result), '/rows')
 
         elif tablename.ext == 'csv':
             sql = f'SELECT {colnames} FROM "{tablename}"'

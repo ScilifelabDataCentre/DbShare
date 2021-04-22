@@ -205,7 +205,7 @@ def render(dbname, sourcename, templatename):
             flask.url_for('.select', dbname=dbname, sourcename=sourcename))
 
     if templatename.ext == 'json' or utils.accept_json():
-        return utils.jsonify(spec)
+        return flask.jsonify(spec)
 
     elif templatename.ext in (None, 'html'):
         json_url = utils.url_for('.render',

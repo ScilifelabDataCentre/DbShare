@@ -138,7 +138,7 @@ def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
                 'nrows': schema['nrows'],
                 'data': [dict(zip(columns, row)) for row in cursor]
             }
-            return utils.jsonify(utils.get_json(**result), schema='/rows')
+            return utils.jsonify(utils.get_json(**result), '/rows')
 
         elif viewname.ext == 'csv':
             writer = utils.CsvWriter(header=columns)

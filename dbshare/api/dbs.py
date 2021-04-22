@@ -3,16 +3,18 @@
 import http.client
 
 import flask
+import flask_cors
 
 import dbshare.dbs
 import dbshare.user
-
 import dbshare.api.db
-
-from .. import utils
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_dbs', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/public')
 def public():
@@ -21,7 +23,7 @@ def public():
         'title': 'Public databases',
         'databases': get_json(dbshare.dbs.get_dbs(public=True))
     }
-    return utils.jsonify(utils.get_json(**result), schema='/dbs')
+    return utils.jsonify(utils.get_json(**result), '/dbs')
 
 @blueprint.route('/all')
 @utils.admin_required
@@ -33,7 +35,7 @@ def all():
         'total_size': sum([db['size'] for db in dbs]),
         'databases': get_json(dbs)
     }
-    return utils.jsonify(utils.get_json(**result), schema='/dbs')
+    return utils.jsonify(utils.get_json(**result), '/dbs')
 
 @blueprint.route('/owner/<name:username>')
 @utils.login_required
@@ -48,7 +50,7 @@ def owner(username):
         'total_size': sum([db['size'] for db in dbs]),
         'databases': get_json(dbs)
     }
-    return utils.jsonify(utils.get_json(**result), schema='/dbs')
+    return utils.jsonify(utils.get_json(**result), '/dbs')
 
 def get_json(dbs):
     "Return JSON for the databases."

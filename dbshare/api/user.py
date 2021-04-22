@@ -3,13 +3,16 @@
 import http.client
 
 import flask
+import flask_cors
 
 import dbshare.user
-
-from .. import utils
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_user', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/<name:username>')
 @utils.login_required
@@ -26,7 +29,7 @@ def user(username):
     user['total_size'] = dbshare.db.get_usage(username)[1]
     user['databases'] = {'href': utils.url_for('api_dbs.owner',
                                                username=user['username'])}
-    return utils.jsonify(utils.get_json(**user), schema='/user')
+    return utils.jsonify(utils.get_json(**user), '/user')
 
 def get_json(username):
     "Get the JSON for a user or owner."

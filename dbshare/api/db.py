@@ -5,6 +5,7 @@ import io
 import sqlite3
 
 import flask
+import flask_cors
 import jsonschema
 
 import dbshare.db
@@ -13,11 +14,13 @@ import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.view
-
-from .. import constants
-from .. import utils
+from dbshare import constants
+from dbshare import utils
 
 blueprint = flask.Blueprint('api_db', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/<name:dbname>', methods=['GET', 'PUT', 'POST', 'DELETE'])
 def database(dbname):
@@ -34,7 +37,7 @@ def database(dbname):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         return utils.jsonify(utils.get_json(**get_json(db, complete=True)),
-                             schema='/db')
+                             '/db')
  
     elif utils.http_PUT():
         db = dbshare.db.get_db(dbname)
@@ -134,7 +137,7 @@ def query(dbname):
         'cpu_time': timer(),
         'data': [dict(zip(columns, row)) for row in rows]
     }
-    return utils.jsonify(utils.get_json(**result), schema='/query/output')
+    return utils.jsonify(utils.get_json(**result), '/query/output')
 
 @blueprint.route('/<name:dbname>/readonly', methods=['POST'])
 def readonly(dbname):

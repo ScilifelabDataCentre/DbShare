@@ -5,17 +5,20 @@ import http.client
 import sqlite3
 
 import flask
+import flask_cors
 import jsonschema
 
 import dbshare.db
 import dbshare.table
 import dbshare.schema.table
-
-from .. import constants
-from .. import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_table', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/<name:dbname>/<name:tablename>',
                  methods=['GET', 'PUT', 'DELETE'])
@@ -37,7 +40,7 @@ def table(dbname, tablename):
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        return utils.jsonify(utils.get_json(**result), schema='/table')
+        return utils.jsonify(utils.get_json(**result), '/table')
 
     elif utils.http_PUT():
         try:
@@ -87,7 +90,7 @@ def statistics(dbname, tablename):
     result = get_json(db, schema, complete=False)
     dbshare.table.compute_statistics(db, schema)
     result.update(schema)
-    return utils.jsonify(utils.get_json(**result), schema='/table/statistics')
+    return utils.jsonify(utils.get_json(**result), '/table/statistics')
 
 @blueprint.route('/<name:dbname>/<name:tablename>/insert', methods=['POST'])
 def insert(dbname, tablename):

@@ -3,15 +3,18 @@
 import http.client
 
 import flask
+import flask_cors
 import jsonschema
 
 import dbshare.db
-
-from .. import constants
-from .. import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_view', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/<name:dbname>/<name:viewname>',
                  methods=['GET', 'PUT', 'DELETE'])
@@ -33,7 +36,7 @@ def view(dbname, viewname):
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        return utils.jsonify(utils.get_json(**result), schema='/view')
+        return utils.jsonify(utils.get_json(**result), '/view')
 
     elif utils.http_PUT():
         try:

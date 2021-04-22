@@ -1,11 +1,12 @@
 "API root JSON schema."
 
-from . import definitions
-from .. import constants
+from dbshare import constants
+from dbshare.schema import definitions
 
 
 schema = {
-    '$id': '/root',             # To be modified at run time.
+    # Modified before first request by 'dbshare.schema.set_base_url'.
+    '$id': '/root',
     '$schema': constants.JSON_SCHEMA_URL,
     'title': 'API root JSON schema.',
     'definitions': {

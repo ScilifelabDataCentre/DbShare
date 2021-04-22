@@ -1,13 +1,17 @@
 "Root API endpoint."
 
 import flask
+import flask_cors
 
 import dbshare
 import dbshare.api.user
 from dbshare import constants
 from dbshare import utils
 
+
 blueprint = flask.Blueprint('api', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
 
 
 @blueprint.route('')
@@ -224,4 +228,4 @@ def root():
                 'method': 'DELETE'
             }
         }
-    return utils.jsonify(utils.get_json(**result), schema='/root')
+    return utils.jsonify(utils.get_json(**result), '/root')

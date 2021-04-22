@@ -232,15 +232,13 @@ def get_json(**items):
     result.update(items)
     return result
 
-def jsonify(result, schema=None):
-    """Return a Response object containing the JSON of 'result'.
-    Optionally add a header Link to the schema given by its URL path."""
+def jsonify(result, schema):
+    """Return a Response object containing the JSON of 'result',
+    adding a header Link to the schema given by its URL path.
+    """
     response = flask.jsonify(result)
-    if schema:
-        response.headers.add(
-            'Link',
-            f"<{flask.current_app.config['SCHEMA_BASE_URL']}{schema}>",
-            rel='schema')
+    link = f"<{flask.current_app.config['SCHEMA_BASE_URL']}{schema}>"
+    response.headers.add("Link", link, rel="schema")
     return response
 
 def http_GET():

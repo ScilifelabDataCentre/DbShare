@@ -3,13 +3,16 @@
 import http.client
 
 import flask
+import flask_cors
 
 import dbshare.system
-
-from .. import utils
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('api_users', __name__)
+
+flask_cors.CORS(blueprint, methods=["GET"])
+
 
 @blueprint.route('/all')
 @utils.admin_required
@@ -31,4 +34,4 @@ def all():
         'title': 'All user accounts.',
         'users': users
     }
-    return utils.jsonify(utils.get_json(**result), schema='/users')
+    return utils.jsonify(utils.get_json(**result), '/users')

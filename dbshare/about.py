@@ -56,7 +56,7 @@ def endpoints():
 def schema():
     "Page with links to all JSON schema for the API."
     return flask.render_template('about/schema.html',
-                                 schemas=dbshare.api.schema.schemas)
+                                 schemas=dbshare.api.schema.get_schemas())
 
 @blueprint.route('/software')
 def software():
