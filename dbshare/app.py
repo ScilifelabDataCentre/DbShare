@@ -90,6 +90,27 @@ def home():
     return flask.render_template('home.html',
                                  dbs=dbshare.dbs.get_dbs(public=True))
 
+@app.route("/status")
+def status():
+    "Return JSON for the current status and some counts for the database."
+    cursor = dbshare.system.get_cursor()
+    cursor.execute("SELECT COUNT(*) FROM dbs")
+    rows = list(cursor)
+    if rows:
+        n_dbs = rows[0][0]
+    else:
+        n_dbs = 0
+    cursor.execute("SELECT COUNT(*) FROM users")
+    rows = list(cursor)
+    if rows:
+        n_users = rows[0][0]
+    else:
+        n_users = 0
+    return dict(status="ok",
+                n_dbs=n_dbs,
+                n_users=n_users)
+
+
 # Set up the URL map.
 app.register_blueprint(dbshare.db.blueprint, url_prefix='/db')
 app.register_blueprint(dbshare.dbs.blueprint, url_prefix='/dbs')
