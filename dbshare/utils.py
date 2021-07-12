@@ -66,7 +66,7 @@ def admin_required(f):
     return wrap
 
 class NameConverter(werkzeug.routing.BaseConverter):
-    "URL route converter for a name."
+    "URL route converter for a name; simply check for valid identifier value."
     def to_python(self, value):
         if not constants.NAME_RX.match(value):
             raise werkzeug.routing.ValidationError

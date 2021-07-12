@@ -38,11 +38,11 @@
 
 {% block meta %}
 <div>
-  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.csv' }}"
+  <a href="{{ url_for('api_table.rows_csv', dbname=db['name'], tablename=schema['name']) }}"
      class="badge badge-pill badge-primary">CSV</a>
 </div>
 <div>
-  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) + '.json' }}"
+  <a href="{{ url_for('api_table.rows_json', dbname=db['name'], tablename=schema['name']) }}"
      class="badge badge-pill badge-primary">JSON</a>
 </div>
 {% endblock %} {# block meta #}

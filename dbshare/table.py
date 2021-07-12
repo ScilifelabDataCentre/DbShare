@@ -74,8 +74,8 @@ def create(dbname):
                                                 dbname=dbname,
                                                 tablename=schema['name']))
 
-@blueprint.route('/<name:dbname>/<nameext:tablename>')
-def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
+@blueprint.route('/<name:dbname>/<name:tablename>')
+def rows(dbname, tablename):
     "Display the rows in the table."
     try:
         db = dbshare.db.get_check_read(dbname)
@@ -84,72 +84,36 @@ def rows(dbname, tablename):  # NOTE: tablename is a NameExt instance!
         return flask.redirect(flask.url_for('home'))
     has_write_access = dbshare.db.has_write_access(db)
     try:
-        schema = db['tables'][str(tablename)]
+        schema = db['tables'][tablename]
     except KeyError:
         utils.flash_error('no such table')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
-        title = schema.get('title') or "Table {}".format(tablename)
         columns = [c['name'] for c in schema['columns']]
         dbcnx = dbshare.db.get_cnx(dbname)
         colnames = ','.join([f'"{c}"' for c in columns])
-
-        if tablename.ext == 'json' or utils.accept_json():
-            sql = f'SELECT {colnames} FROM "{tablename}"'
-            try:
-                cursor = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            result = {
-                'name': str(tablename),
-                'title': title,
-                'source': {'type': 'table',
-                           'href': utils.url_for('api_table.table',
-                                                 dbname=db['name'],
-                                                 tablename=str(tablename))},
-                'nrows': schema['nrows'],
-                'data': [dict(zip(columns, row)) for row in cursor]
-            }
-            return utils.jsonify(utils.get_json(**result), '/rows')
-
-        elif tablename.ext == 'csv':
-            sql = f'SELECT {colnames} FROM "{tablename}"'
-            writer = utils.CsvWriter(header=columns)
-            try:
-                cursor = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(cursor)
-            return flask.Response(writer.getvalue(),
-                                  mimetype=constants.CSV_MIMETYPE)
-
-        elif tablename.ext in (None, 'html'):
-            sql = f'SELECT rowid, {colnames} FROM "{tablename}"'
-            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-            if schema.get('nrows', 0) > limit:
-                sql += f" LIMIT {limit}"
-                utils.flash_message_limit(limit)
-            cursor = utils.execute_timeout(dbcnx, sql)
-            charts = [c for c in db['charts'].values()
-                      if c['source'] == str(tablename)]
-            updateable = bool([c for c in schema['columns']
-                               if c.get('primarykey')])
-            return flask.render_template('table/rows.html', 
-                                         db=db,
-                                         schema=schema,
-                                         title=title,
-                                         rows=cursor,
-                                         charts=charts,
-                                         updateable=updateable,
-                                         has_write_access=has_write_access)
-
-        else:
-            flask.abort(http.client.NOT_ACCEPTABLE)
-
+        sql = f'SELECT rowid, {colnames} FROM "{tablename}"'
+        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+        if schema.get('nrows', 0) > limit:
+            sql += f" LIMIT {limit}"
+            utils.flash_message_limit(limit)
+        cursor = utils.execute_timeout(dbcnx, sql)
     except (SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
         return flask.redirect(
-            flask.url_for('.schema', tablename=str(tablename)))
+            flask.url_for('.schema', tablename=tablename))
+    charts = [c for c in db['charts'].values()
+              if c['source'] == tablename]
+    updateable = bool([c for c in schema['columns']
+                       if c.get('primarykey')])
+    return flask.render_template('table/rows.html', 
+                                 db=db,
+                                 schema=schema,
+                                 title=schema.get('title') or "Table {}".format(tablename),
+                                 rows=cursor,
+                                 charts=charts,
+                                 updateable=updateable,
+                                 has_write_access=has_write_access)
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST', 'DELETE'])
@@ -827,7 +791,7 @@ def update_csv_rows(db, schema, csvfile, delimiter):
                     cursor = ctx.dbcnx.execute(sql, values+pkeys)
                     count += cursor.rowcount
     except sqlite3.Error as error:
-        raise ValueError("row number %s; %s" (rowpos+1, str(error)))
+        raise ValueError("row number %s; %s", (rowpos+1, str(error)))
     return (len(rows), count)
 
 def compute_statistics(db, schema):

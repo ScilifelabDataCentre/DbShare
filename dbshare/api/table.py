@@ -74,6 +74,70 @@ def table(dbname, tablename):
             utils.abort_json(http.client.BAD_REQUEST, error)
         return ('', http.client.NO_CONTENT)
 
+@blueprint.route('/<name:dbname>/<name:tablename>.csv')
+def rows_csv(dbname, tablename):
+    "Return the rows in CSV format."
+    try:
+        db = dbshare.db.get_check_read(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        dbcnx = dbshare.db.get_cnx(dbname)
+        columns = [c['name'] for c in schema['columns']]
+        colnames = ','.join([f'"{c}"' for c in columns])
+        sql = f'SELECT {colnames} FROM "{tablename}"'
+        try:
+            cursor = utils.execute_timeout(dbcnx, sql)
+        except SystemError:
+            flask.abort(http.client.REQUEST_TIMEOUT)
+    except sqlite3.Error:
+        flask.abort(http.client.INTERNAL_SERVER_ERROR)
+    writer = utils.CsvWriter(header=columns)
+    writer.write_rows(cursor)
+    return flask.Response(writer.getvalue(), mimetype=constants.CSV_MIMETYPE)
+
+@blueprint.route('/<name:dbname>/<name:tablename>.json')
+def rows_json(dbname, tablename):
+    "Return the rows in JSON format."
+    try:
+        db = dbshare.db.get_check_read(dbname)
+    except ValueError:
+        flask.abort(http.client.UNAUTHORIZED)
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        schema = db['tables'][tablename]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    try:
+        dbcnx = dbshare.db.get_cnx(dbname)
+        columns = [c['name'] for c in schema['columns']]
+        colnames = ','.join([f'"{c}"' for c in columns])
+        sql = f'SELECT {colnames} FROM "{tablename}"'
+        try:
+            cursor = utils.execute_timeout(dbcnx, sql)
+        except SystemError:
+            flask.abort(http.client.REQUEST_TIMEOUT)
+    except sqlite3.Error:
+        flask.abort(http.client.INTERNAL_SERVER_ERROR)
+    result = {
+        'name': tablename,
+        'title': schema.get('title') or "Table {}".format(tablename),
+        'source': {'type': 'table',
+                   'href': utils.url_for('api_table.table',
+                                         dbname=db['name'],
+                                         tablename=tablename)},
+        'nrows': schema['nrows'],
+        'data': [dict(zip(columns, row)) for row in cursor]
+    }
+    return utils.jsonify(utils.get_json(**result), '/rows')
+
 @blueprint.route('/<name:dbname>/<name:tablename>/statistics', methods=['GET'])
 def statistics(dbname, tablename):
     "GET: Return the schema for the table with statistics for the columns."
@@ -210,16 +274,17 @@ def empty(dbname, tablename):
 
 def get_json(db, table, complete=False, title=False):
     "Return JSON for the table."
-    rows_url = utils.url_for('table.rows',
-                             dbname=db['name'],
-                             tablename=table['name'])
     result = {'name': table['name']}
     if complete or title:
         result['title'] = table.get('title')
         result['description'] = table.get('description')
     result['nrows'] = table['nrows']
-    result['rows'] = {'href': rows_url + '.json'}
-    result['data'] = {'href': rows_url + '.csv',
+    result['rows'] = {'href': utils.url_for('api_table.rows_json',
+                                            dbname=db['name'],
+                                            tablename=table['name'])}
+    result['data'] = {'href': utils.url_for('api_table.rows_csv',
+                                            dbname=db['name'],
+                                            tablename=table['name']),
                       'content-type': constants.CSV_MIMETYPE,
                       'format': 'csv'}
     if complete:
@@ -234,7 +299,7 @@ def get_json(db, table, complete=False, title=False):
             i.pop('table')
         result['charts'] = []
         for chart in db['charts'].values():
-            if chart['schema'] != table['name']: continue
+            if chart['source'] != table['name']: continue
             url = utils.url_for('chart.display',
                                 dbname=db['name'],
                                 chartname=chart['name']) + '.json'

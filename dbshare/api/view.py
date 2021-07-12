@@ -86,7 +86,7 @@ def get_json(db, view, complete=False):
                                                     dbname=db['name'])}
         result['charts'] = []
         for chart in db['charts'].values():
-            if chart['schema'] != view['name']: continue
+            if chart['source'] != view['name']: continue
             url = utils.url_for('chart.display',
                                 dbname=db['name'],
                                 chartname=chart['name']) + '.json'
