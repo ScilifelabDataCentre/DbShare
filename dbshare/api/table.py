@@ -276,8 +276,8 @@ def get_json(db, table, complete=False, title=False):
     "Return JSON for the table."
     result = {'name': table['name']}
     if complete or title:
-        result['title'] = table.get('title')
         result['description'] = table.get('description')
+        result['title'] = table.get('title')
     result['nrows'] = table['nrows']
     result['rows'] = {'href': utils.url_for('api_table.rows_json',
                                             dbname=db['name'],

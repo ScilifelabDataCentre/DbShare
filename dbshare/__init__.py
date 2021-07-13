@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = '1.9.X'
+__version__ = '1.9.3'
 
 class Constants:
     VERSION     = __version__
@@ -17,11 +17,11 @@ class Constants:
     ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
 
     # Version numbers not obtainable programmatically.
-    BOOTSTRAP_VERSION        = '4.3.1'
-    JQUERY_VERSION           = '3.3.1'
+    BOOTSTRAP_VERSION        = '4.6.0'
+    JQUERY_VERSION           = '3.5.1'
     JQUERY_LOCALTIME_VERSION = '0.9.1'
     DPATH_VERSION            = '1.4.2'
-    DATATABLES_VERSION       = '1.10.18'
+    DATATABLES_VERSION       = '1.10.25'
     VEGA_VERSION             = '5'
     VEGA_LITE_VERSION        = '3'
 

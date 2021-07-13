@@ -102,86 +102,52 @@ def edit(dbname, viewname):
             utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
-@blueprint.route('/<name:dbname>/<nameext:viewname>')
-def rows(dbname, viewname):     # NOTE: viewname is a NameExt instance!
+@blueprint.route('/<name:dbname>/<name:viewname>')
+def rows(dbname, viewname):
     "Display rows in the view."
     try:
-        db = dbshare.db.get_check_read(dbname, nrows=[str(viewname)])
+        db = dbshare.db.get_check_read(dbname, nrows=[viewname])
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    has_write_access = dbshare.db.has_write_access(db)
     try:
-        schema = db['views'][str(viewname)]
+        schema = db['views'][viewname]
     except KeyError:
         utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     try:
-        title = schema.get('title') or "View {}".format(viewname)
         dbcnx = dbshare.db.get_cnx(dbname)
         columns = [c['name'] for c in schema['columns']]
         quoted_columns = [f'"{c}"' for c in columns]
         sql = 'SELECT %s FROM "%s"' % (','.join(quoted_columns), viewname)
-
-        if viewname.ext == 'json' or utils.accept_json():
-            try:
-                cursor = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            result = {
-                'name': str(viewname),
-                'title': title,
-                'source': {'type': 'view',
-                           'href': utils.url_for('api_view.view',
-                                                 dbname=db['name'],
-                                                 viewname=schema['name'])},
-                'nrows': schema['nrows'],
-                'data': [dict(zip(columns, row)) for row in cursor]
-            }
-            return utils.jsonify(utils.get_json(**result), '/rows')
-
-        elif viewname.ext == 'csv':
-            writer = utils.CsvWriter(header=columns)
-            try:
-                cursor = utils.execute_timeout(dbcnx, sql)
-            except SystemError:
-                flask.abort(http.client.REQUEST_TIMEOUT)
-            writer.write_rows(cursor)
-            return flask.Response(writer.getvalue(),
-                                  mimetype=constants.CSV_MIMETYPE)
-
-        elif viewname.ext in (None, 'html'):
-            limit = flask.current_app.config['MAX_NROWS_DISPLAY']
-            if schema['nrows'] is None:
-                utils.flash_error('too many rows to fetch; interrupted')
-                cursor = []     # Fake cursor
-            elif schema['nrows'] > limit:
-                utils.flash_message_limit(limit)
-                sql += f" LIMIT {limit}"
-                cursor = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT
-            else:
-                cursor = utils.execute_timeout(dbcnx, sql)
-            query = schema['query']
-            sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT
-            charts = [c for c in db['charts'].values()
-                      if c['source'] == str(viewname)]
-            return flask.render_template('view/rows.html', 
-                                         db=db,
-                                         schema=schema,
-                                         query=query,
-                                         sql=sql,
-                                         title=title,
-                                         rows=cursor,
-                                         charts=charts,
-                                         has_write_access=has_write_access)
-
+        limit = flask.current_app.config['MAX_NROWS_DISPLAY']
+        if schema['nrows'] is None:
+            utils.flash_error('too many rows to fetch; interrupted')
+            cursor = []     # Fake cursor
+        elif schema['nrows'] > limit:
+            utils.flash_message_limit(limit)
+            sql += f" LIMIT {limit}"
+            cursor = utils.execute_timeout(dbcnx, sql) # Maybe LIMIT
         else:
-            flask.abort(http.client.NOT_ACCEPTABLE)
-
+            cursor = utils.execute_timeout(dbcnx, sql)
     except (SystemError, sqlite3.Error) as error:
         utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.schema', viewname=str(viewname)))
+    query = schema['query']
+    sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT
+    charts = [c for c in db['charts'].values()
+              if c['source'] == str(viewname)]
+    return flask.render_template('view/rows.html', 
+                                 db=db,
+                                 schema=schema,
+                                 query=query,
+                                 sql=sql,
+                                 title=schema.get('title') or "View {}".format(viewname),
+                                 rows=cursor,
+                                 charts=charts,
+                                 has_write_access=dbshare.db.has_write_access(db))
+
 
 @blueprint.route('/<name:dbname>/<name:viewname>/schema')
 def schema(dbname, viewname):

@@ -82,7 +82,6 @@ def rows(dbname, tablename):
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    has_write_access = dbshare.db.has_write_access(db)
     try:
         schema = db['tables'][tablename]
     except KeyError:
@@ -113,7 +112,7 @@ def rows(dbname, tablename):
                                  rows=cursor,
                                  charts=charts,
                                  updateable=updateable,
-                                 has_write_access=has_write_access)
+                                 has_write_access=dbshare.db.has_write_access(db))
 
 @blueprint.route('/<name:dbname>/<name:tablename>/edit',
                  methods=['GET', 'POST', 'DELETE'])

@@ -183,6 +183,6 @@ def get_json(db, complete=False):
     if complete:
         result['tables'] = [dbshare.api.table.get_json(db, table, title=True)
                             for table in db['tables'].values()]
-        result['views'] = [dbshare.api.view.get_json(db, view)
+        result['views'] = [dbshare.api.view.get_json(db, view, title=True)
                            for view in db['views'].values()]
     return result
