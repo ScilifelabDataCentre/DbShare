@@ -134,15 +134,12 @@ def rows(dbname, viewname):
         utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.schema', viewname=str(viewname)))
-    query = schema['query']
-    sql = dbshare.query.get_sql_statement(query) # No imposed LIMIT
     charts = [c for c in db['charts'].values()
               if c['source'] == str(viewname)]
     return flask.render_template('view/rows.html', 
                                  db=db,
                                  schema=schema,
-                                 query=query,
-                                 sql=sql,
+                                 query=schema['query'],
                                  title=schema.get('title') or "View {}".format(viewname),
                                  rows=cursor,
                                  charts=charts,
@@ -163,26 +160,10 @@ def schema(dbname, viewname):
         utils.flash_error('no such view')
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
     has_write_access = dbshare.db.has_write_access(db)
-    sources = [dbshare.db.get_schema(db, name) for name in schema['sources']]
-    # Special case: Create HTML links for sources, leave "AS" parts be.
-    html_from = schema['query']['from']
-    for source in sources:
-        if source['type'] == constants.TABLE:
-            url = flask.url_for('table.rows',
-                                dbname=dbname,
-                                tablename=source['name'])
-        else:
-            url = flask.url_for('view.rows',
-                                dbname=dbname,
-                                viewname=source['name'])
-        html = '<a href="%s">%s</a>' % (url, source['name'])
-        html_from = html_from.replace(source['name'], html)
     return flask.render_template('view/schema.html',
                                  db=db,
                                  schema=schema,
-                                 has_write_access=has_write_access,
-                                 sources=sources,
-                                 html_from=html_from)
+                                 has_write_access=has_write_access)
 
 @blueprint.route('/<name:dbname>/<name:viewname>/clone', 
                  methods=['GET', 'POST'])
