@@ -8,11 +8,15 @@
 <div class="m-2">{{ schema.get('description')|markdown }}</div>
 
 <div class="m-2">
+  {% if views %}
   <b>This table is used in views:</b>
   {% for viewname in views %}
   <a href="{{ url_for('view.rows', dbname=db['name'], viewname=viewname) }}">
     {{ viewname }}</a>
   {% endfor %}
+  {% else %}
+  This table is not used in any views.
+  {% endif %}
 </div>
   
 <table id="rows" class="table table-sm table-hover table-responsive">
