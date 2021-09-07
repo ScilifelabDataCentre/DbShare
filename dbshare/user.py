@@ -34,7 +34,8 @@ def login():
             try:
                 next = flask.request.form['next']
             except KeyError:
-                return flask.redirect(flask.url_for('home'))
+                return flask.redirect(
+                    flask.url_for('dbs.owner', username=username))
             else:
                 return flask.redirect(next)
         except ValueError:

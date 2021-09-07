@@ -28,4 +28,3 @@ def set_base_url(base_url):
                    user.schema,
                    users.schema]:
         schema['$id'] = base_url + schema['$id']
-        print(schema["$id"])
