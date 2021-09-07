@@ -101,6 +101,10 @@ def rows(dbname, tablename):
         utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.schema', tablename=tablename))
+    views = []
+    for viewname, view in db['views'].items():
+        if tablename in view['sources']:
+            views.append(viewname)
     charts = [c for c in db['charts'].values()
               if c['source'] == tablename]
     updateable = bool([c for c in schema['columns']
@@ -109,6 +113,7 @@ def rows(dbname, tablename):
                                  db=db,
                                  schema=schema,
                                  title=schema.get('title') or "Table {}".format(tablename),
+                                 views=views,
                                  rows=cursor,
                                  charts=charts,
                                  updateable=updateable,

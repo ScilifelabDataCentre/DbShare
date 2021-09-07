@@ -7,12 +7,14 @@
 {% block main %}
 <div class="m-2">{{ schema.get('description')|markdown }}</div>
 
-<div class="mx-3 ml-4">
-  <span class="text-monospace">{{ sql }};</span>
-  <br>
-  <strong>{{ schema['nrows'] | informative }} rows</strong>
+<div class="m-2">
+  <b>This view based on:</b>
+  {% for source in schema['sources'] %}
+  <a href="{{ url_for('data.rows', dbname=db['name'], dataname=source) }}">
+    {{ source }}</a>
+  {% endfor %}
 </div>
-
+  
 <div class="mt-4">
   <table id="rows" class="table table-sm table-hover">
     <thead>
@@ -159,7 +161,7 @@
   $(function() {
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 25,
+      "pageLength": 10,
       "scrollX": true,
       "ordering": false,
     });

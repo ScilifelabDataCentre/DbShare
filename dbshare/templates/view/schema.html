@@ -52,23 +52,23 @@
       </tr>
       <tr>
 	<th class="text-monospace text-right">FROM</th>
-	<td class="text-monospace">{{ html_from|safe }}</td>
+	<td class="text-monospace">{{ schema['query']['from'] or '' }}</td>
       </tr>
       <tr>
 	<th class="text-monospace text-right">WHERE</th>
-	<td class="text-monospace">{{ schema['query']['where'] or ''}}</td>
+	<td class="text-monospace">{{ schema['query']['where'] or '' }}</td>
       </tr>
       <tr>
 	<th class="text-monospace text-right">ORDER BY</th>
-	<td class="text-monospace">{{ schema['query']['orderby'] or ''}}</td>
+	<td class="text-monospace">{{ schema['query']['orderby'] or '' }}</td>
       </tr>
       <tr>
 	<th class="text-monospace text-right">LIMIT</th>
-	<td class="text-monospace">{{ schema['query']['limit'] or ''}}</td>
+	<td class="text-monospace">{{ schema['query']['limit'] or '' }}</td>
       </tr>
       <tr>
 	<th class="text-monospace text-right">OFFSET</th>
-	<td class="text-monospace">{{ schema['query']['offset'] or ''}}</td>
+	<td class="text-monospace">{{ schema['query']['offset'] or '' }}</td>
       </tr>
     </table>
   </div>

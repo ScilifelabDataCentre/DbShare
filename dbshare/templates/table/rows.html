@@ -7,6 +7,14 @@
 {% block main %}
 <div class="m-2">{{ schema.get('description')|markdown }}</div>
 
+<div class="m-2">
+  <b>This table is used in views:</b>
+  {% for viewname in views %}
+  <a href="{{ url_for('view.rows', dbname=db['name'], viewname=viewname) }}">
+    {{ viewname }}</a>
+  {% endfor %}
+</div>
+  
 <table id="rows" class="table table-sm table-hover table-responsive">
   <thead>
     <tr>
@@ -179,7 +187,7 @@
   $(function() {
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 25,
+      "pageLength": 10,
       {% if has_write_access %}
       "columnDefs": [
         {"orderable": false, "targets": {{ len(schema['columns']) }} }
