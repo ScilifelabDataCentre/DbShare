@@ -20,5 +20,5 @@ openpyxl==2.6.2
 pyrsistent==0.14.11
 requests==2.25.0
 six==1.12.0
-urllib3==1.26.4
+urllib3==1.26.5
 Werkzeug==2.0.1
