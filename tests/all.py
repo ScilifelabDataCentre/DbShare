@@ -8,7 +8,6 @@ from db import Db
 from table import Table
 from query import Query
 from view import View
-from chart import Chart
 from crawl import Crawl
 
 

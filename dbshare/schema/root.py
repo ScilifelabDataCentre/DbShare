@@ -17,7 +17,7 @@ schema = {
         '$id': {'type': 'string', 'format': 'uri'},
         'timestamp': {'type': 'string', 'format': 'date-time'},
         'title': {'type': 'string'},
-        'version': {'type': 'string', 'pattern': '^1\.[0-9]+\.[0-9]+$'},
+        'version': {'type': 'string', 'pattern': '^2\.[0-9]+\.[0-9]+$'},
         'databases': {
             'title': 'Links to collections of databases.',
             'type': 'object',
