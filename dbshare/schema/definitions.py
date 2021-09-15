@@ -92,22 +92,3 @@ hashes = {
     },
     'additionalProperties': False
 }
-
-charts = {
-    'title': 'List of charts.',
-    'type': 'array',
-    'items': {
-        'title': 'Charts.',
-        'type': 'object',
-        'properties': {
-            'name': {'type': 'string'},
-            'title': {'type': ['string', 'null']},
-            'spec': {'$ref': '#/definitions/link'},
-        },
-        'required': [
-            'name',
-            'title',
-            'spec'],
-        'additionalProperties': False
-    }
-}

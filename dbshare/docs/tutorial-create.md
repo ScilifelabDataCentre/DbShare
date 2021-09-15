@@ -75,8 +75,6 @@ If you have an account (see [register](/user/register)), and have logged in
 - Alternatively, the CSV data can be obtained directly using the
   pill (small rounded button) at the top right labelled **CSV**.
 - Use the **JSON** pill to obtain that format.
-- The two latter access methods are used by the visualization tool
-  in DbShare which prepares charts based on Vega-Lite.
 
 ### Download a database
 

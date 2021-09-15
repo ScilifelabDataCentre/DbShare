@@ -47,13 +47,6 @@ VIEWS_TABLE = {
                 dict(name='schema', type=constants.TEXT, notnull=True)]
 }
 
-CHARTS_TABLE = {
-    'name': constants.CHARTS,
-    'columns': [dict(name='name', type=constants.TEXT, primarykey=True),
-                dict(name='schema', type=constants.TEXT, notnull=True),
-                dict(name='spec', type=constants.TEXT, notnull=True)]
-}
-
 
 blueprint = flask.Blueprint('db', __name__)
 
@@ -128,15 +121,9 @@ def display(dbname):
         return response
 
     elif dbname.ext in (None, 'html'):
-        charts = {}
-        for table in db['tables'].values(): charts[table['name']] = []
-        for view in db['views'].values(): charts[view['name']] = []
-        for chart in db['charts'].values():
-            charts[chart['source']].append(chart)
         return flask.render_template(
             'db/display.html', 
             db=db,
-            charts=charts,
             title=db.get('title') or "Database {}".format(dbname),
             has_write_access=has_write_access(db),
             can_change_mode=has_write_access(db, check_mode=False))
@@ -309,7 +296,6 @@ def clone(dbname):
         db = get_db(name, complete=True)
         with DbContext(db) as ctx:
             ctx.db['cloned']  = dbname # Will show up in logs
-            ctx.update_chart_data_urls(dbname)
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/download')
@@ -590,9 +576,6 @@ class DbContext:
             os.rename(utils.dbpath(old_dbname), utils.dbpath(name))
             # The entries in the dbs_log will be fixed in '__exit__'
         self.db['name'] = name
-        # Update of chart data URLs must be done *after* db rename.
-        if old_dbname:
-            self.update_chart_data_urls(old_dbname)
         return self.db['name']
 
     def set_title(self, title):
@@ -637,8 +620,6 @@ class DbContext:
         sql = get_sql_create_table(INDEXES_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
         sql = get_sql_create_table(VIEWS_TABLE, if_not_exists=True)
-        self.dbcnx.execute(sql)
-        sql = get_sql_create_table(CHARTS_TABLE, if_not_exists=True)
         self.dbcnx.execute(sql)
 
     def create_table_load_records(self, tablename, records, has_header=True):
@@ -738,70 +719,6 @@ class DbContext:
             self.dbcnx.executemany(sql, records)
         self.update_table(schema)
 
-    def update_chart_data_urls(self, old_dbname):
-        """When renaming or cloning the database,
-        the data URLs of chart specs must be updated.
-        """
-        old_table_url = utils.url_for('table.rows',
-                                      dbname=old_dbname, 
-                                      tablename='x') # Dummy value
-        old_table_url = old_table_url[:-1] # Remove the dummy 'x' from the url
-        new_table_url = utils.url_for('table.rows',
-                                      dbname=self.db['name'],
-                                      tablename='x')
-        new_table_url = new_table_url[:-1]
-        old_view_url = utils.url_for('view.rows',
-                                     dbname=old_dbname,
-                                     viewname='x')
-        old_view_url = old_view_url[:-1]
-        new_view_url = utils.url_for('view.rows',
-                                     dbname=self.db['name'],
-                                     viewname='x')
-        new_view_url = new_view_url[:-1]
-        for chart in self.db['charts'].values():
-            spec = chart['spec']
-            for path, href in dpath.util.search(spec, 'data/url', yielded=True):
-                href = href.replace(old_table_url, new_table_url)
-                href = href.replace(old_view_url, new_view_url)
-                dpath.util.set(spec, path, href)
-            self.update_chart(chart['name'], spec)
-
-    def set_chart_data_urls(self):
-        "Set the chart data URLs to refer to this site when importing database."
-        sql = f"SELECT name, schema, spec FROM {constants.CHARTS}"
-        cursor = self.dbcnx.execute(sql)
-        charts = [{'name': row[0],
-                   'source': row[1],
-                   'spec': json.loads(row[2])} for row in cursor]
-        new_root = utils.url_for('home').rstrip('/')
-        # Identify the old URL root from a data url in a chart spec.
-        old_root = None
-        search = dpath.util.search
-        for chart in charts:
-            for path,href in search(chart['spec'],'data/url',yielded=True):
-                parts = urllib.parse.urlparse(href)
-                old_root = urllib.parse.urlunparse(parts[0:2]+('','','',''))
-                break
-        rx_table = re.compile(r'^.*/table/(.+)/.+$')
-        rx_view  = re.compile(r'^.*/view/(.+)/.+$')
-        for chart in charts:
-            for path,href in search(chart['spec'],'data/url',yielded=True):
-                # Next, replace old URL root with new.
-                href = href.replace(old_root, new_root)
-                # And, old database name with new in URL path.
-                for m in [rx_table.match(href), rx_view.match(href)]:
-                    if m:
-                        href = href[: m.start(1)] + \
-                               self.db['name'] + \
-                               href[m.end(1) :]
-                        dpath.util.set(chart['spec'], path, href)
-                        break
-        with self.dbcnx:
-            sql = f"UPDATE {constants.CHARTS} SET spec=? WHERE name=?"
-            for chart in charts:
-                self.dbcnx.execute(sql, (json.dumps(chart['spec']),
-                                         chart['name']))
-
     def add_table(self, schema, query=None, create=True):
         """Create the table in the database and add to the database definition.
         If 'query' is given, do 'CREATE TABLE AS', and fix up the schema.
@@ -899,10 +816,6 @@ class DbContext:
         # Delete all indexes for this table.
         for indexname in list(self.db['indexes']):
             self.delete_index(indexname)
-        # Delete all charts having this table as source.
-        for chart in list(self.db['charts'].values()):
-            if chart['source'] == tablename:
-                self.delete_chart(chart['name'])
 
         # Delete all views having this table as source.
         # Will recursively delete other dependent views.
@@ -1009,10 +922,6 @@ class DbContext:
             self.db['views'].pop(viewname)
         except KeyError:
             raise ValueError('no such view in database')
-        # Delete all charts having this view as source.
-        for chart in list(self.db['charts'].values()):
-            if chart['source'] == viewname:
-                self.delete_chart(chart['name'])
 
         # Delete all views having this view as a source.
         # Will recursively delete other dependent views.
@@ -1030,44 +939,8 @@ class DbContext:
         sql = 'DROP VIEW "%s"' % viewname
         self.dbcnx.execute(sql)
 
-    def add_chart(self, chartname, schema, spec):
-        """Create the chart in the database and add to the database definition.
-        Raises ValueError if the chart name is already used.
-        Raises jsonschema.ValidationError if the spec is invalid.
-        """
-        if utils.name_in_nocase(chartname, self.db['charts']):
-            raise ValueError('name is already in use for a chart')
-        utils.json_validate(spec, constants.VEGA_LITE_SCHEMA)
-        with self.dbcnx:
-            sql = f"INSERT INTO {constants.CHARTS} (name, schema, spec) VALUES (?,?,?)"
-            self.dbcnx.execute(sql, (chartname,schema['name'],json.dumps(spec)))
-        self.db['charts'][chartname] = {'name': chartname,
-                                        'source': schema['name'],
-                                        'spec': spec}
-
-    def update_chart(self, chartname, spec):
-        """Update the chart in the database.
-        Raises jsonschema.ValidationError if the spec is invalid.
-        """
-        utils.json_validate(spec, constants.VEGA_LITE_SCHEMA)
-        with self.dbcnx:
-            sql = f"UPDATE {constants.CHARTS} SET spec=? WHERE name=?"
-            self.dbcnx.execute(sql, (json.dumps(spec), chartname))
-        self.db['charts'][chartname]['spec'] = spec
-
-    def delete_chart(self, chartname):
-        "Delete the chart from the database."
-        try:
-            self.db['charts'].pop(chartname)
-        except KeyError:
-            raise ValueError('no such chart in database')
-        with self.dbcnx:
-            sql = "DELETE FROM %s WHERE name=?" % constants.CHARTS
-            self.dbcnx.execute(sql, (chartname,))
-
     def check_metadata(self):
         """Check the validity of the metadata for the database.
-        Fix the data URLs in the saved charts.
         Return False if no metadata (i.e. not a DbShare file), else True.
         Raises ValueError or sqlite3.Error if any problem.
         """
@@ -1088,9 +961,6 @@ class DbContext:
         self.dbcnx.execute(sql)
         # Does the views metatable exist?
         sql = f"SELECT name, schema FROM {constants.VIEWS}"
-        self.dbcnx.execute(sql)
-        # Does the charts metatable exist?
-        sql = f"SELECT name, schema FROM {constants.CHARTS}"
         self.dbcnx.execute(sql)
         return True
 
@@ -1205,12 +1075,6 @@ def get_db(name, complete=False):
         sql = "SELECT name, schema FROM %s" % constants.VIEWS
         cursor.execute(sql)
         db['views'] = dict([(row[0], json.loads(row[1])) for row in cursor])
-        sql = "SELECT name, schema, spec FROM %s" % constants.CHARTS
-        cursor.execute(sql)
-        db['charts'] = dict([(row[0], {'name': row[0], 
-                                       'source': row[1], 
-                                       'spec': json.loads(row[2])})
-                             for row in cursor])
     return db
 
 def get_usage(username=None):
@@ -1419,9 +1283,7 @@ def add_sqlite3_database(dbname, infile, size):
         raise ValueError(str(error))
     try:
         with DbContext(get_db(dbname, complete=True)) as ctx: # Re-read db dict
-            if ctx.check_metadata():
-                ctx.set_chart_data_urls()
-            else:
+            if not ctx.check_metadata():
                 ctx.infer_metadata()
         return ctx.db
     except (ValueError, TypeError, sqlite3.Error) as error:

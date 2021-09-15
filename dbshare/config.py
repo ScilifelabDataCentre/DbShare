@@ -17,7 +17,6 @@ DEFAULT_SETTINGS = dict(
     SITE_STATIC_DIRPATH = None,
     SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
     SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
-    SITE_CHART_TEMPLATES_DIRPATH = None,
     LOG_ACCESS = False,
     HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
     HOST_NAME = None,
@@ -36,8 +35,6 @@ DEFAULT_SETTINGS = dict(
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
     DOCS_DIRPATH = os.path.join(constants.ROOT_DIRPATH, 'docs'),
-    CHART_TEMPLATES_DIRPATH = os.path.join(constants.ROOT_DIRPATH,
-                                           'chart_templates'),
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55
@@ -51,10 +48,6 @@ DEFAULT_SETTINGS = dict(
     EXECUTE_TIMEOUT           = 2.0,
     EXECUTE_TIMEOUT_INCREMENT = 0.010,
     EXECUTE_TIMEOUT_BACKOFF   = 1.75,
-    CHART_DEFAULT_WIDTH = 400,
-    CHART_DEFAULT_HEIGHT = 400,
-    COLUMN_ANNOTATIONS = ['quantitative', 'temporal', 
-                          'ordinal', 'nominal', 'ignore'],
     CSV_FILE_DELIMITERS = {'comma': {'label': "comma ','", 'char': ','},
                            'tab': {'label': "tab '\\t'", 'char': '\t'},
                            'semicolon': {'label': "semicolon ';'", 'char': ';'},
@@ -62,8 +55,6 @@ DEFAULT_SETTINGS = dict(
                                             'char': '|'},
                            'colon': {'label': "colon ':'", 'char': ':'}},
     MARKDOWN_SYNTAX_URL = 'https://daringfireball.net/projects/markdown/syntax',
-    VEGA_LITE_DEFAULT_WIDTH = 400,
-    VEGA_LITE_DEFAULT_HEIGHT = 400,
 )
 
 def init(app):

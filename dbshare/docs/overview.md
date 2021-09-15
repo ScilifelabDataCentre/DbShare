@@ -2,13 +2,9 @@ The DbShare system allows web access to data published in the form of
 [SQLite3](https://www.sqlite.org/) relational databases. Queries on
 the data can be performed using SQL.
 
-The data may be visualized in charts made from predefined templates
-based on the [Vega-Lite](https://vega.github.io/vega-lite/)
-specification format.
-
 ### Databases
 
-A database contains tables and optionally, indexes views and charts. A
+A database contains tables and optionally, indexes and views. A
 database is a single SQLite3 file. The web interface of DbShare allows
 displaying and querying the data in a database using SQL. The metadata
 of the database (schema, indexes, etc) can be viewed.
@@ -20,8 +16,8 @@ site.
 #### Database creation
 
 Only users with an account in the DbShare site may create databases in
-it. A database may be created from scratch, and its tables, indexes,
-views and charts to be defined via the web interface.
+it. A database may be created from scratch, and its tables, indexes
+and views to be defined via the web interface.
 
 An existing SQLite3 file may be uploaded. The DbShare system will
 inspect the schema and data in it and and attempt to infer the
@@ -100,17 +96,6 @@ cross-database queries.
 Indexes are used to optimize queries involving the table of the
 index. They can also be defined to disallow non-unique values in a
 column.
-
-### Charts
-
-The data in a table or view may be visualized on a chart using the
-[Vega-Lite](https://vega.github.io/vega-lite/) specification
-format. The charts are dynamic in the sense that each time the chart
-is viewed, the data is read from the database.
-
-There are a set of chart templates which can be used to quickly create
-a chart which can be saved in the database. The Vega-Lite code of the
-saved charts may be edited.
 
 ### Web and API interfaces
 

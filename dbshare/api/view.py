@@ -150,16 +150,6 @@ def get_json(db, view, complete=False, title=False):
     if complete:
         result['database'] = {'href': utils.url_for('api_db.database',
                                                     dbname=db['name'])}
-        result['charts'] = []
-        for chart in db['charts'].values():
-            if chart['source'] != view['name']: continue
-            url = utils.url_for('chart.display',
-                                dbname=db['name'],
-                                chartname=chart['name']) + '.json'
-            result['charts'].append({
-                'name': chart['name'],
-                'title': chart['spec'].get('title'),
-                'spec': {'href': url}})
     else:
         result['href'] = utils.url_for('api_view.view',
                                        dbname=db['name'],

@@ -297,16 +297,6 @@ def get_json(db, table, complete=False, title=False):
                              if i['table'] == table['name']]
         for i in result['indexes']:
             i.pop('table')
-        result['charts'] = []
-        for chart in db['charts'].values():
-            if chart['source'] != table['name']: continue
-            url = utils.url_for('chart.display',
-                                dbname=db['name'],
-                                chartname=chart['name']) + '.json'
-            result['charts'].append({
-                'name': chart['name'],
-                'title': chart['spec'].get('title'),
-                'specification': {'href': url}})
     else:
         result['href'] = utils.url_for('api_table.table',
                                        dbname=db['name'],

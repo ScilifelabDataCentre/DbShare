@@ -134,15 +134,12 @@ def rows(dbname, viewname):
         utils.flash_error(error)
         return flask.redirect(
             flask.url_for('.schema', viewname=str(viewname)))
-    charts = [c for c in db['charts'].values()
-              if c['source'] == str(viewname)]
     return flask.render_template('view/rows.html', 
                                  db=db,
                                  schema=schema,
                                  query=schema['query'],
                                  title=schema.get('title') or "View {}".format(viewname),
                                  rows=cursor,
-                                 charts=charts,
                                  has_write_access=dbshare.db.has_write_access(db))
 
 

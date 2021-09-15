@@ -105,8 +105,6 @@ def rows(dbname, tablename):
     for viewname, view in db['views'].items():
         if tablename in view['sources']:
             views.append(viewname)
-    charts = [c for c in db['charts'].values()
-              if c['source'] == tablename]
     updateable = bool([c for c in schema['columns']
                        if c.get('primarykey')])
     return flask.render_template('table/rows.html', 
@@ -115,7 +113,6 @@ def rows(dbname, tablename):
                                  title=schema.get('title') or "Table {}".format(tablename),
                                  views=views,
                                  rows=cursor,
-                                 charts=charts,
                                  updateable=updateable,
                                  has_write_access=dbshare.db.has_write_access(db))
 

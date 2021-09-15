@@ -29,15 +29,6 @@
               schema</a>
           </div>
         </div>
-        <div class="row pb-2">
-          <div class="col-md-11 offset-md-1">
-            {% for c in charts[table['name']] %}
-            <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
-               title="{{ c['spec']['title'] }}"
-               class="text-info pr-3">{{ c['name'] }}</a>
-            {% endfor %}
-          </div>
-        </div>
         {% endfor %} {# for table in #}
         {% else %}
         <em>none</em>
@@ -66,15 +57,6 @@
               schema</a>
           </div>
 	</div>
-        <div class="row pb-2">
-          <div class="col-md-11 offset-md-1">
-            {% for c in charts[view['name']] %}
-            <a href="{{ url_for('chart.display', dbname=db['name'], chartname=c['name']) }}"
-               title="{{ c['spec']['title'] }}"
-               class="text-info pr-3">{{ c['name'] }}</a>
-            {% endfor %}
-          </div>
-        </div>
         {% endfor %} {# for view in #}
         {% else %}
         <em>none</em>

@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = '1.9.4'
+__version__ = '2.0.0'
 
 class Constants:
     VERSION     = __version__
@@ -22,8 +22,6 @@ class Constants:
     JQUERY_LOCALTIME_VERSION = '0.9.1'
     DPATH_VERSION            = '1.4.2'
     DATATABLES_VERSION       = '1.10.25'
-    VEGA_VERSION             = '5'
-    VEGA_LITE_VERSION        = '3'
 
     NAME_RX      = re.compile(r'^[a-z][a-z0-9_-]*$', re.I)
     NAME_CHARS   = frozenset(string.ascii_letters + string.digits + '_' + '-')
@@ -37,7 +35,6 @@ class Constants:
     TABLES  = '_tables'
     INDEXES = '_indexes'
     VIEWS   = '_views'
-    CHARTS  = '_charts'
 
     # Database constants.
     TABLE   = 'table'
@@ -72,10 +69,5 @@ class Constants:
 
     def __setattr__(self, key, value):
         raise ValueError('cannot set constant')
-
-
-# Read in JSON Schema for Vega-Lite from file.
-with open(os.path.join(Constants.ROOT_DIRPATH,'static/vega-lite-v3.json')) as f:
-    Constants.VEGA_LITE_SCHEMA = json.load(f)
 
 constants = Constants()

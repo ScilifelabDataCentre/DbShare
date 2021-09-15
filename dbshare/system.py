@@ -151,7 +151,14 @@ def init(app):
     rows = cursor.fetchall()
     if len(rows) == 1:
         if rows[0][0] != major:
-            raise ValueError('wrong major version of system database')
+            # Special case: upgrade from 1 to 2 can be done without changes.
+            # This change entailed simply removing all charts-related stuff.
+            if rows[0][0] == '1' and major == '2':
+                with cnx:
+                    sql = 'UPDATE "meta" SET value=? WHERE key=?'
+                    cursor = cnx.execute(sql, (major, 'version'))
+            else:
+                raise ValueError('wrong major version of system database')
     else:
         with cnx:
             sql = 'INSERT INTO "meta" ("key", "value") VALUES (?, ?)'
