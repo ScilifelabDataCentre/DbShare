@@ -128,8 +128,3 @@ app.register_blueprint(dbshare.api.view.blueprint, url_prefix='/api/view')
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix='/api/user')
 app.register_blueprint(dbshare.api.users.blueprint, url_prefix='/api/users')
 app.register_blueprint(dbshare.api.schema.blueprint, url_prefix='/api/schema')
-
-
-# This code is used only during development.
-if __name__ == '__main__':
-    app.run()
