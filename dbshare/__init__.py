@@ -7,14 +7,14 @@ import os.path
 import re
 import string
 
-__version__ = '2.0.1'
+__version__ = '2.0.2'
 
 class Constants:
     VERSION     = __version__
     SOURCE_URL  = 'https://github.com/pekrau/DbShare'
     SOURCE_NAME = 'DbShare'
 
-    ROOT_DIRPATH = os.path.dirname(os.path.abspath(__file__))
+    ROOT = os.path.dirname(os.path.abspath(__file__))
 
     # Version numbers not obtainable programmatically.
     BOOTSTRAP_VERSION        = '4.6.0'

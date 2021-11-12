@@ -11,14 +11,14 @@ from . import constants
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
-    SERVER_NAME = '127.0.0.1:5000',  # For URL generation; 'app.run()' in devel.
+    SERVER_NAME = '127.0.0.1:5000',  # For URL generation.
     DATABASES_DIRPATH = 'data',
     SITE_NAME = 'DbShare',
     SITE_STATIC_DIRPATH = None,
-    SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
-    SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
+    SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
+    SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
     LOG_ACCESS = False,
-    HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'
+    HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
     HOST_NAME = None,
     HOST_URL = None,
     SECRET_KEY = None,
@@ -26,15 +26,15 @@ DEFAULT_SETTINGS = dict(
     JSON_AS_ASCII = False,
     JSON_SORT_KEYS = False,
     MIN_PASSWORD_LENGTH = 6,
-    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # in seconds; 1 week
+    PERMANENT_SESSION_LIFETIME = 7 * 24 * 60 * 60, # In seconds; = 1 week.
     USER_ENABLE_IMMEDIATELY = False,
-    USER_ENABLE_EMAIL_WHITELIST = [], # List of regexp's
-    USER_DEFAULT_QUOTA = 2**27,       # 134 megabytes
+    USER_ENABLE_EMAIL_WHITELIST = [], # List of regexp's.
+    USER_DEFAULT_QUOTA = 2**27,       # = 134 megabytes.
     TABLE_INITIAL_COLUMNS = 8,
     MAX_NROWS_DISPLAY = 2000,
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
-    DOCS_DIRPATH = os.path.join(constants.ROOT_DIRPATH, 'docs'),
+    DOCS_DIRPATH = os.path.join(constants.ROOT, 'docs'),
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55
@@ -71,8 +71,7 @@ def init(app):
         # Raises an error if filepath variable defined, but no such file.
     except KeyError:
         for filepath in ['settings.json', '../site/settings.json']:
-            filepath = os.path.normpath(os.path.join(constants.ROOT_DIRPATH,
-                                                     filepath))
+            filepath = os.path.normpath(os.path.join(constants.ROOT, filepath))
             try:
                 app.config.from_json(filepath)
             except FileNotFoundError:
@@ -80,9 +79,16 @@ def init(app):
             else:
                 app.config['SETTINGS_FILEPATH'] = filepath
                 break
-    assert app.config['SECRET_KEY']
-    assert app.config['SALT_LENGTH'] > 6
-    assert app.config['MIN_PASSWORD_LENGTH'] > 4
-    assert app.config['EXECUTE_TIMEOUT'] > 0.0
-    assert app.config['EXECUTE_TIMEOUT_INCREMENT'] > 0.0
-    assert app.config['EXECUTE_TIMEOUT_BACKOFF'] > 1.0
+    # Sanity checks. Exception means bad setup.
+    if not app.config['SECRET_KEY']:
+        raise ValueError("SECRET_KEY not set.")
+    if app.config['SALT_LENGTH'] <= 6:
+        raise ValueError("SALT_LENGTH is too short.")
+    if app.config['MIN_PASSWORD_LENGTH'] <= 4:
+        raise ValueError("MIN_PASSWORD_LENGTH is too short.")
+    if app.config['EXECUTE_TIMEOUT'] <= 0:
+        raise ValueError("EXECUTE_TIMEOUT must be positive.")
+    if app.config['EXECUTE_TIMEOUT_INCREMENT'] <= 0:
+        raise ValueError("EXECUTE_TIMEOUT_INCREMENT must be positive.")
+    if app.config['EXECUTE_TIMEOUT_BACKOFF'] <= 1.0:
+        raise ValueError("EXECUTE_TIMEOUT_BACKOFF must be greater than 1.")
