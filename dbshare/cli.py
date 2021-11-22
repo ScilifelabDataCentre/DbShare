@@ -1,8 +1,10 @@
 "Command line interface to the DbShare instance."
 
 import json
+import os.path
 
 import click
+import flask
 
 import dbshare.app
 import dbshare.dbs
@@ -16,6 +18,7 @@ from dbshare import constants
 @click.group()
 def cli():
     "Command line interface for operations on the DbShare instance."
+    pass
 
 @cli.command()
 def counts():
@@ -33,7 +36,7 @@ def counts():
               prompt=True)
 @click.option("--password", help="Password for the new admin account.",
               prompt=True, hide_input=True)
-def admin(username, email, password):
+def create_admin(username, email, password):
     "Create a new admin account."
     with dbshare.app.app.app_context():
         try:
@@ -53,7 +56,7 @@ def admin(username, email, password):
               prompt=True)
 @click.option("--password", help="Password for the new user account.",
               prompt=True, hide_input=True)
-def user(username, email, password):
+def create_user(username, email, password):
     "Create a new user account."
     with dbshare.app.app.app_context():
         try:
@@ -90,8 +93,8 @@ def users():
 
 @cli.command()
 @click.argument("username")
-def show_user(username):
-    "Output JSON for the named user."
+def user(username):
+    "Show the JSON for the named user."
     with dbshare.app.app.app_context():
         click.echo(json.dumps(dbshare.user.get_user(username), indent=2))
 
@@ -103,15 +106,36 @@ def dbs():
             click.echo(db["name"])
 
 @cli.command()
+@click.argument("dbname")
+@click.argument("username")
+@click.option("-d", "--dbfile", type=str, default=None,
+                help="The path of the DbShare Sqlite3 database file.")
+def create_db(dbname, username, dbfile):
+    "Create a new database, optionally from a DbShare Sqlite3 database file."
+    with dbshare.app.app.app_context():
+        try:
+            user = dbshare.user.get_user(username=username)
+            if user is None: raise ValueError('No such user.')
+            flask.g.current_user = user
+            if dbfile:
+                size = os.path.getsize(dbfile)
+                with open(dbfile, 'rb') as infile:
+                    db = dbshare.db.add_sqlite3_database(dbname, infile, size)
+        except (ValueError, IOError) as error:
+            raise click.ClickException(str(error))
+    click.echo(f"Created database {dbname}.")
+
+
+@cli.command()
 @click.argument("name")
 def db(name):
-    "Output JSON info for the named database."
+    "Show the JSON for the named database."
     with dbshare.app.app.app_context():
         db = dbshare.db.get_db(name, complete=True)
         if db is None:
-            click.ClickException("No such database.")
+            raise click.ClickException("No such database.")
         click.echo(json.dumps(dbshare.api.db.get_json(db, complete=True),
-                              indent=2))
+                              ensure_ascii=False, indent=2))
 
 
 if __name__ == '__main__':
