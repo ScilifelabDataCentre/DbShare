@@ -5,8 +5,7 @@ import os.path
 import flask
 
 import dbshare.db
-
-from . import utils
+from dbshare import utils
 
 
 blueprint = flask.Blueprint('dbs', __name__)

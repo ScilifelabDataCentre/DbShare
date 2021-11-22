@@ -1049,16 +1049,11 @@ def get_db(name, complete=False):
     cursor.execute(sql, (name,))
     rows = cursor.fetchall()
     if len(rows) != 1: return None # 'rowcount' does not work?!
-    row = rows[0]
-    db = {'name':       name,
-          'owner':      row[0],
-          'title':      row[1],
-          'description':row[2],
-          'public':     bool(row[3]),
-          'readonly':   bool(row[4]),
-          'created':    row[5],
-          'modified':   row[6],
-          'size':       os.path.getsize(utils.dbpath(name))}
+    db = {'name': name}
+    db.update(rows[0])
+    db['public'] = bool(db['public'])
+    db['readonly'] = bool(db['readonly'])
+    db['size'] = os.path.getsize(utils.dbpath(name))
     db['hashes'] = {}
     sql = "SELECT hashname, hashvalue FROM dbs_hashes WHERE name=?"
     cursor.execute(sql, (name,))
@@ -1199,6 +1194,7 @@ def get_cnx(dbname, write=False):
         return flask.g.dbcnx
     except AttributeError:
         flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname))
+        flask.g.dbcnx.row_factory = sqlite3.Row
         flask.g.dbname = dbname
         return flask.g.dbcnx
 

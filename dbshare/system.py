@@ -95,6 +95,7 @@ def get_cnx():
         return flask.g.cnx
     except AttributeError:
         flask.g.cnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
+        flask.g.cnx.row_factory = sqlite3.Row
         return flask.g.cnx
 
 def get_cursor():

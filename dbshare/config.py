@@ -5,8 +5,7 @@ import os.path
 import sqlite3
 
 import dbshare
-
-from . import constants
+from dbshare import constants
 
 
 # Default configurable values; modified by reading JSON file in 'init'.

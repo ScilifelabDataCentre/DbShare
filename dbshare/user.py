@@ -263,28 +263,7 @@ def logs(username):
 @utils.admin_required
 def users():
     "Display list of all users."
-    import dbshare.dbs
-    cursor = dbshare.system.get_cursor()
-    sql = "SELECT username, email, password, apikey," \
-          " role, status, quota, created, modified FROM users"
-    cursor.execute(sql)
-    users = [{'username':   row[0],
-              'email':      row[1],
-              'password':   row[2],
-              'apikey':     row[3],
-              'role':       row[4],
-              'status':     row[5],
-              'quota':      row[6],
-              'created':    row[7],
-              'modified':   row[8],
-              'ndbs':       0,
-              'size':       0}
-             for row in cursor]
-    lookup = dict([(u['username'], u) for u in users])
-    for db in dbshare.dbs.get_dbs():
-        lookup[db['owner']]['ndbs'] += 1
-        lookup[db['owner']]['size'] += db['size']
-    return flask.render_template('user/users.html', users=users)
+    return flask.render_template('user/users.html', users=get_all_users())
 
 @blueprint.route('/enable/<name:username>', methods=['POST'])
 @utils.admin_required
@@ -487,16 +466,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
     cursor.execute(sql, (name,))
     rows = cursor.fetchall()
     if len(rows) != 1: return None # 'rowcount' does not work?!
-    row = rows[0]
-    return {'username': row[0],
-            'email':    row[1],
-            'password': row[2],
-            'apikey':   row[3],
-            'role':     row[4],
-            'status':   row[5],
-            'quota':    row[6],
-            'created':  row[7],
-            'modified': row[8]}
+    return dict(rows[0])
     
 def get_current_user():
     """Return the user for the current session.
@@ -522,3 +492,20 @@ def is_admin_and_not_self(user):
     if flask.g.is_admin:
         return flask.g.current_user['username'] != user['username']
     return False
+
+def get_all_users():
+    "Return a list of all users."
+    import dbshare.dbs
+    cursor = dbshare.system.get_cursor()
+    sql = "SELECT username, email, password, apikey," \
+          " role, status, quota, created, modified FROM users"
+    cursor.execute(sql)
+    users = [dict(row) for row in cursor]
+    for user in users:
+        user['ndbs'] = 0
+        user['size'] = 0
+    lookup = dict([(u['username'], u) for u in users])
+    for db in dbshare.dbs.get_dbs():
+        lookup[db['owner']]['ndbs'] += 1
+        lookup[db['owner']]['size'] += db['size']
+    return users
