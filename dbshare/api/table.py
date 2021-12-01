@@ -50,11 +50,11 @@ def table(dbname, tablename):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            with dbshare.db.DbContext(db) as ctx:
+            with dbshare.db.DbSaver(db) as saver:
                 schema = flask.request.get_json()
-                ctx.add_table(schema)
+                saver.add_table(schema)
                 for index in schema.get('indexes', []):
-                    ctx.add_index(tablename, index)
+                    saver.add_index(tablename, index)
         except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
@@ -68,8 +68,8 @@ def table(dbname, tablename):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.delete_table(tablename)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.delete_table(tablename)
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return ('', http.client.NO_CONTENT)
@@ -265,8 +265,8 @@ def empty(dbname, tablename):
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     try:
-        with dbshare.db.DbContext(db) as ctx:
-            ctx.empty_table(schema)
+        with dbshare.db.DbSaver(db) as saver:
+            saver.empty_table(schema)
     except sqlite3.Error as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
     return flask.redirect(

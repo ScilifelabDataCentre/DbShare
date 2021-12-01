@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = '2.1.1'
+__version__ = '2.1.2'
 
 class Constants:
     VERSION     = __version__
@@ -16,12 +16,29 @@ class Constants:
 
     ROOT = os.path.dirname(os.path.abspath(__file__))
 
-    # Version numbers not obtainable programmatically.
-    BOOTSTRAP_VERSION        = '4.6.0'
-    JQUERY_VERSION           = '3.5.1'
+    BOOTSTRAP_VERSION  = '4.6.1'
+    BOOTSTRAP_URL = "https://getbootstrap.com/"
+    BOOTSTRAP_CSS_URL = "https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/css/bootstrap.min.css"
+    BOOTSTRAP_CSS_INTEGRITY = "sha384-zCbKRCUGaJDkqS1kPbPd7TveP5iyJE0EjAuZQTgFLD2ylzuqKfdKlfG/eSrtxUkn"
+    BOOTSTRAP_JS_URL = "https://cdn.jsdelivr.net/npm/bootstrap@4.6.1/dist/js/bootstrap.bundle.min.js"
+    BOOTSTRAP_JS_INTEGRITY = "sha384-fQybjgWLrvvRgtW6bFlB7jaZrFsaBXjsOMm/tB9LTS58ONXgqbR9W8oWht/amnpF"
+
+    JQUERY_VERSION     = '3.5.1'
+    JQUERY_URL = "https://jquery.com/"
+    JQUERY_JS_URL = "https://code.jquery.com/jquery-3.5.1.slim.min.js"
+    JQUERY_JS_INTEGRITY = "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
+
+    DATATABLES_VERSION = "1.10.24"
+    DATATABLES_URL = "https://datatables.net/"
+    DATATABLES_CSS_URL = "https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"
+    DATATABLES_JQUERY_JS_URL = "https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"
+    DATATABLES_BOOTSTRAP_JS_URL = "https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"
+
+    JQUERY_LOCALTIME_URL = 'https://plugins.jquery.com/jquery.localtime/'
     JQUERY_LOCALTIME_VERSION = '0.9.1'
-    DPATH_VERSION            = '1.4.2'
-    DATATABLES_VERSION       = '1.10.25'
+
+    DPATH_URL = 'https://github.com/akesterson/dpath-python'
+    DPATH_VERSION = '1.4.2'
 
     NAME_RX      = re.compile(r'^[a-z][a-z0-9_-]*$', re.I)
     NAME_CHARS   = frozenset(string.ascii_letters + string.digits + '_' + '-')

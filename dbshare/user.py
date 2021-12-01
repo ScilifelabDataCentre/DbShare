@@ -69,7 +69,7 @@ def register():
 
     elif utils.http_POST():
         try:
-            with UserContext() as ctx:
+            with UserSaver() as ctx:
                 ctx.set_username(flask.request.form.get('username'))
                 ctx.set_email(flask.request.form.get('email'))
                 ctx.set_role(constants.USER)
@@ -112,7 +112,7 @@ def reset():
         except KeyError:
             pass
         else:
-            with UserContext(user) as ctx:
+            with UserSaver(user) as ctx:
                 ctx.set_password()
             send_password_code(user, 'password reset')
         utils.flash_message('An email has been sent if the user account exists.')
@@ -154,7 +154,7 @@ def password():
         except ValueError:
             utils.flash_error('too short password')
         else:
-            with UserContext(user) as ctx:
+            with UserSaver(user) as ctx:
                 ctx.set_password(password)
             do_login(username, password)
         return flask.redirect(flask.url_for('home'))
@@ -201,7 +201,7 @@ def edit(username):
                                      change_role=is_admin_and_not_self(user))
 
     elif utils.http_POST():
-        with UserContext(user) as ctx:
+        with UserSaver(user) as ctx:
             email = flask.request.form.get('email')
             if email != user['email']:
                 ctx.set_email(enail)
@@ -273,7 +273,7 @@ def enable(username):
     if user is None:
         utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
-    with UserContext(user) as ctx:
+    with UserSaver(user) as ctx:
         ctx.set_status(constants.ENABLED)
         ctx.set_password()
     send_password_code(user, 'enabled')
@@ -287,12 +287,12 @@ def disable(username):
     if user is None:
         utils.flash_error('no such user')
         return flask.redirect(flask.url_for('home'))
-    with UserContext(user) as ctx:
+    with UserSaver(user) as ctx:
         ctx.set_status(constants.DISABLED)
     return flask.redirect(flask.url_for('.display', username=username))
 
 
-class UserContext:
+class UserSaver:
     "Context for creating, modifying and saving a user account."
 
     def __init__(self, user=None):

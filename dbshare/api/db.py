@@ -59,10 +59,10 @@ def database(dbname):
                               io.BytesIO(flask.request.get_data()),
                               flask.request.content_length)
             else:
-                with dbshare.db.DbContext() as ctx:
-                    dbname = ctx.set_name(dbname)
-                    ctx.initialize()
-                db = ctx.db
+                with dbshare.db.DbSaver() as saver:
+                    dbname = saver.set_name(dbname)
+                    saver.initialize()
+                db = saver.db
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(flask.url_for('.database', dbname=dbname))
@@ -77,21 +77,21 @@ def database(dbname):
         try:
             data = flask.request.get_json()
             utils.json_validate(data, dbshare.schema.db.edit)
-            with dbshare.db.DbContext(db) as ctx:
+            with dbshare.db.DbSaver(db) as saver:
                 try:
-                    dbname = ctx.set_name(data['name'])
+                    dbname = saver.set_name(data['name'])
                 except KeyError:
                     pass
                 try:
-                    ctx.set_title(data['title'])
+                    saver.set_title(data['title'])
                 except KeyError:
                     pass
                 try:
-                    ctx.set_description(data['description'])
+                    saver.set_description(data['description'])
                 except KeyError:
                     pass
                 try:
-                    ctx.set_public(data['public'])
+                    saver.set_public(data['public'])
                 except KeyError:
                     pass
         except (jsonschema.ValidationError, ValueError) as error:
@@ -145,8 +145,8 @@ def readonly(dbname):
     try:
         db = dbshare.db.get_check_write(dbname, check_mode=False)
         if not db['readonly']:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.set_readonly(True)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.set_readonly(True)
     except ValueError:
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:
@@ -159,8 +159,8 @@ def readwrite(dbname):
     try:
         db = dbshare.db.get_check_write(dbname, check_mode=False)
         if db['readonly']:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.set_readonly(False)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.set_readonly(False)
     except ValueError:
         flask.abort(http.client.UNAUTHORIZED)
     except KeyError:

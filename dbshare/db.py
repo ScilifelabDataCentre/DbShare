@@ -148,14 +148,14 @@ def create():
 
     elif utils.http_POST():
         try:
-            with DbContext() as ctx:
-                ctx.set_name(flask.request.form['name'])
-                ctx.initialize()
-                ctx.set_title(flask.request.form.get('title'))
+            with DbSaver() as saver:
+                saver.set_name(flask.request.form['name'])
+                saver.initialize()
+                saver.set_title(flask.request.form.get('title'))
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.create'))
-        return flask.redirect(flask.url_for('.display', dbname=ctx.db['name']))
+        return flask.redirect(flask.url_for('.display', dbname=saver.db['name']))
 
 @blueprint.route('/<name:dbname>/edit', methods=['GET', 'POST', 'DELETE'])
 @utils.login_required
@@ -172,16 +172,16 @@ def edit(dbname):
 
     elif utils.http_POST():
         try:
-            with DbContext(db) as ctx:
+            with DbSaver(db) as saver:
                 name = flask.request.form.get('name')
                 if name:
-                    ctx.set_name(name)
+                    saver.set_name(name)
                 try:
-                    ctx.set_title(flask.request.form['title'])
+                    saver.set_title(flask.request.form['title'])
                 except KeyError:
                     pass
                 try:
-                    ctx.set_description(flask.request.form['description'])
+                    saver.set_description(flask.request.form['description'])
                 except KeyError:
                     pass
         except (KeyError, ValueError) as error:
@@ -256,8 +256,8 @@ def upload(dbname):
                     if item == '':
                         record[i] = None
             has_header = utils.to_bool(flask.request.form.get('header'))
-            with DbContext(db) as ctx:
-                ctx.create_table_load_records(tablename,
+            with DbSaver(db) as saver:
+                saver.create_table_load_records(tablename,
                                               records,
                                               has_header=has_header)
             utils.flash_message(f"Loaded {len(records)} records.")
@@ -284,18 +284,18 @@ def clone(dbname):
 
     elif utils.http_POST():
         try:
-            with DbContext() as ctx:
+            with DbSaver() as saver:
                 name = flask.request.form['name']
-                ctx.set_name(name)
-                ctx.set_title(flask.request.form.get('title'))
-                ctx.set_description(flask.request.form.get('description'))
+                saver.set_name(name)
+                saver.set_title(flask.request.form.get('title'))
+                saver.set_description(flask.request.form.get('description'))
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
-        shutil.copyfile(utils.dbpath(dbname), utils.dbpath(ctx.db['name']))
+        shutil.copyfile(utils.dbpath(dbname), utils.dbpath(saver.db['name']))
         db = get_db(name, complete=True)
-        with DbContext(db) as ctx:
-            ctx.db['cloned']  = dbname # Will show up in logs
+        with DbSaver(db) as saver:
+            saver.db['cloned']  = dbname # Will show up in logs
         return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 @blueprint.route('/<name:dbname>/download')
@@ -321,7 +321,7 @@ def vacuum(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
-        with DbContext(db) as cnx:
+        with DbSaver(db) as cnx:
             for schema in db['tables'].values():
                 cnx.update_table(schema)
         dbcnx = get_cnx(db['name'], write=True)
@@ -360,8 +360,8 @@ def public(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
-        with DbContext(db) as ctx:
-            ctx.set_public(True)
+        with DbSaver(db) as saver:
+            saver.set_public(True)
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
     else:
@@ -379,8 +379,8 @@ def private(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
-        with DbContext(db) as ctx:
-            ctx.set_public(False)
+        with DbSaver(db) as saver:
+            saver.set_public(False)
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
     else:
@@ -399,8 +399,8 @@ def readwrite(dbname):
         return flask.redirect(flask.url_for('home'))
     if db['readonly']:
         try:
-            with DbContext(db) as ctx:
-                ctx.set_readonly(False)
+            with DbSaver(db) as saver:
+                saver.set_readonly(False)
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
         else:
@@ -419,8 +419,8 @@ def readonly(dbname):
         return flask.redirect(flask.url_for('home'))
     if not db['readonly']:
         try:
-            with DbContext(db) as ctx:
-                ctx.set_readonly(True)
+            with DbSaver(db) as saver:
+                saver.set_readonly(True)
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
         else:
@@ -428,7 +428,7 @@ def readonly(dbname):
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
 
 
-class DbContext:
+class DbSaver:
     "Context handler to create, modify and save metadata for a database."
 
     def __init__(self, db=None):
@@ -1270,18 +1270,18 @@ def add_sqlite3_database(dbname, infile, size):
     """
     try:
         check_quota(size=size)
-        with DbContext() as ctx:
-            dbname = ctx.set_name(dbname, modify=True)
+        with DbSaver() as saver:
+            dbname = saver.set_name(dbname, modify=True)
             with open(utils.dbpath(dbname), 'wb') as outfile:
                 outfile.write(infile.read())
-            ctx.initialize()
+            saver.initialize()
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
         raise ValueError(str(error))
     try:
-        with DbContext(get_db(dbname, complete=True)) as ctx: # Re-read db dict
-            if not ctx.check_metadata():
-                ctx.infer_metadata()
-        return ctx.db
+        with DbSaver(get_db(dbname, complete=True)) as saver: # Re-read db dict
+            if not saver.check_metadata():
+                saver.infer_metadata()
+        return saver.db
     except (ValueError, TypeError, sqlite3.Error) as error:
         delete_database(dbname)
         raise ValueError(str(error))
@@ -1299,9 +1299,9 @@ def add_xlsx_database(dbname, infile, size):
     try:
         wb = openpyxl.load_workbook(tmp.name)
         check_quota(size=size)
-        with DbContext() as ctx:
-            dbname = ctx.set_name(dbname)
-            ctx.initialize()
+        with DbSaver() as saver:
+            dbname = saver.set_name(dbname)
+            saver.initialize()
         db = get_db(dbname, complete=True)
     except (ValueError, IOError) as error:
         raise ValueError(str(error))
@@ -1325,8 +1325,8 @@ def add_xlsx_database(dbname, infile, size):
         # Convert records from tuples to lists.
         length = len(records[0])
         records = [list(r[:length]) for r in records]
-        with DbContext(db) as ctx:
-            ctx.create_table_load_records(tablename, records)
+        with DbSaver(db) as saver:
+            saver.create_table_load_records(tablename, records)
     return db
 
 def delete_database(dbname):

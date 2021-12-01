@@ -64,8 +64,8 @@ def create(dbname):
                     schema['columns'][npk]['primarykey'] = True
                 except IndexError:
                     pass
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table(schema)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_table(schema)
         except ValueError as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.create', dbname=dbname))
@@ -137,14 +137,14 @@ def edit(dbname, tablename):
 
     elif utils.http_POST():
         try:
-            with dbshare.db.DbContext(db) as ctx:
+            with dbshare.db.DbSaver(db) as saver:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
                 try:
                     del schema['annotations']
                 except KeyError:
                     pass
-                ctx.update_table(schema, reset_cache=False)
+                saver.update_table(schema, reset_cache=False)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(
@@ -152,8 +152,8 @@ def edit(dbname, tablename):
 
     elif utils.http_DELETE():
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.delete_table(str(tablename))
+            with dbshare.db.DbSaver(db) as saver:
+                saver.delete_table(str(tablename))
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
@@ -183,8 +183,8 @@ def column(dbname, tablename):
             column = {'name': flask.request.form.get('name'),
                       'type': flask.request.form.get('type'),
                       'notnull': utils.to_bool(flask.request.form.get('notnull'))}
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table_column(schema, column)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_table_column(schema, column)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(
@@ -207,8 +207,8 @@ def empty(dbname, tablename):
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
 
     try:
-        with dbshare.db.DbContext(db) as ctx:
-            ctx.empty_table(schema)
+        with dbshare.db.DbSaver(db) as saver:
+            saver.empty_table(schema)
     except sqlite3.Error as error:
         utils.flash_error(error)
     return flask.redirect(
@@ -269,8 +269,8 @@ def index_create(dbname, tablename):
                     index['columns'].append(column)
                 else:
                     break
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_index(schema['name'], index)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_index(schema['name'], index)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(
@@ -298,8 +298,8 @@ def index_delete(dbname, tablename, indexname):
                 break
         else:
             raise ValueError('no such index in database')
-        with dbshare.db.DbContext(db) as ctx:
-            ctx.delete_index(indexname)
+        with dbshare.db.DbSaver(db) as saver:
+            saver.delete_index(indexname)
     except (ValueError, sqlite3.Error) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
@@ -399,13 +399,13 @@ def row_edit(dbname, tablename, rowid):
                                          row=values,
                                          rowid=rowid)
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                with ctx.dbcnx:
+            with dbshare.db.DbSaver(db) as saver:
+                with saver.dbcnx:
                     names = ','.join(['"%(name)s"=?' % c
                                       for c in schema['columns']])
                     sql = f'UPDATE "{tablename}" SET {names} WHERE rowid=?'
                     values = values + (rowid,)
-                    ctx.dbcnx.execute(sql, values)
+                    saver.dbcnx.execute(sql, values)
         except sqlite3.Error as error:
             utils.flash_error(error)
         else:
@@ -414,11 +414,11 @@ def row_edit(dbname, tablename, rowid):
             flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
     elif utils.http_DELETE():
-        with dbshare.db.DbContext(db) as ctx:
-            with ctx.dbcnx:
+        with dbshare.db.DbSaver(db) as saver:
+            with saver.dbcnx:
                 sql = f'''DELETE FROM "{schema['name']}" WHERE rowid=?'''
-                ctx.dbcnx.execute(sql, (rowid,))
-                ctx.update_table(schema)
+                saver.dbcnx.execute(sql, (rowid,))
+                saver.update_table(schema)
         return flask.redirect(
             flask.url_for('.rows', dbname=dbname, tablename=tablename))
 
@@ -571,8 +571,8 @@ def clone(dbname, tablename):
             schema['name'] = flask.request.form['name']
             if schema.get('title'):
                 schema['title'] = 'Clone of ' + schema['title']
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table(schema)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_table(schema)
                 colnames = ','.join(['"%(name)s"' % c 
                                      for c in schema['columns']])
                 sql = 'INSERT INTO "%s" (%s) SELECT %s FROM "%s"' % \
@@ -580,8 +580,8 @@ def clone(dbname, tablename):
                        colnames,
                        colnames,
                        tablename)
-                ctx.dbcnx.execute(sql)
-                ctx.update_table(schema)
+                saver.dbcnx.execute(sql)
+                saver.update_table(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(
@@ -737,13 +737,13 @@ def get_csv_rows(schema, csvfile, delimiter, header):
 
 def insert_rows(db, schema, rows):
     "Insert the given rows into the given table."
-    with dbshare.db.DbContext(db) as ctx:
-        with ctx.dbcnx:
+    with dbshare.db.DbSaver(db) as saver:
+        with saver.dbcnx:
             names = ','.join(['"%(name)s"' % c for c in schema['columns']])
             values = ','.join('?' * len(schema['columns']))
             sql = f'''INSERT INTO "{schema['name']}" ({names}) VALUES ({values})'''
-            ctx.dbcnx.executemany(sql, rows)
-            ctx.update_table(schema)
+            saver.dbcnx.executemany(sql, rows)
+            saver.update_table(schema)
 
 def update_csv_rows(db, schema, csvfile, delimiter):
     """Update the given table with the given CSV file.
@@ -784,12 +784,12 @@ def update_csv_rows(db, schema, csvfile, delimiter):
     pkpos = pkpos.values()
     count = 0
     try:
-        with dbshare.db.DbContext(db) as ctx:
-            with ctx.dbcnx:
+        with dbshare.db.DbSaver(db) as saver:
+            with saver.dbcnx:
                 for rowpos, row in enumerate(rows):
                     values = [row[i] for i in colpos]
                     pkeys = [row[i] for i in pkpos]
-                    cursor = ctx.dbcnx.execute(sql, values+pkeys)
+                    cursor = saver.dbcnx.execute(sql, values+pkeys)
                     count += cursor.rowcount
     except sqlite3.Error as error:
         raise ValueError("row number %s; %s", (rowpos+1, str(error)))
@@ -864,5 +864,5 @@ def compute_statistics(db, schema):
                 stats['max'] = {'title': 'Lexical maximum', 
                                 'value': nonnull_values[-1]}
     if dbshare.db.has_write_access(db):
-        with dbshare.db.DbContext(db) as ctx:
-            ctx.update_table(schema, reset_cache=False)
+        with dbshare.db.DbSaver(db) as saver:
+            saver.update_table(schema, reset_cache=False)

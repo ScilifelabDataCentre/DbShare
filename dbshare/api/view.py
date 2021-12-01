@@ -47,8 +47,8 @@ def view(dbname, viewname):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_view(flask.request.get_json(), create=True)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_view(flask.request.get_json(), create=True)
         except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
@@ -62,8 +62,8 @@ def view(dbname, viewname):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.delete_view(viewname)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.delete_view(viewname)
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return ('', http.client.NO_CONTENT)

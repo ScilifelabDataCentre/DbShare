@@ -63,30 +63,21 @@ def software():
     "Display software in system with links and version info."
     config = flask.current_app.config
     v = sys.version_info
-    data = [('DbShare',
-             'https://github.com/pekrau/DbShare', dbshare.__version__),
-            ('Python', 'https://www.python.org/',
-             f"{v.major}.{v.minor}.{v.micro}"),
-            ('Sqlite3', 'https://www.sqlite.org/', sqlite3.version),
-            ('Flask', 'http://flask.pocoo.org/', flask.__version__),
-            ('Flask-Mail',
-             'https://pythonhosted.org/Flask-Mail', flask_mail.__version__),
-            ('Jinja2', 'http://jinja.pocoo.org/docs', jinja2.__version__),
-            ('jsonschema', 
-             'https://github.com/Julian/jsonschema', jsonschema.__version__),
-            ('dpath-python',
-             'https://github.com/akesterson/dpath-python', 
-             constants.DPATH_VERSION),
-            ('Bootstrap',
-             'https://getbootstrap.com/', constants.BOOTSTRAP_VERSION),
-            ('jQuery', 'https://jquery.com/', constants.JQUERY_VERSION),
-            ('jQuery localtime', 
-             'https://plugins.jquery.com/jquery.localtime/',
-             constants.JQUERY_LOCALTIME_VERSION),
-            ('DataTables', 
-             'https://datatables.net/', constants.DATATABLES_VERSION),
+    software = [
+        ('DbShare', dbshare.__version__, constants.SOURCE_URL),
+        ('Python', f"{v.major}.{v.minor}.{v.micro}", 'https://www.python.org/'),
+        ('Sqlite3', sqlite3.version, 'https://www.sqlite.org/'),
+        ('Flask', flask.__version__, 'http://flask.pocoo.org/'),
+        ('Flask-Mail', flask_mail.__version__, 'https://pythonhosted.org/Flask-Mail'),
+        ('Jinja2', jinja2.__version__, 'http://jinja.pocoo.org/docs'),
+        ('jsonschema', jsonschema.__version__, 'https://github.com/Julian/jsonschema'),
+        ('dpath-python', constants.DPATH_VERSION, constants.DPATH_URL),
+        ('Bootstrap', constants.BOOTSTRAP_VERSION, constants.BOOTSTRAP_URL),
+        ('jQuery', constants.JQUERY_VERSION, constants.JQUERY_URL),
+        ('jQuery.localtime', constants.JQUERY_LOCALTIME_VERSION, constants.JQUERY_LOCALTIME_URL),
+        ('DataTables', constants.DATATABLES_VERSION, constants.DATATABLES_URL),
     ]
-    return flask.render_template('about/software.html', data=data)
+    return flask.render_template('about/software.html', software=software)
 
 @blueprint.route('/settings')
 @utils.admin_required

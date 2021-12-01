@@ -5,22 +5,26 @@
 {% block body_title %}Software in this system{% endblock %}
 
 {% block main %}
-<table class="table table-sm mt-2">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Link</th>
-      <th>Version</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for name, url, version in data %}
-    <tr>
-      <td>{{ name }}</td>
-      <td><a href="{{ url }}" target="_blank">{{ url }}</a></td>
-      <td>{{ version or '?' }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+<div class="row">
+  <div class="col-md offset-md-1">
+    <table class="table table-sm mt-2">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Version</th>
+          <th>Link</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, version, url in software %}
+        <tr>
+          <td>{{ name }}</td>
+          <td>{{ version }}</td>
+          <td><a href="{{ url }}" target="_blank">{{ url }}</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
 {% endblock %}

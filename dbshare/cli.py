@@ -40,12 +40,12 @@ def create_admin(username, email, password):
     "Create a new admin account."
     with dbshare.app.app.app_context():
         try:
-            with dbshare.user.UserContext() as context:
-                context.set_username(username)
-                context.set_email(email)
-                context.set_password(password)
-                context.set_role(constants.ADMIN)
-                context.set_status(constants.ENABLED)
+            with dbshare.user.UserSaver() as saver:
+                saver.set_username(username)
+                saver.set_email(email)
+                saver.set_password(password)
+                saver.set_role(constants.ADMIN)
+                saver.set_status(constants.ENABLED)
         except ValueError as error:
             raise click.ClickException(str(error))
 
@@ -60,12 +60,12 @@ def create_user(username, email, password):
     "Create a new user account."
     with dbshare.app.app.app_context():
         try:
-            with dbshare.user.UserContext() as context:
-                context.set_username(username)
-                context.set_email(email)
-                context.set_password(password)
-                context.set_role(constants.USER)
-                context.set_status(constants.ENABLED)
+            with dbshare.user.UserSaver() as saver:
+                saver.set_username(username)
+                saver.set_email(email)
+                saver.set_password(password)
+                saver.set_role(constants.USER)
+                saver.set_status(constants.ENABLED)
         except ValueError as error:
             raise click.ClickException(str(error))
 
@@ -79,8 +79,8 @@ def password(username, password):
     with dbshare.app.app.app_context():
         user = dbshare.user.get_user(username)
         if user:
-            with dbshare.user.UserContext(user) as context:
-                context.set_password(password)
+            with dbshare.user.UserSaver(user) as saver:
+                saver.set_password(password)
         else:
             raise click.ClickException("No such user.")
 

@@ -45,8 +45,8 @@ def create(dbname):
                       'title': title or None,
                       'description': description or None,
                       'query': query}
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_view(schema)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.create',
@@ -78,10 +78,10 @@ def edit(dbname, viewname):
 
     elif utils.http_POST():
         try:
-            with dbshare.db.DbContext(db) as ctx:
+            with dbshare.db.DbSaver(db) as saver:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
-                ctx.update_view(schema)
+                saver.update_view(schema)
         except ValueError as error:
             utils.flash_error(error)
             return flask.redirect(
@@ -96,8 +96,8 @@ def edit(dbname, viewname):
             utils.flash_error(error)
             return flask.redirect(flask.url_for('home'))
         try:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.delete_view(str(viewname))
+            with dbshare.db.DbSaver(db) as saver:
+                saver.delete_view(str(viewname))
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
         return flask.redirect(flask.url_for('db.display', dbname=dbname))
@@ -187,8 +187,8 @@ def clone(dbname, viewname):
             schema['name'] = flask.request.form['name']
             if schema.get('title'):
                 schema['title'] = 'Clone of ' + schema['title']
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_view(schema)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_view(schema)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(

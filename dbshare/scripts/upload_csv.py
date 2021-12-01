@@ -45,10 +45,10 @@ with dbshare.app.app.app_context():
                 if item == '':
                     record[i] = None
         with open(args.filename, newline='') as infile:
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.create_table_load_records(tablename,
-                                              records,
-                                              has_header=args.header)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.create_table_load_records(tablename,
+                                                records,
+                                                has_header=args.header)
     except (ValueError, IOError) as error:
         sys.exit(f"Error: {str(error)}")
     print(f"Loaded {len(records)} records into table {tablename}"

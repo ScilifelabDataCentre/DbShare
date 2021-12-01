@@ -89,8 +89,8 @@ def table(dbname):
         try:
             query = get_query_from_request(check=True)
             schema = {'name': flask.request.form.get('name')}
-            with dbshare.db.DbContext(db) as ctx:
-                ctx.add_table(schema, query=query)
+            with dbshare.db.DbSaver(db) as saver:
+                saver.add_table(schema, query=query)
         except (KeyError, SystemError, sqlite3.Error) as error:
             utils.flash_error(error)
             return flask.redirect(
