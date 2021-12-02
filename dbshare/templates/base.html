@@ -7,7 +7,7 @@
     {% if config['SITE_ICON'] %}
     <link rel="icon" href="{{ url_for('site.static', filename=config['SITE_ICON']) }}">
     {% else %}
-    <link rel="icon" href="{{ url_for('static', filename='dbshare-32.png') }}">
+    <link rel="icon" href="{{ url_for('static', filename='logo32.png') }}">
     {% endif %}
     <link rel="stylesheet" crossorigin="anonymous"
           href="{{ constants.BOOTSTRAP_CSS_URL }}"
@@ -26,7 +26,7 @@
 	     {% if config['SITE_LOGO'] %}
 	     src="{{ url_for('site.static', filename=config['SITE_LOGO']) }}"
 	     {% else %}
-	     src="{{ url_for('static', filename='dbshare-32.png') }}"
+	     src="{{ url_for('static', filename='logo32.png') }}"
              {% endif %}
 	     title="{{ config['SITE_NAME'] }}" alt="{{ config['SITE_NAME'] }}">
         {{ config['SITE_NAME'] }}</a>
@@ -173,11 +173,8 @@
           {% endif %} {# if config['HOST_URL'] #}
         </div>
         <div class="col-md-4 offset-md-4 text-right">
-          <a href="{{ constants.SOURCE_URL}}">
-            <img src="{{ url_for('static', filename='dbshare-32.png') }}"
-		 width="32" height="32">
-	    {{ constants.SOURCE_NAME }}
-	  </a>
+          <img src="{{ url_for('static', filename='logo32.png') }}">
+          <a href="{{ constants.URL}}">DbShare</a>
 	  {{ constants.VERSION}}
         </div>
       </div>
@@ -191,7 +188,7 @@
             crossorigin="anonymous"></script>
     <script src="{{ constants.DATATABLES_JQUERY_JS_URL }}"></script>
     <script src="{{ constants.DATATABLES_BOOTSTRAP_JS_URL }}"></script>
-    <script src="{{ url_for('static', filename='jquery.localtime-0.9.1.min.js') }}"></script>
+    <script src="{{ url_for('static', filename=constants.JQUERY_LOCALTIME_FILENAME) }}"></script>
     {% block javascript %}
     {% endblock %}
   </body>

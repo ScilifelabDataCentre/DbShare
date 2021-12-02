@@ -10,10 +10,8 @@ import string
 __version__ = '2.1.2'
 
 class Constants:
-    VERSION     = __version__
-    SOURCE_URL  = 'https://github.com/pekrau/DbShare'
-    SOURCE_NAME = 'DbShare'
-
+    VERSION = __version__
+    URL = 'https://github.com/pekrau/DbShare'
     ROOT = os.path.dirname(os.path.abspath(__file__))
 
     BOOTSTRAP_VERSION  = '4.6.1'
@@ -28,14 +26,15 @@ class Constants:
     JQUERY_JS_URL = "https://code.jquery.com/jquery-3.5.1.slim.min.js"
     JQUERY_JS_INTEGRITY = "sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj"
 
+    JQUERY_LOCALTIME_URL = 'https://plugins.jquery.com/jquery.localtime/'
+    JQUERY_LOCALTIME_VERSION = '0.9.1'
+    JQUERY_LOCALTIME_FILENAME = 'jquery.localtime-0.9.1.min.js'
+
     DATATABLES_VERSION = "1.10.24"
     DATATABLES_URL = "https://datatables.net/"
     DATATABLES_CSS_URL = "https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css"
     DATATABLES_JQUERY_JS_URL = "https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js"
     DATATABLES_BOOTSTRAP_JS_URL = "https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js"
-
-    JQUERY_LOCALTIME_URL = 'https://plugins.jquery.com/jquery.localtime/'
-    JQUERY_LOCALTIME_VERSION = '0.9.1'
 
     DPATH_URL = 'https://github.com/akesterson/dpath-python'
     DPATH_VERSION = '1.4.2'
