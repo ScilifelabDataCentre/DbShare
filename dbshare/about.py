@@ -64,7 +64,7 @@ def software():
     config = flask.current_app.config
     v = sys.version_info
     software = [
-        ('DbShare', dbshare.__version__, constants.SOURCE_URL),
+        ('DbShare', dbshare.__version__, constants.URL),
         ('Python', f"{v.major}.{v.minor}.{v.micro}", 'https://www.python.org/'),
         ('Sqlite3', sqlite3.version, 'https://www.sqlite.org/'),
         ('Flask', flask.__version__, 'http://flask.pocoo.org/'),
