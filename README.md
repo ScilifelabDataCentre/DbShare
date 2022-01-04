@@ -1,4 +1,4 @@
-# ![DbShare logo](https://raw.githubusercontent.com/pekrau/DbShare/master/dbshare/static/logo32.png) DbShare
+# ![DbShare logo](https://github.com/pekrau/DbShare/raw/master/dbshare/static/logo32.png) DbShare
 
 Web service to share and query tabular data sets stored in
 [SQLite3](https://www.sqlite.org/) databases.
