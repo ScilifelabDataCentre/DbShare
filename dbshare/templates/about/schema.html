@@ -16,7 +16,7 @@
 <table class="table table-borderless table-sm">
   {% for key, value in schemas.items() %}
   <tr>
-    <td class="pr-3 text-right"><a href="{{ value['href'] }}">{{ key }}</a></td>
+    <td class="pr-3 text-right"><a id="{{ key }}"href="{{ value['href'] }}">{{ key }}</a></td>
     <td>{{ value['title'] }}</td>
   </tr>
   {% endfor %}
