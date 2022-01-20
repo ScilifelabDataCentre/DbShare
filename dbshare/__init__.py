@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = '2.1.2'
+__version__ = '2.1.3'
 
 class Constants:
     VERSION = __version__

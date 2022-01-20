@@ -42,158 +42,93 @@ def settings():
     result["BASE_URL"] = result["BASE_URL"].rstrip("/") + "/"
     return result
 
-def test_about(settings, page): # 'page' fixture from 'pytest-playwright'
-    "Test access to 'About' pages."
-    url = f"{settings['BASE_URL']}"
-    page.goto(url)
-    # Click text=About
-    page.click("text=About")
-    # Click text=Overview
-    page.click("text=Overview")
-    assert page.url == "http://localhost:5001/about/doc/overview"
-    # Go to http://localhost:5001/
-    page.goto("http://localhost:5001/")
-    # Click text=About
-    page.click("text=About")
-    # Click text=Tutorial
-    page.click("text=Tutorial")
-    assert page.url == "http://localhost:5001/about/doc/tutorial"
-    # Click text=Explore a database
-    page.click("text=Explore a database")
-    assert page.url == "http://localhost:5001/about/doc/tutorial-explore"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=Create and modify a database
-    with page.expect_navigation():
-        page.click("text=Create and modify a database")
-        assert page.url == "http://localhost:5001/about/doc/tutorial-create"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=Query and view
-    with page.expect_navigation():
-        page.click("text=Query and view")
-        assert page.url == "http://localhost:5001/about/doc/tutorial-query"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=Using the API
-    with page.expect_navigation():
-        page.click("text=Using the API")
-        assert page.url == "http://localhost:5001/about/doc/tutorial-api"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=About
-    page.click("text=About")
-    # Click text=URL endpoints
-    page.click("text=URL endpoints")
-    assert page.url == "http://localhost:5001/about/endpoints"
-
-    # Click text=About
-    page.click("text=About")
-    # Click text=Software
-    page.click("text=Software")
-    assert page.url == "http://localhost:5001/about/software"
+def test_my_databases(settings, page): # 'page' fixture from 'pytest-playwright'
+    "Test access to my databases page."
     # page.wait_for_timeout(5000)
+    page.set_default_timeout(2000)
+    page.goto(settings['BASE_URL'])
+    page.click("text=Login")
+    assert page.url == f"{settings['BASE_URL']}user/login?"
+    page.click("input[name=\"username\"]")
+    page.fill("input[name=\"username\"]", settings["USERNAME"])
+    page.press("input[name=\"username\"]", "Tab")
+    page.fill("input[name=\"password\"]", settings["PASSWORD"])
+    with page.expect_navigation():
+        page.click("id=login")
+        assert page.url == f"{settings['BASE_URL']}dbs/owner/{settings['USERNAME']}"
 
-def test_about_json_schema(settings, page):
-    "Test access to 'About' JSON schema pages."
-    url = f"{settings['BASE_URL']}"
-    page.goto(url)
-    # Click text=About
-    page.click("text=About")
-    # Click text=API JSON schema
-    page.click("text=API JSON schema")
-    assert page.url == "http://localhost:5001/about/schema"
+    page.click("text=Create")
+    assert page.url == f"{settings['BASE_URL']}db/"
 
-    # Click text=root
-    page.click("text=root")
-    assert page.url == "http://localhost:5001/api/schema/root"
-    # Go back to previous page
-    page.go_back()
+    page.click("input[name=\"name\"]")
+    page.fill("input[name=\"name\"]", "test")
+    page.click("textarea[name=\"description\"]")
+    page.fill("textarea[name=\"description\"]", "test database")
+    with page.expect_navigation():
+        page.click("button:has-text(\"Create\")")
+        assert page.url == f"{settings['BASE_URL']}db/test"
 
-    # Click text=dbs Database list API JSON schema. >> a
-    page.click("text=dbs Database list API JSON schema. >> a")
-    assert page.url == "http://localhost:5001/api/schema/dbs"
-    # Go back to previous page
-    page.go_back()
+    with page.expect_navigation():
+        page.click("text=Create table")
+        assert page.url == f"{settings['BASE_URL']}table/test"
 
-    # Click text=db Database API JSON schema. >> a
-    page.click("text=db Database API JSON schema. >> a")
-    assert page.url == "http://localhost:5001/api/schema/db"
-    # Go back to previous page
-    page.go_back()
+    page.click("input[name=\"name\"]")
+    page.fill("input[name=\"name\"]", "t1")
+    page.click("input[name=\"column0name\"]")
+    page.fill("input[name=\"column0name\"]", "i")
+    page.check("#column0primarykey")
+    page.click("input[name=\"column1name\"]")
+    page.fill("input[name=\"column1name\"]", "f")
+    page.select_option("select[name=\"column1type\"]", "REAL")
+    page.click("input[name=\"column2name\"]")
+    page.fill("input[name=\"column2name\"]", "s")
+    page.select_option("select[name=\"column2type\"]", "TEXT")
+    page.click("input[name=\"column3name\"]")
+    page.fill("input[name=\"column3name\"]", "r")
+    page.select_option("select[name=\"column3type\"]", "REAL")
+    page.check("input[name=\"column3notnull\"]")
+    with page.expect_navigation():
+        page.click("button:has-text(\"Create\")")
+        assert page.url == f"{settings['BASE_URL']}table/test/t1"
 
-    # Click text=db/edit
-    page.click("text=db/edit")
-    assert page.url == "http://localhost:5001/api/schema/db/edit"
-    # Go back to previous page
-    page.go_back()
+    with page.expect_navigation():
+        page.click("text=Insert row")
+        assert page.url == f"{settings['BASE_URL']}table/test/t1/row"
+    page.click("input[name=\"i\"]")
+    page.fill("input[name=\"i\"]", "1")
+    page.click("input[name=\"f\"]")
+    page.fill("input[name=\"f\"]", "3.0")
+    page.click("input[name=\"s\"]")
+    page.fill("input[name=\"s\"]", "apa")
+    page.click("input[name=\"r\"]")
+    page.fill("input[name=\"r\"]", "3.141")
+    with page.expect_navigation():
+        page.click("button:has-text(\"Insert\")")
+        assert page.url == f"{settings['BASE_URL']}table/test/t1/row"
 
-    # Click text=table
-    page.click("text=table")
-    assert page.url == "http://localhost:5001/api/schema/table"
-    # Go back to previous page
-    page.go_back()
+    page.click("input[name=\"i\"]")
+    page.fill("input[name=\"i\"]", "2")
+    page.click("input[name=\"f\"]")
+    page.click("input[name=\"s\"]")
+    page.fill("input[name=\"s\"]", "blah")
+    page.click("input[name=\"r\"]")
+    page.fill("input[name=\"r\"]", "-1.0")
+    with page.expect_navigation():
+        page.click("button:has-text(\"Insert\")")
+        assert page.url == f"{settings['BASE_URL']}table/test/t1/row"
 
-    # Click text=table/statistics
-    page.click("text=table/statistics")
-    assert page.url == "http://localhost:5001/api/schema/table/statistics"
-    # Go back to previous page
-    page.go_back()
+    with page.expect_navigation():
+        page.click("text=2 rows")
+        assert page.url == f"{settings['BASE_URL']}table/test/t1"
 
-    # Click text=table/create
-    page.click("text=table/create")
-    assert page.url == "http://localhost:5001/api/schema/table/create"
-    # Go back to previous page
-    page.go_back()
+    with page.expect_navigation():
+        page.once("dialog", lambda dialog: dialog.accept()) # Callback for next click.
+        page.click("text=Delete")
+        assert page.url == f"{settings['BASE_URL']}db/test"
 
-    # Click text=table/input
-    page.click("text=table/input")
-    assert page.url == "http://localhost:5001/api/schema/table/input"
-    # Go back to previous page
-    page.go_back()
+    with page.expect_navigation():
+        page.once("dialog", lambda dialog: dialog.accept()) # Callback for next click.
+        page.click("text=Delete")
+        assert page.url == f"{settings['BASE_URL']}dbs/owner/{settings['USERNAME']}"
 
-    # Click text=view View API JSON schema. >> a
-    page.click("text=view View API JSON schema. >> a")
-    assert page.url == "http://localhost:5001/api/schema/view"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=view/create
-    page.click("text=view/create")
-    assert page.url == "http://localhost:5001/api/schema/view/create"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=rows
-    page.click("text=rows")
-    assert page.url == "http://localhost:5001/api/schema/rows"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=query/input
-    page.click("text=query/input")
-    assert page.url == "http://localhost:5001/api/schema/query/input"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=query/output
-    page.click("text=query/output")
-    assert page.url == "http://localhost:5001/api/schema/query/output"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=user
-    page.click("text=user")
-    assert page.url == "http://localhost:5001/api/schema/user"
-    # Go back to previous page
-    page.go_back()
-
-    # Click text=users
-    page.click("text=users")
-    assert page.url == "http://localhost:5001/api/schema/users"
-    # Go back to previous page
-    page.go_back()
+    # page.wait_for_timeout(3000)
