@@ -200,7 +200,7 @@ def logs(dbname):
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE name=? ORDER BY timestamp DESC"
     cursor.execute(sql, (db['name'],))
@@ -319,12 +319,11 @@ def vacuum(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
-        with DbSaver(db) as cnx:
+        # Reset the table caches.
+        with DbSaver(db) as saver:
             for schema in db['tables'].values():
-                cnx.update_table(schema)
-        dbcnx = get_cnx(db['name'], write=True)
-        sql = 'VACUUM'
-        dbcnx.execute(sql)
+                saver.update_table(schema)
+        get_cnx(db['name'], write=True).execute('VACUUM')
     except sqlite3.Error as error:
         utils.flash_error(error)
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
@@ -340,9 +339,7 @@ def analyze(dbname):
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
     try:
-        dbcnx = get_cnx(db['name'], write=True)
-        sql = 'ANALYZE'
-        dbcnx.execute(sql)
+        get_cnx(db['name'], write=True).execute('ANALYZE')
     except sqlite3.Error as error:
         utils.flash_error(error)
     return flask.redirect(flask.url_for('.display', dbname=db['name']))
@@ -442,20 +439,12 @@ class DbSaver:
             self.old = copy.deepcopy(db)
 
     @property
-    def cnx(self):
-        try:
-            return self._cnx
-        except AttributeError:
-            # Don't close connection at exit; done externally to the context
-            self._cnx = dbshare.system.get_cnx()
-            return self._cnx
-
-    @property
     def dbcnx(self):
+        "Connection the Sqlite3 database itself."
         try:
             return self._dbcnx
         except AttributeError:
-            # Don't close connection at exit; done externally to the context
+            # Don't close connection at exit; done externally to the context.
             self._dbcnx = get_cnx(self.db['name'], write=True)
             return self._dbcnx
 
@@ -468,25 +457,25 @@ class DbSaver:
             if not self.db.get(key):
                 raise ValueError(f"invalid db: {key} not set")
         self.db['modified'] = utils.get_time()
-        with self.cnx:
+        with flask.g.syscnx:
             # Update the existing database entry in system.
             if self.old:
                 sql = "UPDATE dbs SET name=?, owner=?, title=?," \
                     "description=?, public=?, readonly=?, modified=?" \
                     " WHERE name=?"
-                self.cnx.execute(sql, (self.db['name'],
-                                       self.db['owner'],
-                                       self.db.get('title'),
-                                       self.db.get('description'),
-                                       bool(self.db['public']),
-                                       bool(self.db['readonly']),
-                                       self.db['modified'],
-                                       self.old['name']))
+                flask.g.syscnx.execute(sql, (self.db['name'],
+                                             self.db['owner'],
+                                             self.db.get('title'),
+                                             self.db.get('description'),
+                                             bool(self.db['public']),
+                                             bool(self.db['readonly']),
+                                             self.db['modified'],
+                                             self.old['name']))
                 # The Sqlite3 database file was renamed in 'set_name'.
                 if self.old.get('name') != self.db['name']:
                     # Fix entries in log records.
                     sql = "UPDATE dbs_logs SET name=? WHERE name=?"
-                    self.cnx.execute(sql, (self.db['name'], self.old['name']))
+                    flask.g.syscnx.execute(sql, (self.db['name'], self.old['name']))
                     # No need to fix hash values: is (or at least, was)
                     # in read/write mode, so db has no hash values.
                 # Insert hash values if newly computed.
@@ -494,13 +483,13 @@ class DbSaver:
                     sql = "INSERT INTO dbs_hashes (name, hashname, hashvalue)" \
                           " VALUES (?, ?, ?)"
                     for hashname in self.db['hashes']:
-                        self.cnx.execute(sql, (self.db['name'],
-                                               hashname,
-                                               self.db['hashes'][hashname]))
+                        flask.g.syscnx.execute(sql, (self.db['name'],
+                                                     hashname,
+                                                     self.db['hashes'][hashname]))
                 # Delete hash values if removed.
                 elif self.old['hashes'] and not self.db['hashes']:
                     sql = "DELETE FROM dbs_hashes WHERE name=?"
-                    self.cnx.execute(sql, (self.db['name'],))
+                    flask.g.syscnx.execute(sql, (self.db['name'],))
 
             # New database.
             else:
@@ -510,14 +499,14 @@ class DbSaver:
                 sql = "INSERT INTO dbs" \
                       " (name, owner, title, description, public, readonly," \
                       "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-                self.cnx.execute(sql, (self.db['name'],
-                                       self.db['owner'],
-                                       self.db.get('title'),
-                                       self.db.get('description'),
-                                       bool(self.db['public']),
-                                       bool(self.db['readonly']),
-                                       self.db['created'], 
-                                       self.db['modified']))
+                flask.g.syscnx.execute(sql, (self.db['name'],
+                                             self.db['owner'],
+                                             self.db.get('title'),
+                                             self.db.get('description'),
+                                             bool(self.db['public']),
+                                             bool(self.db['readonly']),
+                                             self.db['created'], 
+                                             self.db['modified']))
             # Add log entry
             new = {}
             for key, value in self.db.items():
@@ -537,12 +526,12 @@ class DbSaver:
             sql = "INSERT INTO dbs_logs (name, new, editor," \
                   " remote_addr, user_agent, timestamp)" \
                   " VALUES (?, ?, ?, ?, ?, ?)"
-            self.cnx.execute(sql, (self.db['name'],
-                                   json.dumps(new),
-                                   editor,
-                                   remote_addr,
-                                   user_agent,
-                                   utils.get_time()))
+            flask.g.syscnx.execute(sql, (self.db['name'],
+                                         json.dumps(new),
+                                         editor,
+                                         remote_addr,
+                                         user_agent,
+                                         utils.get_time()))
         # Set the OS-level file permissions.
         if self.db['readonly']:
             os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD)
@@ -1041,7 +1030,7 @@ def get_db(name, complete=False):
     """Return the database metadata for the given name.
     Return None if no such database.
     """
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT owner, title, description, public, readonly," \
           " created, modified FROM dbs WHERE name=?"
     cursor.execute(sql, (name,))
@@ -1072,7 +1061,7 @@ def get_db(name, complete=False):
 
 def get_usage(username=None):
     "Return the number and total size of the databases for the user, or all."
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     if username:
         sql = "SELECT name FROM dbs WHERE owner=?"
         cursor.execute(sql, (username,))
@@ -1329,12 +1318,11 @@ def add_xlsx_database(dbname, infile, size):
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
-    cnx = dbshare.system.get_cnx()
-    with cnx:
+    with flask.g.syscnx:
         sql = 'DELETE FROM dbs_logs WHERE name=?'
-        cnx.execute(sql, (dbname,))
+        flask.g.syscnx.execute(sql, (dbname,))
         sql = 'DELETE FROM dbs WHERE name=?'
-        cnx.execute(sql, (dbname,))
+        flask.g.syscnx.execute(sql, (dbname,))
     try:
         os.remove(utils.dbpath(dbname))
     except FileNotFoundError:

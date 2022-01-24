@@ -1,5 +1,7 @@
 "DbShare web app."
 
+import sqlite3
+
 import flask
 
 import dbshare
@@ -69,10 +71,11 @@ def set_schema_base_url():
 @app.before_request
 def prepare():
     """Actions performed before every access.
-    - Connect to the system database (read-only).
+    - Connect to the system database.
     - Get the current user.
     """
-    flask.g.cnx = dbshare.system.get_cnx()
+    flask.g.syscnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
+    flask.g.syscnx.row_factory = sqlite3.Row
     flask.g.current_user = dbshare.user.get_current_user()
     flask.g.is_admin = flask.g.current_user and \
                        flask.g.current_user.get('role') == constants.ADMIN
@@ -91,7 +94,7 @@ def home():
 @app.route("/status")
 def status():
     "Return JSON for the current status and some counts for the database."
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     cursor.execute("SELECT COUNT(*) FROM dbs")
     rows = list(cursor)
     if rows:

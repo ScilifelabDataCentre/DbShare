@@ -95,6 +95,6 @@ def get_dbs(public=None, owner=None, complete=False, readonly=None):
         criteria['readonly=?'] = readonly
     if criteria:
         sql += ' WHERE ' + ' OR '.join(criteria.keys())
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     cursor.execute(sql, tuple(criteria.values()))
     return [dbshare.db.get_db(row[0], complete=complete) for row in cursor]

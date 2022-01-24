@@ -89,29 +89,15 @@ SYSTEM_INDEXES = [
     dict(name='access_logs_date', table='access_logs', columns=['date']),
 ]
 
-def get_cnx():
-    "Return the existing connection to the system database, else a new one."
-    try:
-        return flask.g.cnx
-    except AttributeError:
-        flask.g.cnx = utils.get_cnx(utils.dbpath(constants.SYSTEM), write=True)
-        flask.g.cnx.row_factory = sqlite3.Row
-        return flask.g.cnx
-
-def get_cursor():
-    "Return a cursor for the system database."
-    return get_cnx().cursor()
-
 def log_access(response):
     "Add log entry for an access after response has been prepared."
-    # Skip if logging turned off.
+    # Skip if access logging turned off.
     if not flask.current_app.config['LOG_ACCESS']:
         return response
     # Skip if access to '/static*'.
     if flask.request.path.startswith('/static'):
         return response
-    cnx = get_cnx()
-    with cnx:
+    with flask.g.syscnx:
         sql = "INSERT INTO access_logs (remote_addr, username," \
               " dbname, date, time, method, path, status_code)" \
               " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
@@ -128,7 +114,7 @@ def log_access(response):
                   flask.request.method,
                   flask.request.path,
                   response.status_code]
-        cnx.execute(sql, values)
+        flask.g.syscnx.execute(sql, values)
     return response
 
 def init(app):

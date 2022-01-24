@@ -84,9 +84,8 @@ def register():
             utils.flash_message('User account created; check your email.')
         # Was set to 'pending'; send email to admins.
         else:
-            cnx = dbshare.system.get_cnx()
             sql = "SELECT email FROM users WHERE role=?"
-            cursor = cnx.execute(sql, (constants.ADMIN,))
+            cursor = flask.g.syscnx.execute(sql, (constants.ADMIN,))
             emails = [row[0] for row in cursor]
             site = flask.current_app.config['SITE_NAME']
             message = flask_mail.Message(f"{site} user account pending",
@@ -224,12 +223,11 @@ def edit(username):
         if ndbs != 0:
             utils.flash_error('cannot delete non-empty user account')
             return flask.redirect(flask.url_for('.display', username=username))
-        cnx = dbshare.system.get_cnx()
-        with cnx:
+        with flask.g.syscnx:
             sql = "DELETE FROM users_logs WHERE username=?"
-            cnx.execute(sql, (username,))
+            flask.g.syscnx.execute(sql, (username,))
             sql = "DELETE FROM users WHERE username=?"
-            cnx.execute(sql, (username,))
+            flask.g.syscnx.execute(sql, (username,))
         utils.flash_message(f"Deleted user {username}.")
         if flask.g.is_admin:
             return flask.redirect(flask.url_for('.users'))
@@ -247,7 +245,7 @@ def logs(username):
     if not is_admin_or_self(user):
         utils.flash_error('access not allowed')
         return flask.redirect(flask.url_for('home'))
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM users_logs WHERE username=? ORDER BY timestamp DESC"
     cursor.execute(sql, (user['username'],))
@@ -308,7 +306,6 @@ class UserSaver:
         else:
             self.user = user
             self.orig = user.copy()
-        self.cnx = dbshare.system.get_cnx()
 
     def __enter__(self):
         return self
@@ -319,39 +316,39 @@ class UserSaver:
             if not self.user.get(key):
                 raise ValueError("invalid user: %s not set" % key)
         self.user['modified'] = utils.get_time()
-        cursor = self.cnx.cursor()
+        cursor = flask.g.syscnx.cursor()
         cursor.execute("SELECT COUNT(*) FROM users WHERE username=?",
                        (self.user['username'],))
         rows = cursor.fetchall()
-        with self.cnx:
+        with flask.g.syscnx:
             # Update user
             if rows[0][0]:
                 sql = "UPDATE users SET email=?, password=?," \
                       " apikey=?, role=?, status=?, quota=?, modified=?" \
                       " WHERE username=?"
-                self.cnx.execute(sql, (self.user['email'],
-                                       self.user['password'],
-                                       self.user.get('apikey'),
-                                       self.user['role'],
-                                       self.user['status'],
-                                       self.user['quota'],
-                                       self.user['modified'],
-                                       self.user['username']))
+                flask.g.syscnx.execute(sql, (self.user['email'],
+                                             self.user['password'],
+                                             self.user.get('apikey'),
+                                             self.user['role'],
+                                             self.user['status'],
+                                             self.user['quota'],
+                                             self.user['modified'],
+                                             self.user['username']))
             # Add user
             else:
                 sql = "INSERT INTO users" \
                       " (username, email, password, apikey, role," \
                       "  status, quota, created, modified)" \
                       " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-                self.cnx.execute(sql, (self.user['username'],
-                                       self.user['email'],
-                                       self.user['password'],
-                                       self.user.get('apikey'),
-                                       self.user['role'],
-                                       self.user['status'],
-                                       self.user['quota'],
-                                       self.user['created'], 
-                                       self.user['modified']))
+                flask.g.syscnx.execute(sql, (self.user['username'],
+                                             self.user['email'],
+                                             self.user['password'],
+                                             self.user.get('apikey'),
+                                             self.user['role'],
+                                             self.user['status'],
+                                             self.user['quota'],
+                                             self.user['created'], 
+                                             self.user['modified']))
             # Add log entry
             new = {}
             for key, value in self.user.items():
@@ -381,26 +378,26 @@ class UserSaver:
             sql = "INSERT INTO users_logs (username, new, editor," \
                   " remote_addr, user_agent, timestamp)" \
                   " VALUES (?, ?, ?, ?, ?, ?)"
-            self.cnx.execute(sql, (self.user['username'],
-                                  json.dumps(new, ensure_ascii=False),
-                                  editor,
-                                  remote_addr,
-                                  user_agent,
-                                  utils.get_time()))
+            flask.g.syscnx.execute(sql, (self.user['username'],
+                                         json.dumps(new, ensure_ascii=False),
+                                         editor,
+                                         remote_addr,
+                                         user_agent,
+                                         utils.get_time()))
 
     def set_username(self, username):
         if 'username' in self.user:
             raise ValueError('username cannot be changed')
         if not constants.NAME_RX.match(username):
             raise ValueError('invalid username; must be an name')
-        if get_user(username=username, cnx=self.cnx):
+        if get_user(username=username):
             raise ValueError('username already in use')
         self.user['username'] = username
 
     def set_email(self, email):
         if not constants.EMAIL_RX.match(email):
             raise ValueError('invalid email')
-        if get_user(email=email, cnx=self.cnx):
+        if get_user(email=email):
             raise ValueError('email already in use')
         self.user['email'] = email
         if self.user.get('status') == constants.PENDING:
@@ -442,7 +439,7 @@ class UserSaver:
 
 # Utility functions
 
-def get_user(username=None, email=None, apikey=None, cnx=None):
+def get_user(username=None, email=None, apikey=None):
     """Return the user for the given username, email or apikey.
     Return None if no such user.
     """
@@ -457,10 +454,7 @@ def get_user(username=None, email=None, apikey=None, cnx=None):
         criterion = " WHERE apikey=?"
     else:
         return None
-    if cnx is None:
-        cursor = dbshare.system.get_cursor()
-    else:
-        cursor = cnx.cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT username, email, password, apikey, role, status," \
           " quota, created, modified FROM users" + criterion
     cursor.execute(sql, (name,))
@@ -496,7 +490,7 @@ def is_admin_and_not_self(user):
 def get_all_users():
     "Return a list of all users."
     import dbshare.dbs
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT username, email, password, apikey," \
           " role, status, quota, created, modified FROM users"
     cursor.execute(sql)

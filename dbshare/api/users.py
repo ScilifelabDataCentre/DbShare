@@ -18,7 +18,7 @@ flask_cors.CORS(blueprint, methods=["GET"])
 @utils.admin_required
 def all():
     "Return the list of all user accounts."
-    cursor = dbshare.system.get_cursor()
+    cursor = flask.g.syscnx.cursor()
     sql = "SELECT username, email, role, status, created, modified" \
           " FROM users"
     cursor.execute(sql)
