@@ -190,9 +190,7 @@ def edit(dbname):
 
     elif utils.http_DELETE():
         delete_database(dbname)
-        return flask.redirect(
-            flask.url_for('dbs.owner',
-                          username=flask.g.current_user['username']))
+        return flask.redirect(flask.url_for('dbs.owner', username=db["owner"]))
 
 @blueprint.route('/<name:dbname>/logs')
 def logs(dbname):

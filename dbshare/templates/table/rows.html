@@ -164,7 +164,7 @@
   $(function() {
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 10,
+      "pageLength": 25,
       {% if has_write_access %}
       "columnDefs": [
         {"orderable": false, "targets": {{ len(schema['columns']) }} }

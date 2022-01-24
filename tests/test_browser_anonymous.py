@@ -14,7 +14,7 @@ import json
 import urllib.parse
 
 import pytest
-from playwright.sync_api import expect
+import playwright.sync_api
 
 
 @pytest.fixture(scope="module")
@@ -164,9 +164,8 @@ def test_demo_database(settings, page):
     page.fill("textarea[name=\"where\"]", "petal_width > 2.2")
     page.click("text=Execute query")
     assert page.url == "http://localhost:5001/query/demo/rows"
-
     assert page.locator("#nrows").text_content() == "14"
     locator = page.locator("#rows > tbody > tr")
-    expect(locator).to_have_count(14)
+    playwright.sync_api.expect(locator).to_have_count(14)
 
     # page.wait_for_timeout(3000)
