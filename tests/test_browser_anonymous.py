@@ -41,7 +41,6 @@ def settings():
 
 def test_about(settings, page): # 'page' fixture from 'pytest-playwright'
     "Test access to 'About' pages."
-    page.set_default_timeout(4000)
     page.goto(settings['BASE_URL'])
     page.click("text=About")
     page.click("text=Overview")
@@ -77,7 +76,6 @@ def test_about(settings, page): # 'page' fixture from 'pytest-playwright'
 
 def test_about_json_schema(settings, page):
     "Test access to 'About' JSON schema pages."
-    page.set_default_timeout(4000)
     page.goto(f"{settings['BASE_URL']}")
     page.click("text=About")
     page.click("text=API JSON schema")
@@ -146,7 +144,6 @@ def test_about_json_schema(settings, page):
 
 def test_demo_database(settings, page):
     "Test access and query of the demo database, which must exist."
-    page.set_default_timeout(4000)
     page.goto(f"{settings['BASE_URL']}")
     page.click("text=demo")
     assert page.url == "http://localhost:5001/db/demo"
