@@ -42,11 +42,8 @@ def settings():
     result["BASE_URL"] = result["BASE_URL"].rstrip("/")
     return result
 
-def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
-    "Test login, creating a table, inserting data 'by hand'."
-    page.set_default_timeout(2000)
-
-    # Login
+def login(settings, page):
+    "Login to the system."
     page.goto(settings['BASE_URL'])
     page.click("text=Login")
     assert page.url == f"{settings['BASE_URL']}/user/login?"
@@ -56,6 +53,10 @@ def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
     page.fill("input[name=\"password\"]", settings["PASSWORD"])
     page.click("id=login")
     assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USERNAME']}"
+
+def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
+    "Test login, creating a table, inserting data 'by hand'."
+    login(settings, page)
 
     # Create a database 'test'.
     page.click("text=Create")
@@ -129,18 +130,7 @@ def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
 
 def test_table_csv(settings, page): # 'page' fixture from 'pytest-playwright'
     "Test login, creating a table, inserting data from a CSV file."
-    page.set_default_timeout(2000)
-
-    # Login
-    page.goto(settings['BASE_URL'])
-    page.click("text=Login")
-    assert page.url == f"{settings['BASE_URL']}/user/login?"
-    page.click("input[name=\"username\"]")
-    page.fill("input[name=\"username\"]", settings["USERNAME"])
-    page.press("input[name=\"username\"]", "Tab")
-    page.fill("input[name=\"password\"]", settings["PASSWORD"])
-    page.click("id=login")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USERNAME']}"
+    login(settings, page)
 
     # Create a database 'test'.
     page.click("text=Create")
