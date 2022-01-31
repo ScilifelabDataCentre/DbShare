@@ -18,17 +18,6 @@ SYSTEM_TABLES = [
                   dict(name='value', type=constants.TEXT, notnull=True)
          ]
     ),
-    dict(name='access_logs',
-         columns=[dict(name='remote_addr', type=constants.TEXT),
-                  dict(name='username', type=constants.TEXT),
-                  dict(name='dbname', type=constants.TEXT),
-                  dict(name='date', type=constants.TEXT),
-                  dict(name='time', type=constants.TEXT),
-                  dict(name='method', type=constants.TEXT),
-                  dict(name='path', type=constants.TEXT),
-                  dict(name='status_code', type=constants.INTEGER)
-         ]
-    ),
     dict(name='users',
          columns=[dict(name='username', type=constants.TEXT, primarykey= True),
                   dict(name='email', type=constants.TEXT, notnull=True),
@@ -83,39 +72,7 @@ SYSTEM_INDEXES = [
     dict(name='users_apikey', table='users', columns=['apikey']),
     dict(name='users_logs_username', table='users_logs', columns=['username']),
     dict(name='dbs_logs_id', table='dbs_logs', columns=['name']),
-    dict(name='access_logs_remote_addr', table='access_logs', columns=['remote_addr']),
-    dict(name='access_logs_username', table='access_logs', columns=['username']),
-    dict(name='access_logs_dbname', table='access_logs', columns=['dbname']),
-    dict(name='access_logs_date', table='access_logs', columns=['date']),
 ]
-
-def log_access(response):
-    "Add log entry for an access after response has been prepared."
-    # Skip if access logging turned off.
-    if not flask.current_app.config['LOG_ACCESS']:
-        return response
-    # Skip if access to '/static*'.
-    if flask.request.path.startswith('/static'):
-        return response
-    with flask.g.syscnx:
-        sql = "INSERT INTO access_logs (remote_addr, username," \
-              " dbname, date, time, method, path, status_code)" \
-              " VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        if flask.g.current_user:
-            username = flask.g.current_user['username']
-        else:
-            username = None
-        dt = datetime.datetime.utcnow()
-        values = [flask.request.remote_addr,
-                  username,
-                  getattr(flask.g, 'dbname', None),
-                  dt.date().isoformat(),
-                  dt.time().replace(microsecond=0).isoformat(),
-                  flask.request.method,
-                  flask.request.path,
-                  response.status_code]
-        flask.g.syscnx.execute(sql, values)
-    return response
 
 def init(app):
     "Initialize tables in the system database, if not done."

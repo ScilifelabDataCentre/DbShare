@@ -81,8 +81,6 @@ def prepare():
                        flask.g.current_user.get('role') == constants.ADMIN
     flask.g.timer = utils.Timer()
 
-app.after_request(dbshare.system.log_access)
-
 @app.route('/')
 def home():
     "Home page; display the list of public databases."

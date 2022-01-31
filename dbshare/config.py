@@ -16,7 +16,6 @@ DEFAULT_SETTINGS = dict(
     SITE_STATIC_DIRPATH = None,
     SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
     SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
-    LOG_ACCESS = False,
     HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
     HOST_NAME = None,
     HOST_URL = None,
