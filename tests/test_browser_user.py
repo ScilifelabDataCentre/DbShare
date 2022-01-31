@@ -1,6 +1,8 @@
-"""Test creating, populating, querying, modifying and deleting a table using a browser.
+"""Test operations for an ordinary logged-in user in a browser.
 
-Requires a user account specified in the file 'settings.json'.
+Requires a user account specified in the file 'settings.json' given by
+- USER_USERNAME
+- USER_PASSWORD
 
 After installing from PyPi using the 'requirements.txt' file, one must do:
 $ playwright install
@@ -26,8 +28,8 @@ def settings():
     """
     result = {                  # Default values
         "BASE_URL": "http://localhost:5001",
-        "USERNAME": None,       # Must be set in 'settings.json'
-        "PASSWORD": None,       # Must be set in 'settings.json'
+        "USER_USERNAME": None,       # Must be set in 'settings.json'
+        "USER_PASSWORD": None,       # Must be set in 'settings.json'
     }
 
     try:
@@ -35,28 +37,28 @@ def settings():
             result.update(json.load(infile))
     except IOError:
         pass
-    for key in ["BASE_URL", "USERNAME", "PASSWORD"]:
+    for key in ["BASE_URL", "USER_USERNAME", "USER_PASSWORD"]:
         if result.get(key) is None:
             raise KeyError(f"Missing {key} value in settings.")
     # Remove any trailing slash.
     result["BASE_URL"] = result["BASE_URL"].rstrip("/")
     return result
 
-def login(settings, page):
-    "Login to the system."
+def login_user(settings, page):
+    "Login to the system as ordinary user."
     page.goto(settings['BASE_URL'])
     page.click("text=Login")
     assert page.url == f"{settings['BASE_URL']}/user/login?"
     page.click("input[name=\"username\"]")
-    page.fill("input[name=\"username\"]", settings["USERNAME"])
+    page.fill("input[name=\"username\"]", settings["USER_USERNAME"])
     page.press("input[name=\"username\"]", "Tab")
-    page.fill("input[name=\"password\"]", settings["PASSWORD"])
+    page.fill("input[name=\"password\"]", settings["USER_PASSWORD"])
     page.click("id=login")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USERNAME']}"
+    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
 
 def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
     "Test login, creating a table, inserting data 'by hand'."
-    login(settings, page)
+    login_user(settings, page)
 
     # Create a database 'test'.
     page.click("text=Create")
@@ -124,13 +126,13 @@ def test_table_data(settings, page): # 'page' fixture from 'pytest-playwright'
     # Delete the database.
     page.once("dialog", lambda dialog: dialog.accept()) # Callback for next click.
     page.click("text=Delete")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USERNAME']}"
+    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
 
     # page.wait_for_timeout(3000)
 
 def test_table_csv(settings, page): # 'page' fixture from 'pytest-playwright'
     "Test login, creating a table, inserting data from a CSV file."
-    login(settings, page)
+    login_user(settings, page)
 
     # Create a database 'test'.
     page.click("text=Create")
@@ -204,6 +206,6 @@ def test_table_csv(settings, page): # 'page' fixture from 'pytest-playwright'
     assert page.url == "http://localhost:5001/db/test"
     page.once("dialog", lambda dialog: dialog.accept()) # Callback for next click.
     page.click("text=Delete")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USERNAME']}"
+    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
 
     # page.wait_for_timeout(3000)

@@ -290,7 +290,7 @@ def clone(dbname):
         except (KeyError, ValueError) as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for('.clone', dbname=dbname))
-        shutil.copyfile(utils.dbpath(dbname), utils.dbpath(saver.db['name']))
+        shutil.copyfile(utils.get_dbpath(dbname), utils.get_dbpath(saver.db['name']))
         db = get_db(name, complete=True)
         with DbSaver(db) as saver:
             saver.db['cloned']  = dbname # Will show up in logs
@@ -304,7 +304,7 @@ def download(dbname):
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    return flask.send_file(utils.dbpath(dbname),
+    return flask.send_file(utils.get_dbpath(dbname),
                            mimetype=constants.SQLITE3_MIMETYPE,
                            as_attachment=True)
 
@@ -457,25 +457,26 @@ class DbSaver:
             if not self.db.get(key):
                 raise ValueError(f"invalid db: {key} not set")
         self.db['modified'] = utils.get_time()
-        with flask.g.syscnx:
+        cnx = utils.get_cnx(write=True)
+        with cnx:
             # Update the existing database entry in system.
             if self.old:
                 sql = "UPDATE dbs SET name=?, owner=?, title=?," \
                     "description=?, public=?, readonly=?, modified=?" \
                     " WHERE name=?"
-                flask.g.syscnx.execute(sql, (self.db['name'],
-                                             self.db['owner'],
-                                             self.db.get('title'),
-                                             self.db.get('description'),
-                                             bool(self.db['public']),
-                                             bool(self.db['readonly']),
-                                             self.db['modified'],
-                                             self.old['name']))
+                cnx.execute(sql, (self.db['name'],
+                                  self.db['owner'],
+                                  self.db.get('title'),
+                                  self.db.get('description'),
+                                  bool(self.db['public']),
+                                  bool(self.db['readonly']),
+                                  self.db['modified'],
+                                  self.old['name']))
                 # The Sqlite3 database file was renamed in 'set_name'.
                 if self.old.get('name') != self.db['name']:
                     # Fix entries in log records.
                     sql = "UPDATE dbs_logs SET name=? WHERE name=?"
-                    flask.g.syscnx.execute(sql, (self.db['name'], self.old['name']))
+                    cnx.execute(sql, (self.db['name'], self.old['name']))
                     # No need to fix hash values: is (or at least, was)
                     # in read/write mode, so db has no hash values.
                 # Insert hash values if newly computed.
@@ -483,13 +484,13 @@ class DbSaver:
                     sql = "INSERT INTO dbs_hashes (name, hashname, hashvalue)" \
                           " VALUES (?, ?, ?)"
                     for hashname in self.db['hashes']:
-                        flask.g.syscnx.execute(sql, (self.db['name'],
-                                                     hashname,
-                                                     self.db['hashes'][hashname]))
+                        cnx.execute(sql, (self.db['name'],
+                                          hashname,
+                                          self.db['hashes'][hashname]))
                 # Delete hash values if removed.
                 elif self.old['hashes'] and not self.db['hashes']:
                     sql = "DELETE FROM dbs_hashes WHERE name=?"
-                    flask.g.syscnx.execute(sql, (self.db['name'],))
+                    cnx.execute(sql, (self.db['name'],))
 
             # New database.
             else:
@@ -499,14 +500,14 @@ class DbSaver:
                 sql = "INSERT INTO dbs" \
                       " (name, owner, title, description, public, readonly," \
                       "  created, modified) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-                flask.g.syscnx.execute(sql, (self.db['name'],
-                                             self.db['owner'],
-                                             self.db.get('title'),
-                                             self.db.get('description'),
-                                             bool(self.db['public']),
-                                             bool(self.db['readonly']),
-                                             self.db['created'], 
-                                             self.db['modified']))
+                cnx.execute(sql, (self.db['name'],
+                                  self.db['owner'],
+                                  self.db.get('title'),
+                                  self.db.get('description'),
+                                  bool(self.db['public']),
+                                  bool(self.db['readonly']),
+                                  self.db['created'], 
+                                  self.db['modified']))
             # Add log entry
             new = {}
             for key, value in self.db.items():
@@ -526,17 +527,17 @@ class DbSaver:
             sql = "INSERT INTO dbs_logs (name, new, editor," \
                   " remote_addr, user_agent, timestamp)" \
                   " VALUES (?, ?, ?, ?, ?, ?)"
-            flask.g.syscnx.execute(sql, (self.db['name'],
-                                         json.dumps(new),
-                                         editor,
-                                         remote_addr,
-                                         user_agent,
-                                         utils.get_time()))
+            cnx.execute(sql, (self.db['name'],
+                              json.dumps(new),
+                              editor,
+                              remote_addr,
+                              user_agent,
+                              utils.get_time()))
         # Set the OS-level file permissions.
         if self.db['readonly']:
-            os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD)
+            os.chmod(utils.get_dbpath(self.db['name']), stat.S_IREAD)
         else:
-            os.chmod(utils.dbpath(self.db['name']), stat.S_IREAD|stat.S_IWRITE)
+            os.chmod(utils.get_dbpath(self.db['name']), stat.S_IREAD|stat.S_IWRITE)
 
     def set_name(self, name, modify=False):
         """Set or change the database name.
@@ -560,7 +561,7 @@ class DbSaver:
         old_dbname = self.db.get('name')
         if old_dbname:
             # Rename the Sqlite3 file if the database already exists.
-            os.rename(utils.dbpath(old_dbname), utils.dbpath(name))
+            os.rename(utils.get_dbpath(old_dbname), utils.get_dbpath(name))
             # The entries in the dbs_log will be fixed in '__exit__'
         self.db['name'] = name
         return self.db['name']
@@ -587,7 +588,7 @@ class DbSaver:
             hashes = {}
             for hashname in flask.current_app.config['CONTENT_HASHES']:
                 hashes[hashname] = hashlib.new(hashname)
-            with open(utils.dbpath(self.db['name']), 'rb') as infile:
+            with open(utils.get_dbpath(self.db['name']), 'rb') as infile:
                 data = infile.read(8192)
                 while data:
                     for hash in hashes.values():
@@ -1040,7 +1041,7 @@ def get_db(name, complete=False):
     db.update(rows[0])
     db['public'] = bool(db['public'])
     db['readonly'] = bool(db['readonly'])
-    db['size'] = os.path.getsize(utils.dbpath(name))
+    db['size'] = os.path.getsize(utils.get_dbpath(name))
     db['hashes'] = {}
     sql = "SELECT hashname, hashvalue FROM dbs_hashes WHERE name=?"
     cursor.execute(sql, (name,))
@@ -1070,7 +1071,7 @@ def get_usage(username=None):
         cursor.execute(sql)
     rows = cursor.fetchall()
     return (len(rows),
-            sum([os.path.getsize(utils.dbpath(row[0])) for row in rows]))
+            sum([os.path.getsize(utils.get_dbpath(row[0])) for row in rows]))
 
 def check_quota(user=None, size=0):
     "Raise ValueError if the current user has exceeded her size quota."
@@ -1164,26 +1165,21 @@ def get_sql_create_index(tablename, schema, if_not_exists=False):
     return ' '.join(sql)
 
 def get_cnx(dbname, write=False):
-    """Get a connection for the given database name.
-    IMPORTANT: Currently, only one connection to a given database can
-    be open at any time!
-    If write is true, then assume the old connection is read-only,
-    so close it and open a new one.
+    """Get the connection for the database given by name.
+    IMPORTANT: Only one connection to a non-system database can be open at any time!
+    If the 'write' mode is wrong, then close and re-open.
     """
-    if write:
-        try:
-            flask.g.dbcnx.close()
-        except AttributeError:
-            pass
-        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname), write=write)
-        flask.g.dbname = dbname
     try:
-        return flask.g.dbcnx
+        if write == flask.g.dbwrite:
+            return flask.g.dbcnx
+        else:
+            flask.g.dbcnx.close()
     except AttributeError:
-        flask.g.dbcnx = utils.get_cnx(utils.dbpath(dbname))
-        flask.g.dbcnx.row_factory = sqlite3.Row
-        flask.g.dbname = dbname
-        return flask.g.dbcnx
+        pass
+    flask.g.dbcnx = utils.get_cnx(dbname, write=write)
+    flask.g.dbname = dbname
+    flask.g.dbwrite = write
+    return flask.g.dbcnx
 
 def has_read_access(db):
     "Does the current user (if any) have read access to the database?"
@@ -1259,7 +1255,7 @@ def add_sqlite3_database(dbname, infile, size):
         check_quota(size=size)
         with DbSaver() as saver:
             dbname = saver.set_name(dbname, modify=True)
-            with open(utils.dbpath(dbname), 'wb') as outfile:
+            with open(utils.get_dbpath(dbname), 'wb') as outfile:
                 outfile.write(infile.read())
             saver.initialize()
     except (ValueError, TypeError, OSError, IOError, sqlite3.Error) as error:
@@ -1318,12 +1314,13 @@ def add_xlsx_database(dbname, infile, size):
 
 def delete_database(dbname):
     "Delete the database in the system database and from disk."
-    with flask.g.syscnx:
+    cnx = utils.get_cnx(write=True)
+    with cnx:
         sql = 'DELETE FROM dbs_logs WHERE name=?'
-        flask.g.syscnx.execute(sql, (dbname,))
+        cnx.execute(sql, (dbname,))
         sql = 'DELETE FROM dbs WHERE name=?'
-        flask.g.syscnx.execute(sql, (dbname,))
+        cnx.execute(sql, (dbname,))
     try:
-        os.remove(utils.dbpath(dbname))
+        os.remove(utils.get_dbpath(dbname))
     except FileNotFoundError:
         pass

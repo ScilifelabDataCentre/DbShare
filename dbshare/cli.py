@@ -13,6 +13,7 @@ import dbshare.system
 import dbshare.user
 
 from dbshare import constants
+from dbshare import utils
 
 
 @click.group()
@@ -24,6 +25,7 @@ def cli():
 def counts():
     "Output counts of databases and users."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         dbs = dbshare.dbs.get_dbs()
         click.echo(f"{len(dbs)} databases.")
         users = dbshare.user.get_all_users()
@@ -39,6 +41,7 @@ def counts():
 def create_admin(username, email, password):
     "Create a new admin account."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         try:
             with dbshare.user.UserSaver() as saver:
                 saver.set_username(username)
@@ -59,6 +62,7 @@ def create_admin(username, email, password):
 def create_user(username, email, password):
     "Create a new user account."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         try:
             with dbshare.user.UserSaver() as saver:
                 saver.set_username(username)
@@ -77,6 +81,7 @@ def create_user(username, email, password):
 def password(username, password):
     "Set the password for a user account."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         user = dbshare.user.get_user(username)
         if user:
             with dbshare.user.UserSaver(user) as saver:
@@ -88,6 +93,7 @@ def password(username, password):
 def users():
     "Output list of users."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         for user in dbshare.user.get_all_users():
             click.echo(user["username"])
 
@@ -96,12 +102,14 @@ def users():
 def user(username):
     "Show the JSON for the named user."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         click.echo(json.dumps(dbshare.user.get_user(username), indent=2))
 
 @cli.command()
 def dbs():
     "Output list of databases."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         for db in dbshare.dbs.get_dbs():
             click.echo(db["name"])
 
@@ -113,6 +121,7 @@ def dbs():
 def create_db(dbname, username, dbfile):
     "Create a new database, optionally from a DbShare Sqlite3 database file."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         try:
             user = dbshare.user.get_user(username=username)
             if user is None: raise ValueError('No such user.')
@@ -131,6 +140,7 @@ def create_db(dbname, username, dbfile):
 def db(name):
     "Show the JSON for the named database."
     with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
         db = dbshare.db.get_db(name, complete=True)
         if db is None:
             raise click.ClickException("No such database.")

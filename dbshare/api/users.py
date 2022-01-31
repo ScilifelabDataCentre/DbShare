@@ -18,10 +18,8 @@ flask_cors.CORS(blueprint, methods=["GET"])
 @utils.admin_required
 def all():
     "Return the list of all user accounts."
-    cursor = flask.g.syscnx.cursor()
     sql = "SELECT username, email, role, status, created, modified" \
           " FROM users"
-    cursor.execute(sql)
     users = [{'username': row[0],
               'email':    row[1],
               'role':     row[2],
@@ -29,7 +27,7 @@ def all():
               'created':  row[4],
               'modified': row[5],
               'href':     utils.url_for('api_user.user', username=row[0])}
-             for row in cursor]
+             for row in flask.g.syscnx.execute(sql)]
     result = {
         'title': 'All user accounts.',
         'users': users

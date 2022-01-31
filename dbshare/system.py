@@ -1,9 +1,10 @@
 "System database; metadata key/value, users, db list."
 
 import datetime
-import sqlite3
+import os.path
 
 import flask
+import sqlite3
 
 import dbshare
 import dbshare.db
@@ -74,11 +75,11 @@ SYSTEM_INDEXES = [
     dict(name='dbs_logs_id', table='dbs_logs', columns=['name']),
 ]
 
+
 def init(app):
     "Initialize tables in the system database, if not done."
-    path = utils.dbpath(constants.SYSTEM, 
-                        dirpath=app.config['DATABASES_DIRPATH'])
-    cnx = sqlite3.connect(path)
+    cnx = sqlite3.connect(os.path.join(app.config["DATABASES_DIRPATH"],
+                                       constants.SYSTEM + ".sqlite3"))
     for schema in SYSTEM_TABLES:
         sql = dbshare.db.get_sql_create_table(schema, if_not_exists=True)
         cnx.execute(sql)

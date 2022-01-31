@@ -77,6 +77,8 @@ def init(app):
             else:
                 app.config['SETTINGS_FILEPATH'] = filepath
                 break
+    app.config["DATABASES_DIRPATH"] = os.path.expanduser(app.config["DATABASES_DIRPATH"])
+    app.config["DATABASES_DIRPATH"] = os.path.expandvars(app.config["DATABASES_DIRPATH"])
     # Sanity checks. Exception means bad setup.
     if not app.config['SECRET_KEY']:
         raise ValueError("SECRET_KEY not set.")

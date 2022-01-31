@@ -81,7 +81,7 @@
     </div>
   </div>
   <div class="col-md-5">
-    {% for table in utils.sorted_schema(db['tables'].values()) %}
+    {% for table in utils.get_sorted_schema(db) %}
     <div class="card border-primary mb-1">
       <div class="card-header">
         <button type="button"
@@ -112,7 +112,7 @@
       </div>
     </div>
     {% endfor %}
-    {% for view in utils.sorted_schema(db['views'].values()) %}
+    {% for view in utils.get_sorted_schema(db, entities='views') %}
     <div class="card border-primary mb-1">
       <div class="card-header">
         <button type="button"

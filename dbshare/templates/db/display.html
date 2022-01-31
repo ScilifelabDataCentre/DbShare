@@ -15,7 +15,7 @@
       </div>
       <div class="card-body">
         {% if db['tables'] %}
-        {% for table in utils.sorted_schema(db['tables'].values()) %}
+        {% for table in utils.get_sorted_schema(db) %}
         <div class="row">
 	  <div class="col-md-6">
 	    <strong title="{{ table['title'] or '' }}">{{ table['name'] }}</strong>
@@ -43,7 +43,7 @@
       </div>
       <div class="card-body">
         {% if db['views'] %}
-        {% for view in utils.sorted_schema(db['views'].values()) %}
+        {% for view in utils.get_sorted_schema(db, entities='views') %}
         <div class="row">
 	  <div class="col-md-6">
 	    <strong title="{{ view['title'] or '' }}">{{ view['name'] }}</strong>

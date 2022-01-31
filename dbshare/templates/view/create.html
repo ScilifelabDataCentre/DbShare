@@ -105,7 +105,7 @@
     </div>
   </div>
   <div class="col-md">
-    {% for table in utils.sorted_schema(db['tables'].values()) %}
+    {% for table in utils.get_sorted_schema(db) %}
     <div class="card border-primary mb-1">
       <div class="card-header">
         <button type="button" class="btn btn-outline-primary" 

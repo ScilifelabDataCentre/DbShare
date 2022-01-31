@@ -113,30 +113,32 @@ class Timer:
         return round(1000 * self())
 
 
-def get_cnx(path, write=False):
-    """Return a new connection to the database at the given path.
+def get_cnx(dbname=None, write=False):
+    """Return a new connection to the database by the given name.
+    If 'dbname' is None, return a connection to the system database.
     If the database file does not exist, it will be created.
     The OS-level file permissions are set in DbSaver.
     """
+    if dbname is None:
+        dbname = constants.SYSTEM
+    dbpath = get_dbpath(dbname)
     if write:
-        cnx = sqlite3.connect(path)
+        cnx = sqlite3.connect(dbpath)
     else:
-        path = "file:%s?mode=ro" % path
-        cnx = sqlite3.connect(path, uri=True)
+        path = "file:%s?mode=ro" % dbpath
+        cnx = sqlite3.connect(dbpath, uri=True)
+    cnx.row_factory = sqlite3.Row
     return cnx
 
-def sorted_schema(schemalist):
-    """Return a sorted list of the list schema dictionaries
-    using the 'name' element as key."""
-    return sorted(schemalist, key=lambda d: d['name'])
+def get_dbpath(dbname):
+    "Return the full file path of the database given by name."
+    return os.path.join(flask.current_app.config["DATABASES_DIRPATH"],
+                        dbname + ".sqlite3")
 
-def dbpath(dbname, dirpath=None):
-    "Return the file path for the given database name."
-    if dirpath is None:
-        dirpath = flask.current_app.config['DATABASES_DIRPATH']
-    dirpath = os.path.expanduser(dirpath)
-    dirpath = os.path.expandvars(dirpath)
-    return os.path.join(dirpath, dbname) + '.sqlite3'
+def get_sorted_schema(db, entities="tables"):
+    """Return a sorted list of the schema dictionaries for the tables or views
+    using the 'name' element as sorting key."""
+    return sorted(db[entities].values(), key=lambda d: d['name'])
 
 def get_iuid():
     "Return a new IUID, which is a UUID4 pseudo-random string."
