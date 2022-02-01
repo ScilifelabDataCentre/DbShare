@@ -19,7 +19,7 @@ import flask
 import flask_mail
 import jinja2.utils
 import jsonschema
-import markdown
+import marko
 import werkzeug.routing
 
 import dbshare.lexer
@@ -94,7 +94,7 @@ class NameExtConverter(werkzeug.routing.BaseConverter):
     def to_url(self, value):
         if isinstance(value, NameExt):
             if value.ext:
-                return "%s.%s" % (value, value.ext)
+                return f"{value}.{value.ext}"
         return str(value)
 
 class Timer:
@@ -125,15 +125,14 @@ def get_cnx(dbname=None, write=False):
     if write:
         cnx = sqlite3.connect(dbpath)
     else:
-        path = "file:%s?mode=ro" % dbpath
+        path = f"file:{dbpath}?mode=ro"
         cnx = sqlite3.connect(dbpath, uri=True)
     cnx.row_factory = sqlite3.Row
     return cnx
 
 def get_dbpath(dbname):
     "Return the full file path of the database given by name."
-    return os.path.join(flask.current_app.config["DATABASES_DIRPATH"],
-                        dbname + ".sqlite3")
+    return os.path.join(flask.current_app.config["DATABASES_DIR"], f"{dbname}.sqlite3")
 
 def get_sorted_schema(db, entities="tables"):
     """Return a sorted list of the schema dictionaries for the tables or views
@@ -274,8 +273,9 @@ def csrf_token():
     # Generate a token to last the session's lifetime.
     if '_csrf_token' not in flask.session:
         flask.session['_csrf_token'] = get_iuid()
-    html = '<input type="hidden" name="_csrf_token" value="%s">' % \
-           flask.session['_csrf_token']
+    # html = '<input type="hidden" name="_csrf_token" value="%s">' % \
+    #        flask.session['_csrf_token']
+    html = '<input type="hidden" name="_csrf_token" value="{flask.session["_csrf_token"]}">'
     return jinja2.utils.Markup(html)
 
 def check_csrf_token():
@@ -334,10 +334,45 @@ def none_as_empty_string(value):
     else:
         return value
 
-def do_markdown(value):
+class HtmlRenderer(marko.html_renderer.HTMLRenderer):
+    """Extension of HTML renderer to allow setting <a> attribute '_target'
+    to '_blank', when the title begins with an exclamation point '!'.
+    """
+
+    def render_link(self, element):
+        if element.title and element.title.startswith('!'):
+            template = '<a target="_blank" href="{}"{}>{}</a>'
+            element.title = element.title[1:]
+        else:
+            template = '<a href="{}"{}>{}</a>'
+        title = (
+            ' title="{}"'.format(self.escape_html(element.title))
+            if element.title
+            else ""
+        )
+        url = self.escape_url(element.dest)
+        body = self.render_children(element)
+        return template.format(url, title, body)
+
+def markdown2html(value):
+    "Process the value from Markdown to HTML."
+    return marko.Markdown(renderer=HtmlRenderer).convert(value or '')
+
+def display_markdown(value):
     "Template filter: Use Markdown to process the value."
-    value = value or ''
-    return jinja2.utils.Markup(markdown.markdown(value, output_format='html5'))
+    return jinja2.utils.Markup(markdown2html(value))
+
+def get_site_text(filename):
+    """Get the Markdown-formatted text from a file in the site directory.
+    Return None if no such file.
+    """
+    try:
+        filepath = os.path.normpath(
+            os.path.join(constants.ROOT, "../site", filename))
+        with open(filepath) as infile:
+            return infile.read()
+    except (OSError, IOError):
+        return None
 
 def access(value):
     "Template filter: Output public or private according to the value."

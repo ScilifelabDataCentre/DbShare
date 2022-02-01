@@ -1,5 +1,3 @@
-# Tutorial: Explore a database
-
 Public databases in DbShare can be explored without being logged in.
 This tutorial uses a public database at the [SciLifeLab
 instance of DbShare](https://dbshare.scilifelab.se/).

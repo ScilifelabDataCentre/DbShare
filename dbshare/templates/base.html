@@ -74,14 +74,18 @@
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">About</a>
             <div class="dropdown-menu" aria-labelledby="navbarAbout">
-              <a href="{{ url_for('about.doc', pagename='overview') }}"
+              <a href="{{ url_for('about.documentation', page='Overview') }}"
 		 class="nav-link">Overview</a>
-              <a href="{{ url_for('about.doc', pagename='tutorial') }}"
+              <a href="{{ url_for('about.documentation', page='Tutorial') }}"
 		 class="nav-link">Tutorial</a>
               <a href="{{ url_for('about.endpoints') }}"
 		 class="nav-link">URL endpoints</a>
               <a href="{{ url_for('about.schema') }}"
 		 class="nav-link">API JSON schema</a>
+              <a href="{{ url_for('about.contact') }}"
+		 class="nav-link">Contact</a>
+              <a href="{{ url_for('about.gdpr') }}"
+                 class="nav-link">Personal data policy</a>
               <a href="{{ url_for('about.software') }}"
 		 class="nav-link">Software</a>
 	    </div>

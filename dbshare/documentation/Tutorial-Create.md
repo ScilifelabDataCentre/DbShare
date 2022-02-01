@@ -1,18 +1,29 @@
-# Tutorial: Create and modify a database
-
 If you have an account (see [register](/user/register)), and have logged in
 (see [login](/user/login)), you will be able to create your own databases.
 
 ### Create a database
 
 - Go to the page showing [your databases](/dbs/owner)
-  ("My databases" in the top menu."
+  ("My databases" in the top menu.)
 - Click **Create**.
 - Provide a name for the database to create. The rules for a name are given
   in the help text.
 - The title and descriptions are optional, but obviously useful for
   describing what the data is about.
 - Clicking **Create** will create the database and bring you to its page.
+
+### Upload a database
+
+- Go to the page showing [your databases](/dbs/owner) ("My databases"
+  in the top menu.)
+- Click **Upload**.
+- Select the file to upload from your local computer, and optionally
+  specify a new name for the database.
+- Clicking **Upload SQLite3 file** will upload it and the server will
+  interpret the contents to extract the schema of the tables.
+- It is also possible to upload an XLSX file (Excel). The server will
+  try to interpret the contents as best as it can, and create a table
+  for each worksheet.
 
 ### The database page
 - The database page is initially empty since no tables of views have been
@@ -36,26 +47,7 @@ If you have an account (see [register](/user/register)), and have logged in
 - Click **Schema** to verify that the table definition is what you expect.
 - On this page, the buttons **Add column** and **Create index** can be used.
 
-### Add data to the table
-
-- Go to the table rows page of the table (Click the button **0 rows**.)
-- Click **Insert row**. This page allows adding a row of data.
-- When **Insert** is clicked, the data is appended to the table.
-  The same input page is shown again. This allows adding many rows after each
-  other with minimum clicking.
-- Click the button **N rows** (where N is the number of rows in the table".
-  The current rows in the table are shown. The table is shown in chunks, 
-  and it is possible to search for items in it. At most
-  2,000 rows are fetched from the server, for performance reasons.
-  The SQLite3 database itself can handle millions of rows in a table.
-
-### Edit a row in the table
-
-- By each row, there is an **Edit** button. Clicking this shows a page where
-  the values in the row can be modified.
-- It is also possible to delete the entire row.
-
-### Create a table from CSV upload
+### Upload a CSV file to create a table
 
 - A table can also be created by uploading a CSV (Comma-Separated Values) file.
   Such files can either by created "by hand", or by exporting a spreadsheet
@@ -67,21 +59,3 @@ If you have an account (see [register](/user/register)), and have logged in
   names of the columns.
 - The upload process infers the schema for the table from the contents
   of the CSV file.
-
-## Download a table
-
-- A table can be downloaded as a CSV file. Use the **Download** button.
-  The page allows some minor customization of the CSV file.
-- Alternatively, the CSV data can be obtained directly using the
-  pill (small rounded button) at the top right labelled **CSV**.
-- Use the **JSON** pill to obtain that format.
-
-### Download a database
-
-- There are several database download options.
-- Clicking **Download** on the database page fetches the database as its
-  native SQLite3 file.
-- The pill labeled **CSV tar.gz' produces a gzipped tar archive file containing
-  the CSV files for each of the tables in the database.
-- The pill labeled **XLSX** creates an Excel file with each table in its
-  separate worksheet.

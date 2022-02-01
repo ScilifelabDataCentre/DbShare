@@ -19,23 +19,29 @@ from . import utils
 
 blueprint = flask.Blueprint('about', __name__)
 
-@blueprint.route('/doc/<pagename>')
-def doc(pagename):
+@blueprint.route('/documentation/<page>')
+def documentation(page):
     "Documentation page in Markdown format."
-    filepath = os.path.join(flask.current_app.config['DOCS_DIRPATH'],
-                            pagename + '.md')
+    filepath = os.path.join(flask.current_app.config['DOCUMENTATION_DIR'], f"{page}.md")
     try:
         with open(filepath) as infile:
-            body = infile.read()
-    except IOError:
+            text = infile.read()
+    except (OSError, IOError):
         flask.abort(http.client.NOT_FOUND)
-    if body.startswith('#'):
-        title, body = body.split('\n', 1)
-        title = title.lstrip('#').strip()
-        body = body.strip()
-    else:
-        title = pagename.replace('-', ' ').capitalize()
-    return flask.render_template('about/doc.html', title=title, body=body)
+    title = page.replace('-', ' ')
+    return flask.render_template('about/documentation.html', title=title, text=text)
+
+@blueprint.route('/contact')
+def contact():
+    "Display the contact information page."
+    return flask.render_template('about/contact.html',
+                                 text=utils.get_site_text("contact.md"))
+
+@blueprint.route('/gdpr')
+def gdpr():
+    "Display the personal data policy page."
+    return flask.render_template('about/gdpr.html',
+                                 text=utils.get_site_text("gdpr.md"))
 
 @blueprint.route('/endpoints')
 def endpoints():

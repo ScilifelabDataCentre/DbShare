@@ -1,5 +1,3 @@
-# Tutorial: Using the API
-
 The API can be used to access and edit databases and their data.
 
 A user account is needed (except for reading public data) and the

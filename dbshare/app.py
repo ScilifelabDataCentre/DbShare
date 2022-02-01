@@ -39,7 +39,7 @@ app.add_template_filter(utils.informative)
 app.add_template_filter(utils.size_none)
 app.add_template_filter(utils.none_as_literal_null)
 app.add_template_filter(utils.none_as_empty_string)
-app.add_template_filter(utils.do_markdown, name='markdown')
+app.add_template_filter(utils.display_markdown)
 app.add_template_filter(utils.access)
 app.add_template_filter(utils.mode)
 

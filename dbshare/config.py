@@ -11,12 +11,12 @@ from dbshare import constants
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
     SERVER_NAME = 'localhost:5001',  # For URL generation; app.run() in devel.
-    DATABASES_DIRPATH = 'data',
+    DATABASES_DIR = 'data',
     SITE_NAME = 'DbShare',
-    SITE_STATIC_DIRPATH = None,
-    SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
-    SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
-    HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIRPATH'.
+    SITE_STATIC_DIR = None,
+    SITE_ICON = None,           # Filename, must be in 'SITE_STATIC_DIR'.
+    SITE_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIR'.
+    HOST_LOGO = None,           # Filename, must be in 'SITE_STATIC_DIR'.
     HOST_NAME = None,
     HOST_URL = None,
     SECRET_KEY = None,
@@ -32,7 +32,7 @@ DEFAULT_SETTINGS = dict(
     MAX_NROWS_DISPLAY = 2000,
     CONTENT_HASHES = ['md5', 'sha1'],
     QUERY_DEFAULT_LIMIT = 200,
-    DOCS_DIRPATH = os.path.join(constants.ROOT, 'docs'),
+    DOCUMENTATION_DIR = os.path.join(constants.ROOT, 'documentation'),
     # Suggested values for timeout, increment and backoff.
     # t=2.0, i=0.010, b=1.75
     #        i=0.014, b=1.55
@@ -77,8 +77,8 @@ def init(app):
             else:
                 app.config['SETTINGS_FILEPATH'] = filepath
                 break
-    app.config["DATABASES_DIRPATH"] = os.path.expanduser(app.config["DATABASES_DIRPATH"])
-    app.config["DATABASES_DIRPATH"] = os.path.expandvars(app.config["DATABASES_DIRPATH"])
+    app.config["DATABASES_DIR"] = os.path.expanduser(app.config["DATABASES_DIR"])
+    app.config["DATABASES_DIR"] = os.path.expandvars(app.config["DATABASES_DIR"])
     # Sanity checks. Exception means bad setup.
     if not app.config['SECRET_KEY']:
         raise ValueError("SECRET_KEY not set.")

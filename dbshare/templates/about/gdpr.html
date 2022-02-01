@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Personal data policy{% endblock %}
+{% block body_title %}{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md offset-md-1">
+    <h2>Personal data policy</h2>
+    {% if text %}
+    {{ text | display_markdown }}
+    {% else %}
+    <i>No personal data policy has been defined.</i>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {# block main #}
