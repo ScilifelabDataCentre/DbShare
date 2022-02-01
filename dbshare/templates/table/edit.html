@@ -33,50 +33,9 @@
           </small>
         </div>
       </div>
-      <!-- <div class="form-group row"> -->
-      <!--   <label for="annotations" class="col-md-2 col-form-label text-right"> -->
-      <!--     Column annotations</label> -->
-      <!--   <div class="col-md-10"> -->
-      <!--     <table class="table table-borderless table-sm"> -->
-      <!--       {% for column in schema['columns'] %} -->
-      <!--       <tr> -->
-      <!--         <th>{{ column['name'] }}</th> -->
-      <!--         <td>{{ column['type'] }}</td> -->
-      <!--         <td> -->
-      <!--   	{{ column['primarykey'] and 'PRIMARY KEY' or '' }} -->
-      <!--   	{{ column['notnull'] and 'NOT NULL' or '' }} -->
-      <!--         </td> -->
-      <!--         <td> -->
-      <!--   	{% for annotation in config['COLUMN_ANNOTATIONS'] %} -->
-      <!--   	<div class="form-check form-check-inline"> -->
-      <!--   	  <input type="radio" class="form-check-input" -->
-      <!--   		 name="column:{{ column['name'] }}" -->
-      <!--   		 id="column:{{ column['name'] }}:{{annotation}}" -->
-      <!--   		 value="{{ annotation }}" -->
-      <!--   		 {{ annotation in schema.get('annotations', {})[column['name']] and 'checked' or '' }}> -->
-      <!--   	  <label class="form-check-label" -->
-      <!--   		 for="column:{{ column['name'] }}:{{annotation}}"> -->
-      <!--   	    {{ annotation }}</label> -->
-      <!--   	</div> -->
-      <!--   	{% endfor %} -->
-      <!--   	<div class="form-check form-check-inline"> -->
-      <!--   	  <input type="radio" class="form-check-input" -->
-      <!--   		 name="column:{{ column['name'] }}" -->
-      <!--   		 id="column:{{ column['name'] }}:none" -->
-      <!--   		 value=""> -->
-      <!--   	  <label class="form-check-label" -->
-      <!--   		 for="column:{{ column['name'] }}:none"> -->
-      <!--   	    <em>none</em></label> -->
-      <!--   	</div> -->
-      <!--         </td> -->
-      <!--       </tr> -->
-      <!--       {% endfor %} -->
-      <!--     </table> -->
-      <!--   </div> -->
-      <!-- </div> -->
       <div class="form-group row">
         <div class="col-md-4 offset-md-2">
-          <button type="submit" 
+          <button type="submit"
                   class="btn btn-primary btn-lg btn-block">Save</button>
         </div>
       </div>

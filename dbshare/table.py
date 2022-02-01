@@ -140,10 +140,6 @@ def edit(dbname, tablename):
             with dbshare.db.DbSaver(db) as saver:
                 schema['title'] = flask.request.form.get('title') or None
                 schema['description'] = flask.request.form.get('description') or None
-                try:
-                    del schema['annotations']
-                except KeyError:
-                    pass
                 saver.update_table(schema, reset_cache=False)
         except (ValueError, sqlite3.Error) as error:
             utils.flash_error(error)

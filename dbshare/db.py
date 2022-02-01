@@ -200,16 +200,14 @@ def logs(dbname):
     except (KeyError, ValueError) as error:
         utils.flash_error(error)
         return flask.redirect(flask.url_for('home'))
-    cursor = flask.g.syscnx.cursor()
     sql = "SELECT new, editor, remote_addr, user_agent, timestamp" \
           " FROM dbs_logs WHERE name=? ORDER BY timestamp DESC"
-    cursor.execute(sql, (db['name'],))
     logs = [{'new':         json.loads(row[0]),
              'editor':      row[1],
              'remote_addr': row[2],
              'user_agent':  row[3],
              'timestamp':   row[4]}
-            for row in cursor]
+            for row in flask.g.syscnx.execute(sql, (db['name'],))]
     return flask.render_template('db/logs.html', db=db, logs=logs)
 
 @blueprint.route('/<name:dbname>/upload', methods=['GET', 'POST'])

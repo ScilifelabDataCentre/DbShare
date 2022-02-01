@@ -19,10 +19,8 @@ def settings():
     1) defaults
     2) file 'settings.json' in this directory
     """
-    result = {                  # Default values
-        "BASE_URL": "http://localhost:5001",
-    }
-
+    # Default values
+    result = {"BASE_URL": "http://localhost:5001"}
     try:
         with open("settings.json", "rb") as infile:
             result.update(json.load(infile))
@@ -38,6 +36,7 @@ def settings():
     yield result
     result["session"].close()
 
+
 def test_status(settings):
     "Test the presence of the status indicator."
     response = settings["session"].get(f"{settings['BASE_URL']}/status")
@@ -47,6 +46,7 @@ def test_status(settings):
     assert data["status"] == "ok"
     assert "n_dbs" in data
     assert "n_users" in data
+
 
 def test_root(settings):
     "Test the root."

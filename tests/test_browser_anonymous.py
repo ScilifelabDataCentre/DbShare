@@ -23,10 +23,8 @@ def settings():
     1) defaults
     2) file 'settings.json' in this directory
     """
-    result = {                  # Default values
-        "BASE_URL": "http://localhost:5001",
-    }
-
+    # Default values
+    result = {"BASE_URL": "http://localhost:5001"}
     try:
         with open("settings.json", "rb") as infile:
             result.update(json.load(infile))
@@ -39,14 +37,15 @@ def settings():
     result["BASE_URL"] = result["BASE_URL"].rstrip("/")
     return result
 
-def test_about(settings, page): # 'page' fixture from 'pytest-playwright'
+
+def test_about(settings, page):  # 'page' fixture from 'pytest-playwright'
     "Test access to 'About' pages."
-    page.goto(settings['BASE_URL'])
+    page.goto(settings["BASE_URL"])
     page.click("text=About")
     page.click("text=Overview")
     assert page.url == f"{settings['BASE_URL']}/about/doc/overview"
 
-    page.goto(settings['BASE_URL'])
+    page.goto(settings["BASE_URL"])
     page.click("text=About")
     page.click("text=Tutorial")
     assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial"
@@ -73,6 +72,7 @@ def test_about(settings, page): # 'page' fixture from 'pytest-playwright'
     page.click("text=About")
     page.click("text=Software")
     assert page.url == f"{settings['BASE_URL']}/about/software"
+
 
 def test_about_json_schema(settings, page):
     "Test access to 'About' JSON schema pages."
@@ -154,10 +154,10 @@ def test_demo_database(settings, page):
     page.click("text=Query")
     assert page.url == "http://localhost:5001/query/demo?from=iris_flower_measurements"
     page.click("text=Table iris_flower_measurements (150 rows) >> button")
-    page.click("textarea[name=\"select\"]")
-    page.fill("textarea[name=\"select\"]", "sepal_length")
-    page.click("textarea[name=\"where\"]")
-    page.fill("textarea[name=\"where\"]", "petal_width > 2.2")
+    page.click('textarea[name="select"]')
+    page.fill('textarea[name="select"]', "sepal_length")
+    page.click('textarea[name="where"]')
+    page.fill('textarea[name="where"]', "petal_width > 2.2")
     page.click("text=Execute query")
     assert page.url == "http://localhost:5001/query/demo/rows"
     assert page.locator("#nrows").text_content() == "14"

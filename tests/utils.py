@@ -2,11 +2,15 @@
 
 import jsonschema
 
+
 def validate_schema(instance, schema):
     "Validate the given JSON instance versus the given JSON schema."
-    jsonschema.validate(instance=instance,
-                        schema=schema,
-                        format_checker=jsonschema.draft7_format_checker)
+    jsonschema.validate(
+        instance=instance,
+        schema=schema,
+        format_checker=jsonschema.draft7_format_checker,
+    )
+
 
 def get_hrefs(data):
     """Traversing the data recursively, return the list of values
