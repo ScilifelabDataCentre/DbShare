@@ -1,3 +1,8 @@
+---
+title: Explore an existing database
+ordinal: 101
+---
+
 Public databases in DbShare can be explored without being logged in.
 This tutorial uses a public database at the [SciLifeLab
 instance of DbShare](https://dbshare.scilifelab.se/).
@@ -13,7 +18,7 @@ contains the following:
   [dow_jones_index](https://dbshare.scilifelab.se/table/demo/dow_jones_index)
   A more complicated, real-world data set.
 
-#### Inspect the iris data
+### Inspect the **iris** data
 
 - Go to [iris_flower_measurements](https://dbshare.scilifelab.se/table/demo/iris_flower_measurements).
   (Use _ctrl-click_ or whatever method your browser has to bring up the table
@@ -34,7 +39,7 @@ contains the following:
     * the number of unique values in a column,
     * list the unique values, if there are less than 8 of them.
 
-#### Query the iris data
+### Query the iris data
 
 - Go back to the page for **Database demo** (in the menu at the top of the
   page).

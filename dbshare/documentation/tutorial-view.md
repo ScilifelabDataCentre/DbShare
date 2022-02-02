@@ -1,3 +1,8 @@
+---
+title: "View: a saved query"
+ordinal: 105
+---
+
 - An SQL view is a saved query. It looks like a table, but there is no
   separate table.
 - A view is nothing magical; each time it is accessed, its saved query

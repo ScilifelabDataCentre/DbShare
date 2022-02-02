@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = '2.3.2'
+__version__ = '2.3.3'
 
 class Constants:
     VERSION = __version__
@@ -80,8 +80,9 @@ class Constants:
     TAR_MIMETYPE     = 'application/x-tar'
     XLSX_MIMETYPE    = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
 
-    # Misc.
+    # Miscellaneous.
     JSON_SCHEMA_URL = 'http://json-schema.org/draft-07/schema#'
+    FRONT_MATTER_RX = re.compile(r"^---(.*)---", re.DOTALL | re.MULTILINE)
 
     def __setattr__(self, key, value):
         raise ValueError('cannot set constant')

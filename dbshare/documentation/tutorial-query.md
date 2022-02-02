@@ -1,3 +1,8 @@
+---
+title: Query database contents
+ordinal: 104
+---
+
 - An SQL query is the main way of extracting the information of
   interest from a database.
 - The query page can be reached from the database page, or from the

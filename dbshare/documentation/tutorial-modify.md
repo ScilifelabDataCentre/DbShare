@@ -1,5 +1,11 @@
-If you have an account (see [register](/user/register)), and have logged in
-(see [login](/user/login)), you will be able to modify your own databases.
+---
+title: Modify table contents
+ordinal: 103
+---
+
+If you have an account (see [Register a user account](/user/register)),
+and have logged in (see [Login](/user/login)), you will be able to
+modify your own databases.
 
 ### Add data to the table
 

@@ -1,13 +1,23 @@
 {% extends 'base.html' %}
 
-{% block head_title %}{{ title }}{% endblock %}
+{% block head_title %}{{ doc.front_matter["title"] }}{% endblock %}
 
-{% block body_title %}{{ title }}{% endblock %}
+{% block body_title %}{{ doc.front_matter["title"] }}{% endblock %}
 
-{% block supermain %}
+{% block main %}
 <div class="row">
   <div class="col-md-9 offset-md-1">
-    {{ text | display_markdown }}
+    {{ doc.md | display_markdown }}
   </div>
 </div>
 {% endblock %} {# block main #}
+
+{% block links %}
+<ul class="list-group">
+  {% for d in docs %}
+  <li class="list-group-item }}">
+    <a href="{{ url_for('about.documentation', page=d.slug) }}">{{ d.title }}</a>
+  </li>
+  {% endfor %}
+</ul>
+{% endblock %}

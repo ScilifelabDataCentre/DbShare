@@ -1,4 +1,10 @@
-The API can be used to access and edit databases and their data.
+---
+title: API for programmatic operations
+ordinal: 107
+---
+
+The Application Programming Interface (API) can be used to access and
+edit databases and their data.
 
 A user account is needed (except for reading public data) and the
 authentication is based on an API key set for the user account.

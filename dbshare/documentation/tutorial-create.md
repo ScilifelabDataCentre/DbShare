@@ -1,3 +1,8 @@
+---
+title: Create databases and tables.
+ordinal: 101
+---
+
 If you have an account (see [register](/user/register)), and have logged in
 (see [login](/user/login)), you will be able to create your own databases.
 
@@ -49,13 +54,13 @@ If you have an account (see [register](/user/register)), and have logged in
 
 ### Upload a CSV file to create a table
 
-- A table can also be created by uploading a CSV (Comma-Separated Values) file.
-  Such files can either by created "by hand", or by exporting a spreadsheet
-  from Excel.
+- A table can also be created by uploading a CSV (Comma-Separated
+  Values) file.  Such files can either by created "by hand", or by
+  exporting a spreadsheet from Excel.
 - In the database page, click **Upload table**.
 - The page has input fields for the file itself, and for some details
   about the file layout. It is recommended to ensure that the CSV file
-  contains a header record, i.e. the first line in it should contain the
-  names of the columns.
+  contains a header record. If it exists, it must contain the names of
+  the columns.
 - The upload process infers the schema for the table from the contents
   of the CSV file.

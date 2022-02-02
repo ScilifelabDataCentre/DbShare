@@ -1,3 +1,8 @@
+---
+title: Download databases and tables
+ordinal: 106
+---
+
 ### Download a database
 
 - There are several database download options.

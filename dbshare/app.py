@@ -48,6 +48,7 @@ dbshare.config.init(app)
 
 # Initialize the subsystems.
 dbshare.system.init(app)
+dbshare.about.init(app)
 utils.mail.init_app(app)
 
 @app.context_processor
