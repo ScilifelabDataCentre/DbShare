@@ -14,11 +14,12 @@ Much of the code below was created using the playwright code generation feature:
 $ playwright codegen http://localhost:5001/ # Click text=Upload
 """
 
-import json
 import urllib.parse
 
 import pytest
 import playwright.sync_api
+
+import utils
 
 
 @pytest.fixture(scope="module")
@@ -27,23 +28,9 @@ def settings():
     1) defaults
     2) file 'settings.json' in this directory
     """
-    # Default values
-    result = {
-        "BASE_URL": "http://localhost:5001",
-        "USER_USERNAME": None,  # Must be set in 'settings.json'
-        "USER_PASSWORD": None,  # Must be set in 'settings.json'
-    }
-    try:
-        with open("settings.json", "rb") as infile:
-            result.update(json.load(infile))
-    except IOError:
-        pass
-    for key in ["BASE_URL", "USER_USERNAME", "USER_PASSWORD"]:
-        if result.get(key) is None:
-            raise KeyError(f"Missing {key} value in settings.")
-    # Remove any trailing slash.
-    result["BASE_URL"] = result["BASE_URL"].rstrip("/")
-    return result
+    return utils.get_settings(
+        BASE_URL="http://localhost:5001", USER_USERNAME=None, USER_PASSWORD=None
+    )
 
 
 def login_user(settings, page):
@@ -219,25 +206,25 @@ def test_db_upload(settings, page):
     page.click("text=Upload")
     assert page.url == "http://localhost:5001/dbs/upload"
     page.once("filechooser", lambda fc: fc.set_files("test.sqlite3"))
-    page.click("input[name=\"sqlite3file\"]")
+    page.click('input[name="sqlite3file"]')
     page.click("text=Upload SQLite3 file")
     assert page.url == "http://localhost:5001/db/test"
     page.click("text=3 rows")
     assert page.url == "http://localhost:5001/table/test/t1"
     locator = page.locator("#rows > tbody > tr")
     playwright.sync_api.expect(locator).to_have_count(3)
-    page.click("a[role=\"button\"]:has-text(\"Schema\")")
+    page.click('a[role="button"]:has-text("Schema")')
     assert page.url == "http://localhost:5001/table/test/t1/schema"
     locator = page.locator("#columns > tbody > tr")
     playwright.sync_api.expect(locator).to_have_count(7)
-    
+
     # Delete the database.
     page.click("text=Database test")
     assert page.url == "http://localhost:5001/db/test"
     page.once("dialog", lambda dialog: dialog.accept())  # Callback for next click.
     page.click("text=Delete")
     assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
-    
+
 
 def test_view(settings, page):
     "Test view creation, based on a table in an uploaded Sqlite3 database file."
@@ -246,7 +233,7 @@ def test_view(settings, page):
     page.click("text=Upload")
     assert page.url == "http://localhost:5001/dbs/upload"
     page.once("filechooser", lambda fc: fc.set_files("test.sqlite3"))
-    page.click("input[name=\"sqlite3file\"]")
+    page.click('input[name="sqlite3file"]')
     page.click("text=Upload SQLite3 file")
     assert page.url == "http://localhost:5001/db/test"
 

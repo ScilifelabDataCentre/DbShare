@@ -15,14 +15,22 @@ from . import users
 
 def set_base_url(base_url):
     "Set the URL in the schemas to reflect the current server."
-    flask.current_app.config['SCHEMA_BASE_URL'] = base_url
-    for schema in [root.schema,
-                   db.schema, db.edit,
-                   dbs.schema,
-                   rows.schema,
-                   table.schema, table.statistics, table.create, table.input,
-                   view.schema, view.create,
-                   query.input, query.output,
-                   user.schema,
-                   users.schema]:
-        schema['$id'] = base_url + schema['$id']
+    flask.current_app.config["SCHEMA_BASE_URL"] = base_url
+    for schema in [
+        root.schema,
+        db.schema,
+        db.edit,
+        dbs.schema,
+        rows.schema,
+        table.schema,
+        table.statistics,
+        table.create,
+        table.input,
+        view.schema,
+        view.create,
+        query.input,
+        query.output,
+        user.schema,
+        users.schema,
+    ]:
+        schema["$id"] = base_url + schema["$id"]

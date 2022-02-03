@@ -10,11 +10,12 @@ Much of the code below was created using the playwright code generation feature:
 $ playwright codegen http://localhost:5001/
 """
 
-import json
 import urllib.parse
 
 import pytest
 import playwright.sync_api
+
+import utils
 
 
 @pytest.fixture(scope="module")
@@ -23,19 +24,7 @@ def settings():
     1) defaults
     2) file 'settings.json' in this directory
     """
-    # Default values
-    result = {"BASE_URL": "http://localhost:5001"}
-    try:
-        with open("settings.json", "rb") as infile:
-            result.update(json.load(infile))
-    except IOError:
-        pass
-    for key in ["BASE_URL"]:
-        if result.get(key) is None:
-            raise KeyError(f"Missing {key} value in settings.")
-    # Remove any trailing slash.
-    result["BASE_URL"] = result["BASE_URL"].rstrip("/")
-    return result
+    return utils.get_settings(BASE_URL="http://localhost:5001")
 
 
 def test_about(settings, page):  # 'page' fixture from 'pytest-playwright'

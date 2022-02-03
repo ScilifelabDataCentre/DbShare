@@ -11,13 +11,12 @@ from dbshare import constants
 from dbshare import utils
 
 
-blueprint = flask.Blueprint('api_view', __name__)
+blueprint = flask.Blueprint("api_view", __name__)
 
 flask_cors.CORS(blueprint, methods=["GET"])
 
 
-@blueprint.route('/<name:dbname>/<name:viewname>',
-                 methods=['GET', 'PUT', 'DELETE'])
+@blueprint.route("/<name:dbname>/<name:viewname>", methods=["GET", "PUT", "DELETE"])
 def view(dbname, viewname):
     """GET: Return the schema for the view.
     PUT: Create the view.
@@ -31,13 +30,13 @@ def view(dbname, viewname):
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         try:
-            schema = db['views'][viewname]
+            schema = db["views"][viewname]
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        result.pop('type', None)
-        return utils.jsonify(utils.get_json(**result), '/view')
+        result.pop("type", None)
+        return utils.jsonify(utils.get_json(**result), "/view")
 
     elif utils.http_PUT():
         try:
@@ -52,7 +51,8 @@ def view(dbname, viewname):
         except (jsonschema.ValidationError, ValueError) as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
-            flask.url_for('api_view.view', dbname=dbname, viewname=viewname))
+            flask.url_for("api_view.view", dbname=dbname, viewname=viewname)
+        )
 
     elif utils.http_DELETE():
         try:
@@ -66,9 +66,10 @@ def view(dbname, viewname):
                 saver.delete_view(viewname)
         except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
-        return ('', http.client.NO_CONTENT)
+        return ("", http.client.NO_CONTENT)
 
-@blueprint.route('/<name:dbname>/<name:viewname>.csv')
+
+@blueprint.route("/<name:dbname>/<name:viewname>.csv")
 def rows_csv(dbname, viewname):
     "Return the rows in CSV format."
     try:
@@ -78,13 +79,13 @@ def rows_csv(dbname, viewname):
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     try:
-        schema = db['views'][viewname]
+        schema = db["views"][viewname]
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     try:
         dbcnx = dbshare.db.get_cnx(dbname)
-        columns = [c['name'] for c in schema['columns']]
-        colnames = ','.join([f'"{c}"' for c in columns])
+        columns = [c["name"] for c in schema["columns"]]
+        colnames = ",".join([f'"{c}"' for c in columns])
         sql = f'SELECT {colnames} FROM "{viewname}"'
         try:
             cursor = utils.execute_timeout(dbcnx, sql)
@@ -96,7 +97,8 @@ def rows_csv(dbname, viewname):
     writer.write_rows(cursor)
     return flask.Response(writer.getvalue(), mimetype=constants.CSV_MIMETYPE)
 
-@blueprint.route('/<name:dbname>/<name:viewname>.json')
+
+@blueprint.route("/<name:dbname>/<name:viewname>.json")
 def rows_json(dbname, viewname):
     "Return the rows in JSON format."
     try:
@@ -106,13 +108,13 @@ def rows_json(dbname, viewname):
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     try:
-        schema = db['views'][viewname]
+        schema = db["views"][viewname]
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     try:
         dbcnx = dbshare.db.get_cnx(dbname)
-        columns = [c['name'] for c in schema['columns']]
-        colnames = ','.join([f'"{c}"' for c in columns])
+        columns = [c["name"] for c in schema["columns"]]
+        colnames = ",".join([f'"{c}"' for c in columns])
         sql = f'SELECT {colnames} FROM "{viewname}"'
         try:
             cursor = utils.execute_timeout(dbcnx, sql)
@@ -121,37 +123,45 @@ def rows_json(dbname, viewname):
     except sqlite3.Error:
         flask.abort(http.client.INTERNAL_SERVER_ERROR)
     result = {
-        'name': viewname,
-        'title': schema.get('title') or "View {}".format(viewname),
-        'source': {'type': 'view',
-                   'href': utils.url_for('api_view.view',
-                                         dbname=db['name'],
-                                         viewname=viewname)},
-        'nrows': schema['nrows'],
-        'data': [dict(zip(columns, row)) for row in cursor]
+        "name": viewname,
+        "title": schema.get("title") or "View {}".format(viewname),
+        "source": {
+            "type": "view",
+            "href": utils.url_for(
+                "api_view.view", dbname=db["name"], viewname=viewname
+            ),
+        },
+        "nrows": schema["nrows"],
+        "data": [dict(zip(columns, row)) for row in cursor],
     }
-    return utils.jsonify(utils.get_json(**result), '/rows')
+    return utils.jsonify(utils.get_json(**result), "/rows")
+
 
 def get_json(db, view, complete=False, title=False):
     "Return the JSON for the view."
-    result = {'name': view['name']}
+    result = {"name": view["name"]}
     if complete or title:
-        result['description'] = view.get('description')
-        result['title'] = view.get('title')
-    result['nrows'] = view.get('nrows')
-    result['rows'] = {'href': utils.url_for('api_view.rows_json',
-                                            dbname=db['name'],
-                                            viewname=view['name'])}
-    result['data'] = {'href': utils.url_for('api_view.rows_csv',
-                                            dbname=db['name'],
-                                            viewname=view['name']),
-                      'content-type': constants.CSV_MIMETYPE,
-                      'format': 'csv'}
+        result["description"] = view.get("description")
+        result["title"] = view.get("title")
+    result["nrows"] = view.get("nrows")
+    result["rows"] = {
+        "href": utils.url_for(
+            "api_view.rows_json", dbname=db["name"], viewname=view["name"]
+        )
+    }
+    result["data"] = {
+        "href": utils.url_for(
+            "api_view.rows_csv", dbname=db["name"], viewname=view["name"]
+        ),
+        "content-type": constants.CSV_MIMETYPE,
+        "format": "csv",
+    }
     if complete:
-        result['database'] = {'href': utils.url_for('api_db.database',
-                                                    dbname=db['name'])}
+        result["database"] = {
+            "href": utils.url_for("api_db.database", dbname=db["name"])
+        }
     else:
-        result['href'] = utils.url_for('api_view.view',
-                                       dbname=db['name'],
-                                       viewname=view['name'])
+        result["href"] = utils.url_for(
+            "api_view.view", dbname=db["name"], viewname=view["name"]
+        )
     return result

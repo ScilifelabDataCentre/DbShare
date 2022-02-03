@@ -4,13 +4,12 @@ Uses the 'requests' package.
 """
 
 import http.client
-import json
 
 import requests
 import pytest
 
 import dbshare
-from utils import *
+import utils
 
 
 @pytest.fixture(scope="module")
@@ -19,18 +18,7 @@ def settings():
     1) defaults
     2) file 'settings.json' in this directory
     """
-    # Default values
-    result = {"BASE_URL": "http://localhost:5001"}
-    try:
-        with open("settings.json", "rb") as infile:
-            result.update(json.load(infile))
-    except IOError:
-        pass
-    for key in ["BASE_URL"]:
-        if result.get(key) is None:
-            raise KeyError(f"Missing {key} value in settings.")
-    # Remove any trailing slash.
-    result["BASE_URL"] = result["BASE_URL"].rstrip("/")
+    result = utils.get_settings(BASE_URL="http://localhost:5001")
     # Set up requests session.
     result["session"] = requests.Session()
     yield result
@@ -48,18 +36,37 @@ def test_status(settings):
     assert "n_users" in data
 
 
+def test_redirect(settings):
+    "Test redirect from web root to API root when accepting only JSON."
+    response = settings["session"].get(
+        f"{settings['BASE_URL']}", headers={"Accept": "application/json"}
+    )
+    assert response.status_code == http.client.OK
+    assert response.url == f"{settings['BASE_URL']}/api"
+
+
 def test_root(settings):
-    "Test the root."
+    "Test the root and some links from it."
+    response = settings["session"].get(f"{settings['BASE_URL']}/api")
+    assert response.status_code == http.client.OK
+    data = utils.get_data_check_schema(settings["session"], response)
+    assert data["version"] == dbshare.__version__
+    # Loop over schema.
+    for href in utils.get_hrefs(data["schema"]):
+        response = settings["session"].get(href)
+        assert response.status_code == http.client.OK
+
+
+def test_databases(settings):
+    "Test the public databases, if any."
     response = settings["session"].get(f"{settings['BASE_URL']}/api")
     assert response.status_code == http.client.OK
     data = response.json()
-    assert "version" in data
-    assert data["version"] == dbshare.__version__
-    response = settings["session"].get(response.links["schema"]["url"])
-    validate_schema(data, response.json())
-    for href in get_hrefs(data["databases"]):
+    for href in utils.get_hrefs(data["databases"]):
         response = settings["session"].get(href)
         assert response.status_code == http.client.OK
-    for href in get_hrefs(data["schema"]):
-        response = settings["session"].get(href)
-        assert response.status_code == http.client.OK
+        data = utils.get_data_check_schema(settings["session"], response)
+        for database in data["databases"]:
+            response = settings["session"].get(database["href"])
+            assert response.status_code == http.client.OK
+            utils.get_data_check_schema(settings["session"], response)
