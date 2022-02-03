@@ -40,42 +40,42 @@ def settings():
 
 def test_about(settings, page):  # 'page' fixture from 'pytest-playwright'
     "Test access to 'About' pages."
+    page.set_default_navigation_timeout(3000)
+
     page.goto(settings["BASE_URL"])
     page.click("text=About")
     page.click("text=Overview")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/overview"
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/overview"
 
     page.goto(settings["BASE_URL"])
     page.click("text=About")
     page.click("text=Tutorial")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial"
-    page.click("text=Explore a database")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial-explore"
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial"
+    locator = page.locator(".list-group-item > a")
+    playwright.sync_api.expect(locator).to_have_count(9)
 
-    page.go_back()
-    page.click("text=Create and modify a database")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial-create"
+    page.click('text="Explore an existing database"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-explore"
+    page.click('text="Create databases and tables"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-create"
+    page.click('text="Modify table contents"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-modify"
+    page.click('text="Query database contents"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-query"
+    page.click('text="View: a saved query"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-view"
+    page.click('text="Download databases and tables"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-download"
+    page.click('text="API for programmatic operations"')
+    assert page.url == f"{settings['BASE_URL']}/about/documentation/tutorial-api"
 
-    page.go_back()
-    page.click("text=Query and view")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial-query"
-
-    page.go_back()
-    page.click("text=Using the API")
-    assert page.url == f"{settings['BASE_URL']}/about/doc/tutorial-api"
-
-    page.go_back()
-    page.click("text=About")
-    page.click("text=URL endpoints")
-    assert page.url == f"{settings['BASE_URL']}/about/endpoints"
-
-    page.click("text=About")
-    page.click("text=Software")
-    assert page.url == f"{settings['BASE_URL']}/about/software"
+    # page.wait_for_timeout(3000)
 
 
 def test_about_json_schema(settings, page):
     "Test access to 'About' JSON schema pages."
+    page.set_default_navigation_timeout(3000)
+
     page.goto(f"{settings['BASE_URL']}")
     page.click("text=About")
     page.click("text=API JSON schema")
@@ -87,6 +87,8 @@ def test_about_json_schema(settings, page):
     page.go_back()
     page.click("id=dbs")
     assert page.url == f"{settings['BASE_URL']}/api/schema/dbs"
+    with open("schema.json", "w") as outfile:
+        outfile.write(page.content())
 
     page.go_back()
     page.click("id=db")
@@ -144,6 +146,8 @@ def test_about_json_schema(settings, page):
 
 def test_demo_database(settings, page):
     "Test access and query of the demo database, which must exist."
+    page.set_default_navigation_timeout(3000)
+
     page.goto(f"{settings['BASE_URL']}")
     page.click("text=demo")
     assert page.url == "http://localhost:5001/db/demo"

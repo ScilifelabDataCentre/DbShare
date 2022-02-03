@@ -270,12 +270,12 @@ def http_DELETE(csrf=True):
 
 def csrf_token():
     "Output HTML for cross-site request forgery (CSRF) protection."
-    # Generate a token to last the session's lifetime.
-    if '_csrf_token' not in flask.session:
-        flask.session['_csrf_token'] = get_iuid()
-    # html = '<input type="hidden" name="_csrf_token" value="%s">' % \
-    #        flask.session['_csrf_token']
-    html = '<input type="hidden" name="_csrf_token" value="{flask.session["_csrf_token"]}">'
+    try:
+        token = flask.session["_csrf_token"]
+    except KeyError:
+        # Generate a token to last the session's lifetime.
+        token = flask.session["_csrf_token"] = get_iuid()
+    html = f'<input type="hidden" name="_csrf_token" value="{token}">'
     return jinja2.utils.Markup(html)
 
 def check_csrf_token():

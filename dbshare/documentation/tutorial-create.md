@@ -1,5 +1,5 @@
 ---
-title: Create databases and tables.
+title: Create databases and tables
 ordinal: 101
 ---
 
