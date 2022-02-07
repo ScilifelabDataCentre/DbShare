@@ -39,3 +39,58 @@ def test_databases(settings):
         response = settings["session"].get(href)
         assert response.status_code == http.client.OK
         utils.get_data_check_schema(settings["session"], response)
+
+def test_create_database(settings):
+    "Test creating and deleting a database."
+    # Create it.
+    url = f"{settings['BASE_URL']}/api/db/test"
+    response = settings["session"].put(url)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    assert len(data["tables"]) == 0
+    assert len(data["views"]) == 0
+
+    # Delete it.
+    response = settings["session"].delete(url)
+    assert response.status_code == http.client.NO_CONTENT
+
+def test_upload_database(settings):
+    "Test uploading a database Sqlite3 file."
+    # Upload it.
+    url = f"{settings['BASE_URL']}/api/db/test"
+    with open("test.sqlite3", "rb") as infile:
+        headers = {'Content-Type': 'application/x-sqlite3'}
+        response = settings["session"].put(url, data=infile, headers=headers)
+        assert response.status_code == http.client.OK
+    data = response.json()
+    assert len(data["tables"]) == 1
+    assert len(data["views"]) == 0
+    table = data["tables"][0]
+    assert table["name"] == "t1"
+    assert table["nrows"] == 3
+
+    # Delete it.
+    response = settings["session"].delete(url)
+    assert response.status_code == http.client.NO_CONTENT
+    
+def test_query_database(settings):
+    "Test uploading a database Sqlite3 file."
+    # Upload it.
+    url = f"{settings['BASE_URL']}/api/db/test"
+    with open("test.sqlite3", "rb") as infile:
+        headers = {'Content-Type': 'application/x-sqlite3'}
+        response = settings["session"].put(url, data=infile, headers=headers)
+        assert response.status_code == http.client.OK
+    data = response.json()
+    assert len(data["tables"]) == 1
+    assert len(data["views"]) == 0
+    table = data["tables"][0]
+    assert table["name"] == "t1"
+    assert table["nrows"] == 3
+
+    
+
+    # Delete it.
+    response = settings["session"].delete(url)
+    assert response.status_code == http.client.NO_CONTENT
+    

@@ -11,9 +11,10 @@ To run while displaying browser window:
 $ pytest --headed
 
 Much of the code below was created using the playwright code generation feature:
-$ playwright codegen http://localhost:5001/ # Click text=Upload
+$ playwright codegen http://localhost:5001/
 """
 
+import http.client
 import urllib.parse
 
 import pytest
@@ -108,10 +109,14 @@ def test_table_data(settings, page):  # 'page' fixture from 'pytest-playwright'
 
     # Delete the table.
     page.click("text=2 rows")
-    assert page.url == f"{settings['BASE_URL']}/table/test/t1"
+    table_url = f"{settings['BASE_URL']}/table/test/t1"
+    assert page.url == table_url
     page.once("dialog", lambda dialog: dialog.accept())  # Callback for next click.
     page.click("text=Delete")
     assert page.url == f"{settings['BASE_URL']}/db/test"
+    page.goto(table_url)
+    locator = page.locator("text=No such table")
+    playwright.sync_api.expect(locator).to_have_count(1)
 
     # Delete the database.
     page.once("dialog", lambda dialog: dialog.accept())  # Callback for next click.
@@ -237,7 +242,24 @@ def test_view(settings, page):
     page.click("text=Upload SQLite3 file")
     assert page.url == "http://localhost:5001/db/test"
 
+    # Create the view.
+    page.click("text=Query")
+    assert page.url == "http://localhost:5001/query/test"
+    page.click('textarea[name="select"]')
+    page.fill('textarea[name="select"]', "i, r1")
+    page.click("textarea[name=\"from\"]")
+    page.fill("textarea[name=\"from\"]", "t1")
+    page.click("textarea[name=\"where\"]")
+    page.fill("textarea[name=\"where\"]", "i2 < 0")
+    page.click("text=Execute query")
+    assert page.url == "http://localhost:5001/query/test/rows"
+    page.click("text=Create view")
+    page.click('input[name="name"]')
+    page.fill('input[name="name"]', "v1")
+    page.click("button:has-text(\"Create\")")
     page.wait_for_timeout(3000)
+    locator = page.locator("#rows > tbody > tr")
+    playwright.sync_api.expect(locator).to_have_count(2)
 
     # Delete the database.
     page.click("text=Database test")
@@ -245,3 +267,5 @@ def test_view(settings, page):
     page.once("dialog", lambda dialog: dialog.accept())  # Callback for next click.
     page.click("text=Delete")
     assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
+
+    # page.wait_for_timeout(3000)
