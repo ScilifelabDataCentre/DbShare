@@ -58,10 +58,12 @@
 {% endblock %} {# block api #}
 
 {% block actions %}
+{% if g.is_admin %}
 <div class="mt-2">
   <a href="{{ url_for('.edit', username=user['username']) }}"
      role="button" class="btn btn-primary btn-block">Edit</a>
 </div>
+{& endif %} {# if g.is_admin #}
 {% if enable_disable %}
 <div class="mt-2">
   {% if user['status'] != constants.ENABLED %}

@@ -42,7 +42,6 @@
       </div>
     </div>
   </div>
-  {% if g.is_admin %}
   <div class="form-group row">
     <label for="quota" class="col-md-2 col-form-label text-right">
       Size quota (bytes)</label>
@@ -51,7 +50,6 @@
              id="quota" name="quota" value="{{ user.get('quota') or '' }}">
     </div>
   </div>
-  {% endif %}
   <div class="form-group row">
     <div class="col-md-2 offset-md-2">
       <button type="submit" class="btn btn-block btn-primary">Save</button>

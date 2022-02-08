@@ -6,7 +6,6 @@ import re
 import sqlite3
 
 import flask
-import flask_mail
 import werkzeug.security
 
 import dbshare.system
@@ -67,6 +66,7 @@ def logout():
 
 
 @blueprint.route("/register", methods=["GET", "POST"])
+@utils.admin_required
 def register():
     "Register a new user account."
     if utils.http_GET():
@@ -78,100 +78,11 @@ def register():
                 ctx.set_username(flask.request.form.get("username"))
                 ctx.set_email(flask.request.form.get("email"))
                 ctx.set_role(constants.USER)
-                ctx.set_password()
+                ctx.set_password(flask.request.form.get("password"))
             user = ctx.user
         except ValueError as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for(".register"))
-        # Directly enabled; send code to the user.
-        if user["status"] == constants.ENABLED:
-            send_password_code(user, "registration")
-            utils.flash_message("User account created; check your email.")
-        # Was set to 'pending'; send email to admins.
-        else:
-            sql = "SELECT email FROM users WHERE role=?"
-            emails = [row[0] for row in flask.g.syscnx.execute(sql, (constants.ADMIN,))]
-            site = flask.current_app.config["SITE_NAME"]
-            message = flask_mail.Message(
-                f"{site} user account pending", recipients=emails
-            )
-            url = utils.url_for(".display", username=user["username"])
-            message.body = f"To enable the user account, go to {url}"
-            utils.mail.send(message)
-            utils.flash_message(
-                "User account created; an email will be sent"
-                " when it has been enabled by the admin."
-            )
-        return flask.redirect(flask.url_for("home"))
-
-
-@blueprint.route("/reset", methods=["GET", "POST"])
-def reset():
-    "Reset the password for a user account and send email."
-    if utils.http_GET():
-        return flask.render_template("user/reset.html")
-
-    elif utils.http_POST():
-        try:
-            user = get_user(email=flask.request.form["email"])
-            if user is None:
-                raise KeyError
-            if user["status"] != constants.ENABLED:
-                raise KeyError
-        except KeyError:
-            pass
-        else:
-            with UserSaver(user) as ctx:
-                ctx.set_password()
-            send_password_code(user, "password reset")
-        utils.flash_message("An email has been sent if the user account exists.")
-        return flask.redirect(flask.url_for("home"))
-
-
-def send_password_code(user, action):
-    "Send an email with the one-time code to the user's email address."
-    site = flask.current_app.config["SITE_NAME"]
-    message = flask_mail.Message(
-        f"{site} user account {action}", recipients=[user["email"]]
-    )
-    url = utils.url_for(
-        ".password", username=user["username"], code=user["password"][len("code:") :]
-    )
-    message.body = f"To set your password, go to {url}"
-    utils.mail.send(message)
-
-
-@blueprint.route("/password", methods=["GET", "POST"])
-def password():
-    "Set the password for a user account, and login user."
-    if utils.http_GET():
-        return flask.render_template(
-            "user/password.html",
-            username=flask.request.args.get("username"),
-            code=flask.request.args.get("code"),
-        )
-
-    elif utils.http_POST():
-        try:
-            username = flask.request.form["username"]
-            if not username:
-                raise KeyError
-            user = get_user(username=username)
-            if user is None:
-                raise KeyError
-            if user["password"] != "code:{}".format(flask.request.form["code"]):
-                raise KeyError
-            password = flask.request.form.get("password") or ""
-            if len(password) < flask.current_app.config["MIN_PASSWORD_LENGTH"]:
-                raise ValueError
-        except KeyError:
-            utils.flash_error("no such user or wrong code")
-        except ValueError:
-            utils.flash_error("too short password")
-        else:
-            with UserSaver(user) as ctx:
-                ctx.set_password(password)
-            do_login(username, password)
         return flask.redirect(flask.url_for("home"))
 
 
@@ -202,15 +113,12 @@ def display(username=None):
 
 
 @blueprint.route("/display/<name:username>/edit", methods=["GET", "POST", "DELETE"])
-@utils.login_required
+@utils.admin_required
 def edit(username):
-    "Edit the user display. Or delete the user."
+    "Edit the user. Or delete the user."
     user = get_user(username=username)
     if user is None:
         utils.flash_error("no such user")
-        return flask.redirect(flask.url_for("home"))
-    if not is_admin_or_self(user):
-        utils.flash_error("access not allowed")
         return flask.redirect(flask.url_for("home"))
 
     if utils.http_GET():
@@ -227,13 +135,16 @@ def edit(username):
                 ctx.set_apikey()
             if is_admin_and_not_self(user):
                 ctx.set_role(flask.request.form.get("role"))
-                quota = flask.request.form.get("quota") or None
-                if quota:
-                    try:
-                        quota = int(quota)
-                    except (ValueError, TypeError):
-                        quota = -1
-                ctx.set_quota(quota)
+            quota = flask.request.form.get("quota") or None
+            if quota:
+                try:
+                    quota = int(quota)
+                except (ValueError, TypeError):
+                    quota = -1
+            ctx.set_quota(quota)
+            password = flask.request.form.get("password")
+            if password:
+                ctx.set_password(password)
         return flask.redirect(flask.url_for(".display", username=user["username"]))
 
     elif utils.http_DELETE():
@@ -248,10 +159,7 @@ def edit(username):
             sql = "DELETE FROM users WHERE username=?"
             cnx.execute(sql, (username,))
         utils.flash_message(f"Deleted user {username}.")
-        if flask.g.is_admin:
-            return flask.redirect(flask.url_for(".users"))
-        else:
-            return flask.redirect(flask.url_for("home"))
+        return flask.redirect(flask.url_for(".users"))
 
 
 @blueprint.route("/display/<name:username>/logs")
@@ -299,8 +207,6 @@ def enable(username):
         return flask.redirect(flask.url_for("home"))
     with UserSaver(user) as ctx:
         ctx.set_status(constants.ENABLED)
-        ctx.set_password()
-    send_password_code(user, "enabled")
     return flask.redirect(flask.url_for(".display", username=username))
 
 

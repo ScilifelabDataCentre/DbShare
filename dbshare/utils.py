@@ -16,7 +16,6 @@ import urllib.parse
 import uuid
 
 import flask
-import flask_mail
 import jinja2.utils
 import jsonschema
 import marko
@@ -25,9 +24,6 @@ import werkzeug.routing
 import dbshare.lexer
 from dbshare import constants
 
-
-# Global instance of mail interface.
-mail = flask_mail.Mail()
 
 # Global instance of SQL lexer.
 lexer = dbshare.lexer.Lexer(
