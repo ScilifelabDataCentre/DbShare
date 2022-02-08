@@ -74,7 +74,7 @@ def test_upload_database(settings):
     assert response.status_code == http.client.NO_CONTENT
     
 def test_query_database(settings):
-    "Test uploading a database Sqlite3 file."
+    "Test querying a database from a Sqlite3 file."
     # Upload it.
     url = f"{settings['BASE_URL']}/api/db/test"
     with open("test.sqlite3", "rb") as infile:
@@ -88,9 +88,21 @@ def test_query_database(settings):
     assert table["name"] == "t1"
     assert table["nrows"] == 3
 
-    
+    # Query
+    response = settings["session"].get(f"{settings['BASE_URL']}/api/schema/query/input")
+    assert response.status_code == http.client.OK
+    query_input_schema = response.json()
+    response = settings["session"].get(f"{settings['BASE_URL']}/api/schema/query/output")
+    assert response.status_code == http.client.OK
+    query_output_schema = response.json()
+    query = {'select': f'r1 as "r"',
+             'from': 't1'}
+    utils.validate_schema(query, query_input_schema)
+    response = settings["session"].post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, query_output_schema)
 
     # Delete it.
     response = settings["session"].delete(url)
     assert response.status_code == http.client.NO_CONTENT
-    
