@@ -65,12 +65,12 @@ def logout():
     return flask.redirect(flask.url_for("home"))
 
 
-@blueprint.route("/register", methods=["GET", "POST"])
+@blueprint.route("/create", methods=["GET", "POST"])
 @utils.admin_required
-def register():
-    "Register a new user account."
+def create():
+    "Create a new user account."
     if utils.http_GET():
-        return flask.render_template("user/register.html")
+        return flask.render_template("user/create.html")
 
     elif utils.http_POST():
         try:
@@ -82,8 +82,8 @@ def register():
             user = ctx.user
         except ValueError as error:
             utils.flash_error(error)
-            return flask.redirect(flask.url_for(".register"))
-        return flask.redirect(flask.url_for("home"))
+            return flask.redirect(flask.url_for(".create"))
+        return flask.redirect(flask.url_for(".display", username=user["username"]))
 
 
 @blueprint.route("/display")
@@ -228,12 +228,8 @@ class UserSaver:
 
     def __init__(self, user=None):
         if user is None:
-            if flask.current_app.config["USER_ENABLE_IMMEDIATELY"]:
-                status = constants.ENABLED
-            else:
-                status = constants.PENDING
             self.user = {
-                "status": status,
+                "status": constants.ENABLED,
                 "quota": flask.current_app.config["USER_DEFAULT_QUOTA"],
                 "created": utils.get_time(),
             }
@@ -357,11 +353,6 @@ class UserSaver:
         if get_user(email=email):
             raise ValueError("email already in use")
         self.user["email"] = email
-        if self.user.get("status") == constants.PENDING:
-            for rx in flask.current_app.config["USER_ENABLE_EMAIL_WHITELIST"]:
-                if re.match(rx, email):
-                    self.set_status(constants.ENABLED)
-                    break
 
     def set_status(self, status):
         if status not in constants.USER_STATUSES:
@@ -378,17 +369,14 @@ class UserSaver:
             raise ValueError("invalid role")
         self.user["role"] = role
 
-    def set_password(self, password=None):
-        "Set the password; a one-time code if no password provided."
+    def set_password(self, password):
+        "Set the password."
         config = flask.current_app.config
-        if password is None:
-            self.user["password"] = "code:%s" % utils.get_iuid()
-        else:
-            if len(password) < config["MIN_PASSWORD_LENGTH"]:
-                raise ValueError("password too short")
-            self.user["password"] = werkzeug.security.generate_password_hash(
-                password, salt_length=config["SALT_LENGTH"]
-            )
+        if len(password) < config["MIN_PASSWORD_LENGTH"]:
+            raise ValueError("password too short")
+        self.user["password"] = werkzeug.security.generate_password_hash(
+            password, salt_length=config["SALT_LENGTH"]
+        )
 
     def set_apikey(self):
         "Set a new API key."

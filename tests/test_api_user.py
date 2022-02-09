@@ -40,6 +40,7 @@ def test_databases(settings):
         assert response.status_code == http.client.OK
         utils.get_data_check_schema(settings["session"], response)
 
+
 def test_create_database(settings):
     "Test creating and deleting a database."
     # Create it.
@@ -54,12 +55,13 @@ def test_create_database(settings):
     response = settings["session"].delete(url)
     assert response.status_code == http.client.NO_CONTENT
 
+
 def test_upload_database(settings):
     "Test uploading a database Sqlite3 file."
     # Upload it.
     url = f"{settings['BASE_URL']}/api/db/test"
     with open("test.sqlite3", "rb") as infile:
-        headers = {'Content-Type': 'application/x-sqlite3'}
+        headers = {"Content-Type": "application/x-sqlite3"}
         response = settings["session"].put(url, data=infile, headers=headers)
         assert response.status_code == http.client.OK
     data = response.json()
@@ -72,13 +74,14 @@ def test_upload_database(settings):
     # Delete it.
     response = settings["session"].delete(url)
     assert response.status_code == http.client.NO_CONTENT
-    
+
+
 def test_query_database(settings):
     "Test querying a database from a Sqlite3 file."
     # Upload it.
     url = f"{settings['BASE_URL']}/api/db/test"
     with open("test.sqlite3", "rb") as infile:
-        headers = {'Content-Type': 'application/x-sqlite3'}
+        headers = {"Content-Type": "application/x-sqlite3"}
         response = settings["session"].put(url, data=infile, headers=headers)
         assert response.status_code == http.client.OK
     data = response.json()
@@ -92,13 +95,16 @@ def test_query_database(settings):
     response = settings["session"].get(f"{settings['BASE_URL']}/api/schema/query/input")
     assert response.status_code == http.client.OK
     query_input_schema = response.json()
-    response = settings["session"].get(f"{settings['BASE_URL']}/api/schema/query/output")
+    response = settings["session"].get(
+        f"{settings['BASE_URL']}/api/schema/query/output"
+    )
     assert response.status_code == http.client.OK
     query_output_schema = response.json()
-    query = {'select': f'r1 as "r"',
-             'from': 't1'}
+    query = {"select": f'r1 as "r"', "from": "t1"}
     utils.validate_schema(query, query_input_schema)
-    response = settings["session"].post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
+    response = settings["session"].post(
+        f"{settings['BASE_URL']}/api/db/test/query", json=query
+    )
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, query_output_schema)

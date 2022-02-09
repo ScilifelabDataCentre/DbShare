@@ -1159,7 +1159,7 @@ def check_quota(user=None, size=0):
 
 
 def get_schema(db, sourcename):
-    """Get the schema of the table or view. 
+    """Get the schema of the table or view.
     Add a member 'type' denoting which it is.
     Raise ValueError if no such table or view.
     """

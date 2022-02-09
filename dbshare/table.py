@@ -773,7 +773,7 @@ def insert_rows(db, schema, rows):
 
 def update_csv_rows(db, schema, csvfile, delimiter):
     """Update the given table with the given CSV file.
-    The CSV file must contain a header row. The primary key column(s) 
+    The CSV file must contain a header row. The primary key column(s)
     must be present. Only given column values will be updated.
     Raises ValueError if any problem.
     """

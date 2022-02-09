@@ -10,15 +10,15 @@
   <col style="width:70%">
   <tr>
     <th class="text-right">Email</th>
-    <td>{{ user['email'] }}</td>
+    <td id="email">{{ user['email'] }}</td>
   </tr>
   <tr>
     <th class="text-right">Role</th>
-    <td>{{ user['role'] }}</td>
+    <td id="role">{{ user['role'] }}</td>
   </tr>
   <tr>
     <th class="text-right">Status</th>
-    <td>{{ user['status'] }}</td>
+    <td id="status">{{ user['status'] }}</td>
   </tr>
   <tr>
     <th class="text-right">API key</th>
@@ -43,7 +43,7 @@
   </tr>
   <tr>
     <th class="text-right">Size quota (bytes)</th>
-    <td>
+    <td id="quota">
       {{ user.get('quota') | size_none }}
     </td>
   </tr>
@@ -63,7 +63,7 @@
   <a href="{{ url_for('.edit', username=user['username']) }}"
      role="button" class="btn btn-primary btn-block">Edit</a>
 </div>
-{& endif %} {# if g.is_admin #}
+{% endif %} {# if g.is_admin #}
 {% if enable_disable %}
 <div class="mt-2">
   {% if user['status'] != constants.ENABLED %}
