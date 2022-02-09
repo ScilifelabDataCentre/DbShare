@@ -100,12 +100,13 @@ def display(username=None):
     if not is_admin_or_self(user):
         utils.flash_error("access not allowed")
         return flask.redirect(flask.url_for("home"))
+    admin_privilege = is_admin_and_not_self(user)
     ndbs, total_size = dbshare.db.get_usage(username)
-    deletable = ndbs == 0
+    deletable = ndbs == 0 and admin_privilege
     return flask.render_template(
         "user/display.html",
         user=user,
-        enable_disable=is_admin_and_not_self(user),
+        admin_privilege=admin_privilege,
         ndbs=ndbs,
         total_size=total_size,
         deletable=deletable,

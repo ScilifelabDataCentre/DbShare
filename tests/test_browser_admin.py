@@ -69,13 +69,13 @@ def test_create_user(settings, page):
     # Create user account.
     assert page.url == f"{settings['BASE_URL']}/user/create"
     page.click('input[name="username"]')
-    page.fill('input[name="username"]', "test_user")
+    page.fill('input[name="username"]', "testing")
     page.press('input[name="username"]', "Tab")
-    page.fill('input[name="email"]', "test_user@dummy.org")
+    page.fill('input[name="email"]', "testing@dummy.org")
     page.press('input[name="email"]', "Tab")
-    page.fill('input[name="password"]', "test_user123")
+    page.fill('input[name="password"]', "testing123")
     page.click('button:has-text("Create")')
-    assert page.url == f"{settings['BASE_URL']}/user/display/test_user"
+    assert page.url == f"{settings['BASE_URL']}/user/display/testing"
 
     # Disable user account.
     assert page.locator("#status").inner_text() == "enabled"
@@ -87,16 +87,20 @@ def test_create_user(settings, page):
     # Try logging out, and then login to the created user.
     page.click(f"text=User {settings['ADMIN_USERNAME']}")
     page.click("text=Logout")
-    settings_copy = settings.copy()
-    settings_copy["ADMIN_USERNAME"] = "test_user"
-    settings_copy["ADMIN_PASSWORD"] = "test_user123"
-    login_user(settings_copy, page)
-    page.click(f"text=User {settings_copy['ADMIN_USERNAME']}")
+    page.click("text=Login")
+    assert page.url == f"{settings['BASE_URL']}/user/login?"
+    page.click('input[name="username"]')
+    page.fill('input[name="username"]', "testing")
+    page.press('input[name="username"]', "Tab")
+    page.fill('input[name="password"]', "testing123")
+    page.click("id=login")
+    assert page.url == f"{settings['BASE_URL']}/dbs/owner/testing"
+    page.click("text=User testing")
     page.click("text=Logout")
 
     # Delete user account.
     login_user(settings, page)
-    page.click(f"text=User {settings['ADMIN_USERNAME']}")
+    page.goto(f"{settings['BASE_URL']}/user/display/testing")
     page.once("dialog", lambda dialog: dialog.accept())  # Callback for next click.
     page.click('button:has-text("Delete")')
     assert page.url == f"{settings['BASE_URL']}/user/users"
