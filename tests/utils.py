@@ -23,31 +23,19 @@ def get_settings(**defaults):
     return result
 
 
-def get_data_check_schema(session, response):
-    """Check that there is a schema linked in the response headers,
-    and that the response JSON data matches that schema.
-    Return the response JSON.
-    """
-    result = response.json()
-    url = response.links["schema"]["url"]
-    r = session.get(url)
-    assert r.status_code == http.client.OK
-    jsonschema.validate(
-        instance=result,
-        schema=r.json(),
-        format_checker=jsonschema.draft7_format_checker,
-    )
-    return result
-
-
 def validate_schema(instance, schema):
     "Validate the given JSON instance versus the given JSON schema."
+    jsonschema.validate(
+        instance=instance,
+        schema=schema,
+        format_checker=jsonschema.draft7_format_checker,
+    )
 
 
 def get_hrefs(data):
     """Traversing the data recursively, return the list of values
     for all 'href' keys in the dictionary.
-    If a 'href' value is not a string, then ignore it.
+    If the value for an 'href' key is not a string, then ignore it.
     """
     result = []
     if isinstance(data, list):
