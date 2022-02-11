@@ -719,9 +719,12 @@ def get_csv_rows(schema, csvfile, delimiter, header):
         raise ValueError("empty CSV file")
     if header:
         header = [h.strip() for h in rows.pop(0)]
-        for n, column in enumerate(schema["columns"]):
-            if header[n] != column["name"]:
-                raise ValueError("header/column name mismatch")
+        try:
+            for n, column in enumerate(schema["columns"]):
+                if header[n] != column["name"]:
+                    raise ValueError("header/column name mismatch")
+        except IndexError as msg:
+            raise ValueError(str(msg))
     try:
         for i, column in enumerate(schema["columns"]):
             type = column["type"]

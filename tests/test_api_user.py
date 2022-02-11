@@ -3,7 +3,9 @@
 Uses the 'requests' package.
 """
 
+import csv
 import http.client
+import io
 
 import requests
 import pytest
@@ -43,10 +45,34 @@ def settings():
     response = session.get(f"{result['BASE_URL']}/api/schema/view/create")
     assert response.status_code == http.client.OK
     result["view_create_schema"] = response.json()
-    # Delete left-over test database, if any.
-    session.delete(f"{result['BASE_URL']}/api/db/test")
+
     yield result
+
     result["session"].close()
+
+
+@pytest.fixture()
+def database(settings):
+    "Upload the test database, and delete it."
+    session = settings["session"]
+
+    # Upload the database.
+    settings["url"] = url = f"{settings['BASE_URL']}/api/db/test"
+    with open("test.sqlite3", "rb") as infile:
+        headers = {"Content-Type": "application/x-sqlite3"}
+        response = session.put(url, data=infile, headers=headers)
+        assert response.status_code == http.client.OK
+    data = response.json()
+    assert len(data["tables"]) == 1
+    assert len(data["views"]) == 0
+    table = data["tables"][0]
+    assert table["name"] == "t1"
+    assert table["nrows"] == 3
+
+    yield
+
+    # Delete the database.
+    response = session.delete(url)
 
 
 def test_root(settings):
@@ -92,53 +118,29 @@ def test_create_database(settings):
     assert len(data["tables"]) == 0
     assert len(data["views"]) == 0
 
-    # Delete the database.
-    response = session.delete(url)
-    assert response.status_code == http.client.NO_CONTENT
+    # Delete the test database.
+    session.delete(url)
 
 
-def test_upload_database(settings):
+def test_upload_database(settings, database):
     "Test uploading a database Sqlite3 file."
     session = settings["session"]
+    url = f"{settings['BASE_URL']}/api/db/bad"
 
-    # Upload the database.
-    url = f"{settings['BASE_URL']}/api/db/test"
-    with open("test.sqlite3", "rb") as infile:
-        headers = {"Content-Type": "application/x-sqlite3"}
-        response = session.put(url, data=infile, headers=headers)
-        assert response.status_code == http.client.OK
-    data = response.json()
-    assert len(data["tables"]) == 1
-    assert len(data["views"]) == 0
-    table = data["tables"][0]
-    assert table["name"] == "t1"
-    assert table["nrows"] == 3
-
-    # Delete the database.
-    response = session.delete(url)
-    assert response.status_code == http.client.NO_CONTENT
-
-    # Bad upload.
+    # Attempt bad upload.
     headers = {"Content-Type": "application/garbage"}
     response = session.put(url, data="garbage", headers=headers)
     assert response.status_code == http.client.UNSUPPORTED_MEDIA_TYPE
 
 
-def test_table(settings):
+def test_table(settings, database):
     "Test creating, modifying and deleting a table."
     session = settings["session"]
-
-    # Create the database.
-    db_url = f"{settings['BASE_URL']}/api/db/test"
-    response = session.put(db_url)
-    assert response.status_code == http.client.OK
-    data = response.json()
-    assert len(data["tables"]) == 0
-    assert len(data["views"]) == 0
+    url = settings["url"]
 
     # Create a table.
     table_spec = {
-        "name": "t1",
+        "name": "t2",
         "title": "Test table",
         "columns": [
             {"name": "i", "type": "INTEGER", "primarykey": True},
@@ -146,7 +148,7 @@ def test_table(settings):
             {"name": "r", "type": "REAL", "notnull": True},
         ],
     }
-    table_url = f"{settings['BASE_URL']}/api/table/test/t1"
+    table_url = f"{settings['BASE_URL']}/api/table/test/t2"
     response = session.put(table_url, json=table_spec)
     assert response.status_code == http.client.OK
     data = response.json()
@@ -166,7 +168,7 @@ def test_table(settings):
     assert lookup["i"]["notnull"]
 
     # Insert rows into the table.
-    url = f"{settings['BASE_URL']}/api/table/test/t1/insert"
+    url = f"{settings['BASE_URL']}/api/table/test/t2/insert"
     row = {"data": [{"i": 1, "t": "stuff", "r": 1.2345}]}
     response = session.post(url, json=row)
     data = response.json()
@@ -225,54 +227,87 @@ def test_table(settings):
     assert data["data"][3] == row_3
 
     # Empty the table.
-    url = f"{settings['BASE_URL']}/api/table/test/t1/empty"
+    url = f"{settings['BASE_URL']}/api/table/test/t2/empty"
     response = session.post(url)
     assert response.status_code == http.client.OK
     response = session.get(response.url)
     data = response.json()
     assert data["nrows"] == 0
 
-    # Delete the database.
-    response = session.delete(db_url)
-    assert response.status_code == http.client.NO_CONTENT
 
-    # def test_csv(self):
-    #     "Create database and table; insert CSV operations."
+def test_csv(settings, database):
+    "Test CSV operations on a table."
+    session = settings["session"]
 
-    #     # Create an empty database.
-    #     response = self.create_database()
-    #     result = self.check_schema(response)
+    # Create the table.
+    table_spec = {
+        "name": "t2",
+        "title": "Test table",
+        "columns": [
+            {"name": "i", "type": "INTEGER", "primarykey": True},
+            {"name": "t", "type": "TEXT", "notnull": False},
+            {"name": "r", "type": "REAL", "notnull": True},
+        ],
+    }
+    table_url = f"{settings['BASE_URL']}/api/table/test/t2"
+    response = session.put(table_url, json=table_spec)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
 
-    #     # Create a table in the database.
-    #     url = self.root['operations']['table']['create']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=self.table_spec['name'])
-    #     response = self.session.put(url, json=self.table_spec)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 0)
+    rows = [
+        {"i": 1, "t": "some text", "r": 1.43},
+        {"i": 2, "t": "Blah", "r": 0.43},
+        {"i": 3, "t": "blopp", "r": 109.1},
+        {"i": 4, "t": "more", "r": -0.213},
+    ]
+    textfile = io.StringIO()
+    writer = csv.DictWriter(textfile, list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    headers = {'Content-Type': 'text/csv'}
+    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    assert data["nrows"] == len(rows)
 
-    #     headers = {'Content-Type': 'text/csv'}
+    # Try inserting a bad row: no primary key.
+    rows = [
+        {"t": "missing primary key", "r": 1.43},
+    ]
+    textfile = io.StringIO()
+    writer = csv.DictWriter(textfile, list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    assert response.status_code == http.client.BAD_REQUEST
 
-    #     # Insert CSV data.
-    #     url = self.root['operations']['table']['insert']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=self.table_spec['name'])
-    #     data = self.get_csvfile_data([(1, 'test', 0.2),
-    #                                   (2, 'another test', 4.123e5),
-    #                                   (3, 'third', -13)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 3)
+    # Try inserting a bad row: missing NOT NULL item.
+    rows = [
+        {"i": 5, "t": "missing primary key"},
+    ]
+    textfile = io.StringIO()
+    writer = csv.DictWriter(textfile, list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    assert response.status_code == http.client.BAD_REQUEST
 
-    #     # Row with None for a pkey item.
-    #     data = self.get_csvfile_data([(None, 'missing pkey', 0.2)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     self.assertEqual(response.status_code, http.client.BAD_REQUEST)
-
-    #     # Row with too many items.
-    #     data = self.get_csvfile_data([(1, 'test', 2.1, 'superfluous')])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     self.assertEqual(response.status_code, http.client.BAD_REQUEST)
+    # Insert more data.
+    rows = [
+        {"i": 5, "t": "yet more text", "r": 1.0e5},
+        {"i": 6, "t": "a name", "r": -0.001},
+    ]
+    textfile = io.StringIO()
+    writer = csv.DictWriter(textfile, list(rows[0].keys()))
+    writer.writeheader()
+    writer.writerows(rows)
+    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    assert data["nrows"] == 6
 
     # def test_update(self):
     #     "Create database and table; insert and update using CSV."
@@ -387,16 +422,10 @@ def test_table(settings):
     #     result = self.check_schema(response)
 
 
-def test_edit_database(settings):
+def test_edit_database(settings, database):
     "Test editing database metadata."
     session = settings["session"]
-
-    # Upload the database.
-    url = f"{settings['BASE_URL']}/api/db/test"
-    with open("test.sqlite3", "rb") as infile:
-        headers = {"Content-Type": "application/x-sqlite3"}
-        response = session.put(url, data=infile, headers=headers)
-        assert response.status_code == http.client.OK
+    url = settings["url"]
 
     # Edit the title.
     title = "New title"
@@ -416,7 +445,7 @@ def test_edit_database(settings):
     # Same title as before.
     assert data.get("title") == title
 
-    # Rename the database; record its new url.
+    # Rename the database.
     name = "test2"
     response = session.post(url, json={"name": name})
     assert response.status_code == http.client.OK
@@ -424,23 +453,15 @@ def test_edit_database(settings):
     utils.validate_schema(data, settings["db_schema"])
     assert data["$id"].endswith(name)
 
-    # Delete the database.
-    response = session.delete(data["$id"])
+    # Delete the renamed database.
+    response = session.delete(response.url)
     assert response.status_code == http.client.NO_CONTENT
 
 
-def test_readonly_database(settings):
+def test_readonly_database(settings, database):
     "Test setting a database to readonly."
     session = settings["session"]
-
-    # Upload the database.
-    url = f"{settings['BASE_URL']}/api/db/test"
-    with open("test.sqlite3", "rb") as infile:
-        headers = {"Content-Type": "application/x-sqlite3"}
-        response = session.put(url, data=infile, headers=headers)
-        assert response.status_code == http.client.OK
-    data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
+    url = settings["url"]
 
     # Set to readonly.
     response = session.post(url + "/readonly")
@@ -466,28 +487,10 @@ def test_readonly_database(settings):
     assert not data["readonly"]
     assert not data["hashes"]
 
-    # Delete the database.
-    response = session.delete(url)
-    assert response.status_code == http.client.NO_CONTENT
 
-
-def test_query_database(settings):
+def test_query_database(settings, database):
     "Test querying a database from a Sqlite3 file."
     session = settings["session"]
-
-    # Upload the database.
-    url = f"{settings['BASE_URL']}/api/db/test"
-    with open("test.sqlite3", "rb") as infile:
-        headers = {"Content-Type": "application/x-sqlite3"}
-        response = session.put(url, data=infile, headers=headers)
-        assert response.status_code == http.client.OK
-    data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
-    assert len(data["tables"]) == 1
-    assert len(data["views"]) == 0
-    table = data["tables"][0]
-    assert table["name"] == "t1"
-    assert table["nrows"] == 3
 
     # Query schema.
     response = session.get(f"{settings['BASE_URL']}/api/schema/query/input")
@@ -510,21 +513,10 @@ def test_query_database(settings):
     response = session.post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
     assert response.status_code == http.client.BAD_REQUEST
 
-    # Delete the database.
-    response = session.delete(url)
-    assert response.status_code == http.client.NO_CONTENT
 
-
-def test_view(settings):
+def test_view(settings, database):
     "Test creating and using a view."
     session = settings["session"]
-
-    # Upload the database.
-    url = f"{settings['BASE_URL']}/api/db/test"
-    with open("test.sqlite3", "rb") as infile:
-        headers = {"Content-Type": "application/x-sqlite3"}
-        response = session.put(url, data=infile, headers=headers)
-        assert response.status_code == http.client.OK
 
     # Create a view.
     view_spec = {
@@ -569,10 +561,6 @@ def test_view(settings):
 
     # Delete the view.
     response = session.delete(f"{settings['BASE_URL']}/api/view/test/v1")
-    assert response.status_code == http.client.NO_CONTENT
-
-    # Delete the database.
-    response = session.delete(url)
     assert response.status_code == http.client.NO_CONTENT
 
 
