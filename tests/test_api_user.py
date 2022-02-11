@@ -37,6 +37,12 @@ def settings():
     response = session.get(f"{result['BASE_URL']}/api/schema/rows")
     assert response.status_code == http.client.OK
     result["rows_schema"] = response.json()
+    response = session.get(f"{result['BASE_URL']}/api/schema/view")
+    assert response.status_code == http.client.OK
+    result["view_schema"] = response.json()
+    response = session.get(f"{result['BASE_URL']}/api/schema/view/create")
+    assert response.status_code == http.client.OK
+    result["view_create_schema"] = response.json()
     # Delete left-over test database, if any.
     session.delete(f"{result['BASE_URL']}/api/db/test")
     yield result
@@ -113,8 +119,8 @@ def test_upload_database(settings):
     assert response.status_code == http.client.NO_CONTENT
 
     # Bad upload.
-    headers = {'Content-Type': 'application/garbage'}
-    response = session.put(url, data='garbage', headers=headers)
+    headers = {"Content-Type": "application/garbage"}
+    response = session.put(url, data="garbage", headers=headers)
     assert response.status_code == http.client.UNSUPPORTED_MEDIA_TYPE
 
 
@@ -132,19 +138,13 @@ def test_table(settings):
 
     # Create a table.
     table_spec = {
-        'name': 't1',
-        'title': 'Test table',
-        'columns': [
-            {'name': 'i',
-             'type': 'INTEGER',
-             'primarykey': True},
-            {'name': 't',
-             'type': 'TEXT',
-             'notnull': False},
-            {'name': 'r',
-             'type': 'REAL',
-             'notnull': True}
-        ]
+        "name": "t1",
+        "title": "Test table",
+        "columns": [
+            {"name": "i", "type": "INTEGER", "primarykey": True},
+            {"name": "t", "type": "TEXT", "notnull": False},
+            {"name": "r", "type": "REAL", "notnull": True},
+        ],
     }
     table_url = f"{settings['BASE_URL']}/api/table/test/t1"
     response = session.put(table_url, json=table_spec)
@@ -153,59 +153,58 @@ def test_table(settings):
     utils.validate_schema(data, settings["table_schema"])
 
     # Check the created table.
-    assert len(data['columns']) == len(table_spec['columns'])
-    assert data['title'] == table_spec['title']
-    lookup = dict([(c['name'], c) for c in table_spec['columns']])
-    for column in data['columns']:
-        assert column['name'] in lookup
-        assert column['type'] == lookup[column['name']]['type']
+    assert len(data["columns"]) == len(table_spec["columns"])
+    assert data["title"] == table_spec["title"]
+    lookup = dict([(c["name"], c) for c in table_spec["columns"]])
+    for column in data["columns"]:
+        assert column["name"] in lookup
+        assert column["type"] == lookup[column["name"]]["type"]
 
     # PRIMAY KEY implies NOT NULL.
-    lookup = dict([(c['name'], c) for c in data['columns']])
-    assert lookup['i']['primarykey']
-    assert lookup['i']['notnull']
+    lookup = dict([(c["name"], c) for c in data["columns"]])
+    assert lookup["i"]["primarykey"]
+    assert lookup["i"]["notnull"]
 
     # Insert rows into the table.
     url = f"{settings['BASE_URL']}/api/table/test/t1/insert"
-    row = {'data': [{'i': 1, 't': 'stuff', 'r': 1.2345}] }
+    row = {"data": [{"i": 1, "t": "stuff", "r": 1.2345}]}
     response = session.post(url, json=row)
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
-    assert data['nrows'] == 1
+    assert data["nrows"] == 1
 
-    row = {'data': [{'i': 2, 't': 'another', 'r': 3}] }
-    response = session.post(url, json=row)
-    assert response.status_code == http.client.OK
-    data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
-    assert data['nrows'] == 2
-
-    row = {'data': [{'i': 3, 'r': -0.45}] }
+    row = {"data": [{"i": 2, "t": "another", "r": 3}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
-    assert data['nrows'] == 3
+    assert data["nrows"] == 2
 
-    row_3 = {'i': 4, 't': 'multirow', 'r': -0.45}
-    rows = {'data': [row_3,
-                     {'i': 5, 't': 'multirow 2', 'r': 1.2e4}]}
+    row = {"data": [{"i": 3, "r": -0.45}]}
+    response = session.post(url, json=row)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    assert data["nrows"] == 3
+
+    row_3 = {"i": 4, "t": "multirow", "r": -0.45}
+    rows = {"data": [row_3, {"i": 5, "t": "multirow 2", "r": 1.2e4}]}
     response = session.post(url, json=rows)
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
-    assert data['nrows'] == 5
+    assert data["nrows"] == 5
 
     # Try to insert invalid data of different kinds.
-    row = {'data': [{'i': 3, 't': 'primary key clash', 'r': -0.1}] }
+    row = {"data": [{"i": 3, "t": "primary key clash", "r": -0.1}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.BAD_REQUEST
 
-    row = {'data': [{'i': 8, 't': 'missing value'}] }
+    row = {"data": [{"i": 8, "t": "missing value"}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.BAD_REQUEST
 
-    row = {'data': [{'i': 9, 't': 'wrong type', 'r': 'string!'}] }
+    row = {"data": [{"i": 9, "t": "wrong type", "r": "string!"}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.BAD_REQUEST
 
@@ -214,16 +213,16 @@ def test_table(settings):
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
-    assert data['nrows'] == 5
+    assert data["nrows"] == 5
 
     # Get the rows and compare one of them.
-    url = data['rows']['href']
+    url = data["rows"]["href"]
     response = session.get(url)
     data = response.json()
     utils.validate_schema(data, settings["rows_schema"])
-    assert data['nrows'] == 5
-    assert len(data['data']) == data['nrows']
-    assert data['data'][3] == row_3
+    assert data["nrows"] == 5
+    assert len(data["data"]) == data["nrows"]
+    assert data["data"][3] == row_3
 
     # Empty the table.
     url = f"{settings['BASE_URL']}/api/table/test/t1/empty"
@@ -231,12 +230,11 @@ def test_table(settings):
     assert response.status_code == http.client.OK
     response = session.get(response.url)
     data = response.json()
-    assert data['nrows'] == 0
+    assert data["nrows"] == 0
 
     # Delete the database.
     response = session.delete(db_url)
     assert response.status_code == http.client.NO_CONTENT
-
 
     # def test_csv(self):
     #     "Create database and table; insert CSV operations."
@@ -401,26 +399,26 @@ def test_edit_database(settings):
         assert response.status_code == http.client.OK
 
     # Edit the title.
-    title = 'New title'
-    response = session.post(url, json={'title': title})
+    title = "New title"
+    response = session.post(url, json={"title": title})
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["db_schema"])
-    assert data.get('title') == title
+    assert data.get("title") == title
 
     # Edit the description.
-    description = 'A description'
-    response = session.post(url, json={'description': description})
+    description = "A description"
+    response = session.post(url, json={"description": description})
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["db_schema"])
-    assert data.get('description') == description
+    assert data.get("description") == description
     # Same title as before.
-    assert data.get('title') == title
+    assert data.get("title") == title
 
     # Rename the database; record its new url.
-    name = 'test2'
-    response = session.post(url, json={'name': name})
+    name = "test2"
+    response = session.post(url, json={"name": name})
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["db_schema"])
@@ -451,8 +449,8 @@ def test_readonly_database(settings):
     utils.validate_schema(data, settings["db_schema"])
 
     # These items are now True.
-    assert data['readonly']
-    assert data['hashes']
+    assert data["readonly"]
+    assert data["hashes"]
 
     # Fail to delete the database.
     response = session.delete(url)
@@ -465,8 +463,8 @@ def test_readonly_database(settings):
     utils.validate_schema(data, settings["db_schema"])
 
     # These items are now False.
-    assert not data['readonly']
-    assert not data['hashes']
+    assert not data["readonly"]
+    assert not data["hashes"]
 
     # Delete the database.
     response = session.delete(url)
@@ -495,27 +493,21 @@ def test_query_database(settings):
     response = session.get(f"{settings['BASE_URL']}/api/schema/query/input")
     assert response.status_code == http.client.OK
     query_input_schema = response.json()
-    response = session.get(
-        f"{settings['BASE_URL']}/api/schema/query/output"
-    )
+    response = session.get(f"{settings['BASE_URL']}/api/schema/query/output")
     assert response.status_code == http.client.OK
     query_output_schema = response.json()
 
     # Query.
     query = {"select": f'r1 as "r"', "from": "t1"}
     utils.validate_schema(query, query_input_schema)
-    response = session.post(
-        f"{settings['BASE_URL']}/api/db/test/query", json=query
-    )
+    response = session.post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, query_output_schema)
 
     # Bad query.
     query = {"select": None, "from": "t1"}
-    response = session.post(
-        f"{settings['BASE_URL']}/api/db/test/query", json=query
-    )
+    response = session.post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
     assert response.status_code == http.client.BAD_REQUEST
 
     # Delete the database.
@@ -527,55 +519,70 @@ def test_view(settings):
     "Test creating and using a view."
     session = settings["session"]
 
-    # def test_name_clash(self):
-    #     "Try creating a view with uppercase name of already existing."
-    #     response = self.upload_file()
-    #     result = self.check_schema(response)
-    #     view_spec = {
-    #         'name': 'V1',
-    #         'query': {'from': 't1',
-    #                   'select': 'r',
-    #                   'where': 'i>=3'}
-    #     }
-    #     url = self.root['operations']['view']['create']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      viewname=view_spec['name'])
-    #     response = self.session.put(url, json=view_spec)
-    #     self.assertEqual(response.status_code, http.client.BAD_REQUEST)
+    # Upload the database.
+    url = f"{settings['BASE_URL']}/api/db/test"
+    with open("test.sqlite3", "rb") as infile:
+        headers = {"Content-Type": "application/x-sqlite3"}
+        response = session.put(url, data=infile, headers=headers)
+        assert response.status_code == http.client.OK
 
-    # def test_create_delete(self):
-    #     "Create a new view, test it, delete it."
-    #     response = self.upload_file()
-    #     result = self.check_schema(response)
-    #     view_spec = {
-    #         'name': 'v2',
-    #         'query': {'from': 't1',
-    #                   'select': 'r',
-    #                   'where': 'i>=3'}
-    #     }
-    #     url = self.root['operations']['view']['create']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      viewname=view_spec['name'])
-    #     response = self.session.put(url, json=view_spec)
-    #     result = self.check_schema(response)
+    # Create a view.
+    view_spec = {
+        "name": "v1",
+        "query": {"from": "t1", "select": "r1", "where": "i1>=10"},
+    }
+    utils.validate_schema(view_spec, settings["view_create_schema"])
+    response = session.put(f"{settings['BASE_URL']}/api/view/test/v1", json=view_spec)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["view_schema"])
 
-    #     # Test the content of the view.
-    #     url = result['rows']['href']
-    #     response = self.session.get(url)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 1)
-    #     self.assertEqual(result['data'][0]['r'], -1.5)
+    # Check the rows of the view.
+    rows_url = data["rows"]["href"]
+    response = session.get(rows_url)
+    data = response.json()
+    utils.validate_schema(data, settings["rows_schema"])
+    assert data["nrows"] == 2
+    assert len(data["data"]) == data["nrows"]
 
-    #     # Delete the view.
-    #     url = self.root['operations']['view']['delete']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      viewname=view_spec['name'])
-    #     response = self.session.delete(url)
-    #     self.assertEqual(response.status_code, http.client.NO_CONTENT)
-    
+    # Insert a row into the table, check that view content changes accordingly.
+    row = {"data": [{"i": 6, "r1": 1.02, "i1": 3091, "t1": "blopp"}]}
+    response = session.post(
+        f"{settings['BASE_URL']}/api/table/test/t1/insert", json=row
+    )
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    response = session.get(rows_url)
+    data = response.json()
+    utils.validate_schema(data, settings["rows_schema"])
+    assert data["nrows"] == 3
+    assert len(data["data"]) == data["nrows"]
+
+    # Fail attempt to create a view with uppercase name of already existing view.
+    view_spec = {
+        "name": "V1",
+        "query": {"from": "t1", "select": "r1", "where": "i1>=10"},
+    }
+    utils.validate_schema(view_spec, settings["view_create_schema"])
+    response = session.put(f"{settings['BASE_URL']}/api/view/test/V1", json=view_spec)
+    assert response.status_code == http.client.BAD_REQUEST
+
+    # Delete the view.
+    response = session.delete(f"{settings['BASE_URL']}/api/view/test/v1")
+    assert response.status_code == http.client.NO_CONTENT
+
+    # Delete the database.
+    response = session.delete(url)
+    assert response.status_code == http.client.NO_CONTENT
+
 
 def test_user(settings):
     "Test access to the user account."
     session = settings["session"]
 
     # Current user, check schema.
+    response = session.get(
+        f"{settings['BASE_URL']}/api/user/{settings['USER_USERNAME']}"
+    )
+    assert response.status_code == http.client.OK
+    data = response.json()

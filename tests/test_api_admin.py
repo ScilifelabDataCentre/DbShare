@@ -31,6 +31,12 @@ def settings():
     response = session.get(f"{result['BASE_URL']}/api/schema/db")
     assert response.status_code == http.client.OK
     result["db_schema"] = response.json()
+    response = session.get(f"{result['BASE_URL']}/api/schema/users")
+    assert response.status_code == http.client.OK
+    result["users_schema"] = response.json()
+    response = session.get(f"{result['BASE_URL']}/api/schema/user")
+    assert response.status_code == http.client.OK
+    result["user_schema"] = response.json()
     yield result
     result["session"].close()
 
@@ -64,10 +70,20 @@ def test_databases(settings):
         response = session.get(href)
         assert response.status_code == http.client.OK
         utils.validate_schema(response.json(), settings["dbs_schema"])
-    
+
 
 def test_users(settings):
     "Test access to the user accounts."
     session = settings["session"]
 
     # Users, check schema.
+    response = session.get(f"{settings['BASE_URL']}/api/users/all")
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["users_schema"])
+
+    # A user, check schema.
+    response = session.get(data["users"][0]["href"])
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["user_schema"])
