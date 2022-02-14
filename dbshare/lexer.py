@@ -137,11 +137,9 @@ class Lexer:
         """
         result = []
         self.until_token = None
-        print("until", value)
         try:
             while True:
                 token = next(self)
-                print(token)
                 if token["type"] == "WHITESPACE":
                     continue
                 if token["type"] == type:
@@ -154,11 +152,9 @@ class Lexer:
                 result.append(token)
         except StopIteration:
             self.until_token = None
-            print("Stop", result)
             return result
         else:
             self.until_token = token
-            print(result)
             return result
 
 

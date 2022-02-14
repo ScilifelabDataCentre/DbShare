@@ -391,7 +391,6 @@ def get_user(username=None, email=None, apikey=None):
     """Return the user for the given username, email or apikey.
     Return None if no such user.
     """
-    print(username, email, apikey)
     if username:
         name = username
         criterion = " WHERE username=?"

@@ -13,6 +13,17 @@ import pytest
 import dbshare
 import utils
 
+# Table specification used in some tests.
+TABLE_SPEC = {
+    "name": "t2",
+    "title": "Test table",
+    "columns": [
+        {"name": "i", "type": "INTEGER", "primarykey": True},
+        {"name": "t", "type": "TEXT", "notnull": False},
+        {"name": "r", "type": "REAL", "notnull": True},
+    ],
+}
+
 
 @pytest.fixture(scope="module")
 def settings():
@@ -136,28 +147,18 @@ def test_upload_database(settings, database):
 def test_table(settings, database):
     "Test creating, modifying and deleting a table."
     session = settings["session"]
-    url = settings["url"]
 
     # Create a table.
-    table_spec = {
-        "name": "t2",
-        "title": "Test table",
-        "columns": [
-            {"name": "i", "type": "INTEGER", "primarykey": True},
-            {"name": "t", "type": "TEXT", "notnull": False},
-            {"name": "r", "type": "REAL", "notnull": True},
-        ],
-    }
     table_url = f"{settings['BASE_URL']}/api/table/test/t2"
-    response = session.put(table_url, json=table_spec)
+    response = session.put(table_url, json=TABLE_SPEC)
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
 
     # Check the created table.
-    assert len(data["columns"]) == len(table_spec["columns"])
-    assert data["title"] == table_spec["title"]
-    lookup = dict([(c["name"], c) for c in table_spec["columns"]])
+    assert len(data["columns"]) == len(TABLE_SPEC["columns"])
+    assert data["title"] == TABLE_SPEC["title"]
+    lookup = dict([(c["name"], c) for c in TABLE_SPEC["columns"]])
     for column in data["columns"]:
         assert column["name"] in lookup
         assert column["type"] == lookup[column["name"]]["type"]
@@ -240,17 +241,8 @@ def test_csv(settings, database):
     session = settings["session"]
 
     # Create the table.
-    table_spec = {
-        "name": "t2",
-        "title": "Test table",
-        "columns": [
-            {"name": "i", "type": "INTEGER", "primarykey": True},
-            {"name": "t", "type": "TEXT", "notnull": False},
-            {"name": "r", "type": "REAL", "notnull": True},
-        ],
-    }
     table_url = f"{settings['BASE_URL']}/api/table/test/t2"
-    response = session.put(table_url, json=table_spec)
+    response = session.put(table_url, json=TABLE_SPEC)
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
@@ -265,8 +257,10 @@ def test_csv(settings, database):
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()
     writer.writerows(rows)
-    headers = {'Content-Type': 'text/csv'}
-    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    headers = {"Content-Type": "text/csv"}
+    response = session.post(
+        f"{table_url}/insert", data=textfile.getvalue(), headers=headers
+    )
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
@@ -280,7 +274,9 @@ def test_csv(settings, database):
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()
     writer.writerows(rows)
-    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    response = session.post(
+        f"{table_url}/insert", data=textfile.getvalue(), headers=headers
+    )
     assert response.status_code == http.client.BAD_REQUEST
 
     # Try inserting a bad row: missing NOT NULL item.
@@ -291,7 +287,9 @@ def test_csv(settings, database):
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()
     writer.writerows(rows)
-    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    response = session.post(
+        f"{table_url}/insert", data=textfile.getvalue(), headers=headers
+    )
     assert response.status_code == http.client.BAD_REQUEST
 
     # Insert more data.
@@ -303,106 +301,48 @@ def test_csv(settings, database):
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()
     writer.writerows(rows)
-    response = session.post(f"{table_url}/insert", data=textfile.getvalue(), headers=headers)
+    response = session.post(
+        f"{table_url}/insert", data=textfile.getvalue(), headers=headers
+    )
     assert response.status_code == http.client.OK
     data = response.json()
     utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 6
 
-    # def test_update(self):
-    #     "Create database and table; insert and update using CSV."
 
-    #     # Create an empty database.
-    #     response = self.create_database()
-    #     self.assertEqual(response.status_code, http.client.OK)
-    #     result = self.check_schema(response)
+def test_index(settings, database):
+    "Test index for a table."
+    session = settings["session"]
 
-    #     # Create a table in the database.
-    #     url = self.root['operations']['table']['create']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=self.table_spec['name'])
-    #     response = self.session.put(url, json=self.table_spec)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 0)
+    # Create the table with an index.
+    table_spec_copy = TABLE_SPEC.copy()
+    table_spec_copy["indexes"] = [{"unique": True, "columns": ["t"]}]
+    response = session.put(
+        f"{settings['BASE_URL']}/api/table/test/t2", json=table_spec_copy
+    )
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    assert len(data["indexes"]) == 1
 
-    #     # Insert CSV data.
-    #     headers = {'Content-Type': 'text/csv'}
-    #     url = self.root['operations']['table']['insert']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=self.table_spec['name'])
-    #     data = self.get_csvfile_data([(1, 'test', 0.2),
-    #                                   (2, 'another test', 4.123e5),
-    #                                   (3, 'third', -13)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 3)
+    # Add rows.
+    url = f"{settings['BASE_URL']}/api/table/test/t2/insert"
+    data = {
+        "data": [
+            {"i": 1, "t": "some text", "r": 1.43},
+            {"i": 2, "t": "Blah", "r": 0.43},
+        ]
+    }
+    response = session.post(url, json=data)
+    assert response.status_code == http.client.OK
+    data = response.json()
+    utils.validate_schema(data, settings["table_schema"])
+    assert data["nrows"] == 2
 
-    #     # Update CSV data; check that it actually changed something.
-    #     update_url = self.root['operations']['table']['update']['href']
-    #     update_url = update_url.format(dbname=base.SETTINGS['dbname'],
-    #                                    tablename=self.table_spec['name'])
-    #     data = self.get_csvfile_data([(1, 'changed', -1.0)])
-    #     response = self.session.post(update_url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 3)
-
-    #     response = self.session.get(result['rows']['href'])
-    #     result = self.check_schema(response)
-    #     rows = result['data']
-    #     self.assertEqual(rows[0]['i'], 1)
-    #     self.assertEqual(rows[0]['t'], 'changed')
-    #     self.assertEqual(rows[2]['i'], 3)
-    #     self.assertEqual(rows[2]['t'], 'third')
-
-    #     # Update non-existent row; should not change anything.
-    #     data = self.get_csvfile_data([(4, 'this row does not exist', 1.0)])
-    #     response = self.session.post(update_url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 3)
-    #     response = self.session.get(result['rows']['href'])
-    #     result = self.check_schema(response)
-    #     self.assertEqual(rows, result['data'])
-
-    # def test_index(self):
-    #     "Create database and table; create index and test it."
-
-    #     # Create an empty database.
-    #     response = self.create_database()
-    #     result = self.check_schema(response)
-
-    #     # Add an index definition to the table spec.
-    #     table_spec = self.table_spec.copy()
-    #     table_spec['indexes'] = [{'unique': True, 'columns': ['t']}]
-
-    #     # Create a table in the database.
-    #     url = self.root['operations']['table']['create']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=table_spec['name'])
-    #     response = self.session.put(url, json=table_spec)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(len(result['indexes']), 1)
-
-    #     # Add rows.
-    #     headers = {'Content-Type': 'text/csv'}
-    #     url = self.root['operations']['table']['insert']['href']
-    #     url = url.format(dbname=base.SETTINGS['dbname'],
-    #                      tablename=self.table_spec['name'])
-    #     data = self.get_csvfile_data([(1, 'first row', 1.0),
-    #                                   (2, 'second row', 2.0)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 2)
-
-    #     # Attempt to add rows that violates unique index.
-    #     data = self.get_csvfile_data([(3, 'second row', 3.0)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     self.assertEqual(response.status_code, http.client.BAD_REQUEST)
-
-    #     # Add proper third row
-    #     data = self.get_csvfile_data([(3, 'third row', 3.0)])
-    #     response = self.session.post(url, data=data, headers=headers)
-    #     result = self.check_schema(response)
-    #     self.assertEqual(result['nrows'], 3)
+    # Attempt to add a row that violates the index unique constraint.
+    data = {"data": [{"i": 3, "t": "some text", "r": 1.0e3}]}
+    response = session.post(url, json=data)
+    assert response.status_code == http.client.BAD_REQUEST
 
     # def test_statistics(self):
     #     "Test computation of statistics."
