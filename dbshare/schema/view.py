@@ -1,8 +1,8 @@
 "View API JSON schema."
 
-from . import definitions
-from . import query
-from .. import constants
+from dbshare import constants
+from dbshare.schema import definitions
+from dbshare.schema import query
 
 schema = {
     "$id": "/view",

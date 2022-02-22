@@ -1,6 +1,6 @@
 "Rows data (table or view) API JSON schema."
 
-from .. import constants
+from dbshare import constants
 
 
 schema = {

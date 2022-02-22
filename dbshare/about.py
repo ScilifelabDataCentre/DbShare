@@ -15,8 +15,8 @@ import yaml
 import dbshare
 import dbshare.api.schema
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 DOCUMENTATION = {}

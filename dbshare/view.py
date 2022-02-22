@@ -9,8 +9,8 @@ import flask
 import dbshare.db
 import dbshare.table
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint("view", __name__)

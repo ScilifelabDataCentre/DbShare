@@ -10,8 +10,8 @@ import flask
 
 import dbshare.db
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint("table", __name__)

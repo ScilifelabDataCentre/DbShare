@@ -10,8 +10,8 @@ import werkzeug.security
 
 import dbshare.system
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint("user", __name__)
