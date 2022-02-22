@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Users{% endblock %}
+
+{% block body_title %}Users{% endblock %}
+
+{% block main %}
+<table id="users" class="table table-sm">
+  <thead>
+    <tr>
+      <th>User</th>
+      <th>Email</th>
+      <th>Role</th>
+      <th>Status</th>
+      <th># databases</th>
+      <th>Size quota (bytes)</th>
+      <th>Total size (bytes)</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>
+        <a href="{{ url_for('.display', username=user['username']) }}">
+          {{ user['username'] }}</a>
+      </td>
+      <td>{{ user['email'] }}</td>
+      <td>{{ user['role'] }}</td>
+      <td>
+        {% if user['status'] == constants.PENDING %}
+	<span class="badge badge-warning">{{ user['status'] }}</span>
+        {% elif user['status'] == constants.DISABLED %}
+	<span class="badge badge-danger">{{ user['status'] }}</span>
+        {% else %}
+        {{ user['status'] }}
+        {% endif %}
+      </td>
+      <td>
+	<a href="{{ url_for('dbs.owner', username=user['username']) }}">
+	  <span class="badge badge-primary">{{ user['ndbs'] }}</span></a>
+      </td>
+      <td class="text-right">
+        {{ user.get('quota') | size_none }}
+      </td>
+      <td class="text-right">
+        {{ user['size'] | size_none }}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_users.all') }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#users").DataTable( {
+      "pagingType": "full_numbers",
+      "pageLength": 25
+    });
+  });
+</script>
+{% endblock %}
+
+{% block actions %}
+<div class="mt-2">
+  <form action="{{ url_for('.create') }}"
+	method="GET">
+    <button type="submit" class="btn btn-block btn-primary">Create user</button>
+  </form>
+</div>
+{% endblock %} {# block actions #}

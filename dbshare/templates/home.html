@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block main %}
+<p class="lead ml-4 mb-5">
+  Web service to share and query tabular data sets stored in
+  <a href="https://www.sqlite.org/" target="_blank">SQLite3</a> databases.
+</p>
+{% include 'dbs/list_public.html' %}
+{% endblock %} {# block main #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api.root') }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#dbs").DataTable( {
+      "pagingType": "full_numbers",
+      "pageLength": 25,
+    });
+  });
+</script>
+{% endblock %} {# block javascript #}

@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Schema for view {{ schema['name'] }}{% endblock %}
+
+{% block body_title %}Schema for view {{ schema['name'] }}{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Columns</h5>
+  </div>
+  <div class="card-body">
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Type</th>
+	  <th>Annotation</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['name'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card border-success mt-4">
+  <div class="card-header bg-success text-white">
+    <h5 class="card-title">Query</h5>
+  </div>
+  <div class="card-body">
+    <table class="table table-sm table-borderless">
+      <col style="width:20%">
+      <col style="width:80%">
+      <tr>
+	<th class="text-right">Title</th>
+	<td>{{ schema.get('title') or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-right">Description</th>
+	<td>{{ schema.get('description') | display_markdown }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">SELECT</th>
+	<td class="text-monospace">{{ schema['query']['select'] }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">FROM</th>
+	<td class="text-monospace">{{ schema['query']['from'] or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">WHERE</th>
+	<td class="text-monospace">{{ schema['query']['where'] or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">ORDER BY</th>
+	<td class="text-monospace">{{ schema['query']['orderby'] or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">LIMIT</th>
+	<td class="text-monospace">{{ schema['query']['limit'] or '' }}</td>
+      </tr>
+      <tr>
+	<th class="text-monospace text-right">OFFSET</th>
+	<td class="text-monospace">{{ schema['query']['offset'] or '' }}</td>
+      </tr>
+    </table>
+  </div>
+</div>
+{% endblock %} {# block main #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_view.view', dbname=db['name'], viewname=schema['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block actions %}
+<div class="mt-2">
+  <a href="{{ url_for('.rows', dbname=db['name'], viewname=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    {{ schema['nrows'] | informative }} rows</a>
+</div>
+<div class="mt-2">
+  <form action="{{ url_for('query.define', dbname=db['name']) }}"
+        method="GET">
+    <input type="hidden" name="select" 
+           value="{{ schema['query'].get('select') or ''}}">
+    <input type="hidden" name="from"
+           value="{{ schema['query'].get('from') or ''}}">
+    <input type="hidden" name="where" 
+           value="{{ schema['query'].get('where') or ''}}">
+    <input type="hidden" name="orderby" 
+           value="{{ schema['query'].get('orderby') or ''}}">
+    <input type="hidden" name="limit"
+           value="{{ schema['query'].get('limit') or ''}}">
+    <button type="submit" class="btn btn-success btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Prepare a new query from this view's definition.">
+      Query</button>
+  </form>
+</div>
+{% endblock %} {# block actions #}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %} {# block javascript #}

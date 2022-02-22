@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Contact information{% endblock %}
+{% block body_title %}{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md offset-md-1">
+    <h2>Contact information</h2>
+    {% if text %}
+    {{ text | display_markdown }}
+    {% else %}
+    <i>No contact information has been defined.</i>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {# block main #}

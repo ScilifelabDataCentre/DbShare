@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Query database {{ db['name'] }}{% endblock %}
+
+{% block body_title %}Query database {{ db['name'] }}{% endblock %}
+
+{% block supermain %}
+<div class="row">
+  <div class="col-md-7">
+    <div class="card border-success">
+      <div class="card-body">
+        <form action="{{ url_for('.rows', dbname=db['name']) }}"
+              method="POST">
+          {{ csrf_token() }}
+          <div class="form-group row">
+            <label for="select" class="col-md-2 col-form-label text-right">
+              SELECT</label>
+            <div class="col-md-10">
+              <textarea id="select" name="select"
+                        class="form-control" rows="3" autofocus
+			>{{ query.get('select') or '' }}</textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="from" class="col-md-2 col-form-label text-right">
+              FROM</label>
+            <div class="col-md-10">
+              <textarea id="from" name="from" class="form-control" rows="3"
+			>{{ query.get('from') or '' }}</textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="where" class="col-md-2 col-form-label text-right">
+              WHERE</label>
+            <div class="col-md-10">
+              <textarea id="where" name="where" class="form-control" rows="4"
+			>{{ query.get('where') or '' }}</textarea>
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="orderby" class="col-md-2 col-form-label text-right">
+              ORDER BY</label>
+            <div class="col-md-10">
+              <input id="orderby" name="orderby" 
+                     type="text" class="form-control"
+                     value="{{ query.get('orderby') or '' }}">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="limit" class="col-md-2 col-form-label text-right">
+              LIMIT</label>
+            <div class="col-md-4">
+              <input id="limit" name="limit" 
+                     type="number" class="form-control"
+                     value="{{ query.get('limit') or '' }}">
+            </div>
+          </div>
+          <div class="form-group row">
+            <label for="offset" class="col-md-2 col-form-label text-right">
+              OFFSET</label>
+            <div class="col-md-4">
+              <input id="offset" name="offset" 
+                     type="number" class="form-control"
+                     value="{{ query.get('offset') or '' }}">
+            </div>
+          </div>
+          <div class="form-group row">
+            <div class="col-md-6 offset-md-2">
+              <button type="submit" aria-describedby="executeHelp"
+                      class="btn btn-success btn-lg btn-block">
+                Execute query</button>
+              <small id="executeHelp" class="form-text text-muted">
+                Maximum CPU time: 
+                {{ round(1000*config['EXECUTE_TIMEOUT']) | informative }} ms.
+              </small>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-5">
+    {% for table in utils.get_sorted_schema(db) %}
+    <div class="card border-primary mb-1">
+      <div class="card-header">
+        <button type="button"
+		class="btn btn-outline-primary dropdown-toggle mx-2"
+                data-toggle="collapse" data-target="#{{ table['name'] }}"
+                aria-expanded="false" aria-controls="{{ table['name'] }}">
+        </button>
+	Table <strong>{{ table['name'] }}</strong>
+	(<a href="{{ url_for('table.rows', dbname=db['name'], tablename=table['name']) }}"
+	    target="_blank"
+            >{{ table['nrows'] | informative }} rows</a>)
+      </div>
+      <div id="{{ table['name'] }}" class="collapse">
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            {% for column in table['columns'] %}
+            <tr>
+              <th class="text-right">{{ column['name'] }}</th>
+              <td>
+                {{ column['type'] }}
+                {{ column.get('primarykey') and 'PRIMARY KEY' or '' }}
+                {{ column.get('notnull') and 'NOT NULL' or '' }}
+              </td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% for view in utils.get_sorted_schema(db, entities='views') %}
+    <div class="card border-primary mb-1">
+      <div class="card-header">
+        <button type="button"
+		class="btn btn-outline-primary dropdown-toggle mx-2" 
+                data-toggle="collapse" data-target="#{{ view['name'] }}"
+                aria-expanded="false" aria-controls="{{ view['name'] }}">
+        </button>
+	View <strong>{{ view['name'] }}</strong>
+	(<a href="{{ url_for('view.rows', dbname=db['name'], viewname=view['name']) }}"
+	    target="_blank"
+            >{{ view['nrows'] | informative }} rows</a>)
+      </div>
+      <div id="{{ view['name'] }}" class="collapse">
+        <div class="card-body">
+          <table class="table table-sm table-borderless">
+            {% for column in view['columns'] %}
+            <tr>
+              <th class="text-right">{{ column['name'] }}</th>
+              <td>{{ column['type'] }}</td>
+            </tr>
+            {% endfor %}
+          </table>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %} {# block supermain #}

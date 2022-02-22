@@ -1,41 +1,68 @@
-"Root API schema."
+"API root JSON schema."
 
-from . import definitions
+from dbshare import constants
+from dbshare.schema import definitions
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/root',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': __doc__,
-    'definitions': definitions.schema,
-    'type': 'object',
-    'properties': {
-        '$id': {'type': 'string', 'format': 'uri'},
-        'title': {'type': 'string'},
-        'version': {'type': 'string',
-                    'pattern': '^1\.[0-9]+\.[0-9]+$'},
-        'databases': {'type': 'object',
-                      'properties': {
-                          'all': {'$ref': '#/definitions/link'},
-                          'owner': {'$ref': '#/definitions/link'},
-                          'public': {'$ref': '#/definitions/link'}},
-                      'required': ['public']
+    # Modified before first request by 'dbshare.schema.set_base_url'.
+    "$id": "/root",
+    "$schema": constants.JSON_SCHEMA_URL,
+    "title": "API root JSON schema.",
+    "definitions": {"link": definitions.link, "iobody": definitions.iobody},
+    "type": "object",
+    "properties": {
+        "$id": {"type": "string", "format": "uri"},
+        "timestamp": {"type": "string", "format": "date-time"},
+        "title": {"type": "string"},
+        "version": {"type": "string", "pattern": "^2\.[0-9]+\.[0-9]+$"},
+        "databases": {
+            "title": "Links to collections of databases.",
+            "type": "object",
+            "properties": {
+                "all": {
+                    "title": "Link to list of all databases.",
+                    "$ref": "#/definitions/link",
+                },
+                "owner": {
+                    "title": "Link to databases owned by the current user.",
+                    "$ref": "#/definitions/link",
+                },
+                "public": {
+                    "title": "Link to list of public databases.",
+                    "$ref": "#/definitions/link",
+                },
+            },
+            "required": ["public"],
+            "additionalProperties": False,
         },
-        'templates': {'type': 'object',
-                      'properties': {
-                          'all': {'$ref': '#/definitions/link'},
-                          'owner': {'$ref': '#/definitions/link'},
-                          'public': {'$ref': '#/definitions/link'}},
-                      'required': ['public']
+        "schema": {
+            "title": "Link to list of the schema documents.",
+            "$ref": "#/definitions/link",
         },
-        'user': {'$ref': '#/definitions/user'},
-        'timestamp': {'type': 'string', 'format': 'datetime'}
+        "users": {
+            "title": "Links to collections of users.",
+            "type": "object",
+            "properties": {
+                "all": {
+                    "title": "Link to list of all users",
+                    "$ref": "#/definitions/link",
+                }
+            },
+            "required": ["all"],
+            "additionalProperties": False,
+        },
+        "user": definitions.user,
+        "operations": definitions.operations,
     },
-    'required': [
-        '$id',
-        'title',
-        'version',
-        'databases',
-        'templates',
-        'timestamp'
-    ]
+    "required": [
+        "$id",
+        "timestamp",
+        "title",
+        "version",
+        "databases",
+        "schema",
+        "operations",
+    ],
+    "additionalProperties": False,
 }

@@ -1,37 +1,40 @@
-"User API schema."
+"User API JSON schema."
 
 from . import definitions
+from .. import constants
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/user',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': __doc__,
-    'definitions': definitions.schema,
-    'type': 'object',
-    'properties': {
-        '$id': {'type': 'string', 'format': 'uri'},
-        'username': {'type': 'string'},
-        'email': {'type': 'string', 'format': 'email'},
-        'role': {'type': 'string', 'enum': ['admin', 'user']},
-        'status': {'type': 'string', 'enum': ['enabled', 'disabled']},
-        'total_size': {'type': 'integer', 'minimum': 0},
-        'modified': {'type': 'string', 'format': 'timestamp'},
-        'created': {'type': 'string', 'format': 'timestamp'},
-        'databases': {'$ref': '#/definitions/link'},
-        'templates': {'$ref': '#/definitions/link'},
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+    "$id": "/user",
+    "$schema": constants.JSON_SCHEMA_URL,
+    "title": "User API JSON schema.",
+    "definitions": {"link": definitions.link},
+    "type": "object",
+    "properties": {
+        "$id": {"type": "string", "format": "uri"},
+        "timestamp": {"type": "string", "format": "date-time"},
+        "username": {"type": "string"},
+        "email": {"type": "string", "format": "email"},
+        "role": {"type": "string", "enum": ["admin", "user"]},
+        "status": {"type": "string", "enum": ["enabled", "disabled"]},
+        "quota": {"oneOf": [{"type": "integer", "minimum": 0}, {"type": "null"}]},
+        "total_size": {"type": "integer", "minimum": 0},
+        "modified": {"type": "string", "format": "date-time"},
+        "created": {"type": "string", "format": "date-time"},
+        "databases": {"$ref": "#/definitions/link"},
     },
-    'required': [
-        '$id',
-        'username',
-        'email',
-        'role',
-        'status',
-        'total_size',
-        'modified',
-        'created',
-        'databases',
-        'templates',
-        'timestamp'
-    ]
+    "required": [
+        "$id",
+        "timestamp",
+        "username",
+        "email",
+        "role",
+        "status",
+        "quota",
+        "total_size",
+        "modified",
+        "created",
+        "databases",
+    ],
+    "additionalProperties": False,
 }

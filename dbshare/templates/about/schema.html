@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block head_title %}API JSON schema{% endblock %}
+
+{% block body_title %}API JSON schema{% endblock %}
+
+{% block main %}
+<div class="row">
+  <div class="col-md-9 offset-md-1">
+    The JSON schema in DbShare currently use
+    <a href="http://json-schema.org/specification-links.html">draft 7 of the
+      specification</a>.
+  </div>
+</div>
+
+<table class="table table-borderless table-sm">
+  {% for key, value in schemas.items() %}
+  <tr>
+    <td class="pr-3 text-right"><a id="{{ key }}"href="{{ value['href'] }}">{{ key }}</a></td>
+    <td>{{ value['title'] }}</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}

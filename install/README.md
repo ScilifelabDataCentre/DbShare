@@ -1,6 +1,11 @@
 Installation
 ============
 
+The databases for DbShare will be located in the directory specified
+by the settings variable `DATABASES_DIRPATH` which must contain the
+absolute path of the directory. The directory must exist and allow
+`read/write` for the HTTP server.
+
 The DbShare system is a Flask app which is typically served by some
 third-party web server, such as `nginx` (via `uwsgi`).
 

@@ -1,94 +1,113 @@
-"Db API schema."
+"Database API JSON schema."
 
 from . import definitions
+from .. import constants
+
 
 schema = {
-    '$id': 'https://dbshare.scilifelab.se/api/schema/db',
-    '$schema': 'http://json-schema.org/draft-07/schema#',
-    'title': __doc__,
-    'definitions': definitions.schema,
-    'type': 'object',
-    'properties': {
-        '$id': {'type': 'string', 'format': 'uri'},
-        'name': {'type': 'string'},
-        'title': {'type': ['string', 'null']},
-        'description': {'type': ['string', 'null']},
-        'owner': {'$ref': '#/definitions/user'},
-        'public': {'type': 'boolean'},
-        'readonly': {'type': 'boolean'},
-        'size': {'type': 'integer', 'minimum': 0},
-        'modified': {'type': 'string', 'format': 'timestamp'},
-        'created': {'type': 'string', 'format': 'timestamp'},
-        'tables': {
-            'type': 'array',
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'title': {'type': ['string', 'null']},
-                    'href': {'type': 'string', 'format': 'uri'},
-                    'database': {'$ref': '#/definitions/link'},
-                    'nrows': {'type': ['number', 'null']},
-                    'rows': {'$ref': '#/definitions/link'},
-                    'data': {'$ref': '#/definitions/link'},
-                    'visualizations': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object'
-                        }
-                    }
-                },
-                'required': ['name', 
-                             'title',
-                             'href',
-                             'database',
-                             'nrows',
-                             'rows',
-                             'data']
-            }
-        },
-        'views': {
-            'type': 'array',
-            'items': {
-                'type': 'object',
-                'properties': {
-                    'name': {'type': 'string'},
-                    'title': {'type': ['string', 'null']},
-                    'href': {'type': 'string', 'format': 'uri'},
-                    'database': {'$ref': '#/definitions/link'},
-                    'nrows': {'type': ['number', 'null']},
-                    'rows': {'$ref': '#/definitions/link'},
-                    'data': {'$ref': '#/definitions/link'},
-                    'visualizations': {
-                        'type': 'array',
-                        'items': {
-                            'type': 'object'
-                        }
-                    }
-                },
-                'required': ['name',
-                             'title',
-                             'href',
-                             'database',
-                             'nrows',
-                             'rows',
-                             'data']
-            }
-        },
-        'timestamp': {'type': 'string', 'format': 'timestamp'}
+    "$id": "/db",
+    "$schema": constants.JSON_SCHEMA_URL,
+    "title": "Database API JSON schema.",
+    "definitions": {
+        "link": definitions.link,
+        "iobody": definitions.iobody,
+        # 'visualizations': definitions.visualizations
     },
-    'required': [
-        '$id',
-        'name', 
-        'title',
-        'description',
-        'owner',
-        'public',
-        'readonly', 
-        'size',
-        'modified',
-        'created',
-        'tables',
-        'timestamp'
-    ]
+    "type": "object",
+    "properties": {
+        "$id": {"type": "string", "format": "uri"},
+        "timestamp": {"type": "string", "format": "date-time"},
+        "name": {"type": "string"},
+        "title": {"type": ["string", "null"]},
+        "description": {"type": ["string", "null"]},
+        "owner": definitions.user,
+        "public": {"type": "boolean"},
+        "readonly": {"type": "boolean"},
+        "size": {"type": "integer", "minimum": 0},
+        "modified": {"type": "string", "format": "date-time"},
+        "created": {"type": "string", "format": "date-time"},
+        "hashes": definitions.hashes,
+        "tables": {
+            "title": "The list of tables in the database.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "title": {"type": ["string", "null"]},
+                    "description": {"type": ["string", "null"]},
+                    "nrows": {"type": ["number", "null"]},
+                    "rows": {"$ref": "#/definitions/link"},
+                    "data": {"$ref": "#/definitions/link"},
+                    "href": {"type": "string", "format": "uri"},
+                },
+                "required": [
+                    "name",
+                    "title",
+                    "description",
+                    "nrows",
+                    "rows",
+                    "data",
+                    "href",
+                ],
+                "additionalProperties": False,
+            },
+        },
+        "views": {
+            "title": "The list of views in the database.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "name": {"type": "string"},
+                    "title": {"type": ["string", "null"]},
+                    "description": {"type": ["string", "null"]},
+                    "href": {"type": "string", "format": "uri"},
+                    "nrows": {"type": ["number", "null"]},
+                    "rows": {"$ref": "#/definitions/link"},
+                    "data": {"$ref": "#/definitions/link"},
+                },
+                "required": [
+                    "name",
+                    "title",
+                    "description",
+                    "href",
+                    "nrows",
+                    "rows",
+                    "data",
+                ],
+                "additionalProperties": False,
+            },
+        },
+        "operations": definitions.operations,
+    },
+    "required": [
+        "$id",
+        "timestamp",
+        "name",
+        "title",
+        "description",
+        "owner",
+        "public",
+        "readonly",
+        "size",
+        "modified",
+        "created",
+        "tables",
+    ],
+    "additionalProperties": False,
+}
+
+edit = {
+    "$id": "/db/edit",
+    "$schema": constants.JSON_SCHEMA_URL,
+    "title": "Database metadata editing API JSON schema.",
+    "type": "object",
+    "properties": {
+        "name": {"type": "string"},
+        "title": {"type": ["string", "null"]},
+        "description": {"type": ["string", "null"]},
+        "public": {"type": "boolean"},
+    },
+    "additionalProperties": False,
 }

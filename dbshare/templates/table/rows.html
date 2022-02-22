@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block head_title %}{{ title }}{% endblock %}
+
+{% block body_title %}{{ title }}{% endblock %}
+
+{% block main %}
+<div class="m-2">{{ schema.get('description') | display_markdown }}</div>
+
+<div class="m-2">
+  {% if views %}
+  <b>This table is used in views:</b>
+  {% for viewname in views %}
+  <a href="{{ url_for('view.rows', dbname=db['name'], viewname=viewname) }}">
+    {{ viewname }}</a>
+  {% endfor %}
+  {% else %}
+  This table is not used in any views.
+  {% endif %}
+</div>
+  
+<table id="rows" class="table table-sm table-hover table-responsive">
+  <thead>
+    <tr>
+      {% for column in schema['columns'] %}
+      <th>{{ column['name'] }}</th>
+      {% endfor %}
+      {% if has_write_access %}
+      <th class="px-0"></th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr>
+      {% for value in row[1:] %}
+      <td>{{ value|none_as_literal_null }}</td>
+      {% endfor %}
+      {% if has_write_access %}
+      <td class="text-right px-0">
+	<a href="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=row[0]) }}"
+	   class="btn btn-sm btn-primary py-0 my-0" role="button">Edit</a>
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %} {# block main #}
+
+{% block meta %}
+<div>
+  <a href="{{ url_for('api_table.rows_csv', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-primary">CSV</a>
+</div>
+<div>
+  <a href="{{ url_for('api_table.rows_json', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-primary">JSON</a>
+</div>
+{% endblock %} {# block meta #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_table.table', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block actions %}
+<div class="mt-2">
+  <form action="{{ url_for('query.define', dbname=db['name']) }}"
+        method="GET">
+    <input type="hidden" name="from" value="{{ schema['name'] }}">
+    <button type="submit" class="btn btn-success btn-block"
+            role="button" data-toggle="tooltip" data-placement="left"
+            title="Construct an SQL query to extract data from the table.">
+      Query</button>
+  </form>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.schema', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Show the schema for the table."
+     class="btn btn-outline-primary btn-block">Schema</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.statistics', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Compute and display statistics for the contents of the columns."
+     class="btn btn-outline-primary btn-block">Statistics</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.download', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Download CSV file of the table contents."
+     class="btn btn-outline-primary btn-block">Download</a>
+</div>
+{% if has_write_access %}
+<div class="mt-2">
+  <a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Add data to create a new row in the table."
+     class="btn btn-primary btn-block">
+    Insert row</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.insert', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Upload a file and insert its contents into the table."
+     class="btn btn-primary btn-block">
+    Insert from file</a>
+</div>
+{% if updateable %}
+<div class="mt-2">
+  <a href="{{ url_for('.update', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Upload a file and update the table by its contents."
+     class="btn btn-primary btn-block">
+    Update from file</a>
+</div>
+{% endif %} {# if updateable #}
+<div class="mt-2">
+  <a href="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Edit the metadata of this table."
+     role="button" class="btn btn-primary btn-block">
+    Edit metadata</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.clone', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Make a complete copy of this table."
+     class="btn btn-primary btn-block">
+    Clone</a>
+</div>
+<div class="mt-2">
+  <form action="{{ url_for('.empty', dbname=db['name'], tablename=schema['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Remove all rows from this; keep the table itself."
+            onclick="return confirm('Really empty? Cannot be undone.')">
+      Empty</button>
+  </form>
+</div>
+<div class="mt-2">
+  <form action="{{ url_for('.edit', dbname=db['name'], tablename=schema['name']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete this table and all its dependent views."
+            onclick="return confirm('Really delete the table? Cannot be undone.')">
+      Delete</button>
+  </form>
+</div>
+{% endif %} {# if has_write_access #}
+{% endblock %} {# block actions #}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#rows").DataTable( {
+      "pagingType": "full_numbers",
+      "pageLength": 25,
+      {% if has_write_access %}
+      "columnDefs": [
+        {"orderable": false, "targets": {{ len(schema['columns']) }} }
+      ]
+      {% endif %}
+    });
+  });
+</script>
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %} {# block javascript #}

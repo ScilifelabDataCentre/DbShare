@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block head_title %}{{ config['SITE_NAME'] }}{% endblock %}</title>
+    {% if config['SITE_ICON'] %}
+    <link rel="icon" href="{{ url_for('site.static', filename=config['SITE_ICON']) }}">
+    {% else %}
+    <link rel="icon" href="{{ url_for('static', filename='logo32.png') }}">
+    {% endif %}
+    <link rel="stylesheet" crossorigin="anonymous"
+          href="{{ constants.BOOTSTRAP_CSS_URL }}"
+          integrity="{{ constants.BOOTSTRAP_CSS_INTEGRITY }}">
+    <link rel="stylesheet" href="{{ constants.DATATABLES_CSS_URL }}">
+    <style>
+      {% block style %}
+      {% endblock %}
+    </style>
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-md navbar-light"
+         style="background-color: #e6e6e6;">
+      <a class="navbar-brand" href="{{ url_for('home') }}">
+        <img width="32" height="32" class="d-inline-block align-top"
+	     {% if config['SITE_LOGO'] %}
+	     src="{{ url_for('site.static', filename=config['SITE_LOGO']) }}"
+	     {% else %}
+	     src="{{ url_for('static', filename='logo32.png') }}"
+             {% endif %}
+	     title="{{ config['SITE_NAME'] }}" alt="{{ config['SITE_NAME'] }}">
+        {{ config['SITE_NAME'] }}</a>
+      <button type="button" class="navbar-toggler navbar-toggler-right"
+              data-toggle="collapse" data-target="#top_navbar"
+              aria-controls="top_navbar" aria-expanded="false"
+              aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="top_navbar">
+        <ul class="navbar-nav mr-auto">
+          {% if g.current_user %}
+          <li class="nav-item ml-1">
+            <a href="{{ url_for('dbs.owner') }}" class="nav-link">
+              My databases</a>
+          </li>
+          {% endif %} {# if g.current_user #}
+
+          {% if db is defined %}
+          <li class="nav-item ml-1">
+            <a href="{{ url_for('db.display', dbname=db['name']) }}"
+               class="nav-link font-weight-bold active">
+	      Database {{ db['name'] }}</a>
+          </li>
+          {% endif %} {# if db is defined #}
+
+          {% if g.is_admin %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarAdmin"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Admin</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAdmin">
+              <a class="dropdown-item" href="{{ url_for('dbs.all') }}">
+                All databases</a>
+              <a class="dropdown-item" href="{{ url_for('user.users') }}">
+                All users</a>
+              <a class="dropdown-item" href="{{ url_for('user.create') }}">
+                Create user</a>
+              <a class="dropdown-item" href="{{ url_for('about.settings') }}">
+                Settings</a>
+            </div>
+          </li>
+          {% endif %} {# if g.is_admin #}
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle mr-4" href="#" id="navbarAbout"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">About</a>
+            <div class="dropdown-menu" aria-labelledby="navbarAbout">
+              <a href="{{ url_for('about.documentation', page='overview') }}"
+		 class="nav-link">Overview</a>
+              <a href="{{ url_for('about.documentation', page='tutorial') }}"
+		 class="nav-link">Tutorial</a>
+              <a href="{{ url_for('about.endpoints') }}"
+		 class="nav-link">URL endpoints</a>
+              <a href="{{ url_for('about.schema') }}"
+		 class="nav-link">API JSON schema</a>
+              <a href="{{ url_for('about.contact') }}"
+		 class="nav-link">Contact</a>
+              <a href="{{ url_for('about.gdpr') }}"
+                 class="nav-link">Personal data policy</a>
+              <a href="{{ url_for('about.software') }}"
+		 class="nav-link">Software</a>
+	    </div>
+          </li>
+
+        </ul>
+
+        <ul class="navbar-nav justify-content-end">
+          <li class="mx-1">
+            {% if g.current_user %}
+            <a href="{{ url_for('user.display', username=g.current_user['username']) }}"
+	       role="button"
+               class="btn btn-outline-secondary my-2 my-sm-0">
+              User {{ g.current_user['username'] }}</a>
+            {% else %}
+            <form action="{{ url_for('user.login') }}"
+                  class="form-inline my-2 my-sm-0"
+                  method="GET">
+              <button class="btn btn-secondary">Login</button>
+            </form>
+            {% endif %}
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-9 offset-md-1">
+          <h2 class="mt-2 mb-3">{% block body_title %}{{ config['SITE_NAME'] }}{% endblock %}</h2>
+          {% for msg in get_flashed_messages(category_filter=['error']) %}
+          <div class="alert alert-danger" role="alert">
+            <strong>Error:</strong> {{ msg }}
+          </div>
+          {% endfor %}
+          {% for msg in get_flashed_messages(category_filter=['message']) %}
+          <div class="alert alert-warning" role="alert">
+            {{ msg }}
+          </div>
+          {% endfor %}
+        </div>
+        <div class="col-md-1 py-1">
+          {% block meta %}
+          {% endblock %}
+        </div>
+        <div class="col-md-1 py-1">
+          {% block api %}
+          {% endblock %}
+        </div>
+      </div>
+      {% block supermain %}
+      <div class="row">
+        <div class="col-md-10">
+          {% block main %}
+          {% endblock %}
+        </div>
+        <div class="col-md-2">
+          <div>
+            {% block links %}
+            {% endblock %}
+          </div>
+          <div>
+            {% block actions %}
+            {% endblock %}
+          </div>
+          <div>
+            {% block info %}
+            {% endblock %}
+          </div>
+        </div>
+      </div>
+      {% endblock %} {# block supermain #}
+      {% block footer %}
+      <hr>
+      <div class="row">
+        <div class="col-md-4">
+          {% if config['HOST_URL'] %}
+          <a href="{{ config['HOST_URL'] }}">
+            {% if config['HOST_LOGO'] %}
+            <img src="{{ url_for('site.static',filename=config['HOST_LOGO']) }}">
+            {% endif %}
+            {{ config['HOST_NAME'] or 'Host' }}
+          </a>
+          {% else %}
+          {% if config['HOST_LOGO'] %}
+          <img src="{{ url_for('site_file', filename=config['HOST_LOGO']) }}">
+          {% endif %}
+          {{ config['HOST_NAME'] or '' }}
+          {% endif %} {# if config['HOST_URL'] #}
+        </div>
+        <div class="col-md-4 offset-md-4 text-right">
+          <img src="{{ url_for('static', filename='logo32.png') }}">
+          <a href="{{ constants.URL}}">DbShare</a>
+	  {{ constants.VERSION}}
+        </div>
+      </div>
+      {% endblock %}
+    </div>
+    <script src="{{ constants.JQUERY_JS_URL }}"
+            integrity="{{ constants.JQUERY_JS_INTEGRITY }}"
+            crossorigin="anonymous"></script>
+    <script src="{{ constants.BOOTSTRAP_JS_URL }}"
+            integrity="{{ constants.BOOTSTRAP_JS_INTEGRITY }}"
+            crossorigin="anonymous"></script>
+    <script src="{{ constants.DATATABLES_JQUERY_JS_URL }}"></script>
+    <script src="{{ constants.DATATABLES_BOOTSTRAP_JS_URL }}"></script>
+    <script src="{{ url_for('static', filename=constants.JQUERY_LOCALTIME_FILENAME) }}"></script>
+    {% block javascript %}
+    {% endblock %}
+  </body>
+</html>

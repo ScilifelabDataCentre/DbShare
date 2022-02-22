@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Schema for table {{ schema['name'] }}{% endblock %}
+
+{% block body_title %}Schema for table {{ schema['name'] }}{% endblock %}
+
+{% block main %}
+<div class="card border-primary">
+  <div class="card-header bg-primary text-white">
+    <h5 class="card-title">Columns</h5>
+  </div>
+  <div class="card-body">
+    <table id="columns" class="table">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Type</th>
+	  <th>Constraints</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for column in schema['columns'] %}
+	<tr>
+	  <td>{{ column['name'] }}</td>
+	  <td>{{ column['type'] }}</td>
+	  <td>
+            {{ column['primarykey'] and 'PRIMARY KEY' or '' }}
+	    {{ column['notnull'] and 'NOT NULL' or '' }}
+          </td>
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card border-secondary mt-4">
+  <div class="card-header bg-secondary text-white">
+    <h5 class="card-title">Indexes</h5>
+  </div>
+  <div class="card-body">
+    {% if indexes %}
+    <table class="table">
+      <thead>
+	<tr>
+	  <th>Name</th>
+	  <th>Unique</th>
+	  <th>Columns</th>
+          {% if has_write_access %}
+	  <th></th>
+          {% endif %}
+	</tr>
+      </thead>
+      <tbody>
+	{% for index in indexes %}
+	<tr>
+	  <td>{{ index['name'] }}</td>
+	  <td>{{ index['unique'] and 'yes' or ''}}</td>
+	  <td>{{ ', '.join(index['columns']) }}</td>
+          {% if has_write_access %}
+          <td>
+            <form action="{{ url_for('.index_delete', dbname=db['name'], tablename=schema['name'], indexname=index['name']) }}"
+	          method="POST">
+              {{ csrf_token() }}
+              <input type="hidden" name="_http_method" value="DELETE">
+              <button type="submit" class="btn btn-danger"
+                      onclick="return confirm('Really delete the index?')">
+                Delete</button>
+            </form>
+          </td>
+          {% endif %}
+	</tr>
+	{% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <em>none</em>
+    {% endif %}
+  </div>
+</div>
+{% endblock %} {# block main #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_table.table', dbname=db['name'], tablename=schema['name']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block actions %}
+<div class="mt-2">
+  <a href="{{ url_for('.rows', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-outline-primary btn-block">
+    {{ db['tables'][schema['name']]['nrows'] | informative }} rows</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.statistics', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" data-toggle="tooltip" data-placement="left"
+     title="Compute and display statistics for the contents of the columns."
+     class="btn btn-outline-primary btn-block">Statistics</a>
+</div>
+{% if has_write_access %}
+<div class="mt-2">
+  <a href="{{ url_for('.column', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-primary btn-block">
+    Add column</a>
+</div>
+<div class="mt-2">
+  <a href="{{ url_for('.index_create', dbname=db['name'], tablename=schema['name']) }}"
+     role="button" class="btn btn-secondary btn-block">
+    Create index</a>
+</div>
+{% endif %}
+{% endblock %} {# block actions #}
+
+{% block javascript %}
+<script>
+  $(function () {
+    $('[data-toggle="tooltip"]').tooltip()
+  })
+</script>
+{% endblock %} {# block javascript #}

@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block head_title %}User {{ user['username'] }}{% endblock %}
+
+{% block body_title %}User {{ user['username'] }}{% endblock %}
+
+{% block main %}
+<table class="table table-sm table-borderless">
+  <col style="width:30%">
+  <col style="width:70%">
+  <tr>
+    <th class="text-right">Email</th>
+    <td id="email">{{ user['email'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Role</th>
+    <td id="role">{{ user['role'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">Status</th>
+    <td id="status">{{ user['status'] }}</td>
+  </tr>
+  <tr>
+    <th class="text-right">API key</th>
+    <td>{{ user.get('apikey') or '-' }}</td>
+  </tr>
+  <tr>
+    <th class="text-right"># databases</th>
+    <td>
+      <a href="{{ url_for('dbs.owner', username=user['username']) }}">
+	<span class="badge badge-primary">{{ ndbs }}</span></a>
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Total size (bytes)</th>
+    <td>
+      {{ total_size | size_none }}
+      {% if user.get('quota') and total_size > user['quota'] %}
+      <br>
+      <span class="text-danger">No more data may be added.</span>
+      {% endif %}
+    </td>
+  </tr>
+  <tr>
+    <th class="text-right">Size quota (bytes)</th>
+    <td id="quota">
+      {{ user.get('quota') | size_none }}
+    </td>
+  </tr>
+</table>
+{% endblock %} {# block main #}
+
+{% block api %}
+<div>
+  <a href="{{ url_for('api_user.user', username=user['username']) }}"
+     class="badge badge-pill badge-dark">API</a>
+</div>
+{% endblock %} {# block api #}
+
+{% block actions %}
+{% if g.is_admin %}
+<div class="mt-2">
+  <a href="{{ url_for('.edit', username=user['username']) }}"
+     role="button" class="btn btn-primary btn-block">Edit</a>
+</div>
+{% endif %} {# if g.is_admin #}
+{% if admin_privilege %}
+<div class="mt-2">
+  {% if user['status'] != constants.ENABLED %}
+  <form action="{{ url_for('.enable', username=user['username']) }}"
+        method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-block btn-success">Enable</button>
+  </form>
+  {% elif user['status'] == constants.ENABLED %}
+  <form action="{{ url_for('.disable', username=user['username']) }}"
+        method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-block btn-danger">Disable</button>
+  </form>
+  {% endif %}
+</div>
+{% endif %} {# if admin_privilege #}
+{% if g.current_user['username'] == user['username'] %}
+<div class="mt-2">
+  <form action="{{ url_for('.logout') }}"
+	method="POST">
+    {{ csrf_token() }}
+    <button type="submit" class="btn btn-warning btn-block">Logout</button>
+  </form>
+</div>
+{% endif %} {# if g.current_user... #}
+{% if deletable %}
+<div class="mt-2">
+  <form action="{{ url_for('.edit', username=user['username']) }}"
+	method="POST">
+    {{ csrf_token() }}
+    <input type="hidden" name="_http_method" value="DELETE">
+    <button type="submit" class="btn btn-danger btn-block"
+	    data-toggle="tooltip" data-placement="left"
+	    title="Delete the user account."
+            onclick="return confirm('Really delete? Cannot be undone.')">
+      Delete</button>
+  </form>
+</div>
+{% endif %} {# if deletable #}
+{% endblock %} {# block actions #}
+
+{% block info %}
+<div class="small">
+  <div class="mt-4">
+    Modified <span class="localtime">{{ user['modified'] }}</span>
+  </div>
+  <div class="mt-1">
+    <a href="{{ url_for('.logs', username=user['username']) }}">Logs</a>
+  </div>
+  <div class="mt-1">
+    Created <span class="localtime">{{ user['created'] }}</span>
+  </div>
+</div>
+{% endblock %} {# block info #}
