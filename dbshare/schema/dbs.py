@@ -32,7 +32,6 @@ schema = {
                     "created": {"type": "string", "format": "date-time"},
                     "hashes": definitions.hashes,
                     "href": {"type": "string", "format": "uri"},
-                    "operations": definitions.operations,
                 },
                 "required": [
                     "name",
@@ -48,6 +47,7 @@ schema = {
                 "additionalProperties": False,
             },
         },
+        "actions": definitions.actions,
     },
     "required": ["$id", "timestamp", "title", "databases"],
     "additionalProperties": False,

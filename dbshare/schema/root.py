@@ -53,7 +53,6 @@ schema = {
             "additionalProperties": False,
         },
         "user": definitions.user,
-        "operations": definitions.operations,
     },
     "required": [
         "$id",
@@ -62,7 +61,6 @@ schema = {
         "version",
         "databases",
         "schema",
-        "operations",
     ],
     "additionalProperties": False,
 }

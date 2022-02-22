@@ -160,6 +160,14 @@ def get_json(db, view, complete=False, title=False):
         result["database"] = {
             "href": utils.url_for("api_db.database", dbname=db["name"])
         }
+        if dbshare.db.has_write_access(db):
+            result["actions"] = {
+                "delete": {
+                    "title": "Delete the view from the database.",
+                    "href": flask.request.url,
+                    "method": "DELETE",
+                },
+            }
     else:
         result["href"] = utils.url_for(
             "api_view.view", dbname=db["name"], viewname=view["name"]

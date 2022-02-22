@@ -74,6 +74,26 @@ operations = {
     },
 }
 
+actions = {
+    "title": "Actions to modify the DbShare server data.",
+    "type": "object",
+    "propertyNames": property_names,
+    "additionalProperties": {
+        "title": "The property name of the action.",
+        "type": "object",
+        "properties": {
+            "title": {"type": "string"},
+            "href": {"type": "string", "format": "uri-template"},
+            "variables": {"type": "object"},
+            "method": {"type": "string", "enum": ["POST", "PUT", "DELETE"]},
+            "input": io,
+            "output": io,
+        },
+        "required": ["href", "method"],
+        # "additionalProperties": False,
+    },
+}
+
 hashes = {
     "title": "Hash values for the body of the database.",
     "type": "object",

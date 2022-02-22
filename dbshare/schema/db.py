@@ -79,7 +79,7 @@ schema = {
                 "additionalProperties": False,
             },
         },
-        "operations": definitions.operations,
+        "actions": definitions.actions,
     },
     "required": [
         "$id",

@@ -65,6 +65,7 @@ schema = {
         "rows": {"$ref": "#/definitions/link"},
         "data": {"$ref": "#/definitions/link"},
         "statistics": {"$ref": "#/definitions/link"},
+        "actions": definitions.actions,
         "columns": columns,
         "indexes": indexes,
     },
