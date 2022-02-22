@@ -9,8 +9,8 @@ import sqlite3
 import dbshare
 import dbshare.db
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 SYSTEM_TABLES = [

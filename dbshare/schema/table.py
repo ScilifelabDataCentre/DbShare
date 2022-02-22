@@ -1,7 +1,7 @@
 "Table API JSON schema."
 
-from . import definitions
-from .. import constants
+from dbshare import constants
+from dbshare.schema import definitions
 
 
 columns = {

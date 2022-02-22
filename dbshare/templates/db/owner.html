@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block head_title %}Change owner of database {{ db['name'] }}{% endblock %}
+
+{% block body_title %}Change owner of database {{ db['name'] }}{% endblock %}
+
+{% block main %}
+<form action="{{ url_for('.owner', dbname=db['name']) }}"
+      method="POST">
+  {{ csrf_token() }}
+  <div class="form-group row">
+    <label for="username" class="col-md-2 col-form-label text-right">
+      User name</label>
+    <div class="col-md-6">
+      <input id="username" name="username" type="text" autofocus
+             aria-describedby="usernameHelp" class="form-control">
+      <small id="usernameHelp" class="form-text text-muted">
+        The user name of the new owner.
+      </small>
+    </div>
+  </div>
+  <div class="form-group row">
+    <div class="col-md-3 offset-md-2">
+      <button type="submit" 
+              class="btn btn-primary btn-lg btn-block">Save</button>
+    </div>
+  </div>
+</form>
+{% endblock %}
+
+{% block actions %}
+<div>
+  <a href="{{ url_for('.display', dbname=db['name']) }}"
+     role="button" class="btn btn-dark btn-block">Cancel</a>
+</div>
+{% endblock %}

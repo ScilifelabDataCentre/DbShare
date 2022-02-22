@@ -1,6 +1,6 @@
 "Query API JSON schema."
 
-from .. import constants
+from dbshare import constants
 
 
 query = {

@@ -8,8 +8,8 @@ import dbshare.db
 import dbshare.table
 import dbshare.schema.query
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 blueprint = flask.Blueprint("query", __name__)

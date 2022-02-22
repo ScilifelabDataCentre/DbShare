@@ -51,7 +51,7 @@ DEFAULT_SETTINGS = dict(
         "vertical-bar": {"label": "vertical-bar '|'", "char": "|"},
         "colon": {"label": "colon ':'", "char": ":"},
     },
-    MARKDOWN_SYNTAX_URL="https://daringfireball.net/projects/markdown/syntax",
+    MARKDOWN_SYNTAX_URL="https://www.markdownguide.org/basic-syntax/",
 )
 
 

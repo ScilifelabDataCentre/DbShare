@@ -24,9 +24,10 @@ import dbshare.system
 import dbshare.schema.table
 import dbshare.table
 import dbshare.query
+import dbshare.user
 
-from . import constants
-from . import utils
+from dbshare import constants
+from dbshare import utils
 
 
 TABLES_TABLE = {
@@ -460,6 +461,31 @@ def readonly(dbname):
     return flask.redirect(flask.url_for(".display", dbname=db["name"]))
 
 
+@blueprint.route("/<name:dbname>/owner", methods=["GET", "POST"])
+@utils.admin_required
+def owner(dbname):
+    "Change owner of the database."
+    db = get_db(dbname)
+    if not db:
+        utils.flash_error("No such database.")
+        return flask.redirect(flask.url_for("home"))
+
+    if utils.http_GET():
+        return flask.render_template("db/owner.html", db=db)
+
+    elif utils.http_POST():
+        user = dbshare.user.get_user(flask.request.form["username"])
+        if not user:
+            utils.flash_error("No such user.")
+            return flask.redirect(flask.url_for(".display", dbname=db["name"]))
+        try:
+            with DbSaver(db) as saver:
+                saver.set_owner(user)
+        except (KeyError, ValueError) as error:
+            utils.flash_error(error)
+        return flask.redirect(flask.url_for(".display", dbname=db["name"]))
+
+
 class DbSaver:
     "Context handler to create, modify and save metadata for a database."
 
@@ -633,15 +659,19 @@ class DbSaver:
 
     def set_title(self, title):
         "Set the database title."
-        self.db["title"] = title or None
+        self.db["title"] = str(title) or None
+
+    def set_owner(self, user):
+        "Set the database owner."
+        self.db["owner"] = user["username"]
 
     def set_description(self, description):
         "Set the database description."
-        self.db["description"] = description or None
+        self.db["description"] = str(description) or None
 
     def set_public(self, access):
         "Set to public (True) or private (False) access."
-        self.db["public"] = access
+        self.db["public"] = bool(access)
 
     def set_readonly(self, mode):
         """Set to 'readonly' (True) or 'readwrite' (False).

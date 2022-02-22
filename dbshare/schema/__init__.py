@@ -2,15 +2,15 @@
 
 import flask
 
-from . import root
-from . import db
-from . import dbs
-from . import rows
-from . import table
-from . import view
-from . import query
-from . import user
-from . import users
+from dbshare.schema import root
+from dbshare.schema import db
+from dbshare.schema import dbs
+from dbshare.schema import rows
+from dbshare.schema import table
+from dbshare.schema import view
+from dbshare.schema import query
+from dbshare.schema import user
+from dbshare.schema import users
 
 
 def set_base_url(base_url):
