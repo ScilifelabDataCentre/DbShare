@@ -79,9 +79,11 @@ def prepare():
     """
     flask.g.syscnx = utils.get_cnx()
     flask.g.current_user = dbshare.user.get_current_user()
-    flask.g.is_admin = (
-        flask.g.current_user and flask.g.current_user.get("role") == constants.ADMIN
-    )
+    if flask.g.current_user:
+        flask.session.permanent = True
+        flask.g.is_admin = flask.g.current_user.get("role") == constants.ADMIN
+    else:
+        flask.g.is_admin = False
     flask.g.timer = utils.Timer()
 
 

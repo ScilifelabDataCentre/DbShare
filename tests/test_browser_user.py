@@ -41,7 +41,7 @@ def login_user(settings, page):
     page.press('input[name="username"]', "Tab")
     page.fill('input[name="password"]', settings["USER_PASSWORD"])
     page.click("id=login")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}"
+    assert page.url == f"{settings['BASE_URL']}/"
 
 
 def test_table_data(settings, page):  # 'page' fixture from 'pytest-playwright'
@@ -49,6 +49,7 @@ def test_table_data(settings, page):  # 'page' fixture from 'pytest-playwright'
     login_user(settings, page)
 
     # Create a database 'test'.
+    page.goto(f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}")
     page.click("text=Create")
     assert page.url == f"{settings['BASE_URL']}/db/"
     page.click('input[name="name"]')
@@ -126,6 +127,7 @@ def test_table_csv(settings, page):  # 'page' fixture from 'pytest-playwright'
     login_user(settings, page)
 
     # Create a database 'test'.
+    page.goto(f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}")
     page.click("text=Create")
     assert page.url == f"{settings['BASE_URL']}/db/"
     page.click('input[name="name"]')
@@ -205,6 +207,7 @@ def test_db_upload(settings, page):
     login_user(settings, page)
 
     # Upload database file.
+    page.goto(f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}")
     page.click("text=Upload")
     assert page.url == "http://localhost:5001/dbs/upload"
     page.once("filechooser", lambda fc: fc.set_files("test.sqlite3"))
@@ -232,6 +235,8 @@ def test_view(settings, page):
     "Test view creation, based on a table in an uploaded Sqlite3 database file."
     login_user(settings, page)
 
+    # Upload database file.
+    page.goto(f"{settings['BASE_URL']}/dbs/owner/{settings['USER_USERNAME']}")
     page.click("text=Upload")
     assert page.url == "http://localhost:5001/dbs/upload"
     page.once("filechooser", lambda fc: fc.set_files("test.sqlite3"))

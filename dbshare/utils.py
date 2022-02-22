@@ -53,8 +53,8 @@ def login_required(f):
     @functools.wraps(f)
     def wrap(*args, **kwargs):
         if not flask.g.current_user:
-            url = flask.url_for("user.login", next=flask.request.base_url)
-            return flask.redirect(url)
+            flask.session["login_target_url"] = flask.request.base_url
+            return flask.redirect(flask.url_for("user.login"))
         return f(*args, **kwargs)
 
     return wrap

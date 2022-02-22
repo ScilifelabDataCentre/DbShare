@@ -41,8 +41,7 @@ def login_user(settings, page):
     page.press('input[name="username"]', "Tab")
     page.fill('input[name="password"]', settings["ADMIN_PASSWORD"])
     page.click("id=login")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/{settings['ADMIN_USERNAME']}"
-
+    assert page.url == f"{settings['BASE_URL']}/"
 
 def test_admin_pages(settings, page):
     "Test admin-pecific pages."
@@ -91,7 +90,7 @@ def test_create_user(settings, page):
     page.press('input[name="username"]', "Tab")
     page.fill('input[name="password"]', "testing123")
     page.click("id=login")
-    assert page.url == f"{settings['BASE_URL']}/dbs/owner/testing"
+    assert page.url == f"{settings['BASE_URL']}/"
     page.click("text=User testing")
     page.click("text=Logout")
 
