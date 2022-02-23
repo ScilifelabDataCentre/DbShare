@@ -1,6 +1,7 @@
 ---
 title: Overview
-ordinal: 1
+level: 0
+ordinal: 0
 ---
 
 The DbShare system allows web access to data published in the form of

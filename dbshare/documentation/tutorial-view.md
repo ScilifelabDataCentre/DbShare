@@ -1,6 +1,7 @@
 ---
 title: "View: a saved query"
-ordinal: 105
+level: 1
+ordinal: 60
 ---
 
 - An SQL view is a saved query. It looks like a table, but there is no

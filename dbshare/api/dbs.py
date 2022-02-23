@@ -22,7 +22,7 @@ def public():
         "title": "Public databases",
         "databases": get_json(dbshare.dbs.get_dbs(public=True)),
     }
-    return utils.jsonify(utils.get_json(**result), "/dbs")
+    return flask.jsonify(utils.get_json(**result))
 
 
 @blueprint.route("/all")
@@ -35,7 +35,7 @@ def all():
         "total_size": sum([db["size"] for db in dbs]),
         "databases": get_json(dbs),
     }
-    return utils.jsonify(utils.get_json(**result), "/dbs")
+    return flask.jsonify(utils.get_json(**result))
 
 
 @blueprint.route("/owner/<name:username>")
@@ -59,7 +59,7 @@ def owner(username):
         ]
 
     }
-    return utils.jsonify(utils.get_json(**result), "/dbs")
+    return flask.jsonify(utils.get_json(**result))
 
 
 def get_json(dbs):

@@ -1,6 +1,7 @@
 ---
 title: Query database contents
-ordinal: 104
+level: 1
+ordinal: 50
 ---
 
 - An SQL query is the main way of extracting the information of

@@ -4,7 +4,6 @@ import http.client
 
 import flask
 import flask_cors
-import jsonschema
 
 import dbshare.db
 from dbshare import constants
@@ -18,8 +17,8 @@ flask_cors.CORS(blueprint, methods=["GET"])
 
 @blueprint.route("/<name:dbname>/<name:viewname>", methods=["GET", "PUT", "DELETE"])
 def view(dbname, viewname):
-    """GET: Return the schema for the view.
-    PUT: Create the view.
+    """GET: Return the SQL schema for the view in JSON format.
+    PUT: Create the view from an SQL schema in JSON format.
     DELETE: Delete the view.
     """
     if utils.http_GET():
@@ -36,7 +35,7 @@ def view(dbname, viewname):
         result = get_json(db, schema, complete=True)
         result.update(schema)
         result.pop("type", None)
-        return utils.jsonify(utils.get_json(**result), "/view")
+        return flask.jsonify(utils.get_json(**result))
 
     elif utils.http_PUT():
         try:
@@ -48,7 +47,7 @@ def view(dbname, viewname):
         try:
             with dbshare.db.DbSaver(db) as saver:
                 saver.add_view(flask.request.get_json(), create=True)
-        except (jsonschema.ValidationError, ValueError) as error:
+        except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for("api_view.view", dbname=dbname, viewname=viewname)
@@ -134,7 +133,7 @@ def rows_json(dbname, viewname):
         "nrows": schema["nrows"],
         "data": [dict(zip(columns, row)) for row in cursor],
     }
-    return utils.jsonify(utils.get_json(**result), "/rows")
+    return flask.jsonify(utils.get_json(**result))
 
 
 def get_json(db, view, complete=False, title=False):

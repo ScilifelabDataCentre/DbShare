@@ -29,7 +29,7 @@ def user(username):
     user["databases"] = {
         "href": utils.url_for("api_dbs.owner", username=user["username"])
     }
-    return utils.jsonify(utils.get_json(**user), "/user")
+    return flask.jsonify(utils.get_json(**user))
 
 
 def get_json(username):

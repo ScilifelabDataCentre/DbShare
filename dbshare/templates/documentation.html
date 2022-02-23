@@ -15,9 +15,17 @@
 {% block links %}
 <ul class="list-group">
   {% for d in docs %}
-  <li class="list-group-item }}">
-    <a href="{{ url_for('about.documentation', page=d.slug) }}">{{ d.title }}</a>
+  {% if d.level == 0 %}
+  <li class="list-group-item">
+    <a href="{{ url_for('.page', page=d.slug) }}">{{ d.title }}</a>
   </li>
+  {% elif d.level == 1 %}
+  <li class="list-group-item">
+    <div class="ml-3">
+      <a href="{{ url_for('.page', page=d.slug) }}">{{ d.title }}</a>
+    </div>
+  </li>
+  {% endif %}
   {% endfor %}
 </ul>
 {% endblock %}

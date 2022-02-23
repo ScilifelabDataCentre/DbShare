@@ -72,18 +72,24 @@
           {% endif %} {# if g.is_admin #}
 
           <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle mr-4" href="#" id="navbarDocumentation"
+               role="button" data-toggle="dropdown"
+               aria-haspopup="true" aria-expanded="false">Documentation</a>
+            <div class="dropdown-menu" aria-labelledby="navbarDocumentation">
+              <a href="{{ url_for('documentation.page', page='overview') }}"
+		 class="nav-link">Overview</a>
+              <a href="{{ url_for('documentation.page', page='tutorial') }}"
+		 class="nav-link">Tutorial</a>
+              <a href="{{ url_for('documentation.endpoints') }}"
+		 class="nav-link">URL endpoints</a>
+	    </div>
+          </li>
+
+          <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle mr-4" href="#" id="navbarAbout"
                role="button" data-toggle="dropdown"
                aria-haspopup="true" aria-expanded="false">About</a>
             <div class="dropdown-menu" aria-labelledby="navbarAbout">
-              <a href="{{ url_for('about.documentation', page='overview') }}"
-		 class="nav-link">Overview</a>
-              <a href="{{ url_for('about.documentation', page='tutorial') }}"
-		 class="nav-link">Tutorial</a>
-              <a href="{{ url_for('about.endpoints') }}"
-		 class="nav-link">URL endpoints</a>
-              <a href="{{ url_for('about.schema') }}"
-		 class="nav-link">API JSON schema</a>
               <a href="{{ url_for('about.contact') }}"
 		 class="nav-link">Contact</a>
               <a href="{{ url_for('about.gdpr') }}"

@@ -1,6 +1,7 @@
 ---
 title: Tutorial
-ordinal: 100
+level: 0
+ordinal: 10
 ---
 
 This section contains short descriptions of the features of DbShare.
@@ -11,4 +12,3 @@ This section contains short descriptions of the features of DbShare.
 - [Query](tutorial-query) database contents.
 - [View](tutorial-view): a saved query.
 - [Download](tutorial-download) databases and tables.
-- [API](tutorial-api) for programmatic operations.

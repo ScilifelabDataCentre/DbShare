@@ -1,6 +1,7 @@
 ---
 title: Explore an existing database
-ordinal: 101
+level: 1
+ordinal: 20
 ---
 
 Public databases in DbShare can be explored without being logged in.

@@ -4,11 +4,11 @@ import flask
 
 import dbshare
 import dbshare.about
+import dbshare.doc
 import dbshare.config
 import dbshare.db
 import dbshare.dbs
 import dbshare.query
-import dbshare.schema
 import dbshare.site
 import dbshare.system
 import dbshare.table
@@ -19,7 +19,6 @@ import dbshare.data
 import dbshare.api.root
 import dbshare.api.db
 import dbshare.api.dbs
-import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.users
@@ -27,7 +26,6 @@ import dbshare.api.view
 
 from dbshare import constants
 from dbshare import utils
-
 
 app = flask.Flask(__name__)
 
@@ -49,7 +47,7 @@ dbshare.config.init(app)
 
 # Initialize the subsystems.
 dbshare.system.init(app)
-dbshare.about.init(app)
+dbshare.doc.init(app)
 
 
 @app.context_processor
@@ -64,12 +62,6 @@ def setup_template_context():
         range=range,
         round=round,
     )
-
-
-@app.before_first_request
-def set_schema_base_url():
-    "Must be done after URL routes have been defined."
-    dbshare.schema.set_base_url(utils.url_for("api_schema.schema"))
 
 
 @app.before_request
@@ -121,6 +113,7 @@ app.register_blueprint(dbshare.view.blueprint, url_prefix="/view")
 app.register_blueprint(dbshare.data.blueprint, url_prefix="/data")
 app.register_blueprint(dbshare.user.blueprint, url_prefix="/user")
 app.register_blueprint(dbshare.about.blueprint, url_prefix="/about")
+app.register_blueprint(dbshare.doc.blueprint, url_prefix="/documentation")
 app.register_blueprint(dbshare.site.blueprint, url_prefix="/site")
 
 app.register_blueprint(dbshare.api.root.blueprint, url_prefix="/api")
@@ -130,7 +123,6 @@ app.register_blueprint(dbshare.api.table.blueprint, url_prefix="/api/table")
 app.register_blueprint(dbshare.api.view.blueprint, url_prefix="/api/view")
 app.register_blueprint(dbshare.api.user.blueprint, url_prefix="/api/user")
 app.register_blueprint(dbshare.api.users.blueprint, url_prefix="/api/users")
-app.register_blueprint(dbshare.api.schema.blueprint, url_prefix="/api/schema")
 
 
 # This code is used only during development.

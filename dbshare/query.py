@@ -6,7 +6,6 @@ import flask
 
 import dbshare.db
 import dbshare.table
-import dbshare.schema.query
 
 from dbshare import constants
 from dbshare import utils
@@ -160,10 +159,7 @@ def get_from_sources(from_):
 
 
 def get_sql_statement(query):
-    """Create the SQL SELECT statement from the query parts.
-    Raises jsonschema.ValidationError if the query is invalid.
-    """
-    utils.json_validate(query, dbshare.schema.query.input)
+    "Create the SQL SELECT statement from the query parts."
     parts = ["SELECT {select} FROM {from}".format(**query)]
     if query.get("where"):
         parts.append("WHERE " + query["where"])
