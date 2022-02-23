@@ -165,7 +165,7 @@ def get_json(db, view, complete=False, title=False):
                     "title": "Delete the view from the database.",
                     "href": flask.request.url,
                     "method": "DELETE",
-                },
+                }
             }
     else:
         result["href"] = utils.url_for(

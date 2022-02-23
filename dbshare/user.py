@@ -27,7 +27,9 @@ def login():
         )
     if utils.http_POST():
         try:
-            do_login(flask.request.form.get("username"), flask.request.form.get("password"))
+            do_login(
+                flask.request.form.get("username"), flask.request.form.get("password")
+            )
             try:
                 url = flask.session.pop("login_target_url")
             except KeyError:
@@ -383,6 +385,7 @@ def do_login(username, password):
     if user["status"] != constants.ENABLED:
         raise ValueError
     flask.session["username"] = user["username"]
+
 
 def get_user(username=None, email=None, apikey=None):
     """Return the user for the given username, email or apikey.

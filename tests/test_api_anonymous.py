@@ -62,9 +62,7 @@ def test_databases(settings):
     response = session.get(f"{settings['BASE_URL']}/api")
     assert response.status_code == http.client.OK
     data = response.json()
-    assert set(data["databases"]) == {
-        "public",
-    }
+    assert set(data["databases"]) == {"public"}
     for category in data["databases"]:
         href = data["databases"][category]["href"]
         response = session.get(href)
