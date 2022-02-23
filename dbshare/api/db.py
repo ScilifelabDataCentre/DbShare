@@ -6,11 +6,9 @@ import sqlite3
 
 import flask
 import flask_cors
-import jsonschema
 
 import dbshare.db
 import dbshare.query
-import dbshare.api.schema
 import dbshare.api.table
 import dbshare.api.user
 import dbshare.api.view
@@ -25,7 +23,7 @@ flask_cors.CORS(blueprint, methods=["GET"])
 @blueprint.route("/<name:dbname>", methods=["GET", "PUT", "POST", "DELETE"])
 def database(dbname):
     """GET: List the database tables, views and metadata.
-    PUT: Create the database, load the data if any input.
+    PUT: Create the database, load any input data (Sqlite3 file, XLSX file).
     POST: Edit the database metadata.
     DELETE: Delete the database.
     """
@@ -36,7 +34,100 @@ def database(dbname):
             flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        return utils.jsonify(utils.get_json(**get_json(db, complete=True)), "/db")
+        data = {
+            "name": db["name"],
+            "title": db.get("title"),
+            "description": db.get("description"),
+            "owner": dbshare.api.user.get_json(db["owner"]),
+            "public": db["public"],
+            "readonly": db["readonly"],
+            "size": db["size"],
+            "modified": db["modified"],
+            "created": db["created"],
+            "hashes": db["hashes"],
+            "tables": [
+                dbshare.api.table.get_json(db, table, title=True)
+                for table in db["tables"].values()
+            ],
+            "views": [
+                dbshare.api.view.get_json(db, view, title=True)
+                for view in db["views"].values()
+            ],
+            "actions": {
+                "query": {
+                    "title": "Query the database.",
+                    "href": utils.url_for("api_db.query", dbname=db["name"]),
+                    "method": "POST",
+                    "input": {
+                        "content-type": constants.JSON_MIMETYPE,
+                    },
+                    "output": {
+                        "content-type": constants.JSON_MIMETYPE,
+                    },
+                },
+            }
+        }
+        if dbshare.db.has_write_access(db):
+            data["actions"]["edit"] = \
+                {
+                    "title": "Edit the database metadata.",
+                    "href": flask.request.url,
+                    "method": "POST",
+                    "input": {
+                        "content-type": constants.JSON_MIMETYPE,
+                    },
+                }
+            data["actions"]["create_table"] = \
+                {
+                    "title": "Create a new table in the database.",
+                    "href": utils.url_for_unq(
+                        "api_table.table", dbname=db["name"], tablename="{tablename}"
+                ),
+                "variables": {
+                    "tablename": {"title": "Name of the table."},
+                },
+                "method": "PUT",
+                "input": {
+                    "content-type": constants.JSON_MIMETYPE,
+                }
+            }
+            data["actions"]["create_view"] = \
+                {
+                    "title": "Create a new view in the database.",
+                    "href": utils.url_for_unq(
+                        "api_view.view", dbname=db["name"], viewname="{viewname}"
+                        ),
+                        "variables": {
+                            "viewname": {"title": "Name of the view."},
+                        },
+                        "method": "PUT",
+                        "input": {
+                            "content-type": constants.JSON_MIMETYPE,
+                        },
+                }
+        if dbshare.db.has_write_access(db, check_mode=False):
+            if db.get("readonly"):
+                data["actions"]["readwrite"] = \
+                    {
+                        "title": "Set the database to read-only.",
+                        "href": utils.url_for("api_db.readonly", dbname=db["name"]),
+                        "method": "POST",
+                    }
+            else:
+                data["actions"]["readonly"] = \
+                    {
+                        "title": "Set the database to read-write.",
+                        "href": utils.url_for("api_db.readwrite", dbname=db["name"]),
+                        "method": "POST",
+                    }
+        if dbshare.db.has_write_access(db):
+            data["actions"]["delete"] = \
+                {
+                    "title": "Delete the database.",
+                    "href": flask.request.url,
+                    "method": "DELETE",
+                }
+        return flask.jsonify(utils.get_json(**data))
 
     elif utils.http_PUT():
         db = dbshare.db.get_db(dbname)
@@ -77,7 +168,6 @@ def database(dbname):
             flask.abort(http.client.NOT_FOUND)
         try:
             data = flask.request.get_json()
-            utils.json_validate(data, dbshare.schema.db.edit)
             with dbshare.db.DbSaver(db) as saver:
                 try:
                     dbname = saver.set_name(data["name"])
@@ -95,7 +185,7 @@ def database(dbname):
                     saver.set_public(data["public"])
                 except KeyError:
                     pass
-        except (jsonschema.ValidationError, ValueError) as error:
+        except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(flask.url_for(".database", dbname=dbname))
 
@@ -125,7 +215,7 @@ def query(dbname):
         sql = dbshare.query.get_sql_statement(query)
         dbcnx = dbshare.db.get_cnx(dbname)
         cursor = utils.execute_timeout(dbcnx, sql)
-    except (jsonschema.ValidationError, sqlite3.Error) as error:
+    except sqlite3.Error as error:
         utils.abort_json(http.client.BAD_REQUEST, error)
     except SystemError:
         flask.abort(http.client.REQUEST_TIMEOUT)
@@ -139,7 +229,7 @@ def query(dbname):
         "cpu_time": timer(),
         "data": [dict(zip(columns, row)) for row in rows],
     }
-    return utils.jsonify(utils.get_json(**result), "/query/output")
+    return flask.jsonify(utils.get_json(**result))
 
 
 @blueprint.route("/<name:dbname>/readonly", methods=["POST"])
@@ -170,29 +260,3 @@ def readwrite(dbname):
     except KeyError:
         flask.abort(http.client.NOT_FOUND)
     return flask.redirect(flask.url_for(".database", dbname=dbname))
-
-
-def get_json(db, complete=False):
-    "Return the JSON for the database."
-    result = {
-        "name": db["name"],
-        "title": db.get("title"),
-        "description": db.get("description"),
-        "owner": dbshare.api.user.get_json(db["owner"]),
-        "public": db["public"],
-        "readonly": db["readonly"],
-        "size": db["size"],
-        "modified": db["modified"],
-        "created": db["created"],
-        "hashes": db["hashes"],
-    }
-    if complete:
-        result["tables"] = [
-            dbshare.api.table.get_json(db, table, title=True)
-            for table in db["tables"].values()
-        ]
-        result["views"] = [
-            dbshare.api.view.get_json(db, view, title=True)
-            for view in db["views"].values()
-        ]
-    return result

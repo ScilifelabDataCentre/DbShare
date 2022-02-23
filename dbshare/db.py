@@ -16,12 +16,10 @@ import tarfile
 import tempfile
 import urllib.parse
 
-import dpath
 import flask
 import openpyxl
 
 import dbshare.system
-import dbshare.schema.table
 import dbshare.table
 import dbshare.query
 import dbshare.user
@@ -808,7 +806,6 @@ class DbSaver:
         """Create the table in the database and add to the database definition.
         If 'query' is given, do 'CREATE TABLE AS', and fix up the schema.
         If 'create' is True, then actually create the table.
-        Raises jsonschema.ValidationError if the schema is invalid.
         Raises ValueError if there is a problem with the input schema data.
         Raises SystemError if the query is interrupted by time-out.
         """
@@ -834,7 +831,6 @@ class DbSaver:
                     column["type"] = row[2]
                 schema["columns"].append(column)
         elif create:
-            utils.json_validate(schema, dbshare.schema.table.create)
             sql = get_sql_create_table(schema)
             self.dbcnx.execute(sql)
         with self.dbcnx:
@@ -880,7 +876,6 @@ class DbSaver:
             schema["nrows"] = self.dbcnx.execute(sql).fetchone()[0]
             for column in schema["columns"]:
                 column.pop("statistics", None)
-        utils.json_validate(schema, dbshare.schema.table.create)
         with self.dbcnx:
             sql = f"UPDATE {constants.TABLES} SET schema=? WHERE name=?"
             self.dbcnx.execute(sql, (json.dumps(schema), schema["name"]))
@@ -965,10 +960,8 @@ class DbSaver:
     def add_view(self, schema, create=True):
         """Create a view in the database and add to the database definition.
         If 'create' is True, then actually create the view.
-        Raises jsonschema.ValidationError if the schema is invalid.
         Raises ValueError if there is a problem with the input schema data.
         """
-        utils.json_validate(schema, dbshare.schema.view.create)
         if not constants.NAME_RX.match(schema["name"]):
             raise ValueError("invalid view name")
         if utils.name_in_nocase(schema["name"], self.db["tables"]):

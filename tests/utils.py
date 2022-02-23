@@ -3,7 +3,7 @@
 import http.client
 import json
 
-import jsonschema
+DBSHARE_VERSION = "2.5.0"
 
 
 def get_settings(**defaults):
@@ -21,15 +21,6 @@ def get_settings(**defaults):
     # Remove any trailing slash in the base URL.
     result["BASE_URL"] = result["BASE_URL"].rstrip("/")
     return result
-
-
-def validate_schema(instance, schema):
-    "Validate the given JSON instance versus the given JSON schema."
-    jsonschema.validate(
-        instance=instance,
-        schema=schema,
-        format_checker=jsonschema.draft7_format_checker,
-    )
 
 
 def get_hrefs(data):

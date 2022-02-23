@@ -6,11 +6,9 @@ import sqlite3
 
 import flask
 import flask_cors
-import jsonschema
 
 import dbshare.db
 import dbshare.table
-import dbshare.schema.table
 from dbshare import constants
 from dbshare import utils
 
@@ -22,8 +20,8 @@ flask_cors.CORS(blueprint, methods=["GET"])
 
 @blueprint.route("/<name:dbname>/<name:tablename>", methods=["GET", "PUT", "DELETE"])
 def table(dbname, tablename):
-    """GET: Return the schema for the table.
-    PUT: Create the table.
+    """GET: Return the SQL schema for the table in JSON format.
+    PUT: Create the table from an SQL schema in JSON format.
     DELETE: Delete the table.
     """
     if utils.http_GET():
@@ -39,7 +37,7 @@ def table(dbname, tablename):
             flask.abort(http.client.NOT_FOUND)
         result = get_json(db, schema, complete=True)
         result.update(schema)
-        return utils.jsonify(utils.get_json(**result), "/table")
+        return flask.jsonify(utils.get_json(**result))
 
     elif utils.http_PUT():
         try:
@@ -54,7 +52,7 @@ def table(dbname, tablename):
                 saver.add_table(schema)
                 for index in schema.get("indexes", []):
                     saver.add_index(tablename, index)
-        except (jsonschema.ValidationError, ValueError) as error:
+        except ValueError as error:
             utils.abort_json(http.client.BAD_REQUEST, error)
         return flask.redirect(
             flask.url_for("api_table.table", dbname=dbname, tablename=tablename)
@@ -140,12 +138,12 @@ def rows_json(dbname, tablename):
         "nrows": schema["nrows"],
         "data": [dict(zip(columns, row)) for row in cursor],
     }
-    return utils.jsonify(utils.get_json(**result), "/rows")
+    return flask.jsonify(utils.get_json(**result))
 
 
 @blueprint.route("/<name:dbname>/<name:tablename>/statistics", methods=["GET"])
 def statistics(dbname, tablename):
-    "GET: Return the schema for the table with statistics for the columns."
+    "Return the SQL schema for the table with statistics for the columns."
     try:
         db = dbshare.db.get_check_read(dbname)
     except ValueError:
@@ -159,7 +157,7 @@ def statistics(dbname, tablename):
     result = get_json(db, schema, complete=False)
     dbshare.table.compute_statistics(db, schema)
     result.update(schema)
-    return utils.jsonify(utils.get_json(**result), "/table/statistics")
+    return flask.jsonify(utils.get_json(**result))
 
 
 @blueprint.route("/<name:dbname>/<name:tablename>/insert", methods=["POST"])
@@ -179,11 +177,7 @@ def insert(dbname, tablename):
     try:
         # JSON input data
         if flask.request.is_json:
-            try:
-                data = flask.request.get_json()
-                utils.json_validate(data, dbshare.schema.table.input)
-            except jsonschema.ValidationError as error:
-                utils.abort_json(http.client.BAD_REQUEST, error)
+            data = flask.request.get_json()
             columns = schema["columns"]
             # Check validity of values in input data.
             rows = []
@@ -267,7 +261,7 @@ def update(dbname, tablename):
 
 @blueprint.route("/<name:dbname>/<name:tablename>/empty", methods=["POST"])
 def empty(dbname, tablename):
-    "POST: Empty the table; delete all rows."
+    "Empty the table; delete all rows."
     try:
         db = dbshare.db.get_check_write(dbname)
     except ValueError:
@@ -321,6 +315,43 @@ def get_json(db, table, complete=False, title=False):
         ]
         for i in result["indexes"]:
             i.pop("table")
+        result["actions"] = [
+            {
+                "title": "Insert additional rows from JSON or CSV data into the table.",
+                "href": utils.url_for_unq(
+                    "api_table.insert", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+                "input": [
+                    {
+                        "content-type": constants.JSON_MIMETYPE
+                    },
+                    {"content-type": constants.CSV_MIMETYPE},
+                ],
+            },
+            {
+                "title": "Update rows in the table from CSV data according to primary key.",
+                "href": utils.url_for_unq(
+                    "api_table.update", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+                "input": {"content-type": constants.CSV_MIMETYPE},
+            },
+            {
+                "title": "Empty the table; remove all rows.",
+                "href": utils.url_for_unq(
+                    "api_table.empty", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+            },
+            {
+                "title": "Delete the table from the database.",
+                "href": utils.url_for_unq(
+                    "api_table.table", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "DELETE",
+            },
+        ]
     else:
         result["href"] = utils.url_for(
             "api_table.table", dbname=db["name"], tablename=table["name"]

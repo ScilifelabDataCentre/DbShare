@@ -10,7 +10,6 @@ import io
 import requests
 import pytest
 
-import dbshare
 import utils
 
 # Table specification used in some tests.
@@ -34,31 +33,7 @@ def settings():
     # Set up requests session with API key.
     result["session"] = session = requests.Session()
     session.headers.update({"x-apikey": result["USER_APIKEY"]})
-    # Get the schema.
-    response = session.get(f"{result['BASE_URL']}/api/schema/root")
-    assert response.status_code == http.client.OK
-    result["root_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/dbs")
-    assert response.status_code == http.client.OK
-    result["dbs_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/db")
-    assert response.status_code == http.client.OK
-    result["db_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/table")
-    assert response.status_code == http.client.OK
-    result["table_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/rows")
-    assert response.status_code == http.client.OK
-    result["rows_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/view")
-    assert response.status_code == http.client.OK
-    result["view_schema"] = response.json()
-    response = session.get(f"{result['BASE_URL']}/api/schema/view/create")
-    assert response.status_code == http.client.OK
-    result["view_create_schema"] = response.json()
-
     yield result
-
     result["session"].close()
 
 
@@ -93,12 +68,7 @@ def test_root(settings):
     response = session.get(f"{settings['BASE_URL']}/api")
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["root_schema"])
-    assert data["version"] == dbshare.__version__
-    # Loop over schema.
-    for href in utils.get_hrefs(data["schema"]):
-        response = session.get(href)
-        assert response.status_code == http.client.OK
+    assert data["version"] == utils.DBSHARE_VERSION
 
 
 def test_databases(settings):
@@ -114,7 +84,6 @@ def test_databases(settings):
         href = data["databases"][category]["href"]
         response = session.get(href)
         assert response.status_code == http.client.OK
-        utils.validate_schema(response.json(), settings["dbs_schema"])
 
 
 def test_create_database(settings):
@@ -153,7 +122,6 @@ def test_table(settings, database):
     response = session.put(table_url, json=TABLE_SPEC)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
 
     # Check the created table.
     assert len(data["columns"]) == len(TABLE_SPEC["columns"])
@@ -173,21 +141,18 @@ def test_table(settings, database):
     row = {"data": [{"i": 1, "t": "stuff", "r": 1.2345}]}
     response = session.post(url, json=row)
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 1
 
     row = {"data": [{"i": 2, "t": "another", "r": 3}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 2
 
     row = {"data": [{"i": 3, "r": -0.45}]}
     response = session.post(url, json=row)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 3
 
     row_3 = {"i": 4, "t": "multirow", "r": -0.45}
@@ -195,7 +160,6 @@ def test_table(settings, database):
     response = session.post(url, json=rows)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 5
 
     # Try to insert invalid data of different kinds.
@@ -215,14 +179,12 @@ def test_table(settings, database):
     response = session.get(table_url)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 5
 
     # Get the rows and compare one of them.
     url = data["rows"]["href"]
     response = session.get(url)
     data = response.json()
-    utils.validate_schema(data, settings["rows_schema"])
     assert data["nrows"] == 5
     assert len(data["data"]) == data["nrows"]
     assert data["data"][3] == row_3
@@ -245,7 +207,6 @@ def test_csv(settings, database):
     response = session.put(table_url, json=TABLE_SPEC)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
 
     rows = [
         {"i": 1, "t": "some text", "r": 1.43},
@@ -263,7 +224,6 @@ def test_csv(settings, database):
     )
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == len(rows)
 
     # Try inserting a bad row: no primary key.
@@ -306,7 +266,6 @@ def test_csv(settings, database):
     )
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 6
 
 
@@ -322,7 +281,6 @@ def test_index(settings, database):
     )
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert len(data["indexes"]) == 1
 
     # Add rows.
@@ -336,30 +294,12 @@ def test_index(settings, database):
     response = session.post(url, json=data)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     assert data["nrows"] == 2
 
     # Attempt to add a row that violates the index unique constraint.
     data = {"data": [{"i": 3, "t": "some text", "r": 1.0e3}]}
     response = session.post(url, json=data)
     assert response.status_code == http.client.BAD_REQUEST
-
-    # def test_statistics(self):
-    #     "Test computation of statistics."
-
-    #     # Create database by file upload
-    #     response = self.upload_file()
-    #     result = self.check_schema(response)
-
-    #     # Get the table URL and the statistics URL
-    #     table_url = result['tables'][0]['href']
-    #     response = self.session.get(table_url)
-    #     result = self.check_schema(response)
-    #     statistics_url = result['statistics']['href']
-
-    #     # Check the statistics
-    #     response = self.session.get(statistics_url)
-    #     result = self.check_schema(response)
 
 
 def test_edit_database(settings, database):
@@ -372,7 +312,6 @@ def test_edit_database(settings, database):
     response = session.post(url, json={"title": title})
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
     assert data.get("title") == title
 
     # Edit the description.
@@ -380,7 +319,6 @@ def test_edit_database(settings, database):
     response = session.post(url, json={"description": description})
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
     assert data.get("description") == description
     # Same title as before.
     assert data.get("title") == title
@@ -390,7 +328,6 @@ def test_edit_database(settings, database):
     response = session.post(url, json={"name": name})
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
     assert data["$id"].endswith(name)
 
     # Delete the renamed database.
@@ -407,7 +344,6 @@ def test_readonly_database(settings, database):
     response = session.post(url + "/readonly")
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
 
     # These items are now True.
     assert data["readonly"]
@@ -421,7 +357,6 @@ def test_readonly_database(settings, database):
     response = session.post(url + "/readwrite")
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["db_schema"])
 
     # These items are now False.
     assert not data["readonly"]
@@ -432,21 +367,11 @@ def test_query_database(settings, database):
     "Test querying a database from a Sqlite3 file."
     session = settings["session"]
 
-    # Query schema.
-    response = session.get(f"{settings['BASE_URL']}/api/schema/query/input")
-    assert response.status_code == http.client.OK
-    query_input_schema = response.json()
-    response = session.get(f"{settings['BASE_URL']}/api/schema/query/output")
-    assert response.status_code == http.client.OK
-    query_output_schema = response.json()
-
     # Query.
     query = {"select": f'r1 as "r"', "from": "t1"}
-    utils.validate_schema(query, query_input_schema)
     response = session.post(f"{settings['BASE_URL']}/api/db/test/query", json=query)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, query_output_schema)
 
     # Bad query.
     query = {"select": None, "from": "t1"}
@@ -463,17 +388,14 @@ def test_view(settings, database):
         "name": "v1",
         "query": {"from": "t1", "select": "r1", "where": "i1>=10"},
     }
-    utils.validate_schema(view_spec, settings["view_create_schema"])
     response = session.put(f"{settings['BASE_URL']}/api/view/test/v1", json=view_spec)
     assert response.status_code == http.client.OK
     data = response.json()
-    utils.validate_schema(data, settings["view_schema"])
 
     # Check the rows of the view.
     rows_url = data["rows"]["href"]
     response = session.get(rows_url)
     data = response.json()
-    utils.validate_schema(data, settings["rows_schema"])
     assert data["nrows"] == 2
     assert len(data["data"]) == data["nrows"]
 
@@ -483,10 +405,8 @@ def test_view(settings, database):
         f"{settings['BASE_URL']}/api/table/test/t1/insert", json=row
     )
     data = response.json()
-    utils.validate_schema(data, settings["table_schema"])
     response = session.get(rows_url)
     data = response.json()
-    utils.validate_schema(data, settings["rows_schema"])
     assert data["nrows"] == 3
     assert len(data["data"]) == data["nrows"]
 
@@ -495,7 +415,6 @@ def test_view(settings, database):
         "name": "V1",
         "query": {"from": "t1", "select": "r1", "where": "i1>=10"},
     }
-    utils.validate_schema(view_spec, settings["view_create_schema"])
     response = session.put(f"{settings['BASE_URL']}/api/view/test/V1", json=view_spec)
     assert response.status_code == http.client.BAD_REQUEST
 
@@ -508,7 +427,7 @@ def test_user(settings):
     "Test access to the user account."
     session = settings["session"]
 
-    # Current user, check schema.
+    # Current user.
     response = session.get(
         f"{settings['BASE_URL']}/api/user/{settings['USER_USERNAME']}"
     )

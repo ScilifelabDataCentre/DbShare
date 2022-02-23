@@ -1,6 +1,7 @@
 ---
 title: Create databases and tables
-ordinal: 101
+level: 1
+ordinal: 30
 ---
 
 If you have an account (see [register](/user/register)), and have logged in

@@ -7,7 +7,7 @@ import os.path
 import re
 import string
 
-__version__ = "2.4.3"
+__version__ = "2.5.0"
 
 
 class Constants:
@@ -98,7 +98,6 @@ class Constants:
     XLSX_MIMETYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
     # Miscellaneous.
-    JSON_SCHEMA_URL = "http://json-schema.org/draft-07/schema#"
     FRONT_MATTER_RX = re.compile(r"^---(.*)---", re.DOTALL | re.MULTILINE)
 
     def __setattr__(self, key, value):

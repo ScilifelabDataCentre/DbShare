@@ -17,7 +17,6 @@ import uuid
 
 import flask
 import jinja2.utils
-import jsonschema
 import marko
 import werkzeug.routing
 
@@ -261,16 +260,6 @@ def get_json(**items):
     return result
 
 
-def jsonify(result, schema):
-    """Return a Response object containing the JSON of 'result',
-    adding a header Link to the schema given by its URL path.
-    """
-    response = flask.jsonify(result)
-    link = f"<{flask.current_app.config['SCHEMA_BASE_URL']}{schema}>"
-    response.headers.add("Link", link, rel="schema")
-    return response
-
-
 def http_GET():
     "Is the HTTP method GET?"
     return flask.request.method == "GET"
@@ -439,15 +428,6 @@ def mode(value):
         return jinja2.utils.Markup(
             '<span class="badge badge-warning">read/write</span>'
         )
-
-
-def json_validate(instance, schema):
-    "Validate the JSON instance versus the given JSON schema."
-    jsonschema.validate(
-        instance=instance,
-        schema=schema,
-        format_checker=jsonschema.draft7_format_checker,
-    )
 
 
 def abort_json(status_code, error):

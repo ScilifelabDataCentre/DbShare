@@ -32,4 +32,4 @@ def all():
         for row in flask.g.syscnx.execute(sql)
     ]
     result = {"title": "All user accounts.", "users": users}
-    return utils.jsonify(utils.get_json(**result), "/users")
+    return flask.jsonify(utils.get_json(**result))

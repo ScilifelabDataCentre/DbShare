@@ -1,6 +1,7 @@
 ---
 title: Download databases and tables
-ordinal: 106
+level: 1
+ordinal: 70
 ---
 
 ### Download a database

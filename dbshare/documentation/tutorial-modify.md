@@ -1,6 +1,7 @@
 ---
 title: Modify table contents
-ordinal: 103
+level: 1
+ordinal: 40
 ---
 
 If you have an account (see [Register a user account](/user/register)),
