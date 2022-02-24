@@ -21,11 +21,9 @@ blueprint = flask.Blueprint("user", __name__)
 def login():
     "Login to a user account. Set the session cookie."
     if utils.http_GET():
-        flask.session["login_target_url"] = flask.request.referrer
-        return flask.render_template(
-            "user/login.html", next=flask.request.args.get("next")
-        )
-    if utils.http_POST():
+        return flask.render_template("user/login.html")
+
+    elif utils.http_POST():
         try:
             do_login(
                 flask.request.form.get("username"), flask.request.form.get("password")
@@ -385,6 +383,7 @@ def do_login(username, password):
     if user["status"] != constants.ENABLED:
         raise ValueError
     flask.session["username"] = user["username"]
+    flask.session.permanent = True
 
 
 def get_user(username=None, email=None, apikey=None):
