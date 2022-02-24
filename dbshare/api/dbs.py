@@ -51,13 +51,13 @@ def owner(username):
         "total_size": sum([db["size"] for db in dbs]),
         "databases": get_json(dbs),
         "actions": [
-            { "title": "Create a new empty database.",
-              "href": utils.url_for_unq("api_db.database", dbname="{dbname}"),
-              "variables": {"dbname": {"title": "Name of the database."}},
-              "method": "PUT",
+            {
+                "title": "Create a new empty database.",
+                "href": utils.url_for_unq("api_db.database", dbname="{dbname}"),
+                "variables": {"dbname": {"title": "Name of the database."}},
+                "method": "PUT",
             }
-        ]
-
+        ],
     }
     return flask.jsonify(utils.get_json(**result))
 
@@ -66,17 +66,19 @@ def get_json(dbs):
     "Return JSON for the databases."
     result = []
     for db in dbs:
-        result.append({
-            "name": db["name"],
-            "href": utils.url_for("api_db.database", dbname=db["name"]),
-            "title": db.get("title"),
-            "description": db.get("description"),
-            "owner": dbshare.api.user.get_json(db["owner"]),
-            "public": db["public"],
-            "readonly": db["readonly"],
-            "size": db["size"],
-            "modified": db["modified"],
-            "created": db["created"],
-            "hashes": db["hashes"]}
+        result.append(
+            {
+                "name": db["name"],
+                "href": utils.url_for("api_db.database", dbname=db["name"]),
+                "title": db.get("title"),
+                "description": db.get("description"),
+                "owner": dbshare.api.user.get_json(db["owner"]),
+                "public": db["public"],
+                "readonly": db["readonly"],
+                "size": db["size"],
+                "modified": db["modified"],
+                "created": db["created"],
+                "hashes": db["hashes"],
+            }
         )
     return result

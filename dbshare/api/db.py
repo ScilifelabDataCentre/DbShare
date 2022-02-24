@@ -58,75 +58,55 @@ def database(dbname):
                     "title": "Query the database.",
                     "href": utils.url_for("api_db.query", dbname=db["name"]),
                     "method": "POST",
-                    "input": {
-                        "content-type": constants.JSON_MIMETYPE,
-                    },
-                    "output": {
-                        "content-type": constants.JSON_MIMETYPE,
-                    },
-                },
-            }
+                    "input": {"content-type": constants.JSON_MIMETYPE},
+                    "output": {"content-type": constants.JSON_MIMETYPE},
+                }
+            },
         }
         if dbshare.db.has_write_access(db):
-            data["actions"]["edit"] = \
-                {
-                    "title": "Edit the database metadata.",
-                    "href": flask.request.url,
-                    "method": "POST",
-                    "input": {
-                        "content-type": constants.JSON_MIMETYPE,
-                    },
-                }
-            data["actions"]["create_table"] = \
-                {
-                    "title": "Create a new table in the database.",
-                    "href": utils.url_for_unq(
-                        "api_table.table", dbname=db["name"], tablename="{tablename}"
-                ),
-                "variables": {
-                    "tablename": {"title": "Name of the table."},
-                },
-                "method": "PUT",
-                "input": {
-                    "content-type": constants.JSON_MIMETYPE,
-                }
+            data["actions"]["edit"] = {
+                "title": "Edit the database metadata.",
+                "href": flask.request.url,
+                "method": "POST",
+                "input": {"content-type": constants.JSON_MIMETYPE},
             }
-            data["actions"]["create_view"] = \
-                {
-                    "title": "Create a new view in the database.",
-                    "href": utils.url_for_unq(
-                        "api_view.view", dbname=db["name"], viewname="{viewname}"
-                        ),
-                        "variables": {
-                            "viewname": {"title": "Name of the view."},
-                        },
-                        "method": "PUT",
-                        "input": {
-                            "content-type": constants.JSON_MIMETYPE,
-                        },
-                }
+            data["actions"]["create_table"] = {
+                "title": "Create a new table in the database.",
+                "href": utils.url_for_unq(
+                    "api_table.table", dbname=db["name"], tablename="{tablename}"
+                ),
+                "variables": {"tablename": {"title": "Name of the table."}},
+                "method": "PUT",
+                "input": {"content-type": constants.JSON_MIMETYPE},
+            }
+            data["actions"]["create_view"] = {
+                "title": "Create a new view in the database.",
+                "href": utils.url_for_unq(
+                    "api_view.view", dbname=db["name"], viewname="{viewname}"
+                ),
+                "variables": {"viewname": {"title": "Name of the view."}},
+                "method": "PUT",
+                "input": {"content-type": constants.JSON_MIMETYPE},
+            }
         if dbshare.db.has_write_access(db, check_mode=False):
             if db.get("readonly"):
-                data["actions"]["readwrite"] = \
-                    {
-                        "title": "Set the database to read-only.",
-                        "href": utils.url_for("api_db.readonly", dbname=db["name"]),
-                        "method": "POST",
-                    }
-            else:
-                data["actions"]["readonly"] = \
-                    {
-                        "title": "Set the database to read-write.",
-                        "href": utils.url_for("api_db.readwrite", dbname=db["name"]),
-                        "method": "POST",
-                    }
-        if dbshare.db.has_write_access(db):
-            data["actions"]["delete"] = \
-                {
-                    "title": "Delete the database.",
-                    "href": flask.request.url,
-                    "method": "DELETE",
+                data["actions"]["readwrite"] = {
+                    "title": "Set the database to read-only.",
+                    "href": utils.url_for("api_db.readonly", dbname=db["name"]),
+                    "method": "POST",
                 }
+            else:
+                data["actions"]["readonly"] = {
+                    "title": "Set the database to read-write.",
+                    "href": utils.url_for("api_db.readwrite", dbname=db["name"]),
+                    "method": "POST",
+                }
+        if dbshare.db.has_write_access(db):
+            data["actions"]["delete"] = {
+                "title": "Delete the database.",
+                "href": flask.request.url,
+                "method": "DELETE",
+            }
         return flask.jsonify(utils.get_json(**data))
 
     elif utils.http_PUT():
