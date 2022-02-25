@@ -43,6 +43,7 @@ def login_user(settings, page):
     page.click("id=login")
     assert page.url == f"{settings['BASE_URL']}/"
 
+
 def test_admin_pages(settings, page):
     "Test admin-pecific pages."
     login_user(settings, page)

@@ -227,9 +227,7 @@ def test_csv(settings, database):
     assert data["nrows"] == len(rows)
 
     # Try inserting a bad row: no primary key.
-    rows = [
-        {"t": "missing primary key", "r": 1.43},
-    ]
+    rows = [{"t": "missing primary key", "r": 1.43}]
     textfile = io.StringIO()
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()
@@ -240,9 +238,7 @@ def test_csv(settings, database):
     assert response.status_code == http.client.BAD_REQUEST
 
     # Try inserting a bad row: missing NOT NULL item.
-    rows = [
-        {"i": 5, "t": "missing primary key"},
-    ]
+    rows = [{"i": 5, "t": "missing primary key"}]
     textfile = io.StringIO()
     writer = csv.DictWriter(textfile, list(rows[0].keys()))
     writer.writeheader()

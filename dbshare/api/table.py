@@ -323,9 +323,7 @@ def get_json(db, table, complete=False, title=False):
                 ),
                 "method": "POST",
                 "input": [
-                    {
-                        "content-type": constants.JSON_MIMETYPE
-                    },
+                    {"content-type": constants.JSON_MIMETYPE},
                     {"content-type": constants.CSV_MIMETYPE},
                 ],
             },
