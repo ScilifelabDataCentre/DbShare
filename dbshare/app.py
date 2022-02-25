@@ -1,4 +1,4 @@
-"DbShare web app."
+"DbShare: Web service to share and query data stored in SQLite3 databases."
 
 import flask
 
@@ -62,6 +62,12 @@ def setup_template_context():
         range=range,
         round=round,
     )
+
+
+@app.before_first_request
+def initialize():
+    "Initialization before handling first request."
+    dbshare.user.create_first_admin()
 
 
 @app.before_request

@@ -1,6 +1,6 @@
 site
-*.json
-!dbshare/chart_templates/*.json
-!site/chart_templates/*.json
+tests/settings.json
 *.pyc
 *~
+__pycache__
+.pytest_cache
