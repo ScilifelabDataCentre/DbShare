@@ -54,12 +54,12 @@ def create():
 
     elif utils.http_POST():
         try:
-            with UserSaver() as ctx:
-                ctx.set_username(flask.request.form.get("username"))
-                ctx.set_email(flask.request.form.get("email"))
-                ctx.set_role(constants.USER)
-                ctx.set_password(flask.request.form.get("password"))
-            user = ctx.user
+            with UserSaver() as saver:
+                saver.set_username(flask.request.form.get("username"))
+                saver.set_email(flask.request.form.get("email"))
+                saver.set_role(constants.USER)
+                saver.set_password(flask.request.form.get("password"))
+            user = saver.user
         except ValueError as error:
             utils.flash_error(error)
             return flask.redirect(flask.url_for(".create"))
@@ -108,24 +108,24 @@ def edit(username):
         )
 
     elif utils.http_POST():
-        with UserSaver(user) as ctx:
+        with UserSaver(user) as saver:
             email = flask.request.form.get("email")
             if email != user["email"]:
-                ctx.set_email(enail)
+                saver.set_email(enail)
             if flask.request.form.get("apikey"):
-                ctx.set_apikey()
+                saver.set_apikey()
             if is_admin_and_not_self(user):
-                ctx.set_role(flask.request.form.get("role"))
+                saver.set_role(flask.request.form.get("role"))
             quota = flask.request.form.get("quota") or None
             if quota:
                 try:
                     quota = int(quota)
                 except (ValueError, TypeError):
                     quota = -1
-            ctx.set_quota(quota)
+            saver.set_quota(quota)
             password = flask.request.form.get("password")
             if password:
-                ctx.set_password(password)
+                saver.set_password(password)
         return flask.redirect(flask.url_for(".display", username=user["username"]))
 
     elif utils.http_DELETE():
@@ -186,8 +186,8 @@ def enable(username):
     if user is None:
         utils.flash_error("no such user")
         return flask.redirect(flask.url_for("home"))
-    with UserSaver(user) as ctx:
-        ctx.set_status(constants.ENABLED)
+    with UserSaver(user) as saver:
+        saver.set_status(constants.ENABLED)
     return flask.redirect(flask.url_for(".display", username=username))
 
 
@@ -199,8 +199,8 @@ def disable(username):
     if user is None:
         utils.flash_error("no such user")
         return flask.redirect(flask.url_for("home"))
-    with UserSaver(user) as ctx:
-        ctx.set_status(constants.DISABLED)
+    with UserSaver(user) as saver:
+        saver.set_status(constants.DISABLED)
     return flask.redirect(flask.url_for(".display", username=username))
 
 
@@ -365,6 +365,32 @@ class UserSaver:
 
 
 # Utility functions
+
+
+def create_first_admin():
+    """Check if an admin user is specified by settings.
+    If it is, and it has not been created, create it.
+    Called by 'app' before first request.
+    """
+    flask.g.syscnx = utils.get_cnx()
+    config = flask.current_app.config
+    if not (
+        config["ADMIN_USERNAME"] and config["ADMIN_EMAIL"] and config["ADMIN_PASSWORD"]
+    ):
+        print("ADMIN account not specified in settings.")
+        return
+    if get_user(username=config["ADMIN_USERNAME"]):
+        print(f"Admin user '{config['ADMIN_USERNAME']}'" " exists already.")
+        return
+    try:
+        with UserSaver() as saver:
+            saver.set_username(config["ADMIN_USERNAME"])
+            saver.set_email(config["ADMIN_EMAIL"])
+            saver.set_password(config["ADMIN_PASSWORD"])
+            saver.set_role(constants.ADMIN)
+        print(f"Admin user '{config['ADMIN_USERNAME']}' created.")
+    except ValueError as error:
+        print("Could not create admin user; misconfiguration.")
 
 
 def do_login(username, password):

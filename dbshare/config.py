@@ -52,6 +52,9 @@ DEFAULT_SETTINGS = dict(
         "colon": {"label": "colon ':'", "char": ":"},
     },
     MARKDOWN_SYNTAX_URL="https://www.markdownguide.org/basic-syntax/",
+    ADMIN_USERNAME=None,  # Admin user to create at startup, if not exists.
+    ADMIN_EMAIL=None,
+    ADMIN_PASSWORD=None,
 )
 
 

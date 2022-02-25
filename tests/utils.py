@@ -3,7 +3,7 @@
 import http.client
 import json
 
-DBSHARE_VERSION = "2.5.0"
+DBSHARE_VERSION = "2.6.0"
 
 
 def get_settings(**defaults):

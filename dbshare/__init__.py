@@ -1,13 +1,11 @@
-"""DbShare
-Web service to share and query tabular data sets stored in SQLite3 databases.
-"""
+"DbShare: Web service to share and query data stored in SQLite3 databases."
 
 import json
 import os.path
 import re
 import string
 
-__version__ = "2.5.0"
+__version__ = "2.6.0"
 
 
 class Constants:
