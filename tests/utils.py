@@ -1,9 +1,8 @@
 "Utility functions for the tests."
 
-import http.client
 import json
 
-DBSHARE_VERSION = "2.6.0"
+DBSHARE_VERSION = "2.6.1"
 
 
 def get_settings(**defaults):

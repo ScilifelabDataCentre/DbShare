@@ -9,7 +9,7 @@ ordinal: 70
 - There are several database download options.
 - Clicking **Download** on the database page fetches the database as its
   native SQLite3 file. This file can be uploaded again; see
-  [Tutorial Create](Tutorial-Create).
+  [Tutorial Create](tutorial-create).
 - The pill (small rounded button) labeled **CSV tar.gz** produces a
   gzipped tar archive file containing the CSV files for each of the
   tables in the database.
