@@ -90,9 +90,9 @@ SYSTEM_INDEXES = [
 
 def init(app):
     "Initialize tables in the system database, if not done."
-    cnx = sqlite3.connect(
-        os.path.join(app.config["DATABASES_DIR"], f"{constants.SYSTEM}.sqlite3")
-    )
+    filepath = os.path.join(app.config["DATABASES_DIR"], f"{constants.SYSTEM}.sqlite3")
+    print(filepath)
+    cnx = sqlite3.connect(os.path.join(filepath))
     for schema in SYSTEM_TABLES:
         sql = dbshare.db.get_sql_create_table(schema, if_not_exists=True)
         cnx.execute(sql)

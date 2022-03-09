@@ -1,5 +1,6 @@
 "Documentation HTML endpoints."
 
+import http.client
 import os
 import os.path
 
