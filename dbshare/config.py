@@ -73,11 +73,13 @@ def init(app):
     except KeyError:
         for filepath in ["settings.json", "../site/settings.json"]:
             filepath = os.path.normpath(os.path.join(constants.ROOT, filepath))
+            print("settings", filepath)
             try:
                 app.config.from_json(filepath)
             except FileNotFoundError:
                 filepath = None
             else:
+                print("read settings", filepath)
                 app.config["SETTINGS_FILEPATH"] = filepath
                 break
     app.config["DATABASES_DIR"] = os.path.expanduser(app.config["DATABASES_DIR"])
