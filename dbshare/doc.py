@@ -30,7 +30,19 @@ def endpoints():
         endpoints[name]["doc"] = func.__doc__
     endpoints["static"]["doc"] = "Static web page support files."
     urls = sorted([(e["url"], e) for e in endpoints.values()])
-    return flask.render_template("about/url_endpoints.html", urls=urls)
+    return flask.render_template("url_endpoints.html", urls=urls)
+
+
+@blueprint.route("/")
+def home():
+    "Home documentation page in Markdown format."
+    try:
+        doc = DOCUMENTATION["overview"]
+    except KeyError:
+        flask.abort(http.client.NOT_FOUND)
+    return flask.render_template(
+        "documentation.html", doc=doc, docs=DOCUMENTATION.values()
+    )
 
 
 @blueprint.route("/<page>")
