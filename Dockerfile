@@ -1,0 +1,15 @@
+FROM python:alpine
+
+RUN apk update && apk upgrade
+
+COPY ./requirements.txt /requirements.txt
+RUN pip install -r /requirements.txt gunicorn
+COPY ./dbshare /code/dbshare
+RUN mkdir /code/site /data
+WORKDIR /code/dbshare
+ENV PYTHONPATH /code
+
+ENV GUNICORN_CMD_ARGS "--bind=0.0.0.0:8000 --workers=1 --thread=4 --worker-class=gthread --forwarded-allow-ips='*' --access-logfile -"
+CMD ["gunicorn", "app:app"]
+
+VOLUME ["/data", "/code/site"]
