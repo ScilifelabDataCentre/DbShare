@@ -18,7 +18,7 @@ jobs:
         with:
           registry: ghcr.io
           username: ${{ secrets.DBSHARE_GITHUB_USER }}
-          password: ${{ secrets.DBSHARE_GITHUB_TOKEN }}
+          password: ${{ secrets.DBSHARE_GITHUB_PASSWORD }}
       - name: Docker meta
         id: meta
         uses: docker/metadata-action@v3
