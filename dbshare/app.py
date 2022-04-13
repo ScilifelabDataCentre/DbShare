@@ -1,6 +1,7 @@
 "DbShare: Web service to share and query data stored in SQLite3 databases."
 
 import flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 import dbshare
 import dbshare.about
@@ -48,6 +49,9 @@ dbshare.config.init(app)
 # Initialize the subsystems.
 dbshare.system.init(app)
 dbshare.doc.init(app)
+
+if app.config["REVERSE_PROXY"]:
+    app.wsgi_app = ProxyFix(app.wsgi_app)
 
 
 @app.context_processor

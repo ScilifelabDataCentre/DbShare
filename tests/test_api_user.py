@@ -62,13 +62,15 @@ def database(settings):
 
 
 def test_root(settings):
-    "Test the root and some links from it."
+    "Test the root."
     session = settings["session"]
 
     response = session.get(f"{settings['BASE_URL']}/api")
     assert response.status_code == http.client.OK
     data = response.json()
-    assert data["version"] == utils.DBSHARE_VERSION
+    url = data["databases"]["public"]["href"]
+    response = session.get(url)
+    assert response.status_code == http.client.OK
 
 
 def test_databases(settings):
