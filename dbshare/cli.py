@@ -171,6 +171,15 @@ def db(name):
             )
         )
 
+@cli.command()
+def dump():
+    raise NotImplementedError
+
+
+@cli.command()
+def undump():
+    raise NotImplementedError
+
 
 if __name__ == "__main__":
     cli()
