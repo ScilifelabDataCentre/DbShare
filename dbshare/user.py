@@ -377,7 +377,6 @@ def create_first_admin():
     if not (
         config["ADMIN_USERNAME"] and config["ADMIN_EMAIL"] and config["ADMIN_PASSWORD"]
     ):
-        print("ADMIN account not specified in settings.")
         return
     if get_user(username=config["ADMIN_USERNAME"]):
         print(f"Admin user '{config['ADMIN_USERNAME']}'" " exists already.")

@@ -8,7 +8,7 @@
   <div class="col-md offset-md-1">
     <h2>Personal data policy</h2>
     {% if text %}
-    {{ text | display_markdown }}
+    {{ text | markdown }}
     {% else %}
     <i>No personal data policy has been defined.</i>
     {% endif %}

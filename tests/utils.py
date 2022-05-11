@@ -2,8 +2,6 @@
 
 import json
 
-DBSHARE_VERSION = "2.6.1"
-
 
 def get_settings(**defaults):
     "Update the default settings by the contents of the 'settings.json' file."

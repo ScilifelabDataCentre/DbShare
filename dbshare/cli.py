@@ -2,6 +2,8 @@
 
 import json
 import os.path
+import tarfile
+import time
 
 import click
 import flask
@@ -170,6 +172,39 @@ def db(name):
                 dbshare.api.db.get_json(db, complete=True), ensure_ascii=False, indent=2
             )
         )
+
+@cli.command()
+@click.option("-f", "--filepath", type=str, help="Filepath of the dump file.")
+def dump(filepath):
+    if not filepath:
+        filepath = "dump_{0}.tar.gz".format(time.strftime("%Y-%m-%d"))
+    click.echo(f"Writing to {filepath} ...")
+    with dbshare.app.app.app_context():
+        flask.g.syscnx = utils.get_cnx()
+        dbs = dbshare.dbs.get_dbs()
+        flask.g.syscnx.close()
+        del flask.g.syscnx
+        if filepath.endswith(".gz"):
+            mode = "w:gz"
+        else:
+            mode = "w"
+        with tarfile.open(filepath, mode=mode) as outfile:
+            outfile.add(utils.get_dbpath(constants.SYSTEM),
+                        arcname=f"{constants.SYSTEM}.sqlite3")
+            click.echo(f"Wrote {constants.SYSTEM}")
+            for db in dbs:
+                outfile.add(utils.get_dbpath(db["name"]),
+                            arcname=f"{db['name']}.sqlite3")
+                click.echo(f"Wrote {db['name']}")
+
+
+@cli.command()
+@click.argument("dumpfile", type=click.Path(exists=True))
+def undump(dumpfile):
+    with dbshare.app.app.app_context():
+        with tarfile.open(dumpfile, mode="r") as infile:
+            for item in infile:
+                infile.extract(item, path=flask.current_app.config["DATABASES_DIR"])
 
 
 if __name__ == "__main__":
