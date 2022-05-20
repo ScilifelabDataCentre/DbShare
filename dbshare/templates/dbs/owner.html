@@ -43,6 +43,7 @@ Databases owned by {{ username }}
 {% endblock %} {# block main #}
 
 {% block actions %}
+{% if not config['READONLY'] %}
 <div class="mt-2">
   <a href="{{ url_for('db.create') }}"
      role="button" data-toggle="tooltip" data-placement="left"
@@ -55,6 +56,7 @@ Databases owned by {{ username }}
      title="Create a new database by uploading a SQLite3 file."
      class="btn btn-primary btn-block">Upload</a>
 </div>
+{% endif %} {# not config['READONLY'] #}
 {% endblock %} {# block actions #}
 
 {% block api %}

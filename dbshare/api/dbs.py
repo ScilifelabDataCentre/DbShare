@@ -50,15 +50,16 @@ def owner(username):
         "user": dbshare.api.user.get_json(username),
         "total_size": sum([db["size"] for db in dbs]),
         "databases": get_json(dbs),
-        "actions": [
+    }
+    if not flask.current_app.config["READONLY"]:
+        result["actions"] = [
             {
                 "title": "Create a new empty database.",
                 "href": utils.url_for_unq("api_db.database", dbname="{dbname}"),
                 "variables": {"dbname": {"title": "Name of the database."}},
                 "method": "PUT",
             }
-        ],
-    }
+        ]
     return flask.jsonify(utils.get_json(**result))
 
 

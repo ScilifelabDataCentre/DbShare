@@ -6,6 +6,5 @@
     "HOST_LOGO": "scilifelab-32x32.png",
     "HOST_NAME": "SciLifeLab Data Centre",
     "HOST_URL": "https://www.scilifelab.se/data/",
-    "CONTACT_EMAIL": "per.kraulis@scilifelab.se",
-    "USER_ENABLE_EMAIL_WHITELIST": [".+@scilifelab.se"]
+    "CONTACT_EMAIL": "per.kraulis@scilifelab.se"
 }

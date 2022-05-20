@@ -10,6 +10,7 @@ from dbshare import constants
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
+    READONLY=False,
     SERVER_NAME="localhost:5001",  # For URL generation; app.run() in devel.
     REVERSE_PROXY=False,
     DATABASES_DIR="data",
