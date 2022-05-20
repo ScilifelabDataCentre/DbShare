@@ -124,6 +124,11 @@
       <div class="row">
         <div class="col-md-9 offset-md-1">
           <h2 class="mt-2 mb-3">{% block body_title %}{{ config['SITE_NAME'] }}{% endblock %}</h2>
+          {% if g.current_user and config['READONLY'] %}
+          <div class="alert alert-danger" role="alert">
+            This site is currently read-only!
+          </div>
+          {% endif %}
           {% for msg in get_flashed_messages(category_filter=['error']) %}
           <div class="alert alert-danger" role="alert">
             <strong>Error:</strong> {{ msg }}

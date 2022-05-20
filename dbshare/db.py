@@ -1315,6 +1315,8 @@ def get_check_read(dbname, nrows=False, complete=True):
 
 def has_write_access(db, check_mode=True):
     "Does the current user (if any) have write access to the database?"
+    if flask.current_app.config["READONLY"]:  # Site-wide parameter.
+        return False
     if not flask.g.current_user:
         return False
     if check_mode and db["readonly"]:

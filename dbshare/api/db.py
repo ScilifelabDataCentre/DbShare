@@ -34,7 +34,7 @@ def database(dbname):
             flask.abort(http.client.UNAUTHORIZED)
         except KeyError:
             flask.abort(http.client.NOT_FOUND)
-        data = {
+        result = {
             "name": db["name"],
             "title": db.get("title"),
             "description": db.get("description"),
@@ -64,13 +64,13 @@ def database(dbname):
             },
         }
         if dbshare.db.has_write_access(db):
-            data["actions"]["edit"] = {
+            result["actions"]["edit"] = {
                 "title": "Edit the database metadata.",
                 "href": flask.request.url,
                 "method": "POST",
                 "input": {"content-type": constants.JSON_MIMETYPE},
             }
-            data["actions"]["create_table"] = {
+            result["actions"]["create_table"] = {
                 "title": "Create a new table in the database.",
                 "href": utils.url_for_unq(
                     "api_table.table", dbname=db["name"], tablename="{tablename}"
@@ -79,7 +79,7 @@ def database(dbname):
                 "method": "PUT",
                 "input": {"content-type": constants.JSON_MIMETYPE},
             }
-            data["actions"]["create_view"] = {
+            result["actions"]["create_view"] = {
                 "title": "Create a new view in the database.",
                 "href": utils.url_for_unq(
                     "api_view.view", dbname=db["name"], viewname="{viewname}"
@@ -90,24 +90,24 @@ def database(dbname):
             }
         if dbshare.db.has_write_access(db, check_mode=False):
             if db.get("readonly"):
-                data["actions"]["readwrite"] = {
+                result["actions"]["readwrite"] = {
                     "title": "Set the database to read-only.",
                     "href": utils.url_for("api_db.readonly", dbname=db["name"]),
                     "method": "POST",
                 }
             else:
-                data["actions"]["readonly"] = {
+                result["actions"]["readonly"] = {
                     "title": "Set the database to read-write.",
                     "href": utils.url_for("api_db.readwrite", dbname=db["name"]),
                     "method": "POST",
                 }
         if dbshare.db.has_write_access(db):
-            data["actions"]["delete"] = {
+            result["actions"]["delete"] = {
                 "title": "Delete the database.",
                 "href": flask.request.url,
                 "method": "DELETE",
             }
-        return flask.jsonify(utils.get_json(**data))
+        return flask.jsonify(utils.get_json(**result))
 
     elif utils.http_PUT():
         db = dbshare.db.get_db(dbname)

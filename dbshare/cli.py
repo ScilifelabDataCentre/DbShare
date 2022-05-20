@@ -173,6 +173,7 @@ def db(name):
             )
         )
 
+
 @cli.command()
 @click.option("-f", "--filepath", type=str, help="Filepath of the dump file.")
 def dump(filepath):
@@ -189,12 +190,15 @@ def dump(filepath):
         else:
             mode = "w"
         with tarfile.open(filepath, mode=mode) as outfile:
-            outfile.add(utils.get_dbpath(constants.SYSTEM),
-                        arcname=f"{constants.SYSTEM}.sqlite3")
+            outfile.add(
+                utils.get_dbpath(constants.SYSTEM),
+                arcname=f"{constants.SYSTEM}.sqlite3",
+            )
             click.echo(f"Wrote {constants.SYSTEM}")
             for db in dbs:
-                outfile.add(utils.get_dbpath(db["name"]),
-                            arcname=f"{db['name']}.sqlite3")
+                outfile.add(
+                    utils.get_dbpath(db["name"]), arcname=f"{db['name']}.sqlite3"
+                )
                 click.echo(f"Wrote {db['name']}")
 
 
