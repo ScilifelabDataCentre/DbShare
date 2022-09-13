@@ -26,7 +26,8 @@
       <th>{{ column['name'] }}</th>
       {% endfor %}
       {% if has_write_access %}
-      <th class="px-0"></th>
+      <th class="pr-0"></th>
+      <th class="pr-0"></th>
       {% endif %}
     </tr>
   </thead>
@@ -37,9 +38,13 @@
       <td>{{ value|none_as_literal_null }}</td>
       {% endfor %}
       {% if has_write_access %}
-      <td class="text-right px-0">
+      <td class="text-right pr-0">
 	<a href="{{ url_for('.row_edit', dbname=db['name'], tablename=schema['name'], rowid=row[0]) }}"
 	   class="btn btn-sm btn-primary py-0 my-0" role="button">Edit</a>
+      </td>
+      <td class="text-right pr-0">
+	<a href="{{ url_for('.row_insert', dbname=db['name'], tablename=schema['name'], duplicate=row[0]) }}"
+	   class="btn btn-sm btn-primary py-0 my-0" role="button">Duplicate</a>
       </td>
       {% endif %}
     </tr>
@@ -164,10 +169,9 @@
   $(function() {
     $("#rows").DataTable( {
       "pagingType": "full_numbers",
-      "pageLength": 25,
       {% if has_write_access %}
       "columnDefs": [
-        {"orderable": false, "targets": {{ len(schema['columns']) }} }
+          {"orderable": false, "targets": [-1, -2] }
       ]
       {% endif %}
     });

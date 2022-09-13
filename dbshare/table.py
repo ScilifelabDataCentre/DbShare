@@ -333,13 +333,33 @@ def row_insert(dbname, tablename):
         return flask.redirect(flask.url_for("db.display", dbname=dbname))
     try:
         schema = db["tables"][tablename]
+        print(schema)
     except KeyError:
         utils.flash_error("no such table")
         return flask.redirect(flask.url_for("db.display", dbname=dbname))
 
     if utils.http_GET():
+        try:
+            duplicate = int(flask.request.args["duplicate"])
+            if duplicate <= 0: raise ValueError
+            if duplicate > schema["nrows"]: raise ValueError
+        except (KeyError, ValueError):
+            row = {}
+        else:
+            dbcnx = dbshare.db.get_cnx(dbname)
+            cursor = dbcnx.cursor()
+            names = ",".join([f'''"{c['name']}"''' for c in schema["columns"]])
+            sql = f"""SELECT {names} FROM "{schema['name']}" WHERE rowid=?"""
+            cursor.execute(sql, (duplicate,))
+            rows = cursor.fetchall()
+            if len(rows) != 1:
+                utils.flash_error("no such row in table")
+                return flask.redirect(
+                    flask.url_for(".rows", dbname=dbname, tablename=tablename)
+                )
+            row = rows[0]
         return flask.render_template(
-            "table/row_insert.html", db=db, schema=schema, values={}
+            "table/row_insert.html", db=db, schema=schema, row=row
         )
 
     elif utils.http_POST():
