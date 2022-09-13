@@ -97,11 +97,11 @@ def test_demo_database(settings, page):
     page.click('textarea[name="select"]')
     page.fill('textarea[name="select"]', "sepal_length")
     page.click('textarea[name="where"]')
-    page.fill('textarea[name="where"]', "petal_width > 2.2")
+    page.fill('textarea[name="where"]', "petal_width > 2.3")
     page.click("text=Execute query")
     assert page.url == "http://localhost:5001/query/demo/rows"
-    assert page.locator("#nrows").text_content() == "14"
+    assert page.locator("#nrows").text_content() == "6"
     locator = page.locator("#rows > tbody > tr")
-    playwright.sync_api.expect(locator).to_have_count(14)
+    playwright.sync_api.expect(locator).to_have_count(6)
 
     # page.wait_for_timeout(3000)
