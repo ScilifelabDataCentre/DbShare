@@ -175,10 +175,19 @@ def db(name):
 
 
 @cli.command()
-@click.option("-f", "--filepath", type=str, help="Filepath of the dump file.")
-def dump(filepath):
+@click.option("-f",
+              "--filepath",
+              type=str,
+              help="Filepath of the dump file.")
+@click.option("-D",
+              "--dumpdir",
+              type=str,
+              help="The directory to write the dump file in, using the standard name.")
+def dump(filepath, dumpdir):
     if not filepath:
         filepath = "dump_{0}.tar.gz".format(time.strftime("%Y-%m-%d"))
+        if dumpdir:
+            filepath = os.path.join(dumpdir, filepath)
     click.echo(f"Writing to {filepath} ...")
     with dbshare.app.app.app_context():
         flask.g.syscnx = utils.get_cnx()
