@@ -11,7 +11,6 @@ from dbshare import constants
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
     READONLY=False,
-    SERVER_NAME="localhost:5001",  # For URL generation; app.run() in devel.
     REVERSE_PROXY=False,
     DATABASES_DIR="data",
     SITE_NAME="DbShare",
@@ -54,9 +53,6 @@ DEFAULT_SETTINGS = dict(
         "colon": {"label": "colon ':'", "char": ":"},
     },
     MARKDOWN_SYNTAX_URL="https://www.markdownguide.org/basic-syntax/",
-    ADMIN_USERNAME=None,  # Admin user to create at startup, if not exists.
-    ADMIN_EMAIL=None,
-    ADMIN_PASSWORD=None,
 )
 
 
