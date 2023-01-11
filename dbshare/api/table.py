@@ -315,42 +315,41 @@ def get_json(db, table, complete=False, title=False):
         ]
         for i in result["indexes"]:
             i.pop("table")
-        if not flask.current_app.config["READONLY"]:
-            result["actions"] = [
-                {
-                    "title": "Insert additional rows from JSON or CSV data into the table.",
-                    "href": utils.url_for_unq(
-                        "api_table.insert", dbname=db["name"], tablename=table["name"]
-                    ),
-                    "method": "POST",
-                    "input": [
-                        {"content-type": constants.JSON_MIMETYPE},
-                        {"content-type": constants.CSV_MIMETYPE},
-                    ],
-                },
-                {
-                    "title": "Update rows in the table from CSV data according to primary key.",
-                    "href": utils.url_for_unq(
-                        "api_table.update", dbname=db["name"], tablename=table["name"]
-                    ),
-                    "method": "POST",
-                    "input": {"content-type": constants.CSV_MIMETYPE},
-                },
-                {
-                    "title": "Empty the table; remove all rows.",
-                    "href": utils.url_for_unq(
-                        "api_table.empty", dbname=db["name"], tablename=table["name"]
-                    ),
-                    "method": "POST",
-                },
-                {
-                    "title": "Delete the table from the database.",
-                    "href": utils.url_for_unq(
-                        "api_table.table", dbname=db["name"], tablename=table["name"]
-                    ),
-                    "method": "DELETE",
-                },
-            ]
+        result["actions"] = [
+            {
+                "title": "Insert additional rows from JSON or CSV data into the table.",
+                "href": utils.url_for_unq(
+                    "api_table.insert", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+                "input": [
+                    {"content-type": constants.JSON_MIMETYPE},
+                    {"content-type": constants.CSV_MIMETYPE},
+                ],
+            },
+            {
+                "title": "Update rows in the table from CSV data according to primary key.",
+                "href": utils.url_for_unq(
+                    "api_table.update", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+                "input": {"content-type": constants.CSV_MIMETYPE},
+            },
+            {
+                "title": "Empty the table; remove all rows.",
+                "href": utils.url_for_unq(
+                    "api_table.empty", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "POST",
+            },
+            {
+                "title": "Delete the table from the database.",
+                "href": utils.url_for_unq(
+                    "api_table.table", dbname=db["name"], tablename=table["name"]
+                ),
+                "method": "DELETE",
+            },
+        ]
     else:
         result["href"] = utils.url_for(
             "api_table.table", dbname=db["name"], tablename=table["name"]
