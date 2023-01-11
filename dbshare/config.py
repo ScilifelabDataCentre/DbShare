@@ -1,5 +1,6 @@
 "Configuration."
 
+import json
 import os
 import os.path
 import sqlite3
@@ -64,22 +65,31 @@ def init(app):
     # Set the defaults specified above.
     app.config.from_mapping(DEFAULT_SETTINGS)
     # Modify the configuration as specified in a JSON settings file.
+    filepaths = []
     try:
-        filepath = os.environ["SETTINGS_FILEPATH"]
-        app.config.from_json(filepath)
+        filepaths.append(os.environ["SETTINGS_FILEPATH"])
         # Raises an error if filepath variable defined, but no such file.
     except KeyError:
         for filepath in ["settings.json", "../site/settings.json"]:
-            filepath = os.path.normpath(os.path.join(constants.ROOT, filepath))
-            try:
-                app.config.from_json(filepath)
-            except FileNotFoundError:
-                filepath = None
-            else:
-                app.config["SETTINGS_FILEPATH"] = filepath
-                break
-    app.config["DATABASES_DIR"] = os.path.expanduser(app.config["DATABASES_DIR"])
-    app.config["DATABASES_DIR"] = os.path.expandvars(app.config["DATABASES_DIR"])
+            filepaths.append(os.path.normpath(os.path.join(constants.ROOT, filepath)))
+
+    # Use the first settings file that can be found.
+    for filepath in filepaths:
+        try:
+            with open(filepath) as infile:
+                config = json.load(infile)
+        except OSError:
+            pass
+        else:
+            for key in config.keys():
+                if key not in DEFAULT_SETTINGS:
+                    app.logger.warning(f"Obsolete item '{key}' in settings file.")
+            app.config.from_mapping(config)
+            app.config["SETTINGS_FILEPATH"] = filepath
+            break
+    app.config["DATABASES_DIR"] = os.path.expandvars(
+        os.path.expanduser(app.config["DATABASES_DIR"]))
+
     # Sanity checks. Exception means bad setup.
     if not app.config["SECRET_KEY"]:
         raise ValueError("SECRET_KEY not set.")

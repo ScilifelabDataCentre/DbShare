@@ -4,7 +4,6 @@ import sqlite3
 import sys
 
 import flask
-import flask_mail
 import http.client
 import jinja2
 
@@ -41,7 +40,6 @@ def software():
         ("Python", f"{v.major}.{v.minor}.{v.micro}", "https://www.python.org/"),
         ("Sqlite3", sqlite3.version, "https://www.sqlite.org/"),
         ("Flask", flask.__version__, "http://flask.pocoo.org/"),
-        ("Flask-Mail", flask_mail.__version__, "https://pythonhosted.org/Flask-Mail"),
         ("Jinja2", jinja2.__version__, "http://jinja.pocoo.org/docs"),
         ("Bootstrap", constants.BOOTSTRAP_VERSION, constants.BOOTSTRAP_URL),
         ("jQuery", constants.JQUERY_VERSION, constants.JQUERY_URL),
