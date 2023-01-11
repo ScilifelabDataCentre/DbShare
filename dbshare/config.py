@@ -11,7 +11,6 @@ from dbshare import constants
 
 # Default configurable values; modified by reading JSON file in 'init'.
 DEFAULT_SETTINGS = dict(
-    READONLY=False,
     REVERSE_PROXY=False,
     DATABASES_DIR="data",
     SITE_NAME="DbShare",

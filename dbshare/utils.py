@@ -18,6 +18,7 @@ import uuid
 import flask
 import jinja2.utils
 import marko
+import markupsafe
 import werkzeug.routing
 
 import dbshare.lexer
@@ -302,7 +303,7 @@ def csrf_token():
         # Generate a token to last the session's lifetime.
         token = flask.session["_csrf_token"] = get_iuid()
     html = f'<input type="hidden" name="_csrf_token" value="{token}">'
-    return jinja2.utils.Markup(html)
+    return markupsafe.Markup(html)
 
 
 def check_csrf_token():
@@ -350,13 +351,13 @@ def size_none(value):
         value = "<em>none</em>"
     else:
         value = '<span class="text-monospace">{:,}</span>'.format(value)
-    return jinja2.utils.Markup(value)
+    return markupsafe.Markup(value)
 
 
 def none_as_literal_null(value):
     "Template filter: Output None as HTML '<NULL>' in safe mode."
     if value is None:
-        return jinja2.utils.Markup("<i>&lt;NULL&gt;</i>")
+        return markupsafe.Markup("<i>&lt;NULL&gt;</i>")
     else:
         return value
 
@@ -397,7 +398,7 @@ def markdown2html(value):
 
 def markdown(value):
     "Template filter: Use Markdown to process the value."
-    return jinja2.utils.Markup(markdown2html(value))
+    return markupsafe.Markup(markdown2html(value))
 
 
 def get_site_text(filename):
@@ -415,19 +416,17 @@ def get_site_text(filename):
 def access(value):
     "Template filter: Output public or private according to the value."
     if value:
-        return jinja2.utils.Markup('<span class="badge badge-info">public</span>')
+        return markupsafe.Markup('<span class="badge badge-info">public</span>')
     else:
-        return jinja2.utils.Markup('<span class="badge badge-secondary">private</span>')
+        return markupsafe.Markup('<span class="badge badge-secondary">private</span>')
 
 
 def mode(value):
     "Template filter: Output readonly or read-write according to the value."
     if value:
-        return jinja2.utils.Markup('<span class="badge badge-success">read-only</span>')
+        return markupsafe.Markup('<span class="badge badge-success">read-only</span>')
     else:
-        return jinja2.utils.Markup(
-            '<span class="badge badge-warning">read/write</span>'
-        )
+        return markupsafe.Markup('<span class="badge badge-warning">read/write</span>')
 
 
 def abort_json(status_code, error):
