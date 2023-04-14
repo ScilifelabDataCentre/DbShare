@@ -368,14 +368,14 @@ def row_insert(dbname, tablename):
             for item in errors.items():
                 utils.flash_error("%s: %s" % item)
             return flask.render_template(
-                "table/row_insert.html", db=db, schema=schema, values=values
+                "table/row_insert.html", db=db, schema=schema, row=values
             )
         try:
             insert_rows(db, schema, [values])
         except sqlite3.Error as error:
             utils.flash_error(error)
             return flask.render_template(
-                "table/row_insert.html", db=db, schema=schema, values=values
+                "table/row_insert.html", db=db, schema=schema, row=values
             )
         utils.flash_message("Row inserted.")
         return flask.redirect(
