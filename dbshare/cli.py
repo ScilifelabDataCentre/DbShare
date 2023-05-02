@@ -184,6 +184,7 @@ def db(name):
               type=str,
               help="The directory to write the dump file in, using the standard name.")
 def dump(filepath, dumpdir):
+    "Dump all Sqlite3 databases to a '.tar.gz' dump file."
     if not filepath:
         filepath = "dump_{0}.tar.gz".format(time.strftime("%Y-%m-%d"))
         if dumpdir:
@@ -214,6 +215,7 @@ def dump(filepath, dumpdir):
 @cli.command()
 @click.argument("dumpfile", type=click.Path(exists=True))
 def undump(dumpfile):
+    "Load a DbShare dump file, creating the Sqlite3 database files."
     with dbshare.main.app.app_context():
         with tarfile.open(dumpfile, mode="r") as infile:
             for item in infile:
