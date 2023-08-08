@@ -1105,7 +1105,6 @@ class DbSaver:
                     query["offset"] = None
                 self.add_view(schema, create=False)
             except (KeyError, ValueError, IndexError, TypeError) as error:
-                print(error)
                 # Get rid of uninterpretable view.
                 sql = f"DROP VIEW {viewname}"
                 cursor.execute(sql)
