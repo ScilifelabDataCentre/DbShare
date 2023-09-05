@@ -333,7 +333,6 @@ def row_insert(dbname, tablename):
         return flask.redirect(flask.url_for("db.display", dbname=dbname))
     try:
         schema = db["tables"][tablename]
-        print(schema)
     except KeyError:
         utils.flash_error("no such table")
         return flask.redirect(flask.url_for("db.display", dbname=dbname))
