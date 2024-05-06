@@ -15,5 +15,5 @@ pyparsing==3.0.7
 pyrsistent==0.18.1
 PyYAML==6.0.1
 six==1.16.0
-Werkzeug==3.0.1
+Werkzeug==3.0.3
 zipp==3.7.0
