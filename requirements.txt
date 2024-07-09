@@ -16,4 +16,4 @@ pyrsistent==0.18.1
 PyYAML==6.0.1
 six==1.16.0
 Werkzeug==3.0.1
-zipp==3.7.0
+zipp==3.19.1
